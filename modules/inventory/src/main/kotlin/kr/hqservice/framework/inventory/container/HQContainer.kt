@@ -3,6 +3,7 @@ package kr.hqservice.framework.inventory.container
 import kr.hqservice.framework.inventory.button.HQButton
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
 import org.bukkit.Bukkit
+import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
@@ -40,11 +41,13 @@ abstract class HQContainer(
     internal fun getButton(slot: Int): HQButtonImpl? = buttons[slot]
 
     final override fun getInventory(): Inventory {
-        return baseInventory ?: Bukkit.createInventory(this, size, title)
-            .apply {
-                initializing(this)
-                baseInventory = this
-            }
+        return baseInventory ?: Bukkit.createInventory(
+            this, size,
+            ChatColor.translateAlternateColorCodes('&', title)
+        ).apply {
+            baseInventory = this
+            initializing(this)
+        }
     }
 
     fun isCancelled(): Boolean = cancel
