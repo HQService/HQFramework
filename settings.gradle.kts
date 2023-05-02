@@ -27,7 +27,6 @@ dependencyResolutionManagement {
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
 
             library("koin-core", "io.insert-koin:koin-core-jvm:${getProperty("koinVersion")}")
-            library("koin-core-coroutines", "io.insert-koin:koin-core-coroutines-jvm:${getProperty("koinVersion")}")
             library("koin-annotations", "io.insert-koin:koin-annotations-jvm:${getProperty("koinAnnotationsVersion")}")
             library("koin-ksp-compiler", "io.insert-koin:koin-ksp-compiler:${getProperty("koinAnnotationsVersion")}")
             library("koin-test", "io.insert-koin:koin-test-jvm:${getProperty("koinVersion")}")

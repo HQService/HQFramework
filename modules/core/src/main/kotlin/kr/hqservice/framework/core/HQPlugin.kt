@@ -10,6 +10,14 @@ import java.io.File
 abstract class HQPlugin : JavaPlugin(), KoinComponent {
     private val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
 
+    final override fun onEnable() {
+        componentRegistry.setup()
+    }
+
+    final override fun onDisable() {
+        componentRegistry.teardown()
+    }
+
     internal fun getJar(): File {
         return super.getFile()
     }
