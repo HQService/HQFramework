@@ -4,11 +4,12 @@ rootProject.name = "HQFramework"
 
 pluginManagement {
     val kotlinVersion: String by settings
+    val shadowVersion: String by settings
 
     plugins {
         kotlin("jvm") version kotlinVersion apply false
         kotlin("plugin.serialization") version kotlinVersion apply false
-        id("com.vjh0107.bukkit-resource-generator") version "1.0.1" apply false
+        id("com.github.johnrengelman.shadow") version shadowVersion apply false
     }
 }
 
@@ -23,6 +24,7 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("libs") {
+            library("kotlin-stdlib", "org.jetbrains.kotlin:kotlin-stdlib:${getProperty("kotlinVersion")}")
             library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:${getProperty("kotlinVersion")}")
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
 
