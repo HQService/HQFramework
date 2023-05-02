@@ -10,10 +10,10 @@ import org.koin.core.annotation.Single
 @Named("module")
 class ModuleComponentHandler : ComponentHandler<HQModule> {
     override fun setup(element: HQModule, plugin: HQPlugin) {
-        element.onEnable(plugin)
+        element.onEnable()
     }
 
     override fun teardown(element: HQModule, plugin: HQPlugin) {
-        element.onDisable(plugin)
+        element.onDisable()
     }
 }

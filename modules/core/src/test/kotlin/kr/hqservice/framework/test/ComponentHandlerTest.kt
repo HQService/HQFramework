@@ -43,12 +43,12 @@ class ComponentHandlerTest : KoinComponent {
     }
 
     interface TestHQModule : HQModule {
-        override fun onEnable(plugin: HQPlugin) {
+        override fun onEnable() {
             println("onEnable, ${this::class.simpleName}")
             assert(true)
         }
 
-        override fun onDisable(plugin: HQPlugin) {
+        override fun onDisable() {
             println("onDisable, ${this::class.simpleName}")
             assert(true)
         }
