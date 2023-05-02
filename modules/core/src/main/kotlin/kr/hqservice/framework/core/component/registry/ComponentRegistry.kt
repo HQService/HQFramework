@@ -27,8 +27,7 @@ import kr.hqservice.framework.core.component.Component
  *
  * 3.
  * 다른 컴포넌트들의 초기화가 끝났을 경우에도 주입하기에 알맞은 인스턴스들을 찾지 못하였을 경우,
- * StackOverFlowException 이 일어나게 됩니다. StackOverFlowException 을 캐치하여,
- * NoBeanDefFoundException 을 발생시킵니다.
+ * NoBeanDefinitionsFoundException 을 발생시킵니다.
  *
  *
  * 컴포넌트의 처리:
