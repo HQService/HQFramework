@@ -1,23 +1,20 @@
 package kr.hqservice.framework.core.component.handler.impl
 
+import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.component.HQListener
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import org.bukkit.event.HandlerList
-import org.bukkit.event.Listener
-import org.bukkit.plugin.Plugin
-import org.koin.core.annotation.Factory
-import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.Named
+import org.koin.core.annotation.Single
 
-@Factory(binds = [ComponentHandler::class])
+@Single(binds = [ComponentHandler::class])
 @Named("listener")
-class ListenerComponentHandler(
-    @InjectedParam private val plugin: Plugin
-) : ComponentHandler<Listener> {
-    override fun setup(element: Listener) {
+class ListenerComponentHandler : ComponentHandler<HQListener> {
+    override fun setup(element: HQListener, plugin: HQPlugin) {
         plugin.server.pluginManager.registerEvents(element, plugin)
     }
 
-    override fun teardown(element: Listener) {
+    override fun teardown(element: HQListener, plugin: HQPlugin) {
         HandlerList.unregisterAll(element)
     }
 }

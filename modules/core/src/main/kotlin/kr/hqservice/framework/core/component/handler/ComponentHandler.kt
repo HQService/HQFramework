@@ -1,7 +1,10 @@
 package kr.hqservice.framework.core.component.handler
 
-interface ComponentHandler<T> {
-    fun setup(element: T)
+import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.component.HQComponent
 
-    fun teardown(element: T)
+interface ComponentHandler<T : HQComponent> {
+    fun setup(element: T, plugin: HQPlugin)
+
+    fun teardown(element: T, plugin: HQPlugin)
 }
