@@ -23,6 +23,7 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("libs") {
+            library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:${getProperty("kotlinVersion")}")
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
 
             library("koin-core", "io.insert-koin:koin-core-jvm:${getProperty("koinVersion")}")
