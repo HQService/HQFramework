@@ -1,11 +1,17 @@
 package kr.hqservice.framework.inventory
 
-import org.bukkit.Server
-import org.bukkit.plugin.Plugin
+import kr.hqservice.framework.core.component.Component
+import kr.hqservice.framework.core.component.HQModule
 
-class InventoryModule(
-    private val plugin: Plugin,
-    private val server: Server
-) {
+@Component
+class InventoryModule: HQModule {
+
+    override fun onEnable() {
+
+    }
+
+    override fun onDisable() {
+
+    }
 
 }
