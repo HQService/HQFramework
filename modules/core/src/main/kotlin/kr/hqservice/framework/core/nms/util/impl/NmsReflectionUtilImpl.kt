@@ -1,0 +1,80 @@
+package kr.hqservice.framework.core.nms.util.impl
+
+import kr.hqservice.framework.core.component.Component
+import kr.hqservice.framework.core.component.HQService
+import kr.hqservice.framework.core.component.HQSingleton
+import kr.hqservice.framework.core.nms.Version
+import kr.hqservice.framework.core.nms.handler.FunctionType
+import kr.hqservice.framework.core.nms.handler.VersionHandler
+import kr.hqservice.framework.core.nms.handler.impl.CallableVersionHandler
+import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
+import org.bukkit.Server
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodHandles.Lookup
+import kotlin.reflect.KCallable
+import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredFunctions
+
+@Component
+@HQSingleton(binds = [NmsReflectionUtil::class])
+class NmsReflectionUtilImpl(
+    server: Server,
+) : NmsReflectionUtil, HQService {
+
+    private val classMap = mutableMapOf<String, KClass<*>>()
+    private val callableMap = mutableMapOf<String, KCallable<*>>()
+
+    private val versionName: String = server.javaClass.`package`.name.split("\\.")[3]
+    private val majorVersion = versionName.substring(1).split("_")[1].toInt()
+    private val version = Version.valueOf("V_$majorVersion")
+
+    private val craftBukkitClass = "org.bukkit.craftbukkit.$versionName."
+    private val nmsClass = "net.minecraft.".orLegacy("net.minecraft.server.$versionName.")
+
+    private val lookup: Lookup = MethodHandles.lookup()
+
+    override fun getVersionName(): String {
+        return versionName
+    }
+
+    override fun getVersion(): Version {
+        return version
+    }
+
+    override fun getNmsClass(className: String, vararg handlers: VersionHandler): KClass<*> {
+        return classMap.computeIfAbsent(className) { name ->
+            getNmsClass(handlers.sortedBy { it.getVersion().ordinal }
+                .firstOrNull { it.getVersion().support(version) }?.getName()?.run { "$this.$name" }
+                ?: name)
+        }
+    }
+
+    private fun getNmsClass(name: String): KClass<*> {
+        try {
+            return Class.forName("$nmsClass.$name").kotlin
+        } catch (_: ClassNotFoundException) {
+            throw IllegalArgumentException("not found class '$nmsClass.$name'")
+        }
+    }
+
+    override fun getCraftBukkitClass(className: String): KClass<*> {
+        try {
+            return Class.forName("$craftBukkitClass.$className").kotlin
+        } catch (_: ClassNotFoundException) {
+            throw IllegalArgumentException("not found class '$craftBukkitClass.$className'")
+        }
+    }
+
+    override fun getFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
+        return callableMap.computeIfAbsent(functionType.getName()) { _ ->
+            val type = handlers.sortedBy { it.getVersion().ordinal }
+                .firstOrNull { it.getVersion().support(version) }?: CallableVersionHandler(version, functionType)
+            clazz.declaredFunctions.single { callable -> type.isMatched(callable) }
+        }
+    }
+
+    private fun String.orLegacy(legacyName: String): String {
+        return if (majorVersion >= 17) this else legacyName
+    }
+
+}
