@@ -9,6 +9,7 @@ import org.bukkit.entity.Player
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class HQContainerTest {
 
     private lateinit var server: ServerMock
@@ -25,6 +26,9 @@ class HQContainerTest {
         TestContainer("&a테스트") {
             HQButtonBuilder(Material.BOOK) {
                 displayName = "&a버튼1"
+                clickFunc {
+                    it.getWhoClicked().sendMessage("aaa")
+                }
             }.build().setSlot(this, 0)
         }.open(player)
 
@@ -42,7 +46,6 @@ class HQContainerTest {
             }.open(player)
         }
     }
-
 
     @AfterEach
     fun b() {

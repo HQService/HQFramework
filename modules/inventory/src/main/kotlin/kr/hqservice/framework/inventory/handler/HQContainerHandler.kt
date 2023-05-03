@@ -1,16 +1,18 @@
 package kr.hqservice.framework.inventory.handler
 
+import kr.hqservice.framework.core.component.Component
+import kr.hqservice.framework.core.component.HQListener
 import kr.hqservice.framework.inventory.container.HQContainer
 import kr.hqservice.framework.inventory.event.impl.ButtonClickEventImpl
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
-import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.inventory.InventoryView
 
-class HQContainerHandler: Listener {
+@Component
+class HQContainerHandler: HQListener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun inventoryClick(event: InventoryClickEvent) {

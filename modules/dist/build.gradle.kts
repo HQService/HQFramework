@@ -33,7 +33,7 @@ for ((group, module) in excludeSet) {
 }
 
 tasks.shadowJar {
-    includeModules()
+    includeModules("inventory", "item")
     destinationDirectory.set(file(rootProject.projectDir.path + "/build_outputs"))
 }
 
