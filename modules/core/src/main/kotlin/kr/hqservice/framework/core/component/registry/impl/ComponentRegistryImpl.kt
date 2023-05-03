@@ -14,6 +14,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
+import org.koin.core.error.NoBeanDefFoundException
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
 import org.koin.core.module.Module
@@ -106,8 +107,7 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
         return kFunction.parameters.map { parameter ->
             val parameterKClass = parameter.type.classifier as KClass<*>
             if (providedInstanceMap != null) {
-                val providedInstance =
-                    providedInstanceMap.filter { parameterKClass.isSubclassOf(it.key) }.values.firstOrNull()
+                val providedInstance = providedInstanceMap.filter { parameterKClass.isSubclassOf(it.key) }.values.firstOrNull()
                 if (providedInstance != null) {
                     return@map providedInstance
                 }

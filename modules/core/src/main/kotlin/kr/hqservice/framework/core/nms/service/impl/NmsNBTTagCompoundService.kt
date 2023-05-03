@@ -21,7 +21,6 @@ import kotlin.reflect.jvm.isAccessible
 class NmsNBTTagCompoundService(
     reflectionUtil: NmsReflectionUtil
 ) : KoinComponent, NmsService<Any?, NmsNBTTagCompoundWrapper>, HQService {
-
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound",
         Version.V_15.handle("nbt"))
 
@@ -32,5 +31,4 @@ class NmsNBTTagCompoundService(
     override fun unwrap(wrapper: NmsNBTTagCompoundWrapper): Any {
         return wrapper.nbtTag
     }
-
 }

@@ -5,7 +5,6 @@ import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 
 interface VersionHandler {
-
     fun getVersion(): Version
 
     fun getName(): String
@@ -13,5 +12,4 @@ interface VersionHandler {
     fun static(): VersionHandler
 
     fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean
-
 }

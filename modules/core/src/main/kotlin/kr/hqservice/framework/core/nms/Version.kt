@@ -6,7 +6,6 @@ import kr.hqservice.framework.core.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.core.nms.handler.impl.NameVersionHandler
 
 enum class Version {
-
     V_7,
     V_8,
     V_9,
@@ -34,5 +33,4 @@ enum class Version {
         block(type)
         return CallableVersionHandler(this, type)
     }
-
 }

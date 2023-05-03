@@ -9,7 +9,6 @@ class NameVersionHandler(
     private val version: Version,
     private val name: String
 ) : VersionHandler {
-
     override fun getVersion(): Version {
         return version
     }
@@ -25,5 +24,4 @@ class NameVersionHandler(
     override fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean {
         return callable.name == name
     }
-
 }
