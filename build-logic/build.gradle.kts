@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
     `kotlin-dsl`
+    `maven-publish`
 }
 
 val properties = loadProperties(rootProject.gradle.parent?.rootProject?.projectDir?.path + "/gradle.properties")

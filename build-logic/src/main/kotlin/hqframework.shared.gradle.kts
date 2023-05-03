@@ -4,6 +4,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
     id("com.google.devtools.ksp")
+    id("hqframework.publish")
 }
 
 val projectGroup: String by project
