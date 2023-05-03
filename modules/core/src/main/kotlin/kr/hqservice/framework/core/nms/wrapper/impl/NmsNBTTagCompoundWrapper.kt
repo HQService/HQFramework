@@ -8,20 +8,27 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class NmsNBTTagCompoundWrapper(
-    val nbtTag: Any
+    internal val nbtTag: Any
 ) : NmsWrapper, KoinComponent {
 
     private val reflectionUtil: NmsReflectionUtil by inject()
 
-    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt.NBTTagCompound"))
+    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt"))
 
-    private val getStringFunction = reflectionUtil.getFunction(nbtTagClass,"getString", listOf(String::class), Version.V_17.handle("l") {
-        listOf(String::class)
-    })
+    private val getStringFunction = reflectionUtil.getFunction(nbtTagClass,"getString", listOf(String::class),
+        Version.V_15.handle("l") { setParameterClasses(String::class) }
+    )
 
-    private val setStringFunction = reflectionUtil.getFunction(nbtTagClass, "setString", listOf(String::class, String::class), Version.V_17.handle("a") {
-        setParameterClasses()
-    })
+    private val setStringFunction = reflectionUtil.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
+        Version.V_15.handle("a") { setParameterClasses(String::class, String::class) }
+    )
 
+    fun getString(key: String): String? {
+        return getStringFunction.call(nbtTag, key) as? String?
+    }
+
+    fun setString(key: String, value: String) {
+        setStringFunction.call(nbtTag, key, value)
+    }
 
 }

@@ -3,6 +3,7 @@ package kr.hqservice.framework.core.nms.handler.impl
 import kr.hqservice.framework.core.nms.Version
 import kr.hqservice.framework.core.nms.handler.VersionHandler
 import kotlin.reflect.KCallable
+import kotlin.reflect.KClass
 
 class NameVersionHandler(
     private val version: Version,
@@ -17,7 +18,7 @@ class NameVersionHandler(
         return name
     }
 
-    override fun isMatched(callable: KCallable<*>): Boolean {
+    override fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean {
         return callable.name == name
     }
 

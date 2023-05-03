@@ -6,7 +6,8 @@ import kotlin.reflect.KType
 class FunctionType(
     private val name: String,
     private var returnType: KType? = null,
-    private var parameterClasses: List<KClass<*>> = emptyList()
+    private var parameterClasses: List<KClass<*>> = emptyList(),
+    private var staticMethod: Boolean = false
 ) {
 
     fun setReturnType(clazz: KType?) {
@@ -17,10 +18,22 @@ class FunctionType(
         parameterClasses = classes.toList()
     }
 
+    fun static() {
+        staticMethod = true
+    }
+
+    fun isStaticMethod(): Boolean {
+        return staticMethod
+    }
+
     fun getName() = name
 
     fun getReturnType() = returnType
 
-    fun getParameterClasses() = parameterClasses
+    fun getParameterClasses(targetClass: KClass<*>): List<KClass<*>> {
+        return if(isStaticMethod())
+            parameterClasses
+        else listOf(targetClass, *parameterClasses.toTypedArray())
+    }
 
 }

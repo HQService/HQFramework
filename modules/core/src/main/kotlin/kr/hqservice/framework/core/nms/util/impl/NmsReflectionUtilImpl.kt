@@ -9,8 +9,6 @@ import kr.hqservice.framework.core.nms.handler.VersionHandler
 import kr.hqservice.framework.core.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
 import org.bukkit.Server
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodHandles.Lookup
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredFunctions
@@ -30,8 +28,6 @@ class NmsReflectionUtilImpl(
 
     private val craftBukkitClass = "org.bukkit.craftbukkit.$versionName."
     private val nmsClass = "net.minecraft.".orLegacy("net.minecraft.server.$versionName.")
-
-    private val lookup: Lookup = MethodHandles.lookup()
 
     override fun getVersionName(): String {
         return versionName
@@ -69,7 +65,7 @@ class NmsReflectionUtilImpl(
         return callableMap.computeIfAbsent(functionType.getName()) { _ ->
             val type = handlers.sortedBy { it.getVersion().ordinal }
                 .firstOrNull { it.getVersion().support(version) }?: CallableVersionHandler(version, functionType)
-            clazz.declaredFunctions.single { callable -> type.isMatched(callable) }
+            clazz.declaredFunctions.single { callable -> type.isMatched(clazz, callable) }
         }
     }
 

@@ -26,15 +26,11 @@ class NmsItemStackService : KoinComponent, NmsService<ItemStack, NmsItemStackWra
     private val asBukkitCopyFunction = reflectionUtil.getFunction(craftItemStackClass, "asBukkitCopy", ItemStack::class, listOf(nmsItemStackClass))
 
     override fun wrap(target: ItemStack): NmsItemStackWrapper {
-        return NmsItemStackWrapper(asNmsCopyFunction.call(target)?: throw IllegalArgumentException(
-
-        ))
+        return NmsItemStackWrapper(asNmsCopyFunction.call(target)?: throw IllegalArgumentException())
     }
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
-        return asBukkitCopyFunction.call(wrapper.nmsItemStack) as? ItemStack?: throw IllegalArgumentException(
-
-        )
+        return asBukkitCopyFunction.call(wrapper.nmsItemStack) as? ItemStack?: throw IllegalArgumentException()
     }
 
 }

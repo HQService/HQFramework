@@ -18,12 +18,11 @@ class NmsNBTTagCompoundService : KoinComponent, NmsService<Any?, NmsNBTTagCompou
 
     private val reflectionUtil: NmsReflectionUtil by inject()
 
-    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt.NBTTagCompound"))
+    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound",
+        Version.V_15.handle("nbt"))
 
     override fun wrap(target: Any?): NmsNBTTagCompoundWrapper {
-        return NmsNBTTagCompoundWrapper(target?: nbtTagClass.primaryConstructor?.call()?: throw IllegalArgumentException(
-
-        ))
+        return NmsNBTTagCompoundWrapper(target?: nbtTagClass.primaryConstructor?.call() ?: throw IllegalArgumentException())
     }
 
     override fun unwrap(wrapper: NmsNBTTagCompoundWrapper): Any {
