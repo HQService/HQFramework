@@ -10,6 +10,8 @@ interface VersionHandler {
 
     fun getName(): String
 
+    fun static(): VersionHandler
+
     fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean
 
 }

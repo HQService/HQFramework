@@ -1,5 +1,6 @@
 plugins {
     id("hqframework.shared")
+    id("hqframework.publish")
 }
 
 dependencies {

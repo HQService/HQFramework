@@ -24,12 +24,12 @@ class HQContainerTest {
     @Test
     fun containerTest() {
         TestContainer("&a테스트") {
-            HQButtonBuilder(Material.BOOK) {
-                displayName = "&a버튼1"
-                clickFunc {
-                    it.getWhoClicked().sendMessage("aaa")
+            HQButtonBuilder(Material.BOOK)
+                .setDisplayName("&a버튼1")
+                .setClickFunction {
+
                 }
-            }.build().setSlot(this, 0)
+                .build().setSlot(this, 0)
         }.open(player)
 
         val holder = player.openInventory.topInventory.holder
@@ -40,9 +40,7 @@ class HQContainerTest {
 
         assertThrows<IndexOutOfBoundsException> {
             TestContainer("&a테스트2") {
-                HQButtonBuilder(Material.BOOK) {
-                    displayName = "&a버튼2"
-                }.build().setSlot(this, 11)
+                HQButtonBuilder(Material.BOOK).build().setSlot(this, 11)
             }.open(player)
         }
     }

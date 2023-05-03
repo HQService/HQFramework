@@ -29,5 +29,5 @@ fun ItemStack.setNmsItemStack(nmsItemStack: NmsItemStackWrapper) {
 }
 
 fun NmsItemStackWrapper.tag(block: NmsNBTTagCompoundWrapper.() -> Unit) {
-    setTag(tagService.wrap(getTag()).apply(block))
+    setTag(getTag().apply(block))
 }

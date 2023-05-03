@@ -30,12 +30,16 @@ class NmsItemStackWrapper(
         Version.V_15.handle("c") { setParameterClasses(nbtTagClass) }
     )
 
+    fun getTagOrNull(): NmsNBTTagCompoundWrapper? {
+        return tagService.wrap(getTagFunction.call(nmsItemStack)?: return null)
+    }
+
     fun getTag(): NmsNBTTagCompoundWrapper {
         return tagService.wrap(getTagFunction.call(nmsItemStack))
     }
 
-    fun setTag(nbtTagCompoundWrapper: NmsNBTTagCompoundWrapper) {
-        setTagFunction.call(nmsItemStack, tagService.unwrap(nbtTagCompoundWrapper))
+    fun setTag(nbtTagCompoundWrapper: NmsNBTTagCompoundWrapper?) {
+        setTagFunction.call(nmsItemStack, nbtTagCompoundWrapper?.run(tagService::unwrap))
     }
 
 }

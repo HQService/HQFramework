@@ -6,6 +6,7 @@ import kr.hqservice.framework.core.component.error.ConstructorConflictException
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundException
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.core.extension.print
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*
@@ -35,10 +36,10 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
     private val componentInstances: ComponentInstanceList = ComponentInstanceList()
 
     override fun setup() {
-        val componentClasses = getAllPluginClasses().filter { klass ->
-            klass.hasAnnotation<Component>()
+        val componentClasses = getAllPluginClasses().filter { clazz ->
+            clazz.annotations.filterIsInstance<Component>().isNotEmpty()
         }
-        val queue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses)
+        val queue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var exceptionCatchingStack = 0
@@ -137,15 +138,15 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
             ?: throw NullPointerException("ComponentHandler implementation not found for ${component.simpleName}")
     }
 
-    private fun getAllPluginClasses(): Collection<KClass<*>> {
-        val classes: MutableSet<KClass<*>> = mutableSetOf()
+    private fun getAllPluginClasses(): Collection<Class<*>> {
+        val classes: MutableSet<Class<*>> = mutableSetOf()
         val entries = JarFile(plugin.getJar()).entries()
         while (entries.hasMoreElements()) {
             val name = entries.nextElement().name.replace("/", ".")
             if (name.startsWith(plugin::class.java.packageName) && name.endsWith(".class")) {
                 try {
                     val clazz = Class.forName(name.removeSuffix(".class"))
-                    classes.add(clazz.kotlin)
+                    classes.add(clazz)
                 } catch (exception: ClassNotFoundException) {
                     exception.printStackTrace()
                 }

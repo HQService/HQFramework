@@ -18,6 +18,10 @@ class NameVersionHandler(
         return name
     }
 
+    override fun static(): VersionHandler {
+        return this
+    }
+
     override fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean {
         return callable.name == name
     }

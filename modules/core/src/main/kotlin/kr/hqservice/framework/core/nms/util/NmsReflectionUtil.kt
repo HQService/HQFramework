@@ -19,6 +19,8 @@ interface NmsReflectionUtil {
 
     fun getFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*>
 
+    fun getStaticFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*>
+
 }
 
 fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {
@@ -35,4 +37,12 @@ fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, params: List<K
 
 fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
     return getFunction(clazz, FunctionType(name, returnType.createType(), params), *handlers)
+}
+
+fun NmsReflectionUtil.getStaticFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+    return getStaticFunction(clazz, FunctionType(name, null, params, true), *handlers.map { it.static() }.toTypedArray())
+}
+
+fun NmsReflectionUtil.getStaticFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+    return getStaticFunction(clazz, FunctionType(name, returnType.createType(), params, true), *handlers.map { it.static() }.toTypedArray())
 }

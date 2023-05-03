@@ -8,16 +8,16 @@ import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
+import java.util.function.Consumer
 
 class HQButtonBuilder(
-    private val itemStack: ItemStack,
-    private val buildBlock: HQButtonBuilder.() -> Unit = {},
+    private val itemStack: ItemStack
 ) {
 
-    var displayName: String = itemStack.itemMeta?.displayName ?: ""
-    var lore: List<String> = itemStack.itemMeta?.lore ?: emptyList()
-    var itemFlags: Set<ItemFlag> = itemStack.itemMeta?.itemFlags ?: emptySet()
-    var removable = false
+    private var displayName: String = itemStack.itemMeta?.displayName ?: ""
+    private var lore: List<String> = itemStack.itemMeta?.lore ?: emptyList()
+    private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
+    private var removable = false
     var glow = false
         set(value) {
             field = value
@@ -25,11 +25,11 @@ class HQButtonBuilder(
             else itemStack.removeEnchantment(Enchantment.LURE)
         }
 
-    private var clickFunction: (ButtonClickEvent) -> Unit = {}
+    private var clickFunction: Consumer<ButtonClickEvent> = Consumer {  }
 
-    constructor(material: Material, buildBlock: HQButtonBuilder.() -> Unit = {}) : this(material, 1, buildBlock)
+    constructor(material: Material) : this(material, 1)
 
-    constructor(material: Material, amount: Int, buildBlock: HQButtonBuilder.() -> Unit = {}) : this(ItemStack(material, amount), buildBlock) {
+    constructor(material: Material, amount: Int) : this(ItemStack(material, amount)) {
         if (material == Material.AIR || !material.isItem) throw IllegalMaterialException(material)
     }
 
@@ -38,12 +38,32 @@ class HQButtonBuilder(
         itemStack.durability = data
     }
 
-    fun clickFunc(block: (ButtonClickEvent) -> Unit) {
+    fun setDisplayName(name: String): HQButtonBuilder {
+        displayName = name
+        return this
+    }
+
+    fun setLore(lore: List<String>): HQButtonBuilder {
+        this.lore = lore
+        return this
+    }
+
+    fun addItemFlags(vararg itemFlag: ItemFlag): HQButtonBuilder {
+        itemFlags.addAll(itemFlag)
+        return this
+    }
+
+    fun setRemovable(removable: Boolean): HQButtonBuilder {
+        this.removable = removable
+        return this
+    }
+
+    fun setClickFunction(block: Consumer<ButtonClickEvent>): HQButtonBuilder {
         clickFunction = block
+        return this
     }
 
     fun build(): HQButton {
-        buildBlock(this)
         itemStack.itemMeta = itemStack.itemMeta?.also { meta ->
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName))
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }

@@ -4,10 +4,11 @@ import kr.hqservice.framework.inventory.button.HQButton
 import kr.hqservice.framework.inventory.container.HQContainer
 import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import org.bukkit.inventory.ItemStack
+import java.util.function.Consumer
 
 internal class HQButtonImpl(
     private val baseItemStack: ItemStack,
-    private val clickFunction: (ButtonClickEvent)->Unit = {},
+    private val clickFunction: Consumer<ButtonClickEvent> = Consumer {},
     private val removable: Boolean = false
 ): HQButton {
 
@@ -22,7 +23,7 @@ internal class HQButtonImpl(
     }
 
     fun click(event: ButtonClickEvent) {
-        clickFunction(event)
+        clickFunction.accept(event)
     }
 
     override fun isRemovable(): Boolean {
