@@ -19,7 +19,6 @@ import kotlin.reflect.full.staticFunctions
 class NmsReflectionUtilImpl(
     server: Server,
 ) : NmsReflectionUtil, HQService {
-
     private val classMap = mutableMapOf<String, KClass<*>>()
     private val callableMap = mutableMapOf<String, KCallable<*>>()
 
@@ -81,5 +80,4 @@ class NmsReflectionUtilImpl(
     private fun String.orLegacy(legacyName: String): String {
         return if (majorVersion >= 17) this else legacyName
     }
-
 }

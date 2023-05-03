@@ -10,7 +10,6 @@ import org.koin.core.component.inject
 class NmsNBTTagCompoundWrapper(
     internal val nbtTag: Any,
 ) : NmsWrapper, KoinComponent {
-
     private val reflectionUtil: NmsReflectionUtil by inject()
 
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
@@ -43,5 +42,4 @@ class NmsNBTTagCompoundWrapper(
     fun remove(key: String) {
         removeFunction.call(nbtTag, key)
     }
-
 }

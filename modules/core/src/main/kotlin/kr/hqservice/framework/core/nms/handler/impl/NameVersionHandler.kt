@@ -9,7 +9,6 @@ class NameVersionHandler(
     private val version: Version,
     private val name: String
 ) : VersionHandler {
-
     override fun getVersion(): Version {
         return version
     }
@@ -26,5 +25,4 @@ class NameVersionHandler(
         return callable.name == name
                 && callable.parameters.map { it.type.classifier as KClass<*> } == listOf(targetClass)
     }
-
 }

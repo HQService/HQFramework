@@ -8,7 +8,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 
 interface NmsReflectionUtil {
-
     fun getVersionName(): String
 
     fun getVersion(): Version
@@ -20,7 +19,6 @@ interface NmsReflectionUtil {
     fun getFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*>
 
     fun getStaticFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*>
-
 }
 
 fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {

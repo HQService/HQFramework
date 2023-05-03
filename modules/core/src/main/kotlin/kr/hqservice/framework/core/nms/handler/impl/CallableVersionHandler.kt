@@ -11,7 +11,6 @@ class CallableVersionHandler(
     private val version: Version,
     val functionType: FunctionType
 ) : VersionHandler {
-
     private val name: String = functionType.getName()
     private val returnType: KType? = functionType.getReturnType()
 
@@ -32,5 +31,4 @@ class CallableVersionHandler(
         return callable.name == name
                 && callable.parameters.map { it.type.classifier as KClass<*> } == functionType.getParameterClasses(targetClass)
     }
-
 }

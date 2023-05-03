@@ -9,7 +9,6 @@ class FunctionType(
     private var parameterClasses: List<KClass<*>> = emptyList(),
     private var staticMethod: Boolean = false
 ) {
-
     fun setReturnType(clazz: KType?) {
         returnType = clazz
     }
@@ -31,9 +30,8 @@ class FunctionType(
     fun getReturnType() = returnType
 
     fun getParameterClasses(targetClass: KClass<*>): List<KClass<*>> {
-        return if(isStaticMethod())
+        return if (isStaticMethod())
             parameterClasses
         else listOf(targetClass, *parameterClasses.toTypedArray())
     }
-
 }

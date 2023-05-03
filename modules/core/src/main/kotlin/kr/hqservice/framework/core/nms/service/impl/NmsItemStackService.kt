@@ -18,7 +18,6 @@ import org.koin.core.component.KoinComponent
 class NmsItemStackService(
     reflectionUtil: NmsReflectionUtil
 ) : KoinComponent, NmsService<ItemStack, NmsItemStackWrapper>, HQService {
-
     private val craftItemStackClass = reflectionUtil.getCraftBukkitClass("inventory.CraftItemStack")
     private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
 
@@ -32,5 +31,4 @@ class NmsItemStackService(
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
         return asBukkitCopyFunction.call(wrapper.nmsItemStack) as? ItemStack?: throw IllegalArgumentException()
     }
-
 }
