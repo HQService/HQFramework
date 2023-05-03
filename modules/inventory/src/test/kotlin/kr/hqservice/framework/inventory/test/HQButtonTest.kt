@@ -9,6 +9,7 @@ import org.bukkit.inventory.ItemFlag
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
 
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class HQButtonTest {
 
     @BeforeEach

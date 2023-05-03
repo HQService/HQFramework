@@ -19,8 +19,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.koin.core.component.KoinComponent
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.context.*
 import org.koin.ksp.generated.module
 import java.util.logging.Logger
 import kotlin.reflect.KClass
