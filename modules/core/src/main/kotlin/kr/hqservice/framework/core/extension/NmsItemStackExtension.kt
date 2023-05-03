@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemStack
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.getKoin
 
-private val itemService: NmsItemStackService by getKoin().inject(named("item"))
+private val itemService: NmsItemStackService by getKoin().inject(named("itemStack"))
 private val tagService: NmsNBTTagCompoundService by getKoin().inject(named("tag"))
 
 fun ItemStack.nms(block: NmsItemStackWrapper.() -> Unit): ItemStack {

@@ -6,16 +6,14 @@ import kr.hqservice.framework.core.component.HQSingleton
 import kr.hqservice.framework.core.nms.Version
 import kr.hqservice.framework.core.nms.service.NmsService
 import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.core.nms.util.getFunction
 import kr.hqservice.framework.core.nms.util.getStaticFunction
 import kr.hqservice.framework.core.nms.wrapper.impl.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 @Component
-@Named("item")
+@Named("itemStack")
 @HQSingleton(binds = [NmsService::class])
 class NmsItemStackService(
     reflectionUtil: NmsReflectionUtil

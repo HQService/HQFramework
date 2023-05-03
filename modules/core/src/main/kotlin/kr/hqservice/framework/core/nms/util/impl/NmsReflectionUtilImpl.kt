@@ -3,17 +3,14 @@ package kr.hqservice.framework.core.nms.util.impl
 import kr.hqservice.framework.core.component.Component
 import kr.hqservice.framework.core.component.HQService
 import kr.hqservice.framework.core.component.HQSingleton
-import kr.hqservice.framework.core.extension.print
 import kr.hqservice.framework.core.nms.Version
 import kr.hqservice.framework.core.nms.handler.FunctionType
 import kr.hqservice.framework.core.nms.handler.VersionHandler
 import kr.hqservice.framework.core.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.core.nms.util.getFunction
 import org.bukkit.Server
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
 import kotlin.reflect.full.declaredFunctions
 import kotlin.reflect.full.staticFunctions
 
@@ -74,7 +71,7 @@ class NmsReflectionUtilImpl(
     }
 
     private fun getFunction(clazz: KClass<*>, functions: Collection<KCallable<*>>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
-        return callableMap.computeIfAbsent(functionType.getName()) { _ ->
+        return callableMap.computeIfAbsent("${clazz.simpleName}#"+functionType.getName()) { _ ->
             val type = handlers.sortedByDescending { it.getVersion().ordinal }
                 .firstOrNull { it.getVersion().support(version) }?: CallableVersionHandler(version, functionType)
             functions.single { callable -> type.isMatched(clazz, callable) }

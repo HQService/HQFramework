@@ -1,6 +1,7 @@
 package kr.hqservice.framework.core.nms.wrapper.impl
 
 import kr.hqservice.framework.core.nms.Version
+import kr.hqservice.framework.core.nms.service.impl.NmsItemService
 import kr.hqservice.framework.core.nms.service.impl.NmsNBTTagCompoundService
 import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.core.nms.util.getFunction
@@ -16,9 +17,10 @@ class NmsItemStackWrapper(
     private val reflectionUtil: NmsReflectionUtil by inject()
 
     private val tagService: NmsNBTTagCompoundService by inject(named("tag"))
+    private val itemService: NmsItemService by inject(named("item"))
 
-    private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_17.handle("world.item"))
-    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt"))
+    private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
+    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
     private val getTagFunction = reflectionUtil.getFunction(nmsItemStackClass, "getTag",
         Version.V_15.handle("o"),
@@ -40,6 +42,10 @@ class NmsItemStackWrapper(
 
     fun setTag(nbtTagCompoundWrapper: NmsNBTTagCompoundWrapper?) {
         setTagFunction.call(nmsItemStack, nbtTagCompoundWrapper?.run(tagService::unwrap))
+    }
+
+    fun getItem(): NmsItemWrapper {
+        return itemService.wrap(this)
     }
 
 }
