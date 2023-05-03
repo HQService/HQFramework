@@ -34,7 +34,7 @@ abstract class HQContainer(
 
         if (original?.isMatchedType(button.getItemStack()) == true)
             original.itemMeta = button.getItemStack().itemMeta
-        else inventory.contents[slot] = button.getItemStack().clone()
+        else inventory.setItem(slot, button.getItemStack().clone())
     }
 
     internal fun getButton(slot: Int): HQButtonImpl? = buttons[slot]
@@ -65,6 +65,7 @@ abstract class HQContainer(
             player.openInventory(inventory)
     }
 
+    @Suppress("deprecation")
     private fun ItemStack.isMatchedType(other: ItemStack): Boolean {
         return type == other.type && durability == other.durability
     }
