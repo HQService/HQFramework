@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package kr.hqservice.framework.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
@@ -14,11 +16,8 @@ import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundExcepti
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
 import kr.hqservice.framework.core.extension.print
-import org.bukkit.event.Event
-import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.plugin.PluginLoader
-import org.bukkit.plugin.RegisteredListener
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -30,7 +29,6 @@ import org.koin.core.context.*
 import org.koin.ksp.generated.module
 import java.util.logging.Logger
 
-@OptIn(ExperimentalStdlibApi::class)
 @ExtendWith(MockKExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ComponentHandlerTest : KoinComponent {
@@ -79,11 +77,7 @@ class ComponentHandlerTest : KoinComponent {
 
     @HQSingleton
     @Component
-    class TestComponentA : TestHQModule, HQListener {
-        init {
-            println("component A initialized")
-        }
-    }
+    class TestComponentA : TestHQModule, HQListener
 
     @Component
     class TestComponentB : TestHQModule
@@ -98,7 +92,7 @@ class ComponentHandlerTest : KoinComponent {
 
         override fun onEnable() {
             super.onEnable()
-            testComponentF.toString().print("testComponentG: ")
+            testComponentF.toString().print("testComponentF: ")
         }
     }
 
@@ -112,7 +106,6 @@ class ComponentHandlerTest : KoinComponent {
     @Component
     class TestComponentX(dummy: Dummy) : TestHQModule
     class Dummy
-
 
     @Test
     fun component_handler_bean_not_found_exception_catch_test() {
@@ -128,7 +121,7 @@ class ComponentHandlerTest : KoinComponent {
         try {
             componentRegistry.setup()
         } catch (exception: NoBeanDefinitionsFoundException) {
-            assert(exception.classes.size.print("classes with exception count: ", " [expected: 1]") == 1)
+            assert(exception.classes.size == 1)
         }
     }
 
@@ -144,7 +137,7 @@ class ComponentHandlerTest : KoinComponent {
         )
         componentRegistry.setup()
         val testComponentA: TestComponentA by inject()
-        assert(capturedListener.captured.print("registeredListener = ") == testComponentA)
+        assert(capturedListener.captured == testComponentA)
     }
 
     private fun setAllPluginClasses(vararg classes: Class<*>) {
