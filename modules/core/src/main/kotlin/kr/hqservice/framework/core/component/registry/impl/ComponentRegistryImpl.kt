@@ -6,7 +6,6 @@ import kr.hqservice.framework.core.component.error.ConstructorConflictException
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundException
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
-import kr.hqservice.framework.core.extension.print
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*
@@ -14,7 +13,6 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
-import org.koin.core.error.NoBeanDefFoundException
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
 import org.koin.core.module.Module
@@ -79,13 +77,17 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
         }
 
         componentInstances.forEach { component ->
-            getComponentHandler(component::class).setup(component, plugin)
+            getMatchedComponentHandlers(component::class).forEach { componentHandler ->
+                componentHandler.setup(component, plugin)
+            }
         }
     }
 
     override fun teardown() {
         componentInstances.forEach { component ->
-            getComponentHandler(component::class).teardown(component, plugin)
+            getMatchedComponentHandlers(component::class).forEach { componentHandler ->
+                componentHandler.teardown(component, plugin)
+            }
         }
     }
 
@@ -124,8 +126,8 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : HQComponent> getComponentHandler(component: KClass<T>): ComponentHandler<HQComponent> {
-        return getKoin().getAll<ComponentHandler<*>>().firstOrNull { componentHandler ->
+    private fun <T : HQComponent> getMatchedComponentHandlers(component: KClass<T>): List<ComponentHandler<HQComponent>> {
+        return getKoin().getAll<ComponentHandler<*>>().filter { componentHandler ->
             val handlerType = componentHandler::class
                 .supertypes
                 .first()
@@ -134,7 +136,7 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
                 .type?.jvmErasure ?: throw NullPointerException("ComponentHandlers must have one type parameter.")
 
             component.allSuperclasses.contains(handlerType)
-        } as? ComponentHandler<HQComponent>
+        } as? List<ComponentHandler<HQComponent>>
             ?: throw NullPointerException("ComponentHandler implementation not found for ${component.simpleName}")
     }
 
