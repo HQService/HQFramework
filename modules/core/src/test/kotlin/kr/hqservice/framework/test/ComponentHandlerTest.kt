@@ -5,16 +5,20 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.spyk
 import kr.hqservice.framework.core.HQFrameworkModule
 import kr.hqservice.framework.core.HQPlugin
-import kr.hqservice.framework.core.component.Component
-import kr.hqservice.framework.core.component.HQFactory
-import kr.hqservice.framework.core.component.HQModule
-import kr.hqservice.framework.core.component.HQSingleton
+import kr.hqservice.framework.core.component.*
 import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundException
+import kr.hqservice.framework.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
 import kr.hqservice.framework.core.extension.print
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
+import org.bukkit.event.Listener
+import org.bukkit.plugin.PluginLoader
+import org.bukkit.plugin.RegisteredListener
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,7 +29,6 @@ import org.koin.core.component.inject
 import org.koin.core.context.*
 import org.koin.ksp.generated.module
 import java.util.logging.Logger
-import kotlin.reflect.KClass
 
 @OptIn(ExperimentalStdlibApi::class)
 @ExtendWith(MockKExtension::class)
@@ -33,15 +36,33 @@ import kotlin.reflect.KClass
 class ComponentHandlerTest : KoinComponent {
     @MockK
     private lateinit var plugin: HQPlugin
+    private lateinit var componentRegistry: ComponentRegistry
+    private val capturedListener = slot<Listener>()
 
+    @Suppress("DEPRECATION", "removal")
     @BeforeEach
     fun setup() {
-        MockBukkit.mock()
+        val server = MockBukkit.mock()
         startKoin {
             modules(HQFrameworkModule().module)
         }
         every { plugin.logger } returns Logger.getLogger("TEST")
         every { plugin.config } returns mockk()
+        every { plugin.server } returns server
+        every { plugin.isEnabled } returns true
+        every { plugin.name } returns "HQTestPlugin"
+        val pluginLoader = mockk<PluginLoader>()
+        every { plugin.pluginLoader } returns pluginLoader
+
+        every { pluginLoader.createRegisteredListeners(capture(capturedListener), any()) } returns mapOf()
+
+        componentRegistry = spyk(ComponentRegistryImpl(plugin), recordPrivateCalls = true)
+    }
+
+    @AfterEach
+    fun teardown() {
+        MockBukkit.unmock()
+        stopKoin()
     }
 
     interface TestHQModule : HQModule {
@@ -56,8 +77,13 @@ class ComponentHandlerTest : KoinComponent {
         }
     }
 
+    @HQSingleton
     @Component
-    class TestComponentA : TestHQModule
+    class TestComponentA : TestHQModule, HQListener {
+        init {
+            println("component A initialized")
+        }
+    }
 
     @Component
     class TestComponentB : TestHQModule
@@ -68,48 +94,60 @@ class ComponentHandlerTest : KoinComponent {
 
     @Component
     class TestComponentD(testComponentC: TestComponentC) : TestHQModule, KoinComponent {
-        private val testComponentG: TestComponentG by inject()
+        private val testComponentF: TestComponentF by inject()
 
         override fun onEnable() {
             super.onEnable()
-            testComponentG.toString().print("testComponentG: ")
+            testComponentF.toString().print("testComponentG: ")
         }
     }
 
     @Component
-    class TestComponentE(dummy: Dummy) : TestHQModule
+    class TestComponentE(componentG: TestComponentF) : TestHQModule
+
+    @HQSingleton(binds = [TestComponentF::class])
+    @Component
+    class TestComponentF : TestHQModule
 
     @Component
-    class TestComponentF(componentG: TestComponentG) : TestHQModule
-
-    @HQSingleton(binds = [TestComponentG::class])
-    @Component
-    class TestComponentG : TestHQModule
-
+    class TestComponentX(dummy: Dummy) : TestHQModule
     class Dummy
 
+
     @Test
-    fun component_handler_test() {
-        val mock = spyk(ComponentRegistryImpl(plugin), recordPrivateCalls = true)
-        every { mock["getAllPluginClasses"]() } returns listOf<Class<*>>(
+    fun component_handler_bean_not_found_exception_catch_test() {
+        setAllPluginClasses(
+            TestComponentA::class.java,
+            TestComponentB::class.java,
+            TestComponentC::class.java,
+            TestComponentD::class.java,
+            TestComponentX::class.java,
+            TestComponentE::class.java,
+            TestComponentF::class.java
+        )
+        try {
+            componentRegistry.setup()
+        } catch (exception: NoBeanDefinitionsFoundException) {
+            assert(exception.classes.size.print("classes with exception count: ", " [expected: 1]") == 1)
+        }
+    }
+
+    @Test
+    fun component_handler_duplicated_component_test() {
+        setAllPluginClasses(
             TestComponentA::class.java,
             TestComponentB::class.java,
             TestComponentC::class.java,
             TestComponentD::class.java,
             TestComponentE::class.java,
-            TestComponentF::class.java,
-            TestComponentG::class.java
+            TestComponentF::class.java
         )
-        try {
-            mock.setup()
-        } catch (exception: NoBeanDefinitionsFoundException) {
-            assert(exception.classes.size == 1)
-        }
+        componentRegistry.setup()
+        val testComponentA: TestComponentA by inject()
+        assert(capturedListener.captured.print("registeredListener = ") == testComponentA)
     }
 
-    @AfterEach
-    fun teardown() {
-        MockBukkit.unmock()
-        stopKoin()
+    private fun setAllPluginClasses(vararg classes: Class<*>) {
+        every { componentRegistry["getAllPluginClasses"]() } returns classes.toList()
     }
 }
