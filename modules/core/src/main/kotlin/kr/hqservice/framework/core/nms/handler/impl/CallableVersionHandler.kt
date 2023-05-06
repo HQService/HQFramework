@@ -9,7 +9,7 @@ import kotlin.reflect.KType
 
 class CallableVersionHandler(
     private val version: Version,
-    val functionType: FunctionType
+    private val functionType: FunctionType
 ) : VersionHandler {
     private val name: String = functionType.getName()
     private val returnType: KType? = functionType.getReturnType()

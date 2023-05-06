@@ -46,7 +46,7 @@ dependencyResolutionManagement {
             library("sqlite", "org.xerial:sqlite-jdbc:${getProperty("sqliteVersion")}")
 
             library("mockK", "io.mockk:mockk:${getProperty("mockKVersion")}")
-            library("mockBukkit", "com.github.MockBukkit:MockBukkit:${getProperty("mockBukkitVersion")}")
+            library("mockBukkit", "com.github.seeseemelk:MockBukkit-v1.19:${getProperty("mockBukkitVersion")}")
             library("mysql-connector", "mysql:mysql-connector-java:${getProperty("mysqlConnectorVersion")}")
             library("junit-parameterizedTest", "org.junit.jupiter:junit-jupiter-params:${getProperty("jUnitVersion")}")
         }
