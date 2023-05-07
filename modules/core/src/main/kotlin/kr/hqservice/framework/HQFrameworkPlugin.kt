@@ -2,11 +2,16 @@ package kr.hqservice.framework
 
 import kr.hqservice.framework.core.HQFrameworkModule
 import kr.hqservice.framework.core.HQPlugin
+import org.bukkit.plugin.PluginDescriptionFile
+import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.context.startKoin
 import org.koin.ksp.generated.module
+import java.io.File
 
-@Suppress("unused")
-class HQFrameworkPlugin : HQPlugin() {
+abstract class HQFrameworkPlugin : HQPlugin {
+    constructor() : super()
+    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+
     override fun onLoad() {
         startKoin {
             modules(HQFrameworkModule().module)

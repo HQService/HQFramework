@@ -5,7 +5,7 @@ plugins {
 }
 
 bukkitResourceGenerator {
-    main = "kr.hqservice.framework.HQFrameworkPlugin"
+    main = "kr.hqservice.framework.HQFramework"
     name = "HQFramework"
     apiVersion = "1.13"
     website = "https://github.com/HighQualityService"
@@ -25,6 +25,10 @@ bukkitResourceGenerator {
     )
 }
 
+dependencies {
+    compileOnly(libs.spigot.api)
+}
+
 apply(file(project.projectDir.path + "/exclude.gradle.kts"))
 
 val excludeSet = org.gradle.internal.Cast.uncheckedNonnullCast<List<Pair<String, String>>>(extra["excludeSet"]!!)
@@ -32,15 +36,15 @@ for ((group, module) in excludeSet) {
     configurations.runtimeClasspath.get().exclude(group, module)
 }
 
+includeModules("core", "inventory", "item", "region", "coroutine", "database")
+
 tasks.shadowJar {
-    includeModules("inventory", "item", "region")
     destinationDirectory.set(file(rootProject.projectDir.path + "/build_outputs"))
 }
 
 fun includeModules(vararg modules: String) {
     configurations.runtimeClasspath.configure {
         dependencies {
-            api(project(":modules:core"))
             modules.forEach {
                 api(project(":modules:$it"))
             }

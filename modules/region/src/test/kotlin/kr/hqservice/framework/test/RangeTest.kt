@@ -29,27 +29,16 @@ import org.koin.dsl.module
 import org.koin.ksp.generated.module
 import kotlin.test.*
 
-@ExtendWith(MockKExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class RangeTest {
-    @MockK
     private lateinit var plugin: HQPlugin
-
     private lateinit var world: World
 
     @BeforeEach
     fun setup() {
         val server = MockBukkit.mock()
+        plugin = HQFrameworkMock.mock()
         world = server.addSimpleWorld("world")
-        val module = module {
-            includes(HQFrameworkModule().module)
-            single<RangeFactory> {
-                RangeFactoryImpl()
-            }
-        }
-        startKoin {
-            modules(module)
-        }
     }
 
     @Test
