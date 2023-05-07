@@ -6,7 +6,6 @@ import io.mockk.spyk
 import kr.hqservice.framework.HQFrameworkPlugin
 import kr.hqservice.framework.core.component.repository.ComponentRepository
 import kr.hqservice.framework.core.component.repository.impl.ComponentRepositoryImpl
-import kr.hqservice.framework.core.extension.print
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
 import java.io.File
