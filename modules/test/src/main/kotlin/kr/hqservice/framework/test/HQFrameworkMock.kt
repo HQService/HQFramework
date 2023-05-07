@@ -12,15 +12,32 @@ import java.io.File
 
 class HQFrameworkMock : HQFrameworkPlugin {
     companion object {
-        fun mock() : HQFrameworkMock {
-            MockBukkit.ensureMocking()
+        private var plugin: HQFrameworkMock? = null
+
+        fun mock(): HQFrameworkMock {
+            if (plugin != null) {
+                throw IllegalStateException("already mocking")
+            }
             val description = PluginDescriptionFile(
                 "HQFramework", "1.0.0",
                 HQFrameworkMock::class.java.name
             )
             val instance = MockBukkit.getMock().pluginManager.loadPlugin(HQFrameworkMock::class.java, description, arrayOfNulls(0))
             MockBukkit.getMock().pluginManager.enablePlugin(instance)
-            return instance as HQFrameworkMock
+            plugin = instance as HQFrameworkMock
+            return plugin!!
+        }
+
+        fun unmock() {
+            ensureMocking()
+            MockBukkit.getMock().pluginManager.disablePlugin(plugin!!)
+            plugin = null
+        }
+
+        private fun ensureMocking() {
+            if (plugin == null) {
+                throw IllegalStateException("not mocking")
+            }
         }
     }
 

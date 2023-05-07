@@ -99,7 +99,7 @@ class RangeTest {
 
     @AfterEach
     fun teardown() {
+        HQFrameworkMock.unmock()
         MockBukkit.unmock()
-        stopKoin()
     }
 }
