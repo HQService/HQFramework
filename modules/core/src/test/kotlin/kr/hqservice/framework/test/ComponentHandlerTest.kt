@@ -13,8 +13,10 @@ import kr.hqservice.framework.core.HQFrameworkModule
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.*
 import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundException
-import kr.hqservice.framework.core.component.registry.ComponentRegistry
-import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
+import kr.hqservice.framework.core.component.handler.impl.ListenerComponentHandler
+import kr.hqservice.framework.core.component.handler.impl.ModuleComponentHandler
+import kr.hqservice.framework.core.component.repository.ComponentRepository
+import kr.hqservice.framework.core.component.repository.impl.ComponentRepositoryImpl
 import kr.hqservice.framework.core.extension.print
 import org.bukkit.event.Listener
 import org.bukkit.plugin.PluginLoader
@@ -34,7 +36,7 @@ import java.util.logging.Logger
 class ComponentHandlerTest : KoinComponent {
     @MockK
     private lateinit var plugin: HQPlugin
-    private lateinit var componentRegistry: ComponentRegistry
+    private lateinit var componentRepository: ComponentRepository
     private val capturedListener = slot<Listener>()
 
     @Suppress("DEPRECATION", "removal")
@@ -54,7 +56,7 @@ class ComponentHandlerTest : KoinComponent {
 
         every { pluginLoader.createRegisteredListeners(capture(capturedListener), any()) } returns mapOf()
 
-        componentRegistry = spyk(ComponentRegistryImpl(plugin), recordPrivateCalls = true)
+        componentRepository = spyk(ComponentRepositoryImpl(plugin), recordPrivateCalls = true)
     }
 
     @AfterEach
@@ -97,7 +99,7 @@ class ComponentHandlerTest : KoinComponent {
     }
 
     @Component
-    class TestComponentE(componentG: TestComponentF) : TestHQModule
+    class TestComponentE(componentF: TestComponentF) : TestHQModule
 
     @HQSingleton(binds = [TestComponentF::class])
     @Component
@@ -119,7 +121,7 @@ class ComponentHandlerTest : KoinComponent {
             TestComponentF::class.java
         )
         try {
-            componentRegistry.setup()
+            componentRepository.setup()
         } catch (exception: NoBeanDefinitionsFoundException) {
             assert(exception.classes.size == 1)
         }
@@ -135,12 +137,16 @@ class ComponentHandlerTest : KoinComponent {
             TestComponentE::class.java,
             TestComponentF::class.java
         )
-        componentRegistry.setup()
+        componentRepository.setup()
         val testComponentA: TestComponentA by inject()
         assert(capturedListener.captured == testComponentA)
     }
 
     private fun setAllPluginClasses(vararg classes: Class<*>) {
-        every { componentRegistry["getAllPluginClasses"]() } returns classes.toList()
+        every { componentRepository["getAllPluginClasses"]() } returns listOf(
+            *classes,
+            ListenerComponentHandler::class.java,
+            ModuleComponentHandler::class.java
+        )
     }
 }

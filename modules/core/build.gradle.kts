@@ -18,4 +18,5 @@ dependencies {
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(kotlin("test"))
+    testImplementation(project(":modules:test"))
 }

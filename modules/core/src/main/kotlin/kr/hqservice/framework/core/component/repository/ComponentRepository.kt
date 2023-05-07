@@ -1,6 +1,8 @@
-package kr.hqservice.framework.core.component.registry
+package kr.hqservice.framework.core.component.repository
 
 import kr.hqservice.framework.core.component.Component
+import kr.hqservice.framework.core.component.HQComponent
+import kotlin.reflect.KClass
 
 /**
  * ComponentRegistry 의 Component 의존성 주입에 대하여:
@@ -36,9 +38,10 @@ import kr.hqservice.framework.core.component.Component
  * 1개 이상의 목적을 지닌 컴포넌트는, 컴포넌트 의존관계에 따른 컴포넌트의 초기화가 진행된 후
  * 구현된 인터페이스에 대응하는 ComponentHandler 가 존재할 경우, 1개 이상의 목적을 완수하게 됩니다.
  */
-interface ComponentRegistry {
-
+interface ComponentRepository {
     fun setup()
 
     fun teardown()
+
+    fun <T : HQComponent> getComponent(key: KClass<T>): T
 }

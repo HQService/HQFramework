@@ -1,11 +1,14 @@
-package kr.hqservice.framework.core.component.registry.impl
+package kr.hqservice.framework.core.component.repository.impl
 
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.*
 import kr.hqservice.framework.core.component.error.ConstructorConflictException
-import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundException
-import kr.hqservice.framework.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.core.component.error.NotComponentHandlerException
+import kr.hqservice.framework.core.component.event.ComponentPostSetupEvent
+import kr.hqservice.framework.core.component.handler.ComponentHandler
+import kr.hqservice.framework.core.component.handler.HQComponentHandler
+import kr.hqservice.framework.core.component.repository.ComponentRepository
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*
@@ -15,8 +18,8 @@ import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
-import org.koin.core.module.Module
 import org.koin.core.instance.SingleInstanceFactory
+import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.StringQualifier
 import org.koin.core.qualifier.TypeQualifier
@@ -30,13 +33,32 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
-@Single(binds = [ComponentRegistry::class])
-class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, KoinComponent {
-    private val componentInstances: ComponentInstanceList = ComponentInstanceList()
+@Factory(binds = [ComponentRepository::class])
+class ComponentRepositoryImpl(private val plugin: HQPlugin) : ComponentRepository, KoinComponent {
+    private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
+    private val componentHandlers: MutableList<HQComponentHandler<*>> = mutableListOf()
 
     override fun setup() {
-        val componentClasses = getAllPluginClasses().filter { clazz ->
-            clazz.annotations.filterIsInstance<Component>().isNotEmpty()
+        val provideInstance: Map<KClass<*>, *> = mapOf(
+            Plugin::class to plugin as Plugin,
+            plugin::class to plugin,
+            Logger::class to plugin.logger,
+            ConfigurationSection::class to plugin.config
+        )
+
+        val componentClasses = mutableListOf<Class<*>>()
+        for (clazz in getAllPluginClasses()) {
+            val annotations = clazz.annotations
+            if (annotations.filterIsInstance<ComponentHandler>().isNotEmpty()) {
+                val componentHandler = callByInjectedParameters(
+                    clazz.kotlin.constructors.first(),
+                    provideInstance
+                ) as? HQComponentHandler<*> ?: throw NotComponentHandlerException(clazz.kotlin)
+                componentHandlers.add(componentHandler)
+            }
+            if (annotations.filterIsInstance<Component>().isNotEmpty()) {
+                componentClasses.add(clazz)
+            }
         }
         val queue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
 
@@ -53,12 +75,6 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
                 throw ConstructorConflictException(component)
             } else {
                 val constructor = component.constructors.first()
-                val provideInstance: Map<KClass<*>, *> = mapOf(
-                    Plugin::class to plugin as Plugin,
-                    plugin::class to plugin,
-                    Logger::class to plugin.logger,
-                    ConfigurationSection::class to plugin.config
-                )
                 val instance = callByInjectedParameters(constructor, provideInstance)
                 if (instance == null) {
                     queue.offer(component)
@@ -76,19 +92,25 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
             }
         }
 
-        componentInstances.forEach { component ->
-            getMatchedComponentHandlers(component::class).forEach { componentHandler ->
-                componentHandler.setup(component, plugin)
+        componentInstances.getComponents().forEach { component ->
+            getMatchedComponentHandlers(component::class, componentHandlers).forEach { componentHandler ->
+                componentHandler.setup(component)
+            }
+        }
+
+        plugin.server.pluginManager.callEvent(ComponentPostSetupEvent(componentInstances.getComponents().toList()))
+    }
+
+    override fun teardown() {
+        componentInstances.getComponents().forEach { component ->
+            getMatchedComponentHandlers(component::class, componentHandlers).forEach { componentHandler ->
+                componentHandler.teardown(component)
             }
         }
     }
 
-    override fun teardown() {
-        componentInstances.forEach { component ->
-            getMatchedComponentHandlers(component::class).forEach { componentHandler ->
-                componentHandler.teardown(component, plugin)
-            }
-        }
+    override fun <T : HQComponent> getComponent(key: KClass<T>): T {
+        return componentInstances.getComponent(key)
     }
 
     /**
@@ -109,7 +131,8 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
         return kFunction.parameters.map { parameter ->
             val parameterKClass = parameter.type.classifier as KClass<*>
             if (providedInstanceMap != null) {
-                val providedInstance = providedInstanceMap.filter { parameterKClass.isSubclassOf(it.key) }.values.firstOrNull()
+                val providedInstance =
+                    providedInstanceMap.filter { parameterKClass.isSubclassOf(it.key) }.values.firstOrNull()
                 if (providedInstance != null) {
                     return@map providedInstance
                 }
@@ -126,8 +149,8 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : HQComponent> getMatchedComponentHandlers(component: KClass<T>): List<ComponentHandler<HQComponent>> {
-        return getKoin().getAll<ComponentHandler<*>>().filter { componentHandler ->
+    private fun <T : HQComponent> getMatchedComponentHandlers(component: KClass<T>, componentHandlers: List<HQComponentHandler<*>> = this.componentHandlers): List<HQComponentHandler<HQComponent>> {
+        return componentHandlers.filter { componentHandler ->
             val handlerType = componentHandler::class
                 .supertypes
                 .first()
@@ -136,7 +159,7 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
                 .type?.jvmErasure ?: throw NullPointerException("ComponentHandlers must have one type parameter.")
 
             component.allSuperclasses.contains(handlerType)
-        } as? List<ComponentHandler<HQComponent>>
+        } as? List<HQComponentHandler<HQComponent>>
             ?: throw NullPointerException("ComponentHandler implementation not found for ${component.simpleName}")
     }
 
