@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core.component.repository
+package kr.hqservice.framework.core.component.registry
 
 import kr.hqservice.framework.core.component.Component
 import kr.hqservice.framework.core.component.HQComponent
@@ -38,7 +38,7 @@ import kotlin.reflect.KClass
  * 1개 이상의 목적을 지닌 컴포넌트는, 컴포넌트 의존관계에 따른 컴포넌트의 초기화가 진행된 후
  * 구현된 인터페이스에 대응하는 ComponentHandler 가 존재할 경우, 1개 이상의 목적을 완수하게 됩니다.
  */
-interface ComponentRepository {
+interface ComponentRegistry {
     fun setup()
 
     fun teardown()

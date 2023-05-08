@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core.component.repository.impl
+package kr.hqservice.framework.core.component.registry.impl
 
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.*
@@ -8,7 +8,7 @@ import kr.hqservice.framework.core.component.error.NotComponentHandlerException
 import kr.hqservice.framework.core.component.event.ComponentPostSetupEvent
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.handler.HQComponentHandler
-import kr.hqservice.framework.core.component.repository.ComponentRepository
+import kr.hqservice.framework.core.component.registry.ComponentRegistry
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*
@@ -33,8 +33,8 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
-@Factory(binds = [ComponentRepository::class])
-class ComponentRepositoryImpl(private val plugin: HQPlugin) : ComponentRepository, KoinComponent {
+@Factory(binds = [ComponentRegistry::class])
+class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, KoinComponent {
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
     private val componentHandlers: MutableList<HQComponentHandler<*>> = mutableListOf()
 

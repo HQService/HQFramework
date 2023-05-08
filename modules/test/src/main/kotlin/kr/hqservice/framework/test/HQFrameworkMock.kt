@@ -4,8 +4,8 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.every
 import io.mockk.spyk
 import kr.hqservice.framework.HQFrameworkPlugin
-import kr.hqservice.framework.core.component.repository.ComponentRepository
-import kr.hqservice.framework.core.component.repository.impl.ComponentRepositoryImpl
+import kr.hqservice.framework.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
 import java.io.File
@@ -44,14 +44,14 @@ class HQFrameworkMock : HQFrameworkPlugin {
     internal constructor() : super()
     internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
-    override val componentRepository: ComponentRepository = spyk(ComponentRepositoryImpl(this), recordPrivateCalls = true)
+    override val componentRegistry: ComponentRegistry = spyk(ComponentRegistryImpl(this), recordPrivateCalls = true)
 
     override fun onPreEnable() {
         stubComponentRepository()
     }
 
     private fun stubComponentRepository() {
-        every { componentRepository["getAllPluginClasses"]() } returns findTargetClasses()
+        every { componentRegistry["getAllPluginClasses"]() } returns findTargetClasses()
     }
 
     private fun findTargetClasses(): Collection<Class<*>> {
