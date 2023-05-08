@@ -16,7 +16,7 @@ import org.koin.core.component.inject
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class CoroutineContextTest : KoinComponent {
     private lateinit var plugin: HQPlugin
-    private val testCoroutineContext: TestCoroutineContext by inject()
+    private val testCoroutineContext: TestCoroutineScope by inject()
 
     @BeforeEach
     fun setup() {
