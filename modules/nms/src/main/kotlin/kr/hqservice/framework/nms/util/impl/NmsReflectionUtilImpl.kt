@@ -1,13 +1,13 @@
-package kr.hqservice.framework.core.nms.util.impl
+package kr.hqservice.framework.nms.util.impl
 
 import kr.hqservice.framework.core.component.Component
 import kr.hqservice.framework.core.component.HQService
 import kr.hqservice.framework.core.component.HQSingleton
-import kr.hqservice.framework.core.nms.Version
-import kr.hqservice.framework.core.nms.handler.FunctionType
-import kr.hqservice.framework.core.nms.handler.VersionHandler
-import kr.hqservice.framework.core.nms.handler.impl.CallableVersionHandler
-import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.handler.FunctionType
+import kr.hqservice.framework.nms.handler.VersionHandler
+import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
+import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import org.bukkit.Server
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass

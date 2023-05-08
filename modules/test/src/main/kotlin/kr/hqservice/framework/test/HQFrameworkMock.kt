@@ -44,7 +44,7 @@ class HQFrameworkMock : HQFrameworkPlugin {
     internal constructor() : super()
     internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
-    override val componentRegistry: ComponentRegistry = spyk(ComponentRegistryImpl(this), recordPrivateCalls = true)
+    public override val componentRegistry: ComponentRegistry = spyk(ComponentRegistryImpl(this), recordPrivateCalls = true)
 
     override fun onPreEnable() {
         stubComponentRepository()

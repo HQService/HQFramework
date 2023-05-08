@@ -1,14 +1,14 @@
-package kr.hqservice.framework.core.nms.service.impl
+package kr.hqservice.framework.nms.service.impl
 
 import kr.hqservice.framework.core.component.Component
 import kr.hqservice.framework.core.component.HQService
 import kr.hqservice.framework.core.component.HQSingleton
-import kr.hqservice.framework.core.nms.Version
-import kr.hqservice.framework.core.nms.service.NmsService
-import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.core.nms.util.getFunction
-import kr.hqservice.framework.core.nms.wrapper.impl.NmsItemStackWrapper
-import kr.hqservice.framework.core.nms.wrapper.impl.NmsItemWrapper
+import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.impl.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.impl.NmsItemWrapper
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
 import java.lang.UnsupportedOperationException

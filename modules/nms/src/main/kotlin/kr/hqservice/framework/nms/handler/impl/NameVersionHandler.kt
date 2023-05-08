@@ -1,7 +1,7 @@
-package kr.hqservice.framework.core.nms.handler.impl
+package kr.hqservice.framework.nms.handler.impl
 
-import kr.hqservice.framework.core.nms.Version
-import kr.hqservice.framework.core.nms.handler.VersionHandler
+import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.handler.VersionHandler
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 

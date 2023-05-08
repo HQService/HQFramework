@@ -1,11 +1,11 @@
-package kr.hqservice.framework.core.nms.wrapper.impl
+package kr.hqservice.framework.nms.wrapper.impl
 
-import kr.hqservice.framework.core.nms.Version
-import kr.hqservice.framework.core.nms.service.impl.NmsItemService
-import kr.hqservice.framework.core.nms.service.impl.NmsNBTTagCompoundService
-import kr.hqservice.framework.core.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.core.nms.util.getFunction
-import kr.hqservice.framework.core.nms.wrapper.NmsWrapper
+import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.service.impl.NmsItemService
+import kr.hqservice.framework.nms.service.impl.NmsNBTTagCompoundService
+import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named

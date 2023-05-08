@@ -1,9 +1,9 @@
-package kr.hqservice.framework.core.nms
+package kr.hqservice.framework.nms
 
-import kr.hqservice.framework.core.nms.handler.FunctionType
-import kr.hqservice.framework.core.nms.handler.VersionHandler
-import kr.hqservice.framework.core.nms.handler.impl.CallableVersionHandler
-import kr.hqservice.framework.core.nms.handler.impl.NameVersionHandler
+import kr.hqservice.framework.nms.handler.FunctionType
+import kr.hqservice.framework.nms.handler.VersionHandler
+import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
+import kr.hqservice.framework.nms.handler.impl.NameVersionHandler
 
 enum class Version {
     V_7,

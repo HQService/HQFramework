@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core.nms.handler
+package kr.hqservice.framework.nms.handler
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
