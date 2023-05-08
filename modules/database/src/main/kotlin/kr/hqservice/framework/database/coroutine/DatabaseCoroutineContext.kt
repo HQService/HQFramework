@@ -1,6 +1,9 @@
-package kr.hqservice.framework.coroutine
+package kr.hqservice.framework.database.coroutine
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.Component
 import kr.hqservice.framework.core.component.HQSingleton
@@ -9,18 +12,18 @@ import org.koin.core.component.getScopeName
 import java.util.logging.Level
 import java.util.logging.Logger
 
+@HQSingleton(binds = [DatabaseCoroutineContext::class])
 @Component
-@HQSingleton(binds = [BukkitMainCoroutineContext::class])
-class BukkitMainCoroutineContext(plugin: HQPlugin, logger: Logger) : HQCoroutineContext(plugin, Dispatchers.Main) {
+class DatabaseCoroutineContext(plugin: HQPlugin, logger: Logger) : HQCoroutineContext(plugin, Dispatchers.IO) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {
-            "BukkitMainCoroutineContext 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +
+            "DatabaseCoroutineContext 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +
                     "job: ${context.job} \n" +
                     "scopeName: ${context.getScopeName()} \n" +
                     "stackTrace 를 출력합니다. \n"
         }
     }
-    private val coroutineName = CoroutineName("BukkitMainCoroutineContext")
+    private val coroutineName = CoroutineName("DatabaseCoroutineContext")
 
     override fun getExceptionHandler(): CoroutineExceptionHandler {
         return exceptionHandler
