@@ -7,15 +7,10 @@ import kr.hqservice.framework.core.component.HQSingleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineContext
 import org.koin.core.component.getScopeName
 import java.util.logging.Level
-import kotlin.coroutines.CoroutineContext
 
 @Component
 @HQSingleton
-class BukkitMainCoroutineContext(private val plugin: HQPlugin) : HQCoroutineContext {
-    override val coroutineContext: CoroutineContext
-        get() = getSupervisor() + Dispatchers.Main + exceptionHandler + bukkitCoroutineContextElement
-
-    private val supervisorJob = SupervisorJob()
+class BukkitMainCoroutineContext(plugin: HQPlugin) : HQCoroutineContext(plugin, Dispatchers.Main) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         plugin.logger.log(Level.SEVERE, throwable) {
             "BukkitMainCoroutineContext 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +
@@ -24,9 +19,14 @@ class BukkitMainCoroutineContext(private val plugin: HQPlugin) : HQCoroutineCont
                     "stackTrace 를 출력합니다. \n"
         }
     }
-    private val bukkitCoroutineContextElement = BukkitCoroutineContextElement(plugin)
 
-    override fun getSupervisor(): Job {
-        return supervisorJob
+    private val coroutineName = CoroutineName("BukkitMainCoroutineContext")
+
+    override fun getExceptionHandler(): CoroutineExceptionHandler {
+        return exceptionHandler
+    }
+
+    override fun getCoroutineName(): CoroutineName {
+        return coroutineName
     }
 }
