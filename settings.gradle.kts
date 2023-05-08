@@ -9,6 +9,7 @@ pluginManagement {
     plugins {
         kotlin("jvm") version kotlinVersion apply false
         kotlin("plugin.serialization") version kotlinVersion apply false
+        kotlin("kapt") version kotlinVersion apply false
         id("com.github.johnrengelman.shadow") version shadowVersion apply false
     }
 }
@@ -49,6 +50,8 @@ dependencyResolutionManagement {
             library("mockBukkit", "com.github.seeseemelk:MockBukkit-v1.19:${getProperty("mockBukkitVersion")}")
             library("mysql-connector", "mysql:mysql-connector-java:${getProperty("mysqlConnectorVersion")}")
             library("junit-parameterizedTest", "org.junit.jupiter:junit-jupiter-params:${getProperty("jUnitVersion")}")
+            library("auto-service", "com.google.auto.service:auto-service:${getProperty("autoServiceVersion")}")
+            library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
         }
     }
 }
