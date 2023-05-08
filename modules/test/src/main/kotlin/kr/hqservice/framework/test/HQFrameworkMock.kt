@@ -9,6 +9,8 @@ import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
 import java.io.File
+import kotlin.reflect.full.findAnnotations
+import kotlin.reflect.full.hasAnnotation
 
 class HQFrameworkMock : HQFrameworkPlugin {
     companion object {
@@ -63,7 +65,7 @@ class HQFrameworkMock : HQFrameworkPlugin {
             val directory = File(url.file)
             if (directory.exists()) {
                 directory.walk()
-                    .filter { f -> f.isFile && !f.name.contains('$') && f.name.endsWith(".class") }
+                    .filter { f -> f.isFile && f.name.endsWith(".class") }
                     .forEach {
                         val fullyQualifiedClassName = it.canonicalPath
                             .removePrefix(directory.canonicalPath)
@@ -73,7 +75,9 @@ class HQFrameworkMock : HQFrameworkPlugin {
                             .removePrefix(".")
                         try {
                             val clazz = Class.forName(fullyQualifiedClassName)
-                            classes.add(clazz)
+                            if (clazz.getAnnotation(ExcludeTestSearch::class.java) == null) {
+                                classes.add(clazz)
+                            }
                         } catch (exception: ClassNotFoundException) {
                             System.err.println(exception)
                         }

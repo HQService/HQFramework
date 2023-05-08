@@ -79,16 +79,20 @@ class ComponentHandlerTest : KoinComponent {
 
     @HQSingleton
     @Component
+    @ExcludeTestSearch
     class TestComponentA : TestHQModule, HQListener
 
     @Component
+    @ExcludeTestSearch
     class TestComponentB : TestHQModule
 
     @HQFactory(binds = [TestComponentC::class])
     @Component
+    @ExcludeTestSearch
     class TestComponentC : TestHQModule
 
     @Component
+    @ExcludeTestSearch
     class TestComponentD(testComponentC: TestComponentC) : TestHQModule, KoinComponent {
         private val testComponentF: TestComponentF by inject()
 
@@ -99,13 +103,16 @@ class ComponentHandlerTest : KoinComponent {
     }
 
     @Component
+    @ExcludeTestSearch
     class TestComponentE(componentF: TestComponentF) : TestHQModule
 
     @HQSingleton(binds = [TestComponentF::class])
     @Component
+    @ExcludeTestSearch
     class TestComponentF : TestHQModule
 
     @Component
+    @ExcludeTestSearch
     class TestComponentX(dummy: Dummy) : TestHQModule
     class Dummy
 
