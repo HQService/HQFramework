@@ -129,6 +129,7 @@ class ComponentHandlerTest : KoinComponent {
         )
         try {
             componentRegistry.setup()
+            assert(false)
         } catch (exception: NoBeanDefinitionsFoundException) {
             assert(exception.classes.size == 1)
         }
