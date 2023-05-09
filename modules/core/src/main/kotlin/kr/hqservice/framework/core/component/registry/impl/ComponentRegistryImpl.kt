@@ -2,13 +2,12 @@ package kr.hqservice.framework.core.component.registry.impl
 
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.*
-import kr.hqservice.framework.core.component.error.ConstructorConflictException
-import kr.hqservice.framework.core.component.error.NoBeanDefinitionsFoundException
-import kr.hqservice.framework.core.component.error.NotComponentHandlerException
+import kr.hqservice.framework.core.component.error.*
 import kr.hqservice.framework.core.component.event.ComponentPostSetupEvent
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.core.extension.print
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*
@@ -36,7 +35,7 @@ import kotlin.reflect.jvm.jvmErasure
 @Factory(binds = [ComponentRegistry::class])
 class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, KoinComponent {
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
-    private val componentHandlers: MutableList<HQComponentHandler<*>> = mutableListOf()
+    private val componentHandlers: MutableMap<KClass<out HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
 
     override fun setup() {
         val provideInstance: Map<KClass<*>, *> = mapOf(
@@ -47,6 +46,7 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
         )
 
         val componentClasses = mutableListOf<Class<*>>()
+        val unsortedComponentHandlers: MutableMap<KClass<*>, HQComponentHandler<*>> = mutableMapOf()
         for (clazz in getAllPluginClasses()) {
             val annotations = clazz.annotations
             if (annotations.filterIsInstance<ComponentHandler>().isNotEmpty()) {
@@ -54,19 +54,56 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
                     clazz.kotlin.constructors.first(),
                     provideInstance
                 ) as? HQComponentHandler<*> ?: throw NotComponentHandlerException(clazz.kotlin)
-                componentHandlers.add(componentHandler)
+                val componentHandlerType = getComponentHandlerType(componentHandler::class)
+                unsortedComponentHandlers[componentHandlerType] = componentHandler
             }
             if (annotations.filterIsInstance<Component>().isNotEmpty()) {
                 componentClasses.add(clazz)
             }
         }
-        val queue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
+        val componentHandlersQueue: ConcurrentLinkedQueue<HQComponentHandler<*>> = ConcurrentLinkedQueue(unsortedComponentHandlers.values)
+
+        var handlerExceptionCatchingStack = 0
+        var previousHandlerQueueSize = componentHandlersQueue.size
+
+        while (componentHandlersQueue.isNotEmpty()) queueScope@{
+            val componentHandlerInstance = componentHandlersQueue.poll()
+            val componentHandlerClass = componentHandlerInstance::class
+            val depends = componentHandlerClass.findAnnotation<ComponentHandler>()!!.depends
+            if (depends.isEmpty()) {
+                componentHandlers[componentHandlerClass] = componentHandlerInstance
+            } else {
+                val illegalDepends = depends.filter {
+                    !it.allSuperclasses.contains(HQComponentHandler::class)
+                }
+                if (illegalDepends.isNotEmpty()) {
+                    throw IllegalDependException(illegalDepends)
+                }
+                val any = depends.filter { depended ->
+                    componentHandlers[depended] == null
+                }
+                if (any.isNotEmpty()) {
+                    componentHandlersQueue.offer(componentHandlerInstance)
+                    if (previousHandlerQueueSize == componentHandlersQueue.size) {
+                        handlerExceptionCatchingStack++
+                    }
+                    if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
+                        throw ComponentCircularException(componentHandlersQueue.toList().map { it::class })
+                    }
+                    previousHandlerQueueSize = componentHandlersQueue.size
+                } else {
+                    componentHandlers[componentHandlerClass] = componentHandlerInstance
+                }
+            }
+        }
+
+        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
-        var exceptionCatchingStack = 0
-        var previousQueueSize = queue.size
-        while (queue.isNotEmpty()) {
-            val component = queue.poll()
+        var componentExceptionCatchingStack = 0
+        var previousComponentQueueSize = componentClassesQueue.size
+        while (componentClassesQueue.isNotEmpty()) {
+            val component = componentClassesQueue.poll()
             if (component.primaryConstructor == null) {
                 val instance = component.createInstance()
                 componentInstances.addSafely(instance)
@@ -77,14 +114,14 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
                 val constructor = component.constructors.first()
                 val instance = callByInjectedParameters(constructor, provideInstance)
                 if (instance == null) {
-                    queue.offer(component)
-                    if (previousQueueSize == queue.size) {
-                        exceptionCatchingStack++
+                    componentClassesQueue.offer(component)
+                    if (previousComponentQueueSize == componentClassesQueue.size) {
+                        componentExceptionCatchingStack++
                     }
-                    if (exceptionCatchingStack == queue.size) {
-                        throw NoBeanDefinitionsFoundException(queue.toList())
+                    if (componentExceptionCatchingStack == componentClassesQueue.size) {
+                        throw NoBeanDefinitionsFoundException(componentClassesQueue.toList())
                     }
-                    previousQueueSize = queue.size
+                    previousComponentQueueSize = componentClassesQueue.size
                 } else {
                     componentInstances.addSafely(instance)
                     tryCreateBeanModule(component, instance)
@@ -92,25 +129,52 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
             }
         }
 
-        componentInstances.getComponents().forEach { component ->
-            getMatchedComponentHandlers(component::class, componentHandlers).forEach { componentHandler ->
-                componentHandler.setup(component)
-            }
+        processComponents { component ->
+            setup(component)
         }
 
         plugin.server.pluginManager.callEvent(ComponentPostSetupEvent(componentInstances.getComponents().toList()))
     }
 
     override fun teardown() {
-        componentInstances.getComponents().forEach { component ->
-            getMatchedComponentHandlers(component::class, componentHandlers).forEach { componentHandler ->
-                componentHandler.teardown(component)
+        processComponents(true) { component ->
+            teardown(component)
+        }
+    }
+
+    /**
+     * @param reverse componentHandler 의 의존 방향을 역방향으로 변경합니다. 이는 teardown 에 사용됩니다.
+     */
+    private fun processComponents(reverse: Boolean = false, action: HQComponentHandler<HQComponent>.(HQComponent) -> Unit) {
+        val componentHandlers = if (reverse) {
+            this.componentHandlers.toList().reversed().toMap()
+        } else {
+            this.componentHandlers
+        }
+        componentHandlers.forEach { (handlerClass, handlerInstance) ->
+            val handlerType = getComponentHandlerType(handlerClass)
+            componentInstances.forEach { (componentClass, component) ->
+                if (componentClass.allSuperclasses.contains(handlerType)) {
+                    @Suppress("UNCHECKED_CAST")
+                    val componentHandler = handlerInstance as HQComponentHandler<HQComponent>
+                    componentHandler.action(component)
+                }
             }
         }
     }
 
     override fun <T : HQComponent> getComponent(key: KClass<T>): T {
         return componentInstances.getComponent(key)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun getComponentHandlerType(componentHandlerClass: KClass<out HQComponentHandler<*>>): KClass<*> {
+        return componentHandlerClass
+            .supertypes
+            .first()
+            .arguments
+            .first()
+            .type?.jvmErasure ?: throw NullPointerException("ComponentHandlers must have one type parameter.")
     }
 
     /**
@@ -146,21 +210,6 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
             val defaultContext = InstanceContext(getKoin(), getKoin().getScope(scopeQualifier.value))
             factory?.get(defaultContext)
         }.toList()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : HQComponent> getMatchedComponentHandlers(component: KClass<T>, componentHandlers: List<HQComponentHandler<*>> = this.componentHandlers): List<HQComponentHandler<HQComponent>> {
-        return componentHandlers.filter { componentHandler ->
-            val handlerType = componentHandler::class
-                .supertypes
-                .first()
-                .arguments
-                .first()
-                .type?.jvmErasure ?: throw NullPointerException("ComponentHandlers must have one type parameter.")
-
-            component.allSuperclasses.contains(handlerType)
-        } as? List<HQComponentHandler<HQComponent>>
-            ?: throw NullPointerException("ComponentHandler implementation not found for ${component.simpleName}")
     }
 
     private fun getAllPluginClasses(): Collection<Class<*>> {
