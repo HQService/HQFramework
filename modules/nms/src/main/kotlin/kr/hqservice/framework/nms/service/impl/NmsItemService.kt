@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.service.impl
 
 import kr.hqservice.framework.core.component.Component
 import kr.hqservice.framework.core.component.HQService
-import kr.hqservice.framework.core.component.HQSingleton
+import kr.hqservice.framework.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
@@ -15,7 +15,7 @@ import java.lang.UnsupportedOperationException
 
 @Component
 @Named("item")
-@HQSingleton(binds = [NmsService::class])
+@Singleton(binds = [NmsService::class])
 class NmsItemService(
     reflectionUtil: NmsReflectionUtil
 ) : KoinComponent, NmsService<NmsItemStackWrapper, NmsItemWrapper>, HQService {

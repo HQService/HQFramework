@@ -3,14 +3,16 @@ package kr.hqservice.framework.coroutine
 import kotlinx.coroutines.*
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.Component
-import kr.hqservice.framework.core.component.HQSingleton
+import kr.hqservice.framework.core.component.Singleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import org.koin.core.annotation.Named
 import org.koin.core.component.getScopeName
 import java.util.logging.Level
 import java.util.logging.Logger
 
+@Named("main")
 @Component
-@HQSingleton(binds = [BukkitMainCoroutineScope::class])
+@Singleton(binds = [HQCoroutineScope::class])
 class BukkitMainCoroutineScope(plugin: HQPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.Main) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {

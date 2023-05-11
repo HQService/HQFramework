@@ -2,12 +2,13 @@ package kr.hqservice.framework.core.component.registry.impl
 
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.*
+import kr.hqservice.framework.core.component.Factory
+import kr.hqservice.framework.core.component.Singleton
 import kr.hqservice.framework.core.component.error.*
 import kr.hqservice.framework.core.component.event.ComponentPostSetupEvent
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
-import kr.hqservice.framework.core.extension.print
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*
@@ -313,8 +314,8 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
      * 빈의 종류와 Bind 타입들을 구합니다.
      */
     private fun getBeanProperties(klass: KClass<*>): Pair<Kind, Array<KClass<*>>>? {
-        val factory = klass.findAnnotation<HQFactory>()
-        val single = klass.findAnnotation<HQSingleton>()
+        val factory = klass.findAnnotation<Factory>()
+        val single = klass.findAnnotation<Singleton>()
         if (factory != null && single != null) {
             throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
         }

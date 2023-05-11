@@ -77,7 +77,7 @@ class ComponentHandlerTest : KoinComponent {
         }
     }
 
-    @HQSingleton
+    @Singleton
     @Component
     @ExcludeTestSearch
     class TestComponentA : TestHQModule, HQListener
@@ -86,7 +86,7 @@ class ComponentHandlerTest : KoinComponent {
     @ExcludeTestSearch
     class TestComponentB : TestHQModule
 
-    @HQFactory(binds = [TestComponentC::class])
+    @Factory(binds = [TestComponentC::class])
     @Component
     @ExcludeTestSearch
     class TestComponentC : TestHQModule
@@ -106,7 +106,7 @@ class ComponentHandlerTest : KoinComponent {
     @ExcludeTestSearch
     class TestComponentE(componentF: TestComponentF) : TestHQModule
 
-    @HQSingleton(binds = [TestComponentF::class])
+    @Singleton(binds = [TestComponentF::class])
     @Component
     @ExcludeTestSearch
     class TestComponentF : TestHQModule
