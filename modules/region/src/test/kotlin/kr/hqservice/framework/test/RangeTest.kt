@@ -37,7 +37,7 @@ class RangeTest {
     @BeforeEach
     fun setup() {
         val server = MockBukkit.mock()
-        plugin = HQFrameworkMock.mock()
+        plugin = HQFrameworkMock.mock("RangeTest")
         world = server.addSimpleWorld("world")
     }
 

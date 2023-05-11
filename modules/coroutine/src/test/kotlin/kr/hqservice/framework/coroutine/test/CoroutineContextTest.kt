@@ -21,7 +21,7 @@ class CoroutineContextTest : KoinComponent {
     @BeforeEach
     fun setup() {
         MockBukkit.mock()
-        plugin = HQFrameworkMock.mock()
+        plugin = HQFrameworkMock.mock("CoroutineContextTest")
     }
 
     @Test

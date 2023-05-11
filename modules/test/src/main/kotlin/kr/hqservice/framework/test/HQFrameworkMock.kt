@@ -9,14 +9,14 @@ import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
 import java.io.File
-import kotlin.reflect.full.findAnnotations
-import kotlin.reflect.full.hasAnnotation
 
 class HQFrameworkMock : HQFrameworkPlugin {
     companion object {
         private var plugin: HQFrameworkMock? = null
+        private lateinit var testName: String
 
-        fun mock(): HQFrameworkMock {
+        fun mock(testName: String): HQFrameworkMock {
+            this.testName = testName
             if (plugin != null) {
                 throw IllegalStateException("already mocking")
             }
@@ -76,7 +76,10 @@ class HQFrameworkMock : HQFrameworkPlugin {
                         try {
                             val clazz = Class.forName(fullyQualifiedClassName)
                             if (clazz.getAnnotation(ExcludeTestSearch::class.java) == null) {
-                                classes.add(clazz)
+                                val isolated: Isolated? = clazz.getAnnotation(Isolated::class.java)
+                                if (isolated == null || isolated.testName == testName) {
+                                    classes.add(clazz)
+                                }
                             }
                         } catch (exception: ClassNotFoundException) {
                             System.err.println(exception)

@@ -28,15 +28,19 @@ class ComponentHandlerOrderTest {
 
     interface TestComponentTypeC : HQComponent
 
+    @Isolated("ComponentHandlerOrderTest")
     @Component
     class TestComponentTypeAImpl : TestComponentTypeA
 
+    @Isolated("ComponentHandlerOrderTest")
     @Component
     class TestComponentTypeBImpl : TestComponentTypeB
 
+    @Isolated("ComponentHandlerOrderTest")
     @Component
     class TestComponentTypeCImpl : TestComponentTypeC
 
+    @Isolated("ComponentHandlerOrderTest")
     @ComponentHandler(depends = [TestComponentTypeCHandler::class])
     class TestComponentTypeAHandler : HQComponentHandler<TestComponentTypeA> {
         override fun setup(element: TestComponentTypeA) {
@@ -68,7 +72,7 @@ class ComponentHandlerOrderTest {
     @BeforeEach
     fun setup() {
         MockBukkit.mock()
-        plugin = spyk(HQFrameworkMock.mock(), recordPrivateCalls = true)
+        plugin = spyk(HQFrameworkMock.mock("ComponentHandlerOrderTest"), recordPrivateCalls = true)
     }
 
     @AfterEach
