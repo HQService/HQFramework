@@ -1,9 +1,10 @@
 package kr.hqservice.framework.database.component
 
 import kr.hqservice.framework.core.component.HQComponent
+import org.jetbrains.exposed.dao.Entity
 
-interface HQRepository<T, ID> : HQComponent {
-    suspend fun saveAll()
+interface HQRepository< ID : Comparable<ID>, T : Entity<ID>> : HQComponent {
+    fun getEntityClass(): HQEntityClass<ID, T>
 
-    suspend fun deleteAll()
+    fun getDataSource(): HQDataSource
 }

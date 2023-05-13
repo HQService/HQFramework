@@ -6,13 +6,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.Component
-import kr.hqservice.framework.core.component.HQSingleton
+import kr.hqservice.framework.core.component.Singleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import org.koin.core.annotation.Named
 import org.koin.core.component.getScopeName
 import java.util.logging.Level
 import java.util.logging.Logger
 
-@HQSingleton(binds = [DatabaseCoroutineScope::class])
+@Named("database")
+@Singleton(binds = [HQCoroutineScope::class])
 @Component
 class DatabaseCoroutineScope(plugin: HQPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
