@@ -14,6 +14,10 @@ abstract class HQFrameworkPlugin : HQPlugin {
     constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
     final override fun onLoad() {
+        startKoin()
+    }
+
+    private fun startKoin() {
         startKoin {
             modules(HQFrameworkModule().module)
         }

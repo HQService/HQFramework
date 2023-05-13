@@ -4,19 +4,29 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.every
 import io.mockk.spyk
 import kr.hqservice.framework.HQFrameworkPlugin
+import kr.hqservice.framework.core.HQFrameworkModule
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.core.component.registry.impl.ComponentRegistryImpl
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
+import org.koin.core.context.startKoin
+import org.koin.core.module.Module
+import org.koin.ksp.generated.module
 import java.io.File
 
 class HQFrameworkMock : HQFrameworkPlugin {
     companion object {
         private var plugin: HQFrameworkMock? = null
-        private lateinit var testName: String
+        private val extendedSearchScope: MutableList<Class<*>> = mutableListOf()
+        private lateinit var testNames: List<String>
 
-        fun mock(testName: String): HQFrameworkMock {
-            this.testName = testName
+        fun mock(testName: String, extendSearchScope: List<Class<*>> = listOf()): HQFrameworkMock {
+            return mock(listOf(testName), extendSearchScope)
+        }
+
+        fun mock(testNames: List<String>, extendSearchScope: List<Class<*>> = listOf()): HQFrameworkMock {
+            this.testNames = testNames
+            this.extendedSearchScope.addAll(extendSearchScope)
             if (plugin != null) {
                 throw IllegalStateException("already mocking")
             }
@@ -77,7 +87,7 @@ class HQFrameworkMock : HQFrameworkPlugin {
                             val clazz = Class.forName(fullyQualifiedClassName)
                             if (clazz.getAnnotation(ExcludeTestSearch::class.java) == null) {
                                 val isolated: Isolated? = clazz.getAnnotation(Isolated::class.java)
-                                if (isolated == null || isolated.testName == testName) {
+                                if (isolated == null || testNames.contains(isolated.testName)) {
                                     classes.add(clazz)
                                 }
                             }
@@ -88,6 +98,7 @@ class HQFrameworkMock : HQFrameworkPlugin {
             }
         }
 
+        classes.addAll(extendedSearchScope)
         return classes
     }
 }

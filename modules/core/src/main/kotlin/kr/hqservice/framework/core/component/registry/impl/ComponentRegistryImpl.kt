@@ -33,10 +33,11 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
-@Factory(binds = [ComponentRegistry::class])
-class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, KoinComponent {
+@org.koin.core.annotation.Factory(binds = [ComponentRegistry::class])
+class ComponentRegistryImpl(@InjectedParam private val plugin: HQPlugin) : ComponentRegistry, KoinComponent {
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
     private val componentHandlers: MutableMap<KClass<out HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+    private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
 
     override fun setup() {
         val provideInstance: Map<KClass<*>, *> = mapOf(
@@ -57,17 +58,24 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
                 ) as? HQComponentHandler<*> ?: throw NotComponentHandlerException(clazz.kotlin)
                 val componentHandlerType = getComponentHandlerType(componentHandler::class)
                 unsortedComponentHandlers[componentHandlerType] = componentHandler
-            }
-            if (annotations.filterIsInstance<Component>().isNotEmpty()) {
+            } else if (annotations.filterIsInstance<Component>().isNotEmpty()) {
                 componentClasses.add(clazz)
+            } else if (annotations.filterIsInstance<QualifierProvider>().isNotEmpty()) {
+                val key = annotations.filterIsInstance<QualifierProvider>().first().key
+                val qualifierProvider = callByInjectedParameters(
+                    clazz.kotlin.constructors.first(),
+                    provideInstance
+                ) as? MutableNamedProvider ?: throw IllegalStateException("not qualifier provider")
+                qualifierProviders[key] = qualifierProvider
             }
         }
-        val componentHandlersQueue: ConcurrentLinkedQueue<HQComponentHandler<*>> = ConcurrentLinkedQueue(unsortedComponentHandlers.values)
+        val componentHandlersQueue: ConcurrentLinkedQueue<HQComponentHandler<*>> =
+            ConcurrentLinkedQueue(unsortedComponentHandlers.values)
 
         var handlerExceptionCatchingStack = 0
         var previousHandlerQueueSize = componentHandlersQueue.size
 
-        while (componentHandlersQueue.isNotEmpty()) queueScope@{
+        while (componentHandlersQueue.isNotEmpty()) queueScope@ {
             val componentHandlerInstance = componentHandlersQueue.poll()
             val componentHandlerClass = componentHandlerInstance::class
             val depends = componentHandlerClass.findAnnotation<ComponentHandler>()!!.depends
@@ -98,7 +106,8 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
             }
         }
 
-        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
+        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> =
+            ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var componentExceptionCatchingStack = 0
@@ -146,7 +155,10 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
     /**
      * @param reverse componentHandler 의 의존 방향을 역방향으로 변경합니다. 이는 teardown 에 사용됩니다.
      */
-    private fun processComponents(reverse: Boolean = false, action: HQComponentHandler<HQComponent>.(HQComponent) -> Unit) {
+    private fun processComponents(
+        reverse: Boolean = false,
+        action: HQComponentHandler<HQComponent>.(HQComponent) -> Unit
+    ) {
         val componentHandlers = if (reverse) {
             this.componentHandlers.toList().reversed().toMap()
         } else {
@@ -307,7 +319,16 @@ class ComponentRegistryImpl(private val plugin: HQPlugin) : ComponentRegistry, K
      * Qualifier 를 구합니다.
      */
     private fun getQualifier(element: KAnnotatedElement): Qualifier? {
-        return element.findAnnotation<Named>()?.value?.let { StringQualifier(it) }
+        return if (element.hasAnnotation<Named>()) {
+            StringQualifier(element.findAnnotation<Named>()!!.value)
+        } else if (element.hasAnnotation<MutableNamed>()) {
+            val key = element.findAnnotation<MutableNamed>()!!.key
+            val qualifierProvider = qualifierProviders[key] ?: throw NullPointerException("MutableNamedQualifier not found")
+            val provided = qualifierProvider.provideQualifier()
+            StringQualifier(provided)
+        } else {
+            null
+        }
     }
 
     /**

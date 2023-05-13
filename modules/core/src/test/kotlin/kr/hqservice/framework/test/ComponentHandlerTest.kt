@@ -3,12 +3,9 @@
 package kr.hqservice.framework.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
-import io.mockk.every
+import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.spyk
 import kr.hqservice.framework.core.HQFrameworkModule
 import kr.hqservice.framework.core.HQPlugin
 import kr.hqservice.framework.core.component.*
@@ -63,6 +60,7 @@ class ComponentHandlerTest : KoinComponent {
     fun teardown() {
         MockBukkit.unmock()
         stopKoin()
+        clearAllMocks()
     }
 
     interface TestHQModule : HQModule {

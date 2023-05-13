@@ -1,6 +1,7 @@
 package kr.hqservice.framework.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
+import io.mockk.clearAllMocks
 import io.mockk.junit5.MockKExtension
 import io.mockk.spyk
 import kr.hqservice.framework.core.component.Component
@@ -79,6 +80,7 @@ class ComponentHandlerOrderTest {
     fun teardown() {
         HQFrameworkMock.unmock()
         MockBukkit.unmock()
+        clearAllMocks()
     }
 
     @Test
