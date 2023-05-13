@@ -36,7 +36,7 @@ for ((group, module) in excludeSet) {
     configurations.runtimeClasspath.get().exclude(group, module)
 }
 
-includeModules("core", "inventory", "item", "region", "coroutine", "database")
+includeModules("core", "inventory", "region", "coroutine", "database", "nms")
 
 tasks.shadowJar {
     destinationDirectory.set(file(rootProject.projectDir.path + "/build_outputs"))
