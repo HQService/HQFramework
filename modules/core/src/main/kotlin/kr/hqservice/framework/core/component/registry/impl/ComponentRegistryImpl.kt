@@ -39,49 +39,52 @@ class ComponentRegistryImpl(@InjectedParam private val plugin: HQPlugin) : Compo
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
     private val componentHandlers: MutableMap<KClass<out HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
     private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
+    private val instanceProviders: MutableMap<KClass<*>, out Any> = mutableMapOf<KClass<*>, Any>().apply {
+        put(Plugin::class, plugin)
+        put(plugin::class, plugin)
+        put(HQPlugin::class, plugin)
+        put(Logger::class, plugin.logger)
+        put(ConfigurationSection::class, plugin.config)
+    }
 
+    @Suppress("UNCHECKED_CAST")
     override fun setup() {
-        val provideInstance: Map<KClass<*>, *> = mapOf(
-            Plugin::class to plugin as Plugin,
-            plugin::class to plugin,
-            Logger::class to plugin.logger,
-            ConfigurationSection::class to plugin.config
-        )
-
         val componentClasses = mutableListOf<Class<*>>()
-        val unsortedComponentHandlers: MutableMap<KClass<*>, HQComponentHandler<*>> = mutableMapOf()
+        val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
         for (clazz in getAllPluginClasses()) {
             val annotations = clazz.annotations
             if (annotations.filterIsInstance<ComponentHandler>().isNotEmpty()) {
-                val componentHandler = callByInjectedParameters(
-                    clazz.kotlin.constructors.first(),
-                    provideInstance
-                ) as? HQComponentHandler<*> ?: throw NotComponentHandlerException(clazz.kotlin)
-                val componentHandlerType = getComponentHandlerType(componentHandler::class)
-                unsortedComponentHandlers[componentHandlerType] = componentHandler
+                val componentHandlerType = getComponentHandlerType(clazz.kotlin)
+                unsortedComponentHandlers[componentHandlerType] = clazz.kotlin as KClass<HQComponentHandler<*>>
             } else if (annotations.filterIsInstance<Component>().isNotEmpty()) {
                 componentClasses.add(clazz)
             } else if (annotations.filterIsInstance<QualifierProvider>().isNotEmpty()) {
                 val key = annotations.filterIsInstance<QualifierProvider>().first().key
                 val qualifierProvider = callByInjectedParameters(
                     clazz.kotlin.constructors.first(),
-                    provideInstance
+                    instanceProviders
                 ) as? MutableNamedProvider ?: throw IllegalStateException("not qualifier provider")
                 qualifierProviders[key] = qualifierProvider
             }
         }
-        val componentHandlersQueue: ConcurrentLinkedQueue<HQComponentHandler<*>> =
+        val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> =
             ConcurrentLinkedQueue(unsortedComponentHandlers.values)
 
         var handlerExceptionCatchingStack = 0
         var previousHandlerQueueSize = componentHandlersQueue.size
 
         while (componentHandlersQueue.isNotEmpty()) queueScope@ {
-            val componentHandlerInstance = componentHandlersQueue.poll()
-            val componentHandlerClass = componentHandlerInstance::class
+            val componentHandlerClass = componentHandlersQueue.poll()
             val depends = componentHandlerClass.findAnnotation<ComponentHandler>()!!.depends
-            if (depends.isEmpty()) {
-                componentHandlers[componentHandlerClass] = componentHandlerInstance
+            val any = depends.filter { depended ->
+                componentHandlers[depended] == null
+            }
+            if (depends.isEmpty() || any.isEmpty()) {
+                val componentHandler = callByInjectedParameters(
+                    componentHandlerClass.constructors.first(),
+                    instanceProviders
+                ) ?: throw NotComponentHandlerException(componentHandlerClass)
+                componentHandlers[componentHandlerClass] = componentHandler
             } else {
                 val illegalDepends = depends.filter {
                     !it.allSuperclasses.contains(HQComponentHandler::class)
@@ -89,21 +92,15 @@ class ComponentRegistryImpl(@InjectedParam private val plugin: HQPlugin) : Compo
                 if (illegalDepends.isNotEmpty()) {
                     throw IllegalDependException(illegalDepends)
                 }
-                val any = depends.filter { depended ->
-                    componentHandlers[depended] == null
+
+                componentHandlersQueue.offer(componentHandlerClass)
+                if (previousHandlerQueueSize == componentHandlersQueue.size) {
+                    handlerExceptionCatchingStack++
                 }
-                if (any.isNotEmpty()) {
-                    componentHandlersQueue.offer(componentHandlerInstance)
-                    if (previousHandlerQueueSize == componentHandlersQueue.size) {
-                        handlerExceptionCatchingStack++
-                    }
-                    if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
-                        throw ComponentCircularException(componentHandlersQueue.toList().map { it::class })
-                    }
-                    previousHandlerQueueSize = componentHandlersQueue.size
-                } else {
-                    componentHandlers[componentHandlerClass] = componentHandlerInstance
+                if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
+                    throw ComponentCircularException(componentHandlersQueue.toList().map { it::class })
                 }
+                previousHandlerQueueSize = componentHandlersQueue.size
             }
         }
 
@@ -115,28 +112,24 @@ class ComponentRegistryImpl(@InjectedParam private val plugin: HQPlugin) : Compo
         var previousComponentQueueSize = componentClassesQueue.size
         while (componentClassesQueue.isNotEmpty()) {
             val component = componentClassesQueue.poll()
-            if (component.primaryConstructor == null) {
-                val instance = component.createInstance()
+            if (component.constructors.size > 1) {
+                throw ConstructorConflictException(component)
+            }
+
+            val constructor = component.constructors.first()
+            val instance = callByInjectedParameters(constructor, instanceProviders)
+            if (instance == null) {
+                componentClassesQueue.offer(component)
+                if (previousComponentQueueSize == componentClassesQueue.size) {
+                    componentExceptionCatchingStack++
+                }
+                if (componentExceptionCatchingStack == componentClassesQueue.size) {
+                    throw NoBeanDefinitionsFoundException(componentClassesQueue.toList())
+                }
+                previousComponentQueueSize = componentClassesQueue.size
+            } else {
                 componentInstances.addSafely(instance)
                 tryCreateBeanModule(component, instance)
-            } else if (component.constructors.size > 1) {
-                throw ConstructorConflictException(component)
-            } else {
-                val constructor = component.constructors.first()
-                val instance = callByInjectedParameters(constructor, provideInstance)
-                if (instance == null) {
-                    componentClassesQueue.offer(component)
-                    if (previousComponentQueueSize == componentClassesQueue.size) {
-                        componentExceptionCatchingStack++
-                    }
-                    if (componentExceptionCatchingStack == componentClassesQueue.size) {
-                        throw NoBeanDefinitionsFoundException(componentClassesQueue.toList())
-                    }
-                    previousComponentQueueSize = componentClassesQueue.size
-                } else {
-                    componentInstances.addSafely(instance)
-                    tryCreateBeanModule(component, instance)
-                }
             }
         }
 
@@ -182,7 +175,7 @@ class ComponentRegistryImpl(@InjectedParam private val plugin: HQPlugin) : Compo
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun getComponentHandlerType(componentHandlerClass: KClass<out HQComponentHandler<*>>): KClass<*> {
+    private fun getComponentHandlerType(componentHandlerClass: KClass<*>): KClass<*> {
         return componentHandlerClass
             .supertypes
             .first()
@@ -324,7 +317,8 @@ class ComponentRegistryImpl(@InjectedParam private val plugin: HQPlugin) : Compo
             StringQualifier(element.findAnnotation<Named>()!!.value)
         } else if (element.hasAnnotation<MutableNamed>()) {
             val key = element.findAnnotation<MutableNamed>()!!.key
-            val qualifierProvider = qualifierProviders[key] ?: throw NullPointerException("MutableNamedQualifier not found")
+            val qualifierProvider =
+                qualifierProviders[key] ?: throw NullPointerException("MutableNamedQualifier not found")
             val provided = qualifierProvider.provideQualifier()
             StringQualifier(provided)
         } else {
