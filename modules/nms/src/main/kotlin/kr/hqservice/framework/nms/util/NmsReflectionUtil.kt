@@ -3,6 +3,9 @@ package kr.hqservice.framework.nms.util
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
+import kr.hqservice.framework.nms.wrapper.packet.PacketWrapper
+import org.bukkit.Server
+import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
@@ -19,6 +22,16 @@ interface NmsReflectionUtil {
     fun getFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*>
 
     fun getStaticFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*>
+
+    fun getEntityPlayer(player: Player): Any
+
+    fun getNmsServer(server: Server): Any
+
+    fun getField(clazz: KClass<*>, fieldType: KClass<*>): KCallable<*>
+
+    fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*>
+
+    suspend fun sendPacket(player: Player, vararg packetWrapper: PacketWrapper)
 }
 
 fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {

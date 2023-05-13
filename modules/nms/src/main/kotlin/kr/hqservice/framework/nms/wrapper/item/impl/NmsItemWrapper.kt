@@ -1,16 +1,16 @@
-package kr.hqservice.framework.nms.wrapper.impl
+package kr.hqservice.framework.nms.wrapper.item.impl
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.NmsWrapper
+import kr.hqservice.framework.nms.wrapper.item.ItemWrapper
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class NmsItemWrapper(
     private val nmsItemStackWrapper: NmsItemStackWrapper,
     private val nmsItem: Any
-) : NmsWrapper, KoinComponent {
+) : ItemWrapper, KoinComponent {
 
     private val reflectionUtil: NmsReflectionUtil by inject()
 

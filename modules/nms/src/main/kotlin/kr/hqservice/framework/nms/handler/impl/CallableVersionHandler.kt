@@ -27,6 +27,10 @@ class CallableVersionHandler(
         return this
     }
 
+    override fun isChangedName(): Boolean {
+        return false
+    }
+
     override fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean {
         return callable.name == name
                 && callable.parameters.map { it.type.classifier as KClass<*> } == functionType.getParameterClasses(targetClass)

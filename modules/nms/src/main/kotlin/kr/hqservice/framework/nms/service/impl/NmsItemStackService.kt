@@ -7,7 +7,7 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getStaticFunction
-import kr.hqservice.framework.nms.wrapper.impl.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent

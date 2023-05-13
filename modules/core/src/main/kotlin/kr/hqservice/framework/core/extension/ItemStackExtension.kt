@@ -2,6 +2,7 @@ package kr.hqservice.framework.core.extension
 
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.util.io.BukkitObjectInputStream
 import org.bukkit.util.io.BukkitObjectOutputStream
 import java.io.ByteArrayInputStream
@@ -32,4 +33,15 @@ fun ByteArray.toItemArray(decompress: Boolean = true): Array<ItemStack> {
             return list.toTypedArray()
         }
     }
+}
+
+fun ItemStack.editMeta(block: ItemMeta.() -> Unit): ItemStack {
+    itemMeta = itemMeta?.apply(block::invoke)
+    return this
+}
+
+fun ItemMeta.addLine(line: String) {
+    lore = lore?.apply {
+        add(line)
+    }?: mutableListOf(line)
 }

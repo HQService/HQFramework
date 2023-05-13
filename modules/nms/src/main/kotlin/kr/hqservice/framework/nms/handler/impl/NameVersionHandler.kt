@@ -7,7 +7,8 @@ import kotlin.reflect.KClass
 
 class NameVersionHandler(
     private val version: Version,
-    private val name: String
+    private val name: String,
+    private val changedName: Boolean = false
 ) : VersionHandler {
     override fun getVersion(): Version {
         return version
@@ -15,6 +16,10 @@ class NameVersionHandler(
 
     override fun getName(): String {
         return name
+    }
+
+    override fun isChangedName(): Boolean {
+        return changedName
     }
 
     override fun static(): VersionHandler {

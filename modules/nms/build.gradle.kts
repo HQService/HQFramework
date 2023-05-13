@@ -7,7 +7,12 @@ dependencies {
     compileOnly(libs.spigot.api)
     api(libs.kotlinx.coroutines.core)
     api(libs.exposed.core)
+    api(libs.netty)
+    api(libs.koin.core)
+    api(libs.koin.annotations)
+    ksp(libs.koin.ksp.compiler)
     api(project(":modules:core"))
+    api(project(":modules:coroutine"))
 
     testImplementation(libs.mockBukkit)
     testImplementation(libs.junit.parameterizedTest)

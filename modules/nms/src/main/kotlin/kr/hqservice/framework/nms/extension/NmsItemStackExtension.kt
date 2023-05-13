@@ -2,8 +2,8 @@ package kr.hqservice.framework.nms.extension
 
 import kr.hqservice.framework.nms.service.impl.NmsItemStackService
 import kr.hqservice.framework.nms.service.impl.NmsNBTTagCompoundService
-import kr.hqservice.framework.nms.wrapper.impl.NmsItemStackWrapper
-import kr.hqservice.framework.nms.wrapper.impl.NmsNBTTagCompoundWrapper
+import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.item.impl.NmsNBTTagCompoundWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.getKoin

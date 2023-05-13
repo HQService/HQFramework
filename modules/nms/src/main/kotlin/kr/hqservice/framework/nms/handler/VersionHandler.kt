@@ -11,5 +11,7 @@ interface VersionHandler {
 
     fun static(): VersionHandler
 
+    fun isChangedName(): Boolean
+
     fun isMatched(targetClass: KClass<*>, callable: KCallable<*>): Boolean
 }

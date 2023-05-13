@@ -1,18 +1,18 @@
-package kr.hqservice.framework.nms.wrapper.impl
+package kr.hqservice.framework.nms.wrapper.item.impl
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.impl.NmsItemService
 import kr.hqservice.framework.nms.service.impl.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.NmsWrapper
+import kr.hqservice.framework.nms.wrapper.item.ItemWrapper
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 
 class NmsItemStackWrapper(
     internal val nmsItemStack: Any
-) : NmsWrapper, KoinComponent {
+) : ItemWrapper, KoinComponent {
 
     private val reflectionUtil: NmsReflectionUtil by inject()
 
@@ -29,7 +29,7 @@ class NmsItemStackWrapper(
     )
 
     private val setTagFunction = reflectionUtil.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
-        Version.V_15.handle("c") { setParameterClasses(nbtTagClass) }
+        Version.V_15.handleFunction("c") { setParameterClasses(nbtTagClass) }
     )
 
     fun getTagOrNull(): NmsNBTTagCompoundWrapper? {

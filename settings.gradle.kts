@@ -21,6 +21,7 @@ dependencyResolutionManagement {
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+        maven("https://mvnrepository.com/artifact/io.netty/netty-all")
     }
 
     versionCatalogs {
@@ -52,6 +53,7 @@ dependencyResolutionManagement {
             library("junit-parameterizedTest", "org.junit.jupiter:junit-jupiter-params:${getProperty("jUnitVersion")}")
             library("auto-service", "com.google.auto.service:auto-service:${getProperty("autoServiceVersion")}")
             library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
+            library("netty", "io.netty:netty-all:${getProperty("nettyVersion")}")
         }
     }
 }

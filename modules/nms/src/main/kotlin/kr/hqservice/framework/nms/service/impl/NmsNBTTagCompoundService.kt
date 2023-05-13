@@ -6,7 +6,7 @@ import kr.hqservice.framework.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.wrapper.impl.NmsNBTTagCompoundWrapper
+import kr.hqservice.framework.nms.wrapper.item.impl.NmsNBTTagCompoundWrapper
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
 import kotlin.reflect.full.createInstance

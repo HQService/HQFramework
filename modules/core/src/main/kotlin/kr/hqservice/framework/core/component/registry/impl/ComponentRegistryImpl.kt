@@ -9,6 +9,7 @@ import kr.hqservice.framework.core.component.event.ComponentPostSetupEvent
 import kr.hqservice.framework.core.component.handler.ComponentHandler
 import kr.hqservice.framework.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.core.extension.print
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.*

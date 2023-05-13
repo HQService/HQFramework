@@ -7,8 +7,8 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.impl.NmsItemStackWrapper
-import kr.hqservice.framework.nms.wrapper.impl.NmsItemWrapper
+import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemWrapper
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
 import java.lang.UnsupportedOperationException

@@ -22,11 +22,11 @@ enum class Version {
 
     fun support(version: Version): Boolean = ordinal <= version.ordinal
 
-    fun handle(name: String): VersionHandler {
-        return NameVersionHandler(this, name)
+    fun handle(name: String, changedName: Boolean = false): VersionHandler {
+        return NameVersionHandler(this, name, changedName)
     }
 
-    fun handle(name: String, block: FunctionType.()->Unit): VersionHandler {
+    fun handleFunction(name: String, block: FunctionType.()->Unit): VersionHandler {
         if(name.isEmpty()) throw IllegalArgumentException("method without name")
 
         val type = FunctionType(name)
