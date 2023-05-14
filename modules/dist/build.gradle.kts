@@ -22,7 +22,8 @@ bukkitResourceGenerator {
         libs.exposed.jdbc.get().toString(),
         libs.hikaricp.get().toString(),
         libs.sqlite.get().toString(),
-        libs.netty.get().toString()
+        libs.netty.get().toString(),
+        libs.auto.service.annotations.get().toString()
     )
 }
 
