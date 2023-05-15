@@ -2,13 +2,12 @@ package kr.hqservice.framework.nms.wrapper.packet
 
 import kr.hqservice.framework.core.component.HQSimpleComponent
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
+import kotlin.reflect.KClass
 
-abstract class PacketWrapper(
-    private val instance: Any
-) : NmsWrapper, HQSimpleComponent {
+abstract class PacketWrapper : NmsWrapper, HQSimpleComponent {
 
-    fun getPacketInstance(): Any {
-        return instance
-    }
+    abstract fun getClass(): KClass<*>
+
+    abstract fun createPacket(): Any
 
 }

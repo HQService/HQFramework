@@ -104,7 +104,7 @@ class NmsReflectionUtilImpl(
 
         if(connection != null)
             packetWrapper.forEach {
-                this.sendPacket.call(connection, it.getPacketInstance()) }
+                this.sendPacket.call(connection, it.createPacket()) }
     }
 
     override fun getField(clazz: KClass<*>, fieldType: KClass<*>): KCallable<*> {
