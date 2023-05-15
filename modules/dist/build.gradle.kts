@@ -23,6 +23,7 @@ bukkitResourceGenerator {
         libs.hikaricp.get().toString(),
         libs.sqlite.get().toString(),
         libs.netty.get().toString(),
+        libs.guava.get().toString(),
         libs.auto.service.annotations.get().toString()
     )
 }

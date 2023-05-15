@@ -11,5 +11,6 @@ extra["excludeSet"] = listOf(
     "io.insert-koin" to "koin-annotations-jvm",
     "com.zaxxer" to "HikariCP",
     "com.google.auto.service" to "auto-service-annotations",
-    "io.netty" to "netty-all"
+    "io.netty" to "netty-all",
+    "com.google.guava" to "guava"
 )

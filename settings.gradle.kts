@@ -54,6 +54,7 @@ dependencyResolutionManagement {
             library("auto-service", "com.google.auto.service:auto-service:${getProperty("autoServiceVersion")}")
             library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
             library("netty", "io.netty:netty-all:${getProperty("nettyVersion")}")
+            library("guava", "com.google.guava:guava:${getProperty("guavaVersion")}")
         }
     }
 }
