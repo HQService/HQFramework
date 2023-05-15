@@ -49,6 +49,10 @@ class HQButtonBuilder(
         return this
     }
 
+    fun getLore(): List<String> {
+        return lore
+    }
+
     fun setCustomModelData(customModelData: Int): HQButtonBuilder {
         this.customModelData = customModelData
         return this
