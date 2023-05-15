@@ -17,6 +17,7 @@ class HQButtonBuilder(
     private var displayName: String = itemStack.itemMeta?.displayName ?: ""
     private var lore: List<String> = itemStack.itemMeta?.lore ?: emptyList()
     private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
+    private var customModelData: Int = 0
     private var removable = false
     var glow = false
         set(value) {
@@ -48,6 +49,11 @@ class HQButtonBuilder(
         return this
     }
 
+    fun setCustomModelData(customModelData: Int): HQButtonBuilder {
+        this.customModelData = customModelData
+        return this
+    }
+
     fun addItemFlags(vararg itemFlag: ItemFlag): HQButtonBuilder {
         itemFlags.addAll(itemFlag)
         return this
@@ -68,6 +74,7 @@ class HQButtonBuilder(
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName))
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
             meta.addItemFlags(*itemFlags.toTypedArray())
+            try { meta.setCustomModelData(customModelData) } catch (_: Exception) {}
         }
         return HQButtonImpl(itemStack, clickFunction, removable)
     }
