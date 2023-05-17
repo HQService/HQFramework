@@ -8,10 +8,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.reflect.KClass
 
 class CallbackContainer {
-    private val callbackMap = ConcurrentHashMap<KClass<out AbstractPacket>, Queue<PacketCallback<out AbstractPacket>>>()
+    private val callbackMap = ConcurrentHashMap<KClass<out AbstractPacket>, Queue<PacketCallbackHandler<out AbstractPacket>>>()
     private val lock = ReentrantReadWriteLock()
 
-    fun addOnQueue(channel: ChannelWrapper, packet: AbstractPacket, targetClass: KClass<out AbstractPacket>, callback: PacketCallback<out AbstractPacket>) {
+    fun addOnQueue(channel: ChannelWrapper, packet: AbstractPacket, targetClass: KClass<out AbstractPacket>, callback: PacketCallbackHandler<out AbstractPacket>) {
         try {
             lock.writeLock().lock()
             channel.sendPacket(packet)
@@ -29,7 +29,7 @@ class CallbackContainer {
             lock.readLock().lock()
             val queue = callbackMap[packet::class]
             return if (!queue.isNullOrEmpty()) {
-                val callback : PacketCallback<AbstractPacket> = queue.poll() as? PacketCallback<AbstractPacket> ?: return false
+                val callback : PacketCallbackHandler<AbstractPacket> = queue.poll() as? PacketCallbackHandler<AbstractPacket> ?: return false
                 callback.onCallbackReceived(packet)
                 true
             } else false
