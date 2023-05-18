@@ -20,7 +20,7 @@ class BossHandler(
     private var preprocessHandler: PacketPreprocessHandler? = null
     private var disconnectHandler: DisconnectHandler? = null
 
-    private val channel: ChannelWrapper
+    val channel: ChannelWrapper
 
     var connectionState: ConnectionState
         private set
@@ -29,6 +29,22 @@ class BossHandler(
     init {
         this.channel = ChannelWrapper(logger,this, channel)
         connectionState = ConnectionState.IDLE
+    }
+
+    fun setDisconnectionHandler(handler: (ChannelWrapper)->Unit) {
+        this.disconnectHandler = object: DisconnectHandler {
+            override fun onDisconnect(channel: ChannelWrapper) {
+                handler(channel)
+            }
+        }
+    }
+
+    fun setPacketPreprocessHandler(handler: (AbstractPacket, ChannelWrapper)-> Unit) {
+        this.preprocessHandler = object: PacketPreprocessHandler {
+            override fun preprocess(packet: AbstractPacket, channel: ChannelWrapper) {
+                handler(packet, channel)
+            }
+        }
     }
 
     fun setConnectionState(state: ConnectionState) {

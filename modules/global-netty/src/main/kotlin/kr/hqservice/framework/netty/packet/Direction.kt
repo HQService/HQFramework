@@ -24,13 +24,17 @@ enum class Direction {
         packetMap[packetClass] = PacketWrapper(packetClass, constructor)
     }
 
-    fun <T : AbstractPacket> addListener(packetClass: KClass<T>, packetListener: (packet: T, channel: ChannelWrapper)-> Unit) {
+    fun <T : AbstractPacket> addListener(packetClass: KClass<T>, packetHandler: (packet: T, channel: ChannelWrapper)-> Unit) {
         val handler = object: PacketHandler<T> {
             override fun onPacketReceive(packet: T, channel: ChannelWrapper) {
-                packetListener(packet, channel)
+                packetHandler(packet, channel)
             }
         }
         handlers.computeIfAbsent(packetClass) { LinkedList() }.add(handler)
+    }
+
+    fun <T : AbstractPacket> addListener(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
+        handlers.computeIfAbsent(packetClass) { LinkedList() }.add(packetHandler)
     }
 
     @Suppress("unchecked_cast")

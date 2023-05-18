@@ -55,6 +55,8 @@ dependencyResolutionManagement {
             library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
             library("netty", "io.netty:netty-all:${getProperty("nettyVersion")}")
             library("guava", "com.google.guava:guava:${getProperty("guavaVersion")}")
+            library("snakeyaml", "org.yaml:snakeyaml:${getProperty("snakeYamlVersion")}")
+            library("ninja", "ninja.leaping.configurate:configurate-yaml:${getProperty("ninjaVersion")}")
         }
     }
 }

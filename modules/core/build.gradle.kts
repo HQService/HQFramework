@@ -9,6 +9,8 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     api(libs.koin.annotations)
+    api(project(":modules:global-netty"))
+    api(project(":modules:global-yaml"))
     ksp(libs.koin.ksp.compiler)
 
     testImplementation(libs.mockBukkit)

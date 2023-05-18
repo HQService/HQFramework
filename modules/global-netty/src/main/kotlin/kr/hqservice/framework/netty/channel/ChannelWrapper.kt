@@ -19,6 +19,10 @@ class ChannelWrapper(
     val callbackContainer = CallbackContainer()
     val pingCalculator = PingCalculator()
 
+    fun setEnabled(enabled: Boolean) {
+        this.enabled = enabled
+    }
+
     fun<T : AbstractPacket> startCallback(packet: AbstractPacket, type: KClass<T>, onReceived: (packet: T)-> Unit) {
         val handler = object: PacketCallbackHandler<T> {
             override fun onCallbackReceived(packet: T) {

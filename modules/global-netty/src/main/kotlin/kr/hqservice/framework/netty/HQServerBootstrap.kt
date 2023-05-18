@@ -5,7 +5,6 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
-import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
@@ -13,14 +12,21 @@ import io.netty.channel.socket.nio.NioSocketChannel
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.PingPongPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
+import kr.hqservice.yaml.config.HQYamlConfiguration
+import java.net.InetSocketAddress
 import java.util.concurrent.CompletableFuture
 import java.util.logging.Logger
 
-class HQServerBootstrap(private val logger: Logger) {
+class HQServerBootstrap(
+    private val logger: Logger,
+    private val config: HQYamlConfiguration,
+) {
     private val group = NioEventLoopGroup(0, ThreadFactoryBuilder().setNameFormat("HQ IO Thread #%1\$d").build())
 
+    //TODO("준형님이 할 거 AUTO_CONNECT , COROUTINE")
+
     fun initClient(isBootUp: Boolean): CompletableFuture<Channel> {
-        if(isBootUp) {
+        if (isBootUp) {
             Direction.INBOUND.registerPacket(ShutdownPacket::class)
             Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
                 if (packet.receivedTime == -1L) {
@@ -40,9 +46,9 @@ class HQServerBootstrap(private val logger: Logger) {
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(HQChannelInitializer(logger))
             .group(group)
-            .connect(/*TODO("HOST ADDRESS")*/)
+            .connect(InetSocketAddress(config.getString("netty.host"), config.getInt("netty.port")))
             .addListener(ChannelFutureListener {
-                if(it.isSuccess)
+                if (it.isSuccess)
                     future.complete(it.channel())
                 else future.completeExceptionally(it.cause())
             })
@@ -60,11 +66,11 @@ class HQServerBootstrap(private val logger: Logger) {
         bootstrap.channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_REUSEADDR, true)
             .childHandler(HQChannelInitializer(logger, true))
-            //.localAddress() TODO("ADDRESS")
+            .localAddress(config.getString("netty.host"), config.getInt("netty.port"))
             .group(group)
             .bind()
             .addListener(ChannelFutureListener {
-                if(it.isSuccess)
+                if (it.isSuccess)
                     future.complete(it.channel())
                 else future.completeExceptionally(it.cause())
             })

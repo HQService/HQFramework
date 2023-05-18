@@ -16,7 +16,9 @@ class PacketEncoder : MessageToByteEncoder<AbstractPacket>() {
         if(Direction.OUTBOUND.findPacketByClass(packetClass) == null)
             throw IllegalArgumentException("packet is not registered to outbound")
 
-        out.writeString(packetClass.qualifiedName?: throw IllegalArgumentException("'${packetClass}' has not qualified name"))
+        out.writeString(packetClass.qualifiedName
+            ?: throw IllegalStateException("'${packetClass}' has not qualified name"))
+
         out.writeBoolean(packet.isCallbackResult())
 
         packet.write(out)
