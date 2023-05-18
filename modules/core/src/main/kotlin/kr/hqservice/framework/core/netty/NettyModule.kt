@@ -9,22 +9,23 @@ import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.yaml.extension.yaml
 import org.bukkit.Bukkit
 import org.bukkit.plugin.Plugin
+import org.koin.core.component.KoinComponent
 import java.io.File
 import java.util.logging.Logger
 
 @Component
 class NettyModule(
     private val plugin: Plugin,
-    private val logger: Logger
-) : HQModule {
+    private val logger: Logger,
+    private val channelHandler: ChannelMainHandler
+) : HQModule, KoinComponent {
     private var nettyEnabled: Boolean = false
-    private var channelHandler: ChannelMainHandler? = null
 
     override fun onEnable() {
         val config = File(plugin.dataFolder, "config.yml").yaml()
         nettyEnabled = config.getBoolean("netty.enabled")
 
-        channelHandler = ChannelMainHandler(plugin).apply {
+        channelHandler.apply {
             Direction.INBOUND.addListener(HandShakePacket::class, this) }
 
         Direction.INBOUND.addListener(ShutdownPacket::class) { packet, channel ->
@@ -43,6 +44,6 @@ class NettyModule(
     }
 
     override fun onDisable() {
-        channelHandler?.disconnect()
+        channelHandler.disconnect()
     }
 }

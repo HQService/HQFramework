@@ -6,7 +6,8 @@ import kr.hqservice.framework.netty.packet.extension.readString
 import kr.hqservice.framework.netty.packet.extension.writeString
 
 class HandShakePacket : AbstractPacket {
-    private var port: Int = 0
+    var port: Int = 0
+        private set
 
     constructor()
     constructor(port: Int) {

@@ -12,7 +12,7 @@ class ChannelWrapper(
     private val logger: Logger,
     val handler: BossHandler,
     val channel: Channel,
-    val port: Int = -1
+    var port: Int = -1
 ) {
 
     private var enabled = true

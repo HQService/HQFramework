@@ -11,6 +11,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.PingPongPacket
+import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.yaml.config.HQYamlConfiguration
 import java.net.InetSocketAddress
@@ -28,6 +29,7 @@ class HQServerBootstrap(
     fun initClient(isBootUp: Boolean): CompletableFuture<Channel> {
         if (isBootUp) {
             Direction.INBOUND.registerPacket(ShutdownPacket::class)
+            Direction.INBOUND.registerPacket(RelayingPacket::class)
             Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
                 if (packet.receivedTime == -1L) {
                     val newPacket = PingPongPacket(packet.time, System.currentTimeMillis())
@@ -57,6 +59,7 @@ class HQServerBootstrap(
 
     fun initServer(): CompletableFuture<Channel> {
         Direction.OUTBOUND.registerPacket(ShutdownPacket::class)
+        Direction.INBOUND.registerPacket(RelayingPacket::class)
         Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
             channel.channel.writeAndFlush(PingPongPacket(packet.time, -1L))
         }
