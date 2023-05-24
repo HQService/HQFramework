@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core
+package kr.hqservice.framework
 
 import org.bukkit.Bukkit
 import org.bukkit.Server
@@ -9,7 +9,7 @@ import org.koin.core.annotation.Single
 
 @Module
 @ComponentScan
-class HQFrameworkModule {
+class HQFrameworkBukkitModule {
     @Single
     fun providePluginManager(): PluginManager {
         return Bukkit.getPluginManager()

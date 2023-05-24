@@ -3,10 +3,10 @@ package kr.hqservice.framework.coroutine.test
 import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.*
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.core.component.*
 import kr.hqservice.framework.global.core.extension.print
-import kr.hqservice.framework.test.HQFrameworkMock
+import kr.hqservice.framework.test.HQFrameworkBukkitMock
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.koin.core.component.KoinComponent
@@ -15,13 +15,13 @@ import org.koin.core.component.inject
 @ExtendWith(MockKExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class CoroutineContextTest : KoinComponent {
-    private lateinit var plugin: HQPlugin
+    private lateinit var plugin: HQBukkitPlugin
     private val testCoroutineContext: TestCoroutineScope by inject()
 
     @BeforeEach
     fun setup() {
         MockBukkit.mock()
-        plugin = HQFrameworkMock.mock("CoroutineContextTest")
+        plugin = HQFrameworkBukkitMock.mock("CoroutineContextTest")
     }
 
     @Test
@@ -65,7 +65,7 @@ class CoroutineContextTest : KoinComponent {
 
     @AfterEach
     fun teardown() {
-        HQFrameworkMock.unmock()
+        HQFrameworkBukkitMock.unmock()
         MockBukkit.unmock()
     }
 }

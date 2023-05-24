@@ -1,5 +1,6 @@
 package kr.hqservice.framework.core
 
+import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
@@ -8,12 +9,18 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
 import java.io.File
+import java.util.logging.Logger
 
-abstract class HQPlugin : JavaPlugin, KoinComponent {
+abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     constructor() : super()
     internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
     protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+
+    final override fun onLoad() {
+        onPreLoad()
+        onPostLoad()
+    }
 
     final override fun onEnable() {
         onPreEnable()
@@ -27,12 +34,11 @@ abstract class HQPlugin : JavaPlugin, KoinComponent {
         onPostDisable()
     }
 
-    open fun onPreEnable() {}
-    open fun onPostEnable() {}
-    open fun onPreDisable() {}
-    open fun onPostDisable() {}
-
-    internal fun getJar(): File {
+    final override fun getJar(): File {
         return super.getFile()
+    }
+
+    final override fun getLogger(): Logger {
+        return super.getLogger()
     }
 }

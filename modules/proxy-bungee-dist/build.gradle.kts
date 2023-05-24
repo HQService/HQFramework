@@ -1,13 +1,12 @@
 plugins {
     id("hqframework.shared")
-    id("hqframework.bukkit-resource-generator")
+    id("hqframework.bungee-resource-generator")
     id("hqframework.shadow")
 }
 
-bukkitResourceGenerator {
-    main = "kr.hqservice.framework.bukkit.HQFrameworkBukkit"
+bungeeResourceGenerator {
+    main = "kr.hqservice.framework.bungee.HQFrameworkBungee"
     name = "HQFramework"
-    apiVersion = "1.13"
     libraries = excludedRuntimeDependencies(
         libs.kotlin.stdlib.jdk8,
         libs.kotlin.reflect,
@@ -30,15 +29,7 @@ bukkitResourceGenerator {
 }
 
 dependencies {
-    compileOnly(libs.spigot.api)
-
-    implementationModule("bukkit", "core")
+    implementationModule("proxy-bungee", "core")
     runtimeOnlyModule("global", "core")
-    runtimeOnlyModule("global", "netty")
-    runtimeOnlyModule("global", "yaml")
-    runtimeOnlyModule("bukkit", "inventory")
-    runtimeOnlyModule("bukkit", "region")
-    runtimeOnlyModule("bukkit", "coroutine")
-    runtimeOnlyModule("bukkit", "database")
-    runtimeOnlyModule("bukkit", "nms")
+    compileOnly(libs.bungeecord.api)
 }

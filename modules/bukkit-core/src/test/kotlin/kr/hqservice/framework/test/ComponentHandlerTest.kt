@@ -6,8 +6,8 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import kr.hqservice.framework.core.HQFrameworkModule
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.HQFrameworkBukkitModule
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.core.component.*
 import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
 import kr.hqservice.framework.core.component.handler.ListenerComponentHandler
@@ -36,7 +36,7 @@ import java.util.logging.Logger
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ComponentHandlerTest : KoinComponent {
     @MockK
-    private lateinit var plugin: HQPlugin
+    private lateinit var plugin: HQBukkitPlugin
     private lateinit var componentRegistry: ComponentRegistry
     private val capturedListener = slot<Listener>()
 
@@ -45,7 +45,7 @@ class ComponentHandlerTest : KoinComponent {
     fun setup() {
         val server = MockBukkit.mock()
         startKoin {
-            modules(HQFrameworkModule().module)
+            modules(HQFrameworkBukkitModule().module)
         }
         every { plugin.logger } returns Logger.getLogger("TEST")
         every { plugin.config } returns mockk()

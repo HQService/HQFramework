@@ -1,13 +1,13 @@
 package kr.hqservice.framework.core.component.handler
 
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.core.component.HQListener
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import org.bukkit.event.HandlerList
 
 @ComponentHandler
-class ListenerComponentHandler(private val plugin: HQPlugin) : HQComponentHandler<HQListener> {
+class ListenerComponentHandler(private val plugin: HQBukkitPlugin) : HQComponentHandler<HQListener> {
     override fun setup(element: HQListener) {
         plugin.server.pluginManager.registerEvents(element, plugin)
     }

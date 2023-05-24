@@ -2,12 +2,12 @@ package kr.hqservice.framework.database.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
 import kotlinx.coroutines.runBlocking
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
 import kr.hqservice.framework.global.core.component.registry.MutableNamedProvider
 import kr.hqservice.framework.global.core.component.registry.QualifierProvider
 import kr.hqservice.framework.global.core.extension.print
-import kr.hqservice.framework.test.HQFrameworkMock
+import kr.hqservice.framework.test.HQFrameworkBukkitMock
 import kr.hqservice.framework.test.Isolated
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -32,18 +32,18 @@ class RepositoryTest : KoinComponent {
         testContext = testInfo.tags.first().print("testContext: ")
         MockBukkit.mock()
         val searchScope = listOf(CoroutineScopeComponentHandler::class.java)
-        HQFrameworkMock.mock("RepositoryTest", searchScope)
+        HQFrameworkBukkitMock.mock("RepositoryTest", searchScope)
     }
 
     @AfterEach
     fun teardown() {
-        HQFrameworkMock.unmock()
+        HQFrameworkBukkitMock.unmock()
         MockBukkit.unmock()
     }
 
     @Isolated("RepositoryTest")
     @QualifierProvider("data-source-type")
-    class RepositoryQualifierProvider(private val hqPlugin: HQPlugin) : MutableNamedProvider {
+    class RepositoryQualifierProvider(private val hqBukkitPlugin: HQBukkitPlugin) : MutableNamedProvider {
         override fun provideQualifier(): String {
             return testContext
         }

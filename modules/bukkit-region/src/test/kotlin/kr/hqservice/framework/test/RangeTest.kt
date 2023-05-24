@@ -1,7 +1,7 @@
 package kr.hqservice.framework.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.region.extension.asBlockLocation
 import org.bukkit.Location
@@ -21,13 +21,13 @@ import kotlin.test.*
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class RangeTest {
-    private lateinit var plugin: HQPlugin
+    private lateinit var plugin: HQBukkitPlugin
     private lateinit var world: World
 
     @BeforeEach
     fun setup() {
         val server = MockBukkit.mock()
-        plugin = HQFrameworkMock.mock("RangeTest")
+        plugin = HQFrameworkBukkitMock.mock("RangeTest")
         world = server.addSimpleWorld("world")
     }
 
@@ -89,7 +89,7 @@ class RangeTest {
 
     @AfterEach
     fun teardown() {
-        HQFrameworkMock.unmock()
+        HQFrameworkBukkitMock.unmock()
         MockBukkit.unmock()
     }
 }

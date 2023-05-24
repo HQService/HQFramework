@@ -3,8 +3,8 @@ package kr.hqservice.framework.test
 import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.every
 import io.mockk.spyk
-import kr.hqservice.framework.HQFrameworkPlugin
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.HQFrameworkBukkitPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.core.component.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import org.bukkit.plugin.Plugin
@@ -14,17 +14,17 @@ import java.io.File
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 
-class HQFrameworkMock : HQFrameworkPlugin {
+class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
     companion object {
-        private var plugin: HQFrameworkMock? = null
+        private var plugin: HQFrameworkBukkitMock? = null
         private val extendedSearchScope: MutableList<Class<*>> = mutableListOf()
         private lateinit var testNames: List<String>
 
-        fun mock(testName: String, extendSearchScope: List<Class<*>> = listOf()): HQFrameworkMock {
+        fun mock(testName: String, extendSearchScope: List<Class<*>> = listOf()): HQFrameworkBukkitMock {
             return mock(listOf(testName), extendSearchScope)
         }
 
-        fun mock(testNames: List<String>, extendSearchScope: List<Class<*>> = listOf()): HQFrameworkMock {
+        fun mock(testNames: List<String>, extendSearchScope: List<Class<*>> = listOf()): HQFrameworkBukkitMock {
             this.testNames = testNames
             this.extendedSearchScope.addAll(extendSearchScope)
             if (plugin != null) {
@@ -32,11 +32,11 @@ class HQFrameworkMock : HQFrameworkPlugin {
             }
             val description = PluginDescriptionFile(
                 "HQFramework", "1.0.0",
-                HQFrameworkMock::class.java.name
+                HQFrameworkBukkitMock::class.java.name
             )
-            val instance = MockBukkit.getMock().pluginManager.loadPlugin(HQFrameworkMock::class.java, description, arrayOfNulls(0))
+            val instance = MockBukkit.getMock().pluginManager.loadPlugin(HQFrameworkBukkitMock::class.java, description, arrayOfNulls(0))
             MockBukkit.getMock().pluginManager.enablePlugin(instance)
-            plugin = instance as HQFrameworkMock
+            plugin = instance as HQFrameworkBukkitMock
             return plugin!!
         }
 
@@ -65,10 +65,10 @@ class HQFrameworkMock : HQFrameworkPlugin {
     private fun stubComponentRepository() {
         every { componentRegistry["getAllComponentsToScan"]() } returns findTargetClasses()
         every { componentRegistry["getProvidedInstances"]() } returns mutableMapOf<KClass<*>, Any>().apply {
-            put(Plugin::class, this@HQFrameworkMock)
-            put(this::class, this@HQFrameworkMock)
-            put(HQPlugin::class, this@HQFrameworkMock)
-            put(Logger::class, this@HQFrameworkMock.logger)
+            put(Plugin::class, this@HQFrameworkBukkitMock)
+            put(this::class, this@HQFrameworkBukkitMock)
+            put(HQBukkitPlugin::class, this@HQFrameworkBukkitMock)
+            put(Logger::class, this@HQFrameworkBukkitMock.logger)
         }
     }
 

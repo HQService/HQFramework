@@ -9,10 +9,6 @@ class ConfigureExtensions : Plugin<Project> {
     override fun apply(target: Project) {}
 }
 
-//for ((group, module) in excludeSet) {
-//    configurations.runtimeClasspath.get().exclude(group, module)
-//}
-
 fun Project.excludedRuntimeDependencies(vararg dependencyProviders: Provider<MinimalExternalModuleDependency>): List<Provider<MinimalExternalModuleDependency>> {
     for (dependency in dependencyProviders) {
         println("excluded: ${dependency.get().group}, ${dependency.get().name}")

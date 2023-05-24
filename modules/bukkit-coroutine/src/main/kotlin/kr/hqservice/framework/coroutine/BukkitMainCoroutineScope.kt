@@ -1,7 +1,7 @@
 package kr.hqservice.framework.coroutine
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
@@ -13,7 +13,7 @@ import java.util.logging.Logger
 @Named("main")
 @Component
 @Singleton(binds = [HQCoroutineScope::class])
-class BukkitMainCoroutineScope(plugin: HQPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.Main) {
+class BukkitMainCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.Main) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {
             "BukkitMainCoroutineContext 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +

@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 @ExtendWith(MockKExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ComponentHandlerOrderTest {
-    private lateinit var plugin: HQFrameworkMock
+    private lateinit var plugin: HQFrameworkBukkitMock
     companion object {
         private val setupOrderResult: MutableList<KClass<out HQComponentHandler<*>>> = mutableListOf()
     }
@@ -73,12 +73,12 @@ class ComponentHandlerOrderTest {
     @BeforeEach
     fun setup() {
         MockBukkit.mock()
-        plugin = spyk(HQFrameworkMock.mock("ComponentHandlerOrderTest"), recordPrivateCalls = true)
+        plugin = spyk(HQFrameworkBukkitMock.mock("ComponentHandlerOrderTest"), recordPrivateCalls = true)
     }
 
     @AfterEach
     fun teardown() {
-        HQFrameworkMock.unmock()
+        HQFrameworkBukkitMock.unmock()
         MockBukkit.unmock()
         clearAllMocks()
     }

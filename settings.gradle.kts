@@ -29,6 +29,7 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
+            library("bungeecord-api", "net.md-5:bungeecord-api:${getProperty("bungeecordVersion")}")
 
             library("kotlin-stdlib-jdk8", "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${getProperty("kotlinVersion")}")
             library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:${getProperty("kotlinVersion")}")

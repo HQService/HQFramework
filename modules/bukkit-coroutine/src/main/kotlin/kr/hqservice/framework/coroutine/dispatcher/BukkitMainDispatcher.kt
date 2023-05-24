@@ -1,7 +1,7 @@
 package kr.hqservice.framework.coroutine.dispatcher
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.core.HQPlugin
+import kr.hqservice.framework.core.HQBukkitPlugin
 import kr.hqservice.framework.coroutine.BukkitCoroutineContextElement
 import org.bukkit.Bukkit
 import org.bukkit.scheduler.BukkitRunnable
@@ -30,7 +30,7 @@ object BukkitMainDispatcher : MainCoroutineDispatcher(), Delay {
         continuation.invokeOnCancellation { task.cancel() }
     }
 
-    private fun getPluginByCoroutineContext(coroutineContext: CoroutineContext): HQPlugin {
+    private fun getPluginByCoroutineContext(coroutineContext: CoroutineContext): HQBukkitPlugin {
         val plugin = coroutineContext[BukkitCoroutineContextElement]?.plugin
         return plugin
             ?: throw IllegalStateException("BukkitMainCoroutineContext 를 사용하기 위해서는, CombineContext 에 BukkitCoroutineContextElement 를 넣어주세요.")
