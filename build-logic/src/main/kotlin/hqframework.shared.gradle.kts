@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
+    kotlin("kapt")
     id("com.google.devtools.ksp")
 }
 

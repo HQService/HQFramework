@@ -26,7 +26,19 @@ gradlePlugin {
     plugins {
         register("hqframework-bukkit-resource-generator") {
             id = "hqframework.bukkit-resource-generator"
-            implementationClass = "bukkitResourceGenerator.BukkitResourceGeneratorPlugin"
+            implementationClass = "resourcegenerator.bukkit.BukkitResourceGeneratorPlugin"
+        }
+        register("hqframework-bungee-resource-generator") {
+            id = "hqframework.bungee-resource-generator"
+            implementationClass = "resourcegenerator.bungee.BungeeResourceGeneratorPlugin"
+        }
+        register("hqframework-dependency-handler-extensions") {
+            id = "hqframework.dependency-handler-extensions"
+            implementationClass = "DependencyHandlerExtensions"
+        }
+        register("hqframework-configure-extensions") {
+            id = "hqframework.configure-extensions"
+            implementationClass = "ConfigureExtensions"
         }
     }
 }

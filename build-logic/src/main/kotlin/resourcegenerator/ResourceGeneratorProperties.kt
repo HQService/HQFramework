@@ -1,0 +1,3 @@
+package resourcegenerator
+
+interface ResourceGeneratorProperties

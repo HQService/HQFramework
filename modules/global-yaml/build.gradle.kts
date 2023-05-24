@@ -4,11 +4,11 @@ plugins {
 }
 
 dependencies {
+    apiModule("global", "core")
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
-    api(libs.ninja)
+    api(libs.configurate.yaml)
     api(libs.snakeyaml)
 
     testImplementation(libs.junit.parameterizedTest)
-    testImplementation(project(":modules:test"))
 }

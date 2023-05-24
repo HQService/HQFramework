@@ -4,5 +4,6 @@ plugins {
 }
 
 tasks.shadowJar {
-    this.archiveBaseName.set(project.rootProject.name)
+    archiveBaseName.set(project.rootProject.name)
+    destinationDirectory.set(file(rootProject.projectDir.path + "/build_outputs"))
 }

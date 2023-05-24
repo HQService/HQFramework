@@ -11,6 +11,8 @@ pluginManagement {
         kotlin("plugin.serialization") version kotlinVersion apply false
         kotlin("kapt") version kotlinVersion apply false
         id("com.github.johnrengelman.shadow") version shadowVersion apply false
+        id("hqframework-dependency-handler-extensions")
+        id("hqframework-configure-extensions")
     }
 }
 
@@ -26,9 +28,11 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("libs") {
-            library("kotlin-stdlib", "org.jetbrains.kotlin:kotlin-stdlib:${getProperty("kotlinVersion")}")
-            library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:${getProperty("kotlinVersion")}")
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
+
+            library("kotlin-stdlib-jdk8", "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${getProperty("kotlinVersion")}")
+            library("kotlin-reflect", "org.jetbrains.kotlin:kotlin-reflect:${getProperty("kotlinVersion")}")
+            library("kotlin-test", "org.jetbrains.kotlin:kotlin-test:${getProperty("kotlinVersion")}")
 
             library("koin-core", "io.insert-koin:koin-core-jvm:${getProperty("koinVersion")}")
             library("koin-annotations", "io.insert-koin:koin-annotations-jvm:${getProperty("koinAnnotationsVersion")}")
@@ -44,19 +48,19 @@ dependencyResolutionManagement {
             library("kotlinx-coroutines-test", "org.jetbrains.kotlinx:kotlinx-coroutines-test:${getProperty("coroutinesVersion")}")
             library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:${getProperty("serializationVersion")}")
 
+            library("auto-service", "com.google.auto.service:auto-service:${getProperty("autoServiceVersion")}")
+            library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
             library("hikaricp", "com.zaxxer:HikariCP:${getProperty("hikariCPVersion")}")
             library("sqlite", "org.xerial:sqlite-jdbc:${getProperty("sqliteVersion")}")
+            library("mysql-connector", "mysql:mysql-connector-java:${getProperty("mysqlConnectorVersion")}")
 
             library("mockK", "io.mockk:mockk:${getProperty("mockKVersion")}")
             library("mockBukkit", "com.github.seeseemelk:MockBukkit-v1.19:${getProperty("mockBukkitVersion")}")
-            library("mysql-connector", "mysql:mysql-connector-java:${getProperty("mysqlConnectorVersion")}")
             library("junit-parameterizedTest", "org.junit.jupiter:junit-jupiter-params:${getProperty("jUnitVersion")}")
-            library("auto-service", "com.google.auto.service:auto-service:${getProperty("autoServiceVersion")}")
-            library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
             library("netty", "io.netty:netty-all:${getProperty("nettyVersion")}")
             library("guava", "com.google.guava:guava:${getProperty("guavaVersion")}")
             library("snakeyaml", "org.yaml:snakeyaml:${getProperty("snakeYamlVersion")}")
-            library("ninja", "ninja.leaping.configurate:configurate-yaml:${getProperty("ninjaVersion")}")
+            library("configurate-yaml", "ninja.leaping.configurate:configurate-yaml:${getProperty("configurateYamlVersion")}")
         }
     }
 }
@@ -71,5 +75,5 @@ fun includeAll(modulesDir: String) {
 }
 
 fun getProperty(key: String): String {
-    return extra[key]?.toString() ?: throw IllegalArgumentException("property with $key is null")
+    return extra[key]?.toString() ?: throw IllegalArgumentException("property with $key not found")
 }
