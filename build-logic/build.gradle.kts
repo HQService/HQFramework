@@ -40,5 +40,9 @@ gradlePlugin {
             id = "hqframework.configure-extensions"
             implementationClass = "ConfigureExtensions"
         }
+        register("hqframework-runtime-dependency-relocator") {
+            id = "hqframework.runtime-dependency-relocator"
+            implementationClass = "RuntimeDependencyRelocator"
+        }
     }
 }
