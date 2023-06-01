@@ -4,7 +4,7 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.core.component.*
+import kr.hqservice.framework.bukkit.core.component.*
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.test.HQFrameworkBukkitMock
 import org.junit.jupiter.api.*

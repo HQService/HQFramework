@@ -9,7 +9,7 @@ import io.mockk.junit5.MockKExtension
 import kr.hqservice.framework.bukkit.HQFrameworkBukkitModule
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.HQListener
-import kr.hqservice.framework.core.component.*
+import kr.hqservice.framework.bukkit.core.component.*
 import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
 import kr.hqservice.framework.bukkit.core.component.handler.ListenerComponentHandler
 import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
