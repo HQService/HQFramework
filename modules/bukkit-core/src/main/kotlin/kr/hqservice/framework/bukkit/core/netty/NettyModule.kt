@@ -1,8 +1,9 @@
-package kr.hqservice.framework.core.netty
+package kr.hqservice.framework.bukkit.core.netty
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQModule
-import kr.hqservice.framework.core.netty.handler.ChannelMainHandler
+import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket

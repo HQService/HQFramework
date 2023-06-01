@@ -5,7 +5,7 @@ plugins {
 }
 
 bukkitResourceGenerator {
-    main = "kr.hqservice.framework.bukkit.HQFrameworkBukkit"
+    main = "kr.hqservice.framework.HQFrameworkBukkit"
     name = "HQFramework"
     apiVersion = "1.13"
     libraries = excludedRuntimeDependencies(

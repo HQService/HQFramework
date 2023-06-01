@@ -10,6 +10,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import kr.hqservice.framework.netty.packet.Direction
+import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.PingPongPacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
@@ -24,10 +25,18 @@ class HQServerBootstrap(
 ) {
     private val group = NioEventLoopGroup(0, ThreadFactoryBuilder().setNameFormat("HQ IO Thread #%1\$d").build())
 
+    private fun init() {
+        Direction.INBOUND.registerPacket(HandShakePacket::class)
+        Direction.OUTBOUND.registerPacket(HandShakePacket::class)
+        Direction.INBOUND.registerPacket(PingPongPacket::class)
+        Direction.OUTBOUND.registerPacket(PingPongPacket::class)
+    }
+
     //TODO("준형님이 할 거 AUTO_CONNECT , COROUTINE")
 
     fun initClient(isBootUp: Boolean): CompletableFuture<Channel> {
         if (isBootUp) {
+            init()
             Direction.INBOUND.registerPacket(ShutdownPacket::class)
             Direction.INBOUND.registerPacket(RelayingPacket::class)
             Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
@@ -58,8 +67,9 @@ class HQServerBootstrap(
     }
 
     fun initServer(): CompletableFuture<Channel> {
-        Direction.OUTBOUND.registerPacket(ShutdownPacket::class)
+        init()
         Direction.INBOUND.registerPacket(RelayingPacket::class)
+        Direction.OUTBOUND.registerPacket(ShutdownPacket::class)
         Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
             channel.channel.writeAndFlush(PingPongPacket(packet.time, -1L))
         }

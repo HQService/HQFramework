@@ -8,7 +8,6 @@ import kr.hqservice.framework.netty.packet.server.RelayingResult
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
-import net.md_5.bungee.api.plugin.Plugin
 import java.lang.NumberFormatException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
@@ -38,11 +37,12 @@ class NettyServerBootstrap(
             wrapper.handler.setConnectionState(ConnectionState.CONNECTED)
             wrapper.channel.writeAndFlush(HandShakePacket(-1))
             channelContainer.onChannelActive(packet.port, wrapper)
+            logger.info("registered channel ${channelContainer.getChannelNameByPort(packet.port)}")
             PingPongManagementThread(wrapper).start()
             wrapper.channel.pipeline().addFirst("timeout-handler", TimeOutHandler(5L, TimeUnit.SECONDS))
         }
 
-        Direction.INBOUND.addListener(RelayingPacket::class) { packet, wrapper ->
+        Direction.INBOUND.addListener(RelayingPacket::class) { packet, _ ->
             try {
                 try {
                     val port = packet.getTargetServer().toInt()

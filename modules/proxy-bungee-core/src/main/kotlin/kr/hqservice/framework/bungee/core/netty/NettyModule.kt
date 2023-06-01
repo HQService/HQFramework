@@ -19,8 +19,7 @@ class NettyModule(
     private val bootstrap = NettyServerBootstrap(logger, config)
 
     override fun onEnable() {
-        if(nettyEnabled)
-            bootstrap.initializing()
+        if(nettyEnabled) bootstrap.initializing()
     }
 
     override fun onDisable() {

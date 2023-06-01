@@ -1,8 +1,8 @@
-package kr.hqservice.framework.core.netty
+package kr.hqservice.framework.bukkit.core.netty
 
-import kr.hqservice.framework.core.netty.event.AsyncNettyPacketReceivedEvent
-import kr.hqservice.framework.core.netty.event.NettyClientDisconnectedEvent
-import kr.hqservice.framework.core.netty.event.NettyPacketReceivedEvent
+import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
+import kr.hqservice.framework.bukkit.core.netty.event.NettyClientDisconnectedEvent
+import kr.hqservice.framework.bukkit.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.netty.HQServerBootstrap
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.pipeline.BossHandler

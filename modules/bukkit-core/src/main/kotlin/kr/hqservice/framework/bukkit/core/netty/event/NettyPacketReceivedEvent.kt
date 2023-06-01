@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core.netty.event
+package kr.hqservice.framework.bukkit.core.netty.event
 
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.AbstractPacket

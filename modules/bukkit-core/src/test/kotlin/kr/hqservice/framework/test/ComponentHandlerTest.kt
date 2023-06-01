@@ -6,12 +6,13 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import kr.hqservice.framework.HQFrameworkBukkitModule
-import kr.hqservice.framework.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.HQFrameworkBukkitModule
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.core.component.*
 import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
-import kr.hqservice.framework.core.component.handler.ListenerComponentHandler
-import kr.hqservice.framework.core.component.registry.BukkitComponentRegistry
+import kr.hqservice.framework.bukkit.core.component.handler.ListenerComponentHandler
+import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.handler.impl.ModuleComponentHandler
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.component.Component

@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core.netty.handler
+package kr.hqservice.framework.bukkit.core.netty.handler
 
 import kr.hqservice.framework.netty.packet.AbstractPacket
 

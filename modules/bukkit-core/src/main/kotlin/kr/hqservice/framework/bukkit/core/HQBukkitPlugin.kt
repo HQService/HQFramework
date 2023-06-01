@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core
+package kr.hqservice.framework.bukkit.core
 
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
@@ -28,7 +28,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
         val stream = getResource("config.yml")
         val file = File(dataFolder, "config.yml")
         if(!dataFolder.exists()) dataFolder.mkdirs()
-        file.bufferedWriter().use {  writer ->
+        if(!file.exists()) file.bufferedWriter().use {  writer ->
             stream?.reader()?.readLines()?.forEach {
                 writer.appendLine(it)
             }

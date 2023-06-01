@@ -1,4 +1,4 @@
-package kr.hqservice.framework.core.extension
+package kr.hqservice.framework.bukkit.core.extension
 
 import kr.hqservice.framework.global.core.extension.compress
 import kr.hqservice.framework.global.core.extension.decompress

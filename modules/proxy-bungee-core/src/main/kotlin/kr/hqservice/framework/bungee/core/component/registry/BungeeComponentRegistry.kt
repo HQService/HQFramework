@@ -7,11 +7,12 @@ import kr.hqservice.framework.proxy.core.HQProxyPlugin
 import kr.hqservice.framework.proxy.core.component.registry.ProxyComponentRegistry
 import net.md_5.bungee.api.plugin.Plugin
 import org.koin.core.annotation.Factory
+import org.koin.core.annotation.InjectedParam
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 
 @Factory(binds = [ComponentRegistry::class])
-class BungeeComponentRegistry(private val plugin: HQBungeePlugin) : ProxyComponentRegistry<HQBungeePlugin>(plugin) {
+class BungeeComponentRegistry(@InjectedParam private val plugin: HQBungeePlugin) : ProxyComponentRegistry<HQBungeePlugin>(plugin) {
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
         return mutableMapOf<KClass<*>, Any>().apply {
             put(Plugin::class, plugin)

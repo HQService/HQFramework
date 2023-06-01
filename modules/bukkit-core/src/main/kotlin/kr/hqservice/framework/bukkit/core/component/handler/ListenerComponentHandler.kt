@@ -1,7 +1,7 @@
-package kr.hqservice.framework.core.component.handler
+package kr.hqservice.framework.bukkit.core.component.handler
 
-import kr.hqservice.framework.core.HQBukkitPlugin
-import kr.hqservice.framework.core.component.HQListener
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import org.bukkit.event.HandlerList

@@ -1,11 +1,13 @@
-package kr.hqservice.framework.core.netty.event
+package kr.hqservice.framework.bukkit.core.netty.event
 
 import kr.hqservice.framework.netty.channel.ChannelWrapper
+import kr.hqservice.framework.netty.packet.AbstractPacket
 import org.bukkit.event.HandlerList
 
-class NettyClientConnectedEvent(
-    channel: ChannelWrapper
-) : NettyEvent(false, channel) {
+class AsyncNettyPacketReceivedEvent(
+    channel: ChannelWrapper,
+    packet: AbstractPacket
+) : PacketEvent(true, channel, packet) {
     override fun getHandlers(): HandlerList {
         return getHandlerList()
     }

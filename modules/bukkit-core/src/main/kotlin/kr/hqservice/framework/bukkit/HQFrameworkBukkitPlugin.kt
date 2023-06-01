@@ -1,6 +1,6 @@
-package kr.hqservice.framework
+package kr.hqservice.framework.bukkit
 
-import kr.hqservice.framework.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.HQPlugin
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile

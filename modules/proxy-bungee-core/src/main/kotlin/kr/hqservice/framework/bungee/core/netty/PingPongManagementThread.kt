@@ -6,20 +6,23 @@ import kr.hqservice.framework.netty.pipeline.ConnectionState
 import java.util.concurrent.TimeUnit
 
 class PingPongManagementThread(
-    private val wrapper: ChannelWrapper
+    private val wrapper: ChannelWrapper,
 ) : Thread() {
     override fun run() {
-        while(wrapper.channel.isOpen && wrapper.channel.isActive) {
+        while (wrapper.channel.isOpen && wrapper.channel.isActive) {
             try {
                 TimeUnit.SECONDS.sleep(1)
-            } catch (e: InterruptedException) { e.printStackTrace() }
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
 
-            if(wrapper.handler.connectionState != ConnectionState.CONNECTED)
+            if (wrapper.handler.connectionState != ConnectionState.CONNECTED)
                 return
 
             wrapper.startCallback(
                 PingPongPacket(-1L, System.currentTimeMillis()),
-                PingPongPacket::class) { packet ->
+                PingPongPacket::class
+            ) { packet ->
                 val ping = System.currentTimeMillis() - packet.receivedTime
                 wrapper.pingCalculator.process(ping)
                 val rt = PingPongPacket(packet.time, -1L)

@@ -1,6 +1,6 @@
-package kr.hqservice.framework.core.component.registry
+package kr.hqservice.framework.bukkit.core.component.registry
 
-import kr.hqservice.framework.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
 import org.bukkit.configuration.ConfigurationSection

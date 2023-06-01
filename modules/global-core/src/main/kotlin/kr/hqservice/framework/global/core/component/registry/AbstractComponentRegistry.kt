@@ -6,6 +6,7 @@ import kr.hqservice.framework.global.core.component.*
 import kr.hqservice.framework.global.core.component.Factory
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.component.error.*
+import kr.hqservice.framework.global.core.extension.print
 import org.koin.core.annotation.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
@@ -54,7 +55,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 qualifierProviders[key] = qualifierProvider
             }
         }
-
         val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> =
             ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
 

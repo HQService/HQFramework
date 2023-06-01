@@ -1,7 +1,7 @@
 package kr.hqservice.framework.inventory.handler
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.core.component.HQListener
+import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.inventory.container.HQContainer
 import kr.hqservice.framework.inventory.event.impl.ButtonClickEventImpl
 import org.bukkit.event.EventHandler

@@ -1,10 +1,10 @@
-package kr.hqservice.framework.core.netty.handler.impl
+package kr.hqservice.framework.bukkit.core.netty.handler.impl
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
-import kr.hqservice.framework.core.netty.event.NettyClientConnectedEvent
-import kr.hqservice.framework.core.netty.handler.ChannelMainHandler
-import kr.hqservice.framework.core.netty.handler.PacketSender
+import kr.hqservice.framework.bukkit.core.netty.event.NettyClientConnectedEvent
+import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
+import kr.hqservice.framework.bukkit.core.netty.handler.PacketSender
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.AbstractPacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
@@ -23,7 +23,9 @@ class ChannelMainHandlerImpl(
     override fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
         channel.handler.setConnectionState(ConnectionState.CONNECTED)
         this.proxyChannel = channel.handler.channel
-        plugin.server.scheduler.runTask(plugin, Runnable { plugin.server.pluginManager.callEvent(NettyClientConnectedEvent(channel)) })
+        plugin.server.scheduler.runTask(plugin, Runnable { plugin.server.pluginManager.callEvent(
+            NettyClientConnectedEvent(channel)
+        ) })
     }
 
     override fun sendPacketToProxy(packet: AbstractPacket) {

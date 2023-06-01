@@ -5,7 +5,7 @@ plugins {
 }
 
 bungeeResourceGenerator {
-    main = "kr.hqservice.framework.bungee.HQFrameworkBungee"
+    main = "kr.hqservice.framework.HQFrameworkBungee"
     name = "HQFramework"
     libraries = excludedRuntimeDependencies(
         libs.kotlin.stdlib.jdk8,

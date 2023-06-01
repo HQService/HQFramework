@@ -1,7 +1,7 @@
 package kr.hqservice.framework.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
-import kr.hqservice.framework.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.region.extension.asBlockLocation
 import org.bukkit.Location

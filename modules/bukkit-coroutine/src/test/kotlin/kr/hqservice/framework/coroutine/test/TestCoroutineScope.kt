@@ -1,7 +1,7 @@
 package kr.hqservice.framework.coroutine.test
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope

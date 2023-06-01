@@ -9,19 +9,19 @@ enum class Direction {
     OUTBOUND;
 
     protected val packetMap =
-        mutableMapOf<KClass<out AbstractPacket>, PacketWrapper<out AbstractPacket>>()
+        mutableMapOf<String, PacketWrapper<out AbstractPacket>>()
 
     protected val handlers =
-        mutableMapOf<KClass<out AbstractPacket>, LinkedList<PacketHandler<out AbstractPacket>>>()
+        mutableMapOf<String, LinkedList<PacketHandler<out AbstractPacket>>>()
 
     fun <T : AbstractPacket> registerPacket(packetClass: KClass<T>) {
-        if (packetMap.containsKey(packetClass))
+        if (packetMap.containsKey(packetClass.qualifiedName!!))
             throw IllegalArgumentException("packet duplicated")
 
         val constructor = packetClass.constructors.firstOrNull { it.parameters.isEmpty() }
             ?: throw IllegalArgumentException("packet has not define default constructor")
 
-        packetMap[packetClass] = PacketWrapper(packetClass, constructor)
+        packetMap[packetClass.qualifiedName!!] = PacketWrapper(packetClass, constructor)
     }
 
     fun <T : AbstractPacket> addListener(packetClass: KClass<T>, packetHandler: (packet: T, channel: ChannelWrapper)-> Unit) {
@@ -30,26 +30,26 @@ enum class Direction {
                 packetHandler(packet, channel)
             }
         }
-        handlers.computeIfAbsent(packetClass) { LinkedList() }.add(handler)
+        handlers.computeIfAbsent(packetClass.qualifiedName!!) { LinkedList() }.add(handler)
     }
 
     fun <T : AbstractPacket> addListener(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
-        handlers.computeIfAbsent(packetClass) { LinkedList() }.add(packetHandler)
+        handlers.computeIfAbsent(packetClass.qualifiedName!!) { LinkedList() }.add(packetHandler)
     }
 
     @Suppress("unchecked_cast")
     fun <T : AbstractPacket> getPacketByClass(clazz: KClass<T>): PacketWrapper<T> {
-        return packetMap[clazz] as? PacketWrapper<T>?: throw IllegalArgumentException("not found packet")
+        return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>?: throw IllegalArgumentException("not found packet")
     }
 
     @Suppress("unchecked_cast")
     fun <T : AbstractPacket> findPacketByClass(clazz: KClass<T>): PacketWrapper<T>? {
-        return packetMap[clazz] as? PacketWrapper<T>
+        return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>
     }
 
     @Suppress("unchecked_cast")
     fun <T : AbstractPacket> onPacketReceived(packet: T, channel: ChannelWrapper): Boolean {
-        val handlers = this.handlers[packet::class]?: return false
+        val handlers = this.handlers[packet::class.qualifiedName!!]?: return false
         for (listener in handlers) {
             listener as PacketHandler<T>
             listener.onPacketReceive(packet, channel)

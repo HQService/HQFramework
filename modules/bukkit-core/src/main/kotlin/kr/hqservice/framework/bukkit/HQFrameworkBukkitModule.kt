@@ -1,4 +1,4 @@
-package kr.hqservice.framework
+package kr.hqservice.framework.bukkit
 
 import org.bukkit.Bukkit
 import org.bukkit.Server

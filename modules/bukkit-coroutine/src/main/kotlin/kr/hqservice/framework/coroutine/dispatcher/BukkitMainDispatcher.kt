@@ -1,7 +1,7 @@
 package kr.hqservice.framework.coroutine.dispatcher
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.coroutine.BukkitCoroutineContextElement
 import org.bukkit.Bukkit
 import org.bukkit.scheduler.BukkitRunnable
