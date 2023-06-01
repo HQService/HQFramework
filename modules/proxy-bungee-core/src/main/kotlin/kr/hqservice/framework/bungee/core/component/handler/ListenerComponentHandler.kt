@@ -7,7 +7,7 @@ import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.api.plugin.PluginManager
 
 @ComponentHandler
-class HQListenerHandler(
+class ListenerComponentHandler(
     private val plugin: Plugin,
     private val pluginManager: PluginManager
 ) : HQComponentHandler<HQListener> {

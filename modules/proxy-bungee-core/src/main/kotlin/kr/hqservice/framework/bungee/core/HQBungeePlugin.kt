@@ -10,7 +10,7 @@ import java.io.File
 import java.util.logging.Logger
 
 abstract class HQBungeePlugin : Plugin(), HQPlugin, KoinComponent {
-    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this, Plugin::class) }
 
     final override fun onLoad() {
         onPreLoad()
