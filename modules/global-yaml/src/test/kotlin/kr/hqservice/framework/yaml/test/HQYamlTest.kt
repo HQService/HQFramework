@@ -1,6 +1,6 @@
-package kr.hqservice.yaml.test
+package kr.hqservice.framework.yaml.test
 
-import kr.hqservice.yaml.extension.yaml
+import kr.hqservice.framework.yaml.extension.yaml
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.File

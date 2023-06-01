@@ -6,7 +6,7 @@ import kr.hqservice.framework.core.netty.handler.ChannelMainHandler
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
-import kr.hqservice.yaml.extension.yaml
+import kr.hqservice.framework.yaml.extension.yaml
 import org.bukkit.Bukkit
 import org.bukkit.plugin.Plugin
 import org.koin.core.component.KoinComponent

@@ -13,7 +13,7 @@ import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.PingPongPacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
-import kr.hqservice.yaml.config.HQYamlConfiguration
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletableFuture
 import java.util.logging.Logger

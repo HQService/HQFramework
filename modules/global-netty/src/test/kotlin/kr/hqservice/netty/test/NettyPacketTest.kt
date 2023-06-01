@@ -8,7 +8,7 @@ import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.netty.test.global.TestBootstrap
-import kr.hqservice.yaml.extension.yaml
+import kr.hqservice.framework.yaml.extension.yaml
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.io.File

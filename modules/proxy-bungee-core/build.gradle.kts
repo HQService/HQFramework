@@ -5,6 +5,8 @@ plugins {
 
 dependencies {
     apiModule("global", "core")
+    apiModule("global", "netty")
+    apiModule("global", "yaml")
     apiModule("proxy", "core")
     compileOnly(libs.bungeecord.api)
     api(libs.kotlinx.coroutines.core)

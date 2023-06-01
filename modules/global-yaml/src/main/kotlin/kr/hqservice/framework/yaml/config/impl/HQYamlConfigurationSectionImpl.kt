@@ -1,6 +1,6 @@
-package kr.hqservice.yaml.config.impl
+package kr.hqservice.framework.yaml.config.impl
 
-import kr.hqservice.yaml.config.HQYamlConfigurationSection
+import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 import ninja.leaping.configurate.ConfigurationNode
 
 open class HQYamlConfigurationSectionImpl(

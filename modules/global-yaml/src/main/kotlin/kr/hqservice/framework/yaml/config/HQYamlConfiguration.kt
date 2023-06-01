@@ -1,4 +1,4 @@
-package kr.hqservice.yaml.config
+package kr.hqservice.framework.yaml.config
 
 import java.io.File
 
