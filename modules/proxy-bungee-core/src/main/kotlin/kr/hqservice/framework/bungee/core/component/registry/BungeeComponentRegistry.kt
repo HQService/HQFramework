@@ -5,6 +5,7 @@ import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.proxy.core.HQProxyPlugin
 import kr.hqservice.framework.proxy.core.component.registry.ProxyComponentRegistry
+import net.md_5.bungee.api.plugin.Plugin
 import org.koin.core.annotation.Factory
 import java.util.logging.Logger
 import kotlin.reflect.KClass
@@ -13,6 +14,7 @@ import kotlin.reflect.KClass
 class BungeeComponentRegistry(private val plugin: HQBungeePlugin) : ProxyComponentRegistry<HQBungeePlugin>(plugin) {
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
         return mutableMapOf<KClass<*>, Any>().apply {
+            put(Plugin::class, plugin)
             put(HQProxyPlugin::class, plugin)
             put(HQBungeePlugin::class, plugin)
             put(HQPlugin::class, plugin)

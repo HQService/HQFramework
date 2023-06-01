@@ -19,14 +19,7 @@ abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
 
     final override fun onEnable() {
         onPreEnable()
-        val stream = getResourceAsStream("config.yml")
-        if(!dataFolder.exists()) dataFolder.mkdirs()
-        val file = File(dataFolder, "config.yml")
-        file.bufferedWriter().use {  writer ->
-            stream?.reader()?.readLines()?.forEach {
-                writer.appendLine(it)
-            }
-        }
+        loadConfig()
         componentRegistry.setup()
         onPostEnable()
     }
@@ -43,5 +36,16 @@ abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
 
     final override fun getLogger(): Logger {
         return super.getLogger()
+    }
+
+    private fun loadConfig() {
+        val stream = getResourceAsStream("config.yml") ?: return
+        if(!dataFolder.exists()) dataFolder.mkdirs()
+        val file = File(dataFolder, "config.yml")
+        file.bufferedWriter().use {  writer ->
+            stream.reader().readLines().forEach {
+                writer.appendLine(it)
+            }
+        }
     }
 }
