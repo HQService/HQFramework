@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     apiModule("global", "core")
-    apiModule("proxy", "core-api")
     api(libs.kotlinx.coroutines.core)
     api(libs.netty)
 

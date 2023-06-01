@@ -1,11 +1,20 @@
 package kr.hqservice.framework.velocity.core
 
+import com.velocitypowered.api.event.EventManager
+import com.velocitypowered.api.event.Subscribe
+import com.velocitypowered.api.event.proxy.ProxyInitializeEvent
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent
+import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.proxy.ProxyServer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kr.hqservice.framework.global.core.HQPlugin
+import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.proxy.core.HQProxyPlugin
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.koin.core.parameter.parametersOf
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStreamReader
@@ -14,10 +23,49 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
+import java.util.logging.Logger
 
-abstract class HQFrameworkVelocityPlugin : HQPlugin {
+abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
+    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+
+    abstract fun getEventManager(): EventManager
+    abstract fun getProxyServer(): ProxyServer
+    abstract fun getSlf4jLogger(): org.slf4j.Logger
+    abstract fun getPluginContainer(): PluginContainer
+
+    @Subscribe
+    fun onProxyEnable(event: ProxyInitializeEvent) {
+        onPreEnable()
+        onEnable()
+        onPostEnable()
+    }
+
+    @Subscribe
+    fun onProxyDisable(event: ProxyShutdownEvent) {
+        onPreDisable()
+        onDisable()
+        onPostDisable()
+    }
+
+    final override fun onLoad() {
+        onPreLoad()
+        onPostLoad()
+    }
+
+    final override fun onEnable() {
+        componentRegistry.setup()
+    }
+
+    final override fun onDisable() {
+        componentRegistry.teardown()
+    }
+
     final override fun getJar(): File {
         return findTargetPluginJar()
+    }
+
+    final override fun getLogger(): Logger {
+        return Logger.getLogger(this.getSlf4jLogger().name)
     }
 
     private fun findTargetPluginJar(): File {
@@ -42,8 +90,4 @@ abstract class HQFrameworkVelocityPlugin : HQPlugin {
             throw NullPointerException("플러그인의 velocity-plugin.json 을 로드할 수 없습니다.")
         }
     }
-
-    abstract fun getVelocityEventManager(): com.velocitypowered.api.event.EventManager
-
-    abstract fun getProxyServer(): ProxyServer
 }

@@ -1,7 +1,7 @@
 package kr.hqservice.framework.bungee.core
 
-import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.proxy.core.HQProxyPlugin
 import net.md_5.bungee.api.plugin.Plugin
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -9,8 +9,8 @@ import org.koin.core.parameter.parametersOf
 import java.io.File
 import java.util.logging.Logger
 
-abstract class HQBungeePlugin : Plugin(), HQPlugin, KoinComponent {
-    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this, Plugin::class) }
+abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
+    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
 
     final override fun onLoad() {
         onPreLoad()
