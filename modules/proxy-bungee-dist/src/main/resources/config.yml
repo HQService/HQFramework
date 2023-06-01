@@ -1,0 +1,4 @@
+netty-enabled: false
+netty-host: 127.0.0.1
+netty-port: 11286
+netty-shutdown-servers: true

@@ -6,7 +6,7 @@ import io.netty.handler.codec.LengthFieldPrepender
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.PacketDecoder
 import kr.hqservice.framework.netty.pipeline.PacketEncoder
-import kr.hqservice.yaml.config.HQYamlConfiguration
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import java.util.logging.Logger
 
 class TestBootstrap(

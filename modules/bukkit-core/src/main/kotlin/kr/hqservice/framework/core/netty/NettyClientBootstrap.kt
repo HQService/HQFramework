@@ -8,7 +8,7 @@ import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
-import kr.hqservice.yaml.config.HQYamlConfiguration
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.plugin.Plugin
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
