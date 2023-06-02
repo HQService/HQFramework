@@ -6,6 +6,8 @@ plugins {
 dependencies {
     apiModule("global", "core")
     apiModule("global", "yaml")
+    api(libs.byte.buddy.core)
+    api(libs.byte.buddy.agent)
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.netty)

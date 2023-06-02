@@ -16,9 +16,9 @@ import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegi
 import kr.hqservice.framework.global.core.component.handler.impl.ModuleComponentHandler
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Factory
+import kr.hqservice.framework.global.core.component.HQFactory
 import kr.hqservice.framework.global.core.component.HQModule
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.global.core.extension.print
 import org.bukkit.event.Listener
 import org.bukkit.plugin.PluginLoader
@@ -80,7 +80,7 @@ class ComponentHandlerTest : KoinComponent {
         }
     }
 
-    @Singleton
+    @HQSingleton
     @Component
     @ExcludeTestSearch
     class TestComponentA : TestHQModule, HQListener
@@ -89,7 +89,7 @@ class ComponentHandlerTest : KoinComponent {
     @ExcludeTestSearch
     class TestComponentB : TestHQModule
 
-    @Factory(binds = [TestComponentC::class])
+    @HQFactory(binds = [TestComponentC::class])
     @Component
     @ExcludeTestSearch
     class TestComponentC : TestHQModule
@@ -109,7 +109,7 @@ class ComponentHandlerTest : KoinComponent {
     @ExcludeTestSearch
     class TestComponentE(componentF: TestComponentF) : TestHQModule
 
-    @Singleton(binds = [TestComponentF::class])
+    @HQSingleton(binds = [TestComponentF::class])
     @Component
     @ExcludeTestSearch
     class TestComponentF : TestHQModule

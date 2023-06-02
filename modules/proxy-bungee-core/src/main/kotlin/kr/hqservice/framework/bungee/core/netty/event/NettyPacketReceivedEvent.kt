@@ -1,14 +1,14 @@
 package kr.hqservice.framework.bungee.core.netty.event
 
 import kr.hqservice.framework.netty.channel.ChannelWrapper
-import kr.hqservice.framework.netty.packet.AbstractPacket
+import kr.hqservice.framework.netty.packet.Packet
 import kotlin.reflect.KClass
 
 class NettyPacketReceivedEvent(
-    val packet: AbstractPacket,
+    val packet: Packet,
     val wrapper: ChannelWrapper
 ) : PacketEvent() {
-    fun isPacketOf(clazz: KClass<out AbstractPacket>): Boolean {
+    fun isPacketOf(clazz: KClass<out Packet>): Boolean {
         return clazz.isInstance(packet)
     }
 }

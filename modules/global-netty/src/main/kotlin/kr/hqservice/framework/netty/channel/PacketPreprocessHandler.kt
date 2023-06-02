@@ -1,7 +1,7 @@
 package kr.hqservice.framework.netty.channel
 
-import kr.hqservice.framework.netty.packet.AbstractPacket
+import kr.hqservice.framework.netty.packet.Packet
 
 interface PacketPreprocessHandler {
-    fun preprocess(packet: AbstractPacket, channel: ChannelWrapper)
+    fun preprocess(packet: Packet, channel: ChannelWrapper)
 }

@@ -68,6 +68,10 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
         return Logger.getLogger(this.getSlf4jLogger().name)
     }
 
+    final override fun getPluginClassLoader(): ClassLoader {
+        return Thread.currentThread().contextClassLoader
+    }
+
     private fun findTargetPluginJar(): File {
         val pluginPath = Path.of("plugins")
         val pluginJarPath = Files.newDirectoryStream(pluginPath) { path ->

@@ -2,7 +2,7 @@ package kr.hqservice.framework.netty.channel
 
 import io.netty.channel.Channel
 import kr.hqservice.framework.netty.math.PingCalculator
-import kr.hqservice.framework.netty.packet.AbstractPacket
+import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import java.util.logging.Logger
@@ -23,7 +23,7 @@ class ChannelWrapper(
         this.enabled = enabled
     }
 
-    fun<T : AbstractPacket> startCallback(packet: AbstractPacket, type: KClass<T>, onReceived: (packet: T)-> Unit) {
+    fun<T : Packet> startCallback(packet: Packet, type: KClass<T>, onReceived: (packet: T)-> Unit) {
         val handler = object: PacketCallbackHandler<T> {
             override fun onCallbackReceived(packet: T) {
                 onReceived(packet)
@@ -32,12 +32,11 @@ class ChannelWrapper(
         callbackContainer.addOnQueue(this, packet, type, handler)
     }
 
-    fun sendPacket(packet: AbstractPacket) {
+    fun sendPacket(packet: Packet) {
         if(enabled) {
             if(handler.connectionState == ConnectionState.CONNECTED) {
                 channel.writeAndFlush(packet)
             } else logger.severe("Some logic tried to send packet before connection established or disconnected. (Packet: ${packet::class.simpleName})")
         }
     }
-
 }

@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.service.impl
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
@@ -13,7 +13,7 @@ import kotlin.reflect.full.createInstance
 
 @Component
 @Named("tag")
-@Singleton(binds = [NmsService::class])
+@HQSingleton(binds = [NmsService::class])
 class NmsNBTTagCompoundService(
     reflectionUtil: NmsReflectionUtil
 ) : KoinComponent, NmsService<Any?, NmsNBTTagCompoundWrapper>, HQService {

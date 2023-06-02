@@ -1,5 +1,9 @@
 package kr.hqservice.framework.bungee.core.netty
 
+import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
+import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.HQSimpleComponent
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.netty.HQServerBootstrap
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
@@ -8,15 +12,18 @@ import kr.hqservice.framework.netty.packet.server.RelayingResult
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import org.koin.core.component.KoinComponent
 import java.lang.NumberFormatException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
+@Component
+@HQSingleton(binds = [NettyServerBootstrap::class])
 class NettyServerBootstrap(
     private val logger: Logger,
-    private val config: HQYamlConfiguration
-) {
-    private val channelContainer = NettyChannelContainer(config.getBoolean("" + "netty.shutdown-servers"))
+    private val config: HQYamlConfiguration,
+    private val channelRegistry: NettyChannelRegistry
+) : KoinComponent, HQSimpleComponent {
 
     fun initializing() {
         val future = HQServerBootstrap(logger, config).initServer()
@@ -29,15 +36,15 @@ class NettyServerBootstrap(
         registerDefaultListeners()
     }
 
-    fun shutdown() { channelContainer.shutdown() }
+    fun shutdown() { channelRegistry.shutdown() }
 
     private fun registerDefaultListeners() {
         Direction.INBOUND.addListener(HandShakePacket::class) { packet, wrapper ->
             wrapper.port = packet.port
             wrapper.handler.setConnectionState(ConnectionState.CONNECTED)
             wrapper.channel.writeAndFlush(HandShakePacket(-1))
-            channelContainer.onChannelActive(packet.port, wrapper)
-            logger.info("registered channel ${channelContainer.getChannelNameByPort(packet.port)}")
+            channelRegistry.registerActiveChannel(packet.port, wrapper)
+            logger.info("registered channel ${channelRegistry.getChannelNameByPort(packet.port)}")
             PingPongManagementThread(wrapper).start()
             wrapper.channel.pipeline().addFirst("timeout-handler", TimeOutHandler(5L, TimeUnit.SECONDS))
         }
@@ -45,13 +52,13 @@ class NettyServerBootstrap(
         Direction.INBOUND.addListener(RelayingPacket::class) { packet, _ ->
             try {
                 try {
-                    val port = packet.getTargetServer().toInt()
+                    val port = packet.targetServer.toInt()
                     if (port == -1) {
-                        channelContainer.forEachChannels { it.sendPacket(RelayingResult(packet.getRelay())) }
+                        channelRegistry.forEachChannels { it.sendPacket(RelayingResult(packet.getRelay())) }
                         return@addListener
-                    } else channelContainer.getChannelByPort(port)
+                    } else channelRegistry.getChannelByPort(port)
                 } catch (e: NumberFormatException) {
-                    channelContainer.getChannelByServerName(packet.getTargetServer())
+                    channelRegistry.getChannelByServerName(packet.targetServer)
                 }.sendPacket(RelayingResult(packet.getRelay()))
             } catch (e: IllegalArgumentException) {
                 logger.severe("Relaying packet failed due to TargetServer Offline!")

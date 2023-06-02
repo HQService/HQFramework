@@ -21,4 +21,6 @@ interface HQPlugin {
     fun getDataFolder(): File
 
     fun getLogger(): Logger
+
+    fun getPluginClassLoader(): ClassLoader
 }

@@ -3,7 +3,7 @@ package kr.hqservice.framework.coroutine
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import org.koin.core.annotation.Named
 import org.koin.core.component.getScopeName
@@ -12,7 +12,7 @@ import java.util.logging.Logger
 
 @Named("main")
 @Component
-@Singleton(binds = [HQCoroutineScope::class])
+@HQSingleton(binds = [HQCoroutineScope::class])
 class BukkitMainCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.Main) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {

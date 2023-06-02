@@ -2,7 +2,7 @@ package kr.hqservice.framework.database.test.datasource
 
 import kotlinx.coroutines.CoroutineScope
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.database.DatabaseHost
 import kr.hqservice.framework.database.component.HQDataSource
@@ -12,7 +12,7 @@ import org.koin.core.annotation.Named
 
 @Named("mysql")
 @Isolated("RepositoryTest")
-@Singleton(binds = [HQDataSource::class])
+@HQSingleton(binds = [HQDataSource::class])
 @Component
 class TestMySQLDataSource(
     @Named("database") coroutineScope: HQCoroutineScope

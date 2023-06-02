@@ -4,4 +4,4 @@ import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-annotation class Singleton(val binds: Array<KClass<*>> = [])
+annotation class HQSingleton(val binds: Array<KClass<*>> = [])

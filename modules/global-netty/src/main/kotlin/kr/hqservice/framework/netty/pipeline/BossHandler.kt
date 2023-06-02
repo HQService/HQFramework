@@ -7,7 +7,7 @@ import io.netty.handler.timeout.ReadTimeoutException
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.channel.DisconnectHandler
 import kr.hqservice.framework.netty.channel.PacketPreprocessHandler
-import kr.hqservice.framework.netty.packet.AbstractPacket
+import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import java.io.IOException
@@ -39,9 +39,9 @@ class BossHandler(
         }
     }
 
-    fun setPacketPreprocessHandler(handler: (AbstractPacket, ChannelWrapper)-> Unit) {
+    fun setPacketPreprocessHandler(handler: (Packet, ChannelWrapper)-> Unit) {
         this.preprocessHandler = object: PacketPreprocessHandler {
-            override fun preprocess(packet: AbstractPacket, channel: ChannelWrapper) {
+            override fun preprocess(packet: Packet, channel: ChannelWrapper) {
                 handler(packet, channel)
             }
         }
@@ -58,7 +58,7 @@ class BossHandler(
             return
         }
 
-        val packet = msg as AbstractPacket
+        val packet = msg as Packet
         preprocessHandler?.preprocess(packet, channel)
 
         if(packet.isCallbackResult() && channel.callbackContainer.complete(packet))

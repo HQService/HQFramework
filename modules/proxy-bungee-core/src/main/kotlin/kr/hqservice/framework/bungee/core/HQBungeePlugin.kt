@@ -48,4 +48,8 @@ abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
             }
         }
     }
+
+    final override fun getPluginClassLoader(): ClassLoader {
+        return Plugin::class.java.classLoader
+    }
 }

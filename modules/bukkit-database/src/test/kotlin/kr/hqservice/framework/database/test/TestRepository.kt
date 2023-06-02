@@ -1,7 +1,7 @@
 package kr.hqservice.framework.database.test
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.database.component.HQDataSource
 import kr.hqservice.framework.database.component.HQEntityClass
 import kr.hqservice.framework.database.component.HQRepository
@@ -12,7 +12,7 @@ import org.koin.core.annotation.Named
 import java.util.*
 
 @Isolated("RepositoryTest")
-@Singleton(binds = [TestRepository::class])
+@HQSingleton(binds = [TestRepository::class])
 @Component
 class TestRepositoryImpl(
     @MutableNamed("data-source-type") private val dataSource: HQDataSource,

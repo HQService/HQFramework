@@ -1,17 +1,9 @@
 package kr.hqservice.framework.netty.packet.server
 
 import io.netty.buffer.ByteBuf
-import kr.hqservice.framework.netty.packet.AbstractPacket
+import kr.hqservice.framework.netty.packet.Packet
 
-class HandShakePacket : AbstractPacket {
-    var port: Int = 0
-        private set
-
-    constructor()
-    constructor(port: Int) {
-        this.port = port
-    }
-
+class HandShakePacket(var port: Int) : Packet() {
     override fun write(buf: ByteBuf) {
         buf.writeInt(port)
     }

@@ -3,15 +3,14 @@ package kr.hqservice.framework.netty.pipeline
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
-import kr.hqservice.framework.netty.packet.AbstractPacket
+import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.extension.writeString
 import kotlin.jvm.Throws
 
-class PacketEncoder : MessageToByteEncoder<AbstractPacket>() {
-
+class PacketEncoder : MessageToByteEncoder<Packet>() {
     @Throws(Exception::class)
-    override fun encode(ctx: ChannelHandlerContext, packet: AbstractPacket?, out: ByteBuf) {
+    override fun encode(ctx: ChannelHandlerContext, packet: Packet?, out: ByteBuf) {
         if(packet == null)
             throw IllegalArgumentException("packet is null")
 

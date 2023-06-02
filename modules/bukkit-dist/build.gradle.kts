@@ -25,7 +25,9 @@ bukkitResourceGenerator {
         libs.guava,
         libs.auto.service.annotations,
         libs.snakeyaml,
-        libs.configurate.yaml
+        libs.configurate.yaml,
+        libs.byte.buddy.core,
+        libs.byte.buddy.agent
     )
 }
 

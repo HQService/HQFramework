@@ -15,6 +15,7 @@ import kr.hqservice.framework.netty.packet.server.PingPongPacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import net.bytebuddy.agent.ByteBuddyAgent
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletableFuture
 import java.util.logging.Logger
@@ -26,6 +27,8 @@ class HQServerBootstrap(
     private val group = NioEventLoopGroup(0, ThreadFactoryBuilder().setNameFormat("HQ IO Thread #%1\$d").build())
 
     private fun init() {
+        ByteBuddyAgent.install()
+
         Direction.INBOUND.registerPacket(HandShakePacket::class)
         Direction.OUTBOUND.registerPacket(HandShakePacket::class)
         Direction.INBOUND.registerPacket(PingPongPacket::class)

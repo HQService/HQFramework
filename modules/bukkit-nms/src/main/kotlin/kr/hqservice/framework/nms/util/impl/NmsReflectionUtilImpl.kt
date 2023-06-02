@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.util.impl
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
@@ -20,7 +20,7 @@ import kotlin.reflect.full.staticFunctions
 import kotlin.reflect.jvm.jvmErasure
 
 @Component
-@Singleton(binds = [NmsReflectionUtil::class])
+@HQSingleton(binds = [NmsReflectionUtil::class])
 class NmsReflectionUtilImpl(
     server: Server,
 ) : NmsReflectionUtil, HQSimpleComponent {

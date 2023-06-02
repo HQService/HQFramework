@@ -3,10 +3,7 @@ package kr.hqservice.framework.global.core.component.registry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.component.*
-import kr.hqservice.framework.global.core.component.Factory
-import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.component.error.*
-import kr.hqservice.framework.global.core.extension.print
 import org.koin.core.annotation.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
@@ -81,6 +78,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             } else {
                 componentInstances.addSafely(instance)
                 tryCreateBeanModule(component, instance)
+                componentExceptionCatchingStack = 0
             }
         }
         val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> = ConcurrentLinkedQueue(unsortedComponentHandlers.values)
@@ -103,6 +101,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     setup(component)
                 }
                 componentHandlers[componentHandlerClass] = componentHandler
+                handlerExceptionCatchingStack = 0
             } else {
                 val illegalDepends = depends.filter {
                     !it.allSuperclasses.contains(HQComponentHandler::class)
@@ -292,8 +291,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
      * 빈의 종류와 Bind 타입들을 구합니다.
      */
     private fun getBeanProperties(klass: KClass<*>): Pair<Kind, Array<KClass<*>>>? {
-        val factory = klass.findAnnotation<Factory>()
-        val single = klass.findAnnotation<Singleton>()
+        val factory = klass.findAnnotation<HQFactory>()
+        val single = klass.findAnnotation<HQSingleton>()
         if (factory != null && single != null) {
             throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
         }

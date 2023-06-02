@@ -1,21 +1,28 @@
-package kr.hqservice.framework.bungee.core.netty
+package kr.hqservice.framework.bungee.core.netty.registry.impl
 
 import kr.hqservice.framework.bungee.core.netty.event.NettyClientConnectedEvent
 import kr.hqservice.framework.bungee.core.netty.event.NettyClientDisconnectedEvent
 import kr.hqservice.framework.bungee.core.netty.event.NettyPacketReceivedEvent
+import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
+import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.HQSimpleComponent
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.framework.netty.pipeline.BossHandler
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import net.md_5.bungee.api.ProxyServer
 
-class NettyChannelContainer(
-    private val shutdownServers: Boolean,
-) {
+@Component
+@HQSingleton(binds = [NettyChannelRegistry::class])
+class NettyChannelRegistryImpl(
+    private val config: HQYamlConfiguration
+) : NettyChannelRegistry, HQSimpleComponent {
     private val portChannelContainer = mutableMapOf<Int, ChannelWrapper>()
     private val nameChannelContainer = mutableMapOf<String, ChannelWrapper>()
     private var unknownClientId = 1
 
-    fun onChannelActive(port: Int, wrapper: ChannelWrapper) {
+    override fun registerActiveChannel(port: Int, wrapper: ChannelWrapper) {
         val name = ProxyServer.getInstance().servers.values.firstOrNull { it.address.port == port }?.name
             ?: "Unknown-${unknownClientId++}"
         ProxyServer.getInstance().pluginManager.callEvent(
@@ -35,7 +42,11 @@ class NettyChannelContainer(
         }
     }
 
-    fun getChannelNameByPort(port: Int): String {
+    override fun loopChannels(block: (ChannelWrapper)->Unit) {
+        portChannelContainer.values.forEach(block)
+    }
+
+    override fun getChannelNameByPort(port: Int): String {
         return nameChannelContainer.entries.firstOrNull { it.value.port == port }?.key
             ?: throw IllegalArgumentException()
     }
@@ -51,23 +62,23 @@ class NettyChannelContainer(
         nameChannelContainer.entries.removeIf { it.value == wrapper }
     }
 
-    fun shutdown() {
+    override fun shutdown() {
         portChannelContainer.values.forEach {
-            it.channel.writeAndFlush(ShutdownPacket(shutdownServers))
+            it.channel.writeAndFlush(ShutdownPacket(config.getBoolean("netty.shutdown-servers")))
             if (it.channel.isActive && it.channel.isOpen)
                 it.channel.close()
         }
     }
 
-    fun getChannelByPort(port: Int): ChannelWrapper {
+    override fun getChannelByPort(port: Int): ChannelWrapper {
         return portChannelContainer[port] ?: throw IllegalArgumentException()
     }
 
-    fun getChannelByServerName(name: String): ChannelWrapper {
+    override fun getChannelByServerName(name: String): ChannelWrapper {
         return nameChannelContainer[name] ?: throw IllegalArgumentException()
     }
 
-    fun forEachChannels(block: (ChannelWrapper) -> Unit) {
+    override fun forEachChannels(block: (ChannelWrapper) -> Unit) {
         portChannelContainer.values.forEach(block)
     }
 }

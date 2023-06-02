@@ -50,4 +50,8 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     final override fun getLogger(): Logger {
         return super.getLogger()
     }
+
+    final override fun getPluginClassLoader(): ClassLoader {
+        return super.getClassLoader()
+    }
 }

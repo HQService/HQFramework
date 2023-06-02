@@ -2,7 +2,7 @@ package kr.hqservice.framework.netty.packet
 
 import io.netty.buffer.ByteBuf
 
-abstract class AbstractPacket {
+abstract class Packet {
     private var callbackResult = false
 
     fun isCallbackResult(): Boolean {
