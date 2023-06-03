@@ -44,6 +44,7 @@ class NettyChannelRegistryImpl(
         val connectedPacket = ChannelConnectedPacket(channelVO)
 
         val connectedChannels = mutableListOf<NettyChannel>()
+        connectedChannels.add(channelVO)
         nameChannelContainer.forEach { (channelName, wrap) -> connectedChannels.add(NettyChannelImpl(wrap.port, channelName)) }
         portChannelContainer.values.forEach { it.sendPacket(connectedPacket) }
 

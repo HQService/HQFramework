@@ -46,7 +46,7 @@ class PlayerConnectionListener(
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
             event.player.uniqueId,
-            null,
+            getChannelByAddress(event.server.address),
         )
         val packet = PlayerConnectionPacket(nettyPlayer, PlayerConnectionState.CONNECTED, getChannelByAddress(event.server.address))
         channelContainer.loopChannels { it.sendPacket(packet) }
@@ -70,7 +70,7 @@ class PlayerConnectionListener(
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
             event.player.uniqueId,
-            getChannelByAddress(event.player.server.address)
+            event.player.server?.run { getChannelByAddress(this.address) }
         )
         val packet = PlayerConnectionPacket(nettyPlayer, PlayerConnectionState.DISCONNECT, getChannelByAddress(event.player.pendingConnection.address))
         channelContainer.loopChannels { it.sendPacket(packet) }

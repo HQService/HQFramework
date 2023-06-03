@@ -60,8 +60,8 @@ class HQNettyClient(
 
             Direction.INBOUND.addListener(ChannelListPacket::class) { packet, _ ->
                 /*println("ChannelListPacket Received Log -> ")
-                println("channels: ${packet.getChannels().map { it.getName() + ", " + it.getPort() }}")
-                println("players: ${packet.getPlayers().map { it.getName() + ", " + it.getChannel()?.getPort() }}")*/
+                println("channels: ${packet.getChannels().map { it.getName() + "-" + it.getPort() }}")
+                println("players: ${packet.getPlayers().map { it.getName() + "-" + it.getChannel()?.getPort() }}")*/
                 packet.getChannels().forEach(container::registerChannel)
                 packet.getPlayers().forEach(container::addPlayer)
             }
@@ -98,8 +98,9 @@ class HQNettyClient(
             .group(group)
             .connect(InetSocketAddress(config.getString("netty.host"), config.getInt("netty.port")))
             .addListener(ChannelFutureListener {
-                if (it.isSuccess)
+                if (it.isSuccess) {
                     future.complete(it.channel())
+                }
                 else future.completeExceptionally(it.cause())
             })
         return future
