@@ -4,7 +4,7 @@ import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
-import kr.hqservice.framework.netty.HQServerBootstrap
+import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
@@ -26,7 +26,7 @@ class NettyServerBootstrap(
 ) : KoinComponent, HQSimpleComponent {
 
     fun initializing() {
-        val future = HQServerBootstrap(logger, config).initServer()
+        val future = HQNettyBootstrap(logger, config).initServer()
         future.whenCompleteAsync { _, throwable ->
             if(throwable != null) {
                 logger.severe("failed to bootup successfully.")

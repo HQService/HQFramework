@@ -3,7 +3,7 @@ package kr.hqservice.framework.bukkit.core.netty
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.event.NettyClientDisconnectedEvent
 import kr.hqservice.framework.bukkit.core.netty.event.NettyPacketReceivedEvent
-import kr.hqservice.framework.netty.HQServerBootstrap
+import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.ConnectionState
@@ -21,13 +21,12 @@ class NettyClientBootstrap(
     private var bootup = true
 
     fun initializing() {
-        // TODO("준형님이 코루틴으로 바꿀 예정")
-        val future = HQServerBootstrap(logger, config).initClient(bootup)
+        val future = HQNettyBootstrap(logger, config).initClient(bootup)
         bootup = false
         future.whenCompleteAsync { channel, throwable ->
             if(throwable != null) {
                 logger.severe("failed to bootup successfully.")
-                throwable.printStackTrace()
+                //throwable.printStackTrace()
                 try {
                     TimeUnit.SECONDS.sleep(3)
                     initializing()

@@ -1,6 +1,10 @@
 package kr.hqservice.framework.netty.packet.extension
 
 import io.netty.buffer.ByteBuf
+import kr.hqservice.framework.netty.api.NettyChannel
+import kr.hqservice.framework.netty.api.NettyPlayer
+import kr.hqservice.framework.netty.api.impl.NettyChannelImpl
+import kr.hqservice.framework.netty.api.impl.NettyPlayerImpl
 import java.util.UUID
 import kotlin.experimental.and
 
@@ -60,4 +64,42 @@ fun ByteBuf.writeUUID(uuid: UUID) {
 
 fun ByteBuf.readUUID(): UUID {
     return UUID(readLong(), readLong())
+}
+
+fun ByteBuf.writeChannel(nettyChannel: NettyChannel?) {
+    if(nettyChannel == null) writeString("null-channel")
+    else {
+        writeString(nettyChannel.getName())
+        writeInt(nettyChannel.getPort())
+    }
+}
+
+fun ByteBuf.readChannel(): NettyChannel? {
+    val name = readString()
+    if(name == "null-channel") return null
+    val port = readInt()
+    return NettyChannelImpl(port, name)
+}
+
+fun ByteBuf.writeChannels(nettyChannels: List<NettyChannel>) {
+    writeInt(nettyChannels.size)
+    nettyChannels.forEach(::writeChannel)
+}
+
+fun ByteBuf.readChannels(): List<NettyChannel> {
+    return List(readInt()) { readChannel()!! }
+}
+
+fun ByteBuf.writePlayer(nettyPlayer: NettyPlayer) {
+    writeString(nettyPlayer.getName())
+    writeUUID(nettyPlayer.getUniqueId())
+    nettyPlayer.getChannel().apply(::writeChannel)
+}
+
+fun ByteBuf.readPlayer(): NettyPlayer {
+    return NettyPlayerImpl(
+        readString(),
+        readUUID(),
+        readChannel()
+    )
 }
