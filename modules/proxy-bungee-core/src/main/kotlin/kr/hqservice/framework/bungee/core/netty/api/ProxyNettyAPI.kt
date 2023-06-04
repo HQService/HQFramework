@@ -14,20 +14,48 @@ import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.PacketHandler
 import net.md_5.bungee.api.ProxyServer
+import net.md_5.bungee.api.chat.TextComponent
 import java.util.UUID
+import java.util.logging.Logger
 import kotlin.reflect.KClass
 
 @Component
 @HQSingleton(binds = [HQNettyAPI::class])
 class ProxyNettyAPI(
     private val packetSender: PacketSender,
+    private val logger: Logger
 ) : HQNettyAPI, HQService {
+    private val proxy: ProxyServer by lazy { ProxyServer.getInstance() }
+
     override fun getPacketSender(): PacketSender {
         return packetSender
     }
 
     override fun getChannels(): List<NettyChannel> {
         return ProxyServer.getInstance().servers.map { NettyChannelImpl(it.value.address.port, it.key) }
+    }
+
+    override fun broadcast(message: String, logging: Boolean) {
+        val msg = TextComponent(message)
+        proxy.broadcast(msg)
+        if(logging) logger.info("[BROADCAST_ALL] $message")
+    }
+
+    override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
+        val msg = TextComponent(message)
+        val server = proxy.getServerInfo(channel.getName())?: return
+        server.players.forEach { it.sendMessage(msg) }
+        if(logging) logger.info("[BROADCAST_${channel.getName().uppercase()}] $message")
+    }
+
+    override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
+        val msg = TextComponent(message)
+        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(msg) }
+        if(logging) logger.info("[MESSAGE] $message")
+    }
+
+    override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
+        sendMessageToPlayers(listOf(player), message, logging)
     }
 
     override fun getChannel(name: String): NettyChannel? {

@@ -12,6 +12,14 @@ interface HQNettyAPI {
 
     fun getChannels(): List<NettyChannel>
 
+    fun broadcast(message: String, logging: Boolean = true)
+
+    fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean = true)
+
+    fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean = true)
+
+    fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean = true)
+
     fun getChannel(name: String): NettyChannel?
 
     fun getChannel(port: Int): NettyChannel?

@@ -12,6 +12,8 @@ import kr.hqservice.framework.netty.container.ChannelContainer
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.PacketHandler
+import kr.hqservice.framework.netty.packet.message.BroadcastPacket
+import kr.hqservice.framework.netty.packet.message.MessagePacket
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -27,6 +29,22 @@ class BukkitNettyAPI(
 
     override fun getChannels(): List<NettyChannel> {
         return container.getChannels()
+    }
+
+    override fun broadcast(message: String, logging: Boolean) {
+        packetSender.sendPacketToProxy(BroadcastPacket(message, logging, null))
+    }
+
+    override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
+        packetSender.sendPacketToProxy(BroadcastPacket(message, logging, channel))
+    }
+
+    override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
+        packetSender.sendPacketToProxy(MessagePacket(message, logging, players))
+    }
+
+    override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
+        packetSender.sendPacketToProxy(MessagePacket(message, logging, listOf(player)))
     }
 
     override fun getChannel(name: String): NettyChannel? {

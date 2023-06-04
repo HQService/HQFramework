@@ -1,10 +1,16 @@
 package kr.hqservice.framework.netty.packet.extension
 
 import io.netty.buffer.ByteBuf
+import kr.hqservice.framework.global.core.extension.compress
+import kr.hqservice.framework.global.core.extension.decompress
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.impl.NettyChannelImpl
 import kr.hqservice.framework.netty.api.impl.NettyPlayerImpl
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 import java.util.UUID
 import kotlin.experimental.and
 
@@ -102,4 +108,45 @@ fun ByteBuf.readPlayer(): NettyPlayer {
         readUUID(),
         readChannel()
     )
+}
+
+fun ByteBuf.writePlayers(nettyPlayers: List<NettyPlayer>) {
+    if(nettyPlayers.isEmpty()) writeBytes(ByteArray(0))
+    else ByteArrayOutputStream().use {
+        ObjectOutputStream(it).use { oos ->
+            oos.writeInt(nettyPlayers.size)
+            nettyPlayers.forEach { player ->
+                oos.writeUTF(player.getName())
+                oos.writeUTF(player.getUniqueId().toString())
+                player.getChannel()?.apply {
+                    oos.writeInt(getPort())
+                    oos.writeUTF(getName())
+                }?: oos.writeInt(-1)
+            }
+        }
+        val byteArray = it.toByteArray().compress()
+        writeBytes(byteArray)
+    }
+}
+
+fun ByteBuf.readPlayers(): List<NettyPlayer> {
+    val players = mutableListOf<NettyPlayer>()
+    try {
+        val bytes = ByteArray(readableBytes())
+        getBytes(readerIndex(), bytes)
+        ByteArrayInputStream(bytes.decompress()).use {
+            ObjectInputStream(it).use { ois ->
+                val size = ois.readInt()
+                for (i in 0 until size) {
+                    val name = ois.readUTF()
+                    val uuid = UUID.fromString(ois.readUTF())
+                    val port = ois.readInt()
+                    val channel =
+                        if (port == -1) null else NettyChannelImpl(port, ois.readUTF())
+                    players.add(NettyPlayerImpl(name, uuid, channel))
+                }
+            }
+        }
+    } catch (_: Exception) {}
+    return players
 }

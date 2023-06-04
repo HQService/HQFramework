@@ -4,6 +4,9 @@ import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEv
 import kr.hqservice.framework.bukkit.core.netty.event.NettyClientDisconnectedEvent
 import kr.hqservice.framework.bukkit.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.netty.HQNettyBootstrap
+import kr.hqservice.framework.netty.packet.Direction
+import kr.hqservice.framework.netty.packet.message.BroadcastPacket
+import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.ConnectionState
@@ -22,6 +25,10 @@ class NettyClientBootstrap(
 
     fun initializing() {
         val future = HQNettyBootstrap(logger, config).initClient(bootup)
+        if(bootup) {
+            Direction.OUTBOUND.registerPacket(BroadcastPacket::class)
+            Direction.OUTBOUND.registerPacket(MessagePacket::class)
+        }
         bootup = false
         future.whenCompleteAsync { channel, throwable ->
             if(throwable != null) {
