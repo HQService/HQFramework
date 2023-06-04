@@ -25,9 +25,11 @@ import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
 abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
+    private companion object {
+        val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+        val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
+    }
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
-    private val componentHandlers: MutableMap<KClass<out HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
-    private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
 
@@ -52,8 +54,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 qualifierProviders[key] = qualifierProvider
             }
         }
-        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> =
-            ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
+        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var componentExceptionCatchingStack = 0
@@ -81,8 +82,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentExceptionCatchingStack = 0
             }
         }
-        val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> = ConcurrentLinkedQueue(unsortedComponentHandlers.values)
-
+        val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> = ConcurrentLinkedQueue(unsortedComponentHandlers.values.toMutableList() + componentHandlers.keys)
         var handlerExceptionCatchingStack = 0
         var previousHandlerQueueSize = componentHandlersQueue.size
 
@@ -123,7 +123,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     }
 
     final override fun teardown() {
-        val reversedComponentHandlers = this.componentHandlers.toList().reversed().toMap()
+        val reversedComponentHandlers = componentHandlers.toList().reversed().toMap()
         reversedComponentHandlers.forEach { (_, componentHandler) ->
             processComponents(componentHandler) { component ->
                 teardown(component)

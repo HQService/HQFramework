@@ -8,7 +8,6 @@ import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
-import java.io.BufferedReader
 import java.io.File
 import java.util.logging.Logger
 
