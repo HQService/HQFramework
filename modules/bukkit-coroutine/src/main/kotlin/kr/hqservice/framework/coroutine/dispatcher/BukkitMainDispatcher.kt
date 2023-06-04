@@ -7,7 +7,7 @@ import org.bukkit.Bukkit
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.coroutines.CoroutineContext
 
-@OptIn(InternalCoroutinesApi::class)
+@OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 object BukkitMainDispatcher : MainCoroutineDispatcher(), Delay {
     override val immediate: MainCoroutineDispatcher
         get() = BukkitMainDispatcherImmediate

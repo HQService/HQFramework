@@ -24,14 +24,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
 
     final override fun onEnable() {
         onPreEnable()
-        val stream = getResource("config.yml")
-        val file = File(dataFolder, "config.yml")
-        if(!dataFolder.exists()) dataFolder.mkdirs()
-        if(!file.exists()) file.bufferedWriter().use {  writer ->
-            stream?.reader()?.readLines()?.forEach {
-                writer.appendLine(it)
-            }
-        }
+        loadConfigIfExist()
         componentRegistry.setup()
         onPostEnable()
     }
@@ -52,5 +45,16 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
 
     final override fun getPluginClassLoader(): ClassLoader {
         return super.getClassLoader()
+    }
+
+    private fun loadConfigIfExist() {
+        val stream = getResource("config.yml") ?: return
+        val file = File(dataFolder, "config.yml")
+        if(!dataFolder.exists()) dataFolder.mkdirs()
+        if(!file.exists()) file.bufferedWriter().use {  writer ->
+            stream.reader().readLines().forEach {
+                writer.appendLine(it)
+            }
+        }
     }
 }
