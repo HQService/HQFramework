@@ -1,7 +1,7 @@
 package kr.hqservice.framework.global.core.component
 
 interface HQModule : HQComponent {
-    fun onEnable()
+    fun onEnable() {}
 
-    fun onDisable()
+    fun onDisable() {}
 }

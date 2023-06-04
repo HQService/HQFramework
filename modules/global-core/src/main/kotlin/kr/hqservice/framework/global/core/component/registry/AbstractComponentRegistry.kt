@@ -154,7 +154,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun getComponentHandlerType(componentHandlerClass: KClass<*>): KClass<*> {
         return componentHandlerClass
             .supertypes
-            .first()
+            .first { it.isSubtypeOf(HQComponentHandler::class.starProjectedType) }
             .arguments
             .first()
             .type?.jvmErasure ?: throw NullPointerException("ComponentHandlers must have one type parameter.")
