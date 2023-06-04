@@ -1,4 +1,4 @@
-package kr.hqservice.framework.velocity
+package kr.hqservice.framework
 
 import com.google.inject.Inject
 import com.velocitypowered.api.event.EventManager
@@ -6,9 +6,9 @@ import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
+import kr.hqservice.framework.velocity.HQFrameworkVelocityPlugin
 import java.io.File
 import java.nio.file.Path
-import java.util.logging.Logger
 
 @Plugin(
     id = "hqframework",
