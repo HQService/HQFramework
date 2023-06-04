@@ -5,5 +5,7 @@ import java.io.File
 interface HQYamlConfiguration : HQYamlConfigurationSection {
     fun load(file: File)
 
+    fun save(file: File)
+
     fun reload()
 }

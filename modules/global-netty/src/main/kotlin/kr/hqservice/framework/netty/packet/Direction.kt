@@ -1,8 +1,6 @@
 package kr.hqservice.framework.netty.packet
 
-import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.netty.channel.ChannelWrapper
-import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.Visibility
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy

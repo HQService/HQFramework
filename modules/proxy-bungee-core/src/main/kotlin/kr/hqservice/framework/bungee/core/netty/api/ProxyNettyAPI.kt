@@ -3,6 +3,7 @@ package kr.hqservice.framework.bungee.core.netty.api
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
 import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.netty.api.HQNettyAPI
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
@@ -13,8 +14,8 @@ import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.PacketHandler
+import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ProxyServer
-import net.md_5.bungee.api.chat.TextComponent
 import java.util.UUID
 import java.util.logging.Logger
 import kotlin.reflect.KClass
@@ -36,22 +37,19 @@ class ProxyNettyAPI(
     }
 
     override fun broadcast(message: String, logging: Boolean) {
-        val msg = TextComponent(message)
-        proxy.broadcast(msg)
+        proxy.broadcast(message)
         if(logging) logger.info("[BROADCAST_ALL] $message")
     }
 
     override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
-        val msg = TextComponent(message)
         val server = proxy.getServerInfo(channel.getName())?: return
-        server.players.forEach { it.sendMessage(msg) }
+        server.players.forEach { it.sendMessage(message) }
         if(logging) logger.info("[BROADCAST_${channel.getName().uppercase()}] $message")
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
-        val msg = TextComponent(message)
-        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(msg) }
-        if(logging) logger.info("[MESSAGE] $message")
+        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(message) }
+        if(logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message)}")
     }
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
