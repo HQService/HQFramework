@@ -7,11 +7,19 @@ import java.io.File
 
 class HQYamlConfigurationImpl : HQYamlConfiguration {
     private var cachedFile: File? = null
+    private var loader: YAMLConfigurationLoader? = null
     private var rootSection: HQYamlConfigurationSectionImpl? = null
 
     override fun load(file: File) {
-        rootSection = HQYamlConfigurationSectionImpl(YAMLConfigurationLoader.builder().setFile(file).build().load())
+        loader = YAMLConfigurationLoader.builder().setFile(file).build()
+        rootSection = HQYamlConfigurationSectionImpl(loader!!.load())
         cachedFile = file
+    }
+
+    override fun save(file: File) {
+        val loader = loader?: return
+        val rootSection = rootSection?: return
+        loader.save(rootSection.getRoot())
     }
 
     override fun reload() {
@@ -25,6 +33,14 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
 
     override fun getString(key: String): String {
         return rootSection?.getString(key) ?: ""
+    }
+
+    override fun getStringList(key: String): List<String> {
+        return rootSection?.getStringList(key)?: emptyList()
+    }
+
+    override fun getIntegerList(key: String): List<Int> {
+        return rootSection?.getIntegerList(key)?: emptyList()
     }
 
     override fun getBoolean(key: String): Boolean {
@@ -41,5 +57,9 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
 
     override fun getLong(key: String): Long {
         return rootSection?.getLong(key)?: 0
+    }
+
+    override fun set(key: String, value: Any?) {
+        rootSection?.set(key, value)
     }
 }

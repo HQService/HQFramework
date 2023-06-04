@@ -1,5 +1,6 @@
 package kr.hqservice.framework.yaml.config.impl
 
+import com.google.common.reflect.TypeToken
 import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 import ninja.leaping.configurate.ConfigurationNode
 
@@ -14,12 +15,27 @@ open class HQYamlConfigurationSectionImpl(
         return pointer
     }
 
+    fun getRoot(): ConfigurationNode {
+        return root
+    }
+
     override fun getSection(key: String): HQYamlConfigurationSection? {
         return findNode(key).run { HQYamlConfigurationSectionImpl(this) }
     }
 
     override fun getString(key: String): String {
         return findNode(key).getString("") ?: ""
+    }
+
+    override fun getStringList(key: String): List<String> {
+        return findNode(key).getList { it as String }
+    }
+
+    override fun getIntegerList(key: String): List<Int> {
+        return findNode(key).getList {
+            if (it is String) it.toInt()
+            else it as Int
+        }
     }
 
     override fun getBoolean(key: String): Boolean {
@@ -36,5 +52,9 @@ open class HQYamlConfigurationSectionImpl(
 
     override fun getLong(key: String): Long {
         return findNode(key).getLong(0)
+    }
+
+    override fun set(key: String, value: Any?) {
+        findNode(key).value = value
     }
 }
