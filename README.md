@@ -66,7 +66,7 @@ class ExampleServiceImpl : ExampleService {
 ```kotlin
 package kr.hqservice.exampleplugin
 
-class ExamplePlugin : HQPlugin()
+class ExamplePlugin : HQBukkitPlugin()
 ```
 > BukkitExampleEvent를 handle 하였을 때 결과:
 ```
