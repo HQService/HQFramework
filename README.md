@@ -1,4 +1,4 @@
-# HQFramework
+# HQFramework / Next Generation Bukkit/Proxy Development Framework
 [![GitHub license](https://img.shields.io/badge/license-GPL%20v3-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.7.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
 ### Bukkit 및 Proxy 플랫폼을 더 생산적, 직관적, 객체지향적으로 만들어줍니다.
@@ -8,13 +8,6 @@ HQFramework는 SpringFramework 에서 영감을 받아 Bukkit 및 Proxy 플랫�
 
 ## Features
 * [Component](#component)
-  * [HQComponentd의 사용](#hqcomponent의-사용)
-  * [복잡한 의존관계에서의 HQComponent](#복잡한-의존관계에서의-hqcomponent)
-  * [HQComponentHandler의 사용](#hqcomponenthandler의-사용)
-  * [HQComponentHandler의 초기화 순서보장](#hqcomponenthandler의-초기화-순서-보장)
-  * [Qualifier의 사용](#qualifier의-사용)
-    * [Named](#named)
-    * [MutableNamed](#mutablenamed)
     
 ## Component
 ### Table of contents
