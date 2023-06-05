@@ -3,6 +3,8 @@ package kr.hqservice.framework.yaml.config
 interface HQYamlConfigurationSection {
     fun getString(key: String): String
 
+    fun getKeys(): List<String>
+
     fun getStringList(key: String): List<String>
 
     fun getIntegerList(key: String): List<Int>

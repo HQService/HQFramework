@@ -11,4 +11,5 @@ dependencies {
     api(libs.snakeyaml)
 
     testImplementation(libs.junit.parameterizedTest)
+    testImplementation(libs.kotlin.test)
 }

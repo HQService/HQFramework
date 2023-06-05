@@ -1,6 +1,5 @@
 package kr.hqservice.framework.yaml.config.impl
 
-import com.google.common.reflect.TypeToken
 import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 import ninja.leaping.configurate.ConfigurationNode
 
@@ -25,6 +24,10 @@ open class HQYamlConfigurationSectionImpl(
 
     override fun getString(key: String): String {
         return findNode(key).getString("") ?: ""
+    }
+
+    override fun getKeys(): List<String> {
+        return root.childrenMap.keys.map { it as String }
     }
 
     override fun getStringList(key: String): List<String> {

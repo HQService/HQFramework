@@ -13,7 +13,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     override fun load(file: File) {
         loader = YAMLConfigurationLoader.builder().setFile(file).build()
         rootSection = HQYamlConfigurationSectionImpl(loader!!.load())
-        cachedFile = file
+        if(cachedFile == null) cachedFile = file
     }
 
     override fun save(file: File) {
@@ -23,6 +23,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun reload() {
+        loader = null
         rootSection = null
         cachedFile?.apply(this::load)
     }
@@ -33,6 +34,10 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
 
     override fun getString(key: String): String {
         return rootSection?.getString(key) ?: ""
+    }
+
+    override fun getKeys(): List<String> {
+        return rootSection?.getKeys()?: emptyList()
     }
 
     override fun getStringList(key: String): List<String> {

@@ -1,10 +1,13 @@
 package kr.hqservice.framework.yaml.test
 
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.yaml.extension.yaml
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import java.io.File
 
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class HQYamlTest {
 
     @Test
@@ -21,6 +24,9 @@ class HQYamlTest {
         assertEquals(yaml.getString("test"), "")
 
         yaml.reload()
+        yaml.getSection("netty")?.getKeys()?.forEach {
+            it.print("netty-section-> ")
+        }
         assertEquals(yaml.getString("test"), "hello")
 
         temp.copyTo(file, true)
