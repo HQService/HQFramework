@@ -25,7 +25,7 @@ class ChannelMainHandlerImpl(
     private var proxyChannel: ChannelWrapper? = null
 
     override fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
-        channel.handler.setConnectionState(ConnectionState.CONNECTED)
+        channel.handler.connectionState = ConnectionState.CONNECTED
         this.proxyChannel = channel.handler.channel
         plugin.server.scheduler.runTask(plugin, Runnable { plugin.server.pluginManager.callEvent(
             NettyClientConnectedEvent(channel)

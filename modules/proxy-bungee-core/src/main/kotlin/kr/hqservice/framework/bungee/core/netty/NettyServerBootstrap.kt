@@ -49,7 +49,7 @@ class NettyServerBootstrap(
     private fun registerDefaultListeners() {
         Direction.INBOUND.addListener(HandShakePacket::class) { packet, wrapper ->
             wrapper.port = packet.port
-            wrapper.handler.setConnectionState(ConnectionState.CONNECTED)
+            wrapper.handler.connectionState = ConnectionState.CONNECTED
             wrapper.channel.writeAndFlush(HandShakePacket(-1))
             channelRegistry.registerActiveChannel(packet.port, wrapper)
             logger.info("registered channel ${channelRegistry.getChannelNameByPort(packet.port)}")

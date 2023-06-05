@@ -20,16 +20,12 @@ class BossHandler(
     private var preprocessHandler: PacketPreprocessHandler? = null
     private var disconnectHandler: DisconnectHandler? = null
 
-    val channel: ChannelWrapper
-
-    var connectionState: ConnectionState
-        private set
-
-
-    init {
-        this.channel = ChannelWrapper(logger,this, channel)
-        connectionState = ConnectionState.IDLE
-    }
+    val channel: ChannelWrapper = ChannelWrapper(logger,this, channel)
+    var connectionState: ConnectionState = ConnectionState.IDLE
+        set(value) {
+            field = value
+            logger.info("Internal netty connection state is now: ${value.name}")
+        }
 
     fun setDisconnectionHandler(handler: (ChannelWrapper)->Unit) {
         this.disconnectHandler = object: DisconnectHandler {
@@ -45,11 +41,6 @@ class BossHandler(
                 handler(packet, channel)
             }
         }
-    }
-
-    fun setConnectionState(state: ConnectionState) {
-        connectionState = state
-        logger.info("Internal netty connection state is now: ${state.name}")
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
@@ -79,7 +70,7 @@ class BossHandler(
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
-        setConnectionState(ConnectionState.IDLE)
+        connectionState = ConnectionState.IDLE
         disconnectHandler?.onDisconnect(channel)
     }
 }

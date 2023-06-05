@@ -51,7 +51,7 @@ class NettyPacketTest {
         Direction.INBOUND.registerPacket(HandShakePacket::class)
         Direction.INBOUND.addListener(HandShakePacket::class) { packet, wrapper ->
             wrapper.port = packet.port
-            wrapper.handler.setConnectionState(ConnectionState.CONNECTED)
+            wrapper.handler.connectionState = ConnectionState.CONNECTED
             println("received handshake packet ${packet.port}")
             assertEquals(wrapper.port, 25545)
         }

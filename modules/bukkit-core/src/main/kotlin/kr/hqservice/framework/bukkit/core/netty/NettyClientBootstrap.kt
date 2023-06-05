@@ -59,7 +59,7 @@ class NettyClientBootstrap(
             }
 
             logger.info("netty-client initialization success!")
-            handlerBoss.setConnectionState(ConnectionState.HANDSHAKING)
+            handlerBoss.connectionState = ConnectionState.HANDSHAKING
             channel.writeAndFlush(HandShakePacket(plugin.server.port))
             channel.pipeline().addFirst("timeout-handler", TimeOutHandler(5L, TimeUnit.SECONDS))
         }
