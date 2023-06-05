@@ -287,3 +287,143 @@ class ExampleListener(private val repository: ExampleRepository) : HQListener {
 ```
 mysql
 ```
+
+---
+### NettyServer
+HQFramework 를 사용하는 proxy 환경의 모든 서버에서 Netty Module 을 통한 통신이 가능합니다.
+
+---
+### Packet & PacketSender
+HQFramework 의 netty 가 활성화 된 proxy 환경의 서버에서는 Packet 을 상속받은 data class 를 다른 채널로 간편하게 보낼 수 있습니다.
+또한, Packet 을 read/write 하는 과정에서 간편하게 사용할 수 있는 ByteBuf Extension 을 제공합니다.
+ 아래는 Packet 을 보내기/받기 전 서버에 register 하는 방법과 보내는 방법에 대한 간단한 예제입니다.
+> Packet 클래스는 해당 패킷을 송/수신 하는 모듈에서 공통으로 선언되어야 합니다.
+```kotlin
+data class ExampleHelloPacket(
+ var playerName: String,
+ var playerUniqueId: UUID
+) : Packet() {
+ override fun write(buf: ByteBuf) {
+  playerName = buf.readString()
+  playerUniqueId = buf.readUUID()
+ }
+ 
+ override fun read(buf: ByteBuf) {
+  buf.writeString(playerName)
+  buf.writeUUID(playerUniqueId)
+ }
+}
+```
+> 패킷을 송신 할 모듈의 예제입니다.
+```kotlin
+@Component
+class ExampleNettyModule(
+  private val nettyServer: NettyServer
+) : HQModule {
+  override onEnable() {
+    nettyServer.registerOuterPacket(ExampleHelloPacket::class)
+  }
+}
+```
+```kotlin
+@Component
+class ExampleChatListener(
+  private val packetSender: PacketSender
+) : HQListener {
+  @EventHandler
+  fun onExampleEvent(event: AsyncChatEvent) {
+    val player = event.player
+    packetSender.sendPacketToProxy(ExampleHelloPacket(player.name, player.uniqueId))
+  }
+}
+```
+> 패킷을 수신 할 모듈의 예제입니다.
+```kotlin
+@Component
+class ExampleNettyModule(
+  private val nettyServer: NettyServer,
+  private val logger: Logger
+) : HQModule {
+  override onEnable() {
+    nettyServer.registerInnerPacket(ExampleHelloPacket::class) { packet, channelWrapper ->
+      logger.info("${packet.playerName}(${packet.playerUniqueId}) 님의 Hello Packet 수신")
+    }
+  }
+}
+```
+
+---
+### NettyChannel & NettyPlayer
+HQFramework 의 NettyServer 를 통해 연결 된 모든 채널의 정보와 플레이어를 제공합니다.
+ 아래는 NettyChannel/NettyPlayer 를 이용한 간단한 예제입니다.
+```kotlin
+@Component
+class ExampleListener(
+  private val nettyServer: NettyServer,
+  private val packetSender: PacketSender
+) : HQListener {
+  @EventHandler
+  fun onExampleEvent(event: AsyncChatEvent) {
+    event.isCancelled = true
+    val player = event.player
+    val myChannel = nettyServer.getPlayer(player.uniqueId)?.getChannel()
+    
+    val stringMessage = (event.message() as TextComponent).content()
+    if (myChannel != null) {
+      myChannel.sendMessage("${player.name} 님의 메세지 $stringMessage")
+    }
+  }
+}
+```
+
+---
+### Packet IO
+HQFramework 는 Netty 채널 간 데이터를 송/수신 할 때, 해당 데이터(bytes)를 다시 객체로, 객체를 데이터로 Encode/Decode 하는 과정에서
+ Boilerplate code 를 줄이기 위해 HQFramework 에서는 간편한 방식으로 Packet 을 register 할 수 있도록 도와줍니다.
+ 먼저, 다른 프로젝트에서 흔히 사용되는 방식을 설명 드리겠습니다.
+```kotlin
+class PacketPlayOutChat : Packet<PacketListenerPlayOut> {
+  lateinit var a: IChatBaseComponent
+  lateinit var b: ChatMessageType
+  
+  constructor()
+  // 중략
+  constructor(var1: IChatBaseComponent, var2: ChatMessageType) {
+    a = var1
+    b = var2
+  }
+  
+  // Packet 을 read 하는 method
+  fun a(var1: PacketDataSerializer) {
+    this.a = var1.f()
+    this.b = ChatMessageType.a(var1.readByte())
+  }
+  
+  // Packet 을 write 하는 method
+  fun b(var1: PacketDataSerializer) {
+    var1.a(this.a)
+    var1.writeByte(this.b.a())
+  }
+}
+```
+> 위의 코드는 net.minecraft.server.v1_12_R1 내부 서버 구현체에서 발췌 하였습니다.
+위의 코드는 패킷을 읽을 때 비어있는 생성자를 통하여 인스턴스를 생성하고, 그 인스턴스의 필드를 read 하는 method 를 통해 decoding 하는 방식입니다.
+ 통용적으로 사용되는 방식이나, Boilerplate 인 비어있는 constructor 에 대한 작성이 매 Packet 클래스마다 요구됩니다.
+ 아래는 HQFramework 가 ByteBuddy 를 사용하여 위의 클래스를 저희의 방식으로 정의했을 때의 대한 예제입니다.
+```kotlin
+data class PacketPlayOutChat(
+  var a: IChatBaseComponent
+  var b: ChatMessageType
+): Packet {
+  override fun read(byteBuf: ByteBuf) {
+    this.a = byteBuf.readIChatBaseComponent()
+    this.b = ChatMessageType.a(byteBuf.readByte())
+  }
+  
+  override fun write(byteBuf: ByteBuf) {
+    byteBuf.writeIChatBaseComponent(this.a)
+    byteBuf.writeByte(this.b.a())
+  }
+}
+```
+이 방식은 비어있는 constructor 를 가진 class 를 재정의하여, read method 를 통해 수신받은 데이터를 실제 Packet class 의 생성자에 주입하는 방식으로 구현 되었습니다.
