@@ -1,4 +1,4 @@
-# HQFramework / Next Generation Bukkit/Proxy Development Framework
+# HQFramework / next-generation bukkit/proxy development framework
 [![GitHub license](https://img.shields.io/badge/license-GPL%20v3-blue.svg?style=flat)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Kotlin](https://img.shields.io/badge/kotlin-1.7.21-blue.svg?logo=kotlin)](http://kotlinlang.org)
 ### Bukkit 및 Proxy 플랫폼을 더 생산적, 직관적, 객체지향적으로 만들어줍니다.
