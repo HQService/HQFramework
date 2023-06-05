@@ -2,7 +2,7 @@ package kr.hqservice.framework.netty.api
 
 import java.util.*
 
-interface NettyPlayer : MessageSender {
+interface NettyPlayer {
     fun getName(): String
 
     fun getUniqueId(): UUID

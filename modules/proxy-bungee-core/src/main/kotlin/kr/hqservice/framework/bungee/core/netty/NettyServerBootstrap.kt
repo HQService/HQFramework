@@ -5,7 +5,8 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.netty.HQNettyBootstrap
-import kr.hqservice.framework.netty.api.HQNettyAPI
+import kr.hqservice.framework.netty.api.NettyServer
+import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
 import kr.hqservice.framework.netty.packet.message.MessagePacket
@@ -26,7 +27,7 @@ class NettyServerBootstrap(
     private val logger: Logger,
     private val config: HQYamlConfiguration,
     private val channelRegistry: NettyChannelRegistry,
-    private val api: HQNettyAPI
+    private val packetSender: PacketSender
 ) : KoinComponent, HQSimpleComponent {
 
     fun initializing() {
@@ -75,12 +76,12 @@ class NettyServerBootstrap(
         Direction.INBOUND.addListener(BroadcastPacket::class) { packet, _ ->
             val targetChannel = packet.targetChannel
             if(targetChannel != null) {
-                api.sendMessageToChannel(targetChannel, packet.message, packet.logging)
-            } else api.broadcast(packet.message, packet.logging)
+                packetSender.sendMessageToChannel(targetChannel, packet.message, packet.logging)
+            } else packetSender.broadcast(packet.message, packet.logging)
         }
 
         Direction.INBOUND.addListener(MessagePacket::class) { packet, _ ->
-            api.sendMessageToPlayers(packet.receivers, packet.message, packet.logging)
+            packetSender.sendMessageToPlayers(packet.receivers, packet.message, packet.logging)
         }
     }
 }

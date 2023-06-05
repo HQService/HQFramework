@@ -1,6 +1,6 @@
 package kr.hqservice.framework.netty.api
 
-interface NettyChannel : MessageSender {
+interface NettyChannel {
     fun getName(): String
 
     fun getPort(): Int

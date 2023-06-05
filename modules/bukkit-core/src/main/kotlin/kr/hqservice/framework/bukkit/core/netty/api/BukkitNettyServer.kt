@@ -3,7 +3,7 @@ package kr.hqservice.framework.bukkit.core.netty.api
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
 import kr.hqservice.framework.global.core.component.HQSingleton
-import kr.hqservice.framework.netty.api.HQNettyAPI
+import kr.hqservice.framework.netty.api.NettyServer
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.PacketSender
@@ -12,39 +12,16 @@ import kr.hqservice.framework.netty.container.ChannelContainer
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.PacketHandler
-import kr.hqservice.framework.netty.packet.message.BroadcastPacket
-import kr.hqservice.framework.netty.packet.message.MessagePacket
 import java.util.*
 import kotlin.reflect.KClass
 
 @Component
-@HQSingleton(binds = [HQNettyAPI::class])
-class BukkitNettyAPI(
-    private val packetSender: PacketSender,
+@HQSingleton(binds = [NettyServer::class])
+class BukkitNettyServer(
     private val container: ChannelContainer
-) : HQNettyAPI, HQService {
-    override fun getPacketSender(): PacketSender {
-        return packetSender
-    }
-
+) : NettyServer, HQService {
     override fun getChannels(): List<NettyChannel> {
         return container.getChannels()
-    }
-
-    override fun broadcast(message: String, logging: Boolean) {
-        packetSender.sendPacketToProxy(BroadcastPacket(message, logging, null))
-    }
-
-    override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
-        packetSender.sendPacketToProxy(BroadcastPacket(message, logging, channel))
-    }
-
-    override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
-        packetSender.sendPacketToProxy(MessagePacket(message, logging, players))
-    }
-
-    override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
-        packetSender.sendPacketToProxy(MessagePacket(message, logging, listOf(player)))
     }
 
     override fun getChannel(name: String): NettyChannel? {
