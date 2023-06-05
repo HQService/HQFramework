@@ -377,7 +377,7 @@ class ExampleListener(
 ```
 
 ---
-### Packet IO
+### Packet I/O
 HQFramework 는 Netty 채널 간 데이터를 송/수신 할 때, 해당 데이터(bytes)를 다시 객체로, 객체를 데이터로 Encode/Decode 하는 과정에서
  Boilerplate code 를 줄이기 위해 HQFramework 에서는 간편한 방식으로 Packet 을 register 할 수 있도록 도와줍니다.
  먼저, 다른 프로젝트에서 흔히 사용되는 방식을 설명 드리겠습니다.
