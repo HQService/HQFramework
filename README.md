@@ -421,7 +421,7 @@ class PacketPlayOutChat : Packet<PacketListenerPlayOut> {
 data class PacketPlayOutChat(
   var a: IChatBaseComponent
   var b: ChatMessageType
-): Packet {
+): Packet() {
   override fun read(byteBuf: ByteBuf) {
     this.a = byteBuf.readIChatBaseComponent()
     this.b = ChatMessageType.a(byteBuf.readByte())
