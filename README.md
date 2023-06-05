@@ -80,6 +80,11 @@ Hello ExamplePlugin!
 ---
 ### 복잡한 의존관계에서의 HQComponent
 이번에는 여러 계층의 의존관계를 지닌 컴포넌트들로 예시를 들어보겠습니다.
+
+<details>
+<summary>자세히</summary>
+<div markdown="1">
+
 ```kotlin
 @Component
 class ExampleListener(
@@ -138,10 +143,18 @@ true
 
 이 경우에는, `Config` 컴포넌트가 제일 먼저 생성되며, 그 이후로 `Service`, `Listener` 순으로 컴포넌트가 생성됩니다.
 생성자 주입을 사용하게 되면, 의존관계를 개발자가 생각할 필요 없이 HQFramework 가 자동으로 정리해줍니다.
-
+ 
+ </div>
+ </details>
+ 
 ---
 ### HQComponentHandler의 사용
 아래는 컴포넌트가 생성될 때 초기화됐음을 출력하는 컴포넌트를 제작하는 예제입니다. HQComponent를 구현하고, HQComponentHandler를 구현 후 ComponentHandler 어노테이션을 달기만 하면 굉장히 간편하게 제작할 수 있습니다.
+
+<details>
+<summary>자세히</summary>
+<div markdown="1">
+
 ```kotlin
 class ExampleComponent : HQComponent {
   fun getLogger()
@@ -165,10 +178,18 @@ class ExampleComponentHandler : HQComponentHandler<ExampleComponent> {
 }
 ```
 
+ </div>
+ </details> 
+ 
 ---
 ### HQComponentHandler의 초기화 순서 보장
 컴포넌트가 초기화 될 때 순서가 중요한 경우가 있습니다. 이럴 경우, ComponentHandler 어노테이션의 depends 인자에 다른 ComponentHandler 의 클래스를 명시하기만 하면 됩니다.
  아래는 초기화 순서 보장에 대한 예제입니다.
+ 
+<details>
+<summary>자세히</summary>
+<div markdown="1">
+ 
 ```kotlin
 class DependedExampleComponent : HQComponent
 ```
@@ -196,7 +217,10 @@ class DependedExampleComponentHandler : HQComponentHandler<DependedExampleCompon
 위 예제에서 `DependedComponentHandler` 는 `ExampleComponentHandler` 와 `ServiceComponentHandler` 를 의존하고 있습니다.
  이 경우에는, `ExampleComponentHandler` 와 `ServiceComponentHandler` 의 setup이 끝난 후에 `DependedComponentHandler`가 setup됩니다.
  이와 반대로, teardown 시에는 `ExampleComponentHandler`와 `ServiceComponentHandler` 의 teardown 이전에 `DependedComponentHandler` 가 teardown됩니다.
-
+                        
+ </div>
+ </details> 
+ 
 ---
 ### Qualifier의 사용
 컴포넌트를 Bean 으로 사용하게 될 경우, 하나의 인터페이스에 여러개의 definition을 선언해야 하거나 선언하고 싶은 경우가 있습니다.
@@ -206,6 +230,11 @@ class DependedExampleComponentHandler : HQComponentHandler<DependedExampleCompon
 ### Named
 Named Qualifier는 Koin의 Qualifier 입니다. HQFramework는 Koin의 Named Qualifier를 지원합니다.
  아래는 Named Qualifier 사용에 대한 예제입니다.
+ 
+<details>
+<summary>자세히</summary>
+<div markdown="1">
+ 
 ```kotlin
 interface ExampleService : HQService { fun get(): String }
 ```
@@ -234,11 +263,19 @@ class ExampleItemListener(@Named("item") private val service: ExampleService) : 
 item
 ```
 이처럼 생성자에 원하는 구현체를 Named Qualifier 를 통해 종단에서 주입받을 수 있습니다.
-
+                        
+ </div>
+ </details> 
+ 
 ---
 ### MutableNamed
 MutableNamed Qualifier는 HQframework의 Qualifier 입니다. 어노테이션 기반의 Qualifier 에는 로직이 들어갈 수 없는 단점을 보완하기 위하여 만들어졌습니다.
  아래는 MutableNamed Qualifier 사용에 대한 예제입니다.
+ 
+<details>
+<summary>자세히</summary>
+<div markdown="1">
+ 
 ```kotlin
 @QualifierProvider(key = "exampleplugin.data-source.type")
 class DataSourceQualifierProvider(private val plugin: Plugin) : MutableNamedProvider {
@@ -295,3 +332,7 @@ class ExampleListener(private val repository: ExampleRepository) : HQListener {
 ```
 mysql
 ```
+          
+ </div>
+ </details> 
+ 
