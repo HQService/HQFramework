@@ -8,6 +8,7 @@ HQFramework는 SpringFramework 에서 영감을 받아 Bukkit 및 Proxy 플랫�
 
 ## Features
 * [Component](#component)
+* [Packet I/O](#packet-i/o)
     
 ## Component
 ### Table of contents
@@ -289,11 +290,16 @@ mysql
 ```
 
 ---
-### NettyServer
+### Packet I/O
+### Table of contents
+* [Bukkit 서버와 Proxy 서버간의 양방향 통신하기](#bukkit-서버와-proxy-서버간의-양방향-통신하기)
+* [NettyChannel 및 NettyPlayer 의 사용](#nettyChannel-및-nettyplayer-의-사용)
+* [간결한 방식으로 Packet 선언하기](#간결한-방식으로-packet-선언하기)
+
 HQFramework 를 사용하는 proxy 환경의 모든 서버에서 Netty Module 을 통한 통신이 가능합니다.
 
 ---
-### Packet & PacketSender
+### Bukkit 서버와 Proxy 서버간의 양방향 통신하기
 HQFramework 의 netty 가 활성화 된 proxy 환경의 서버에서는 Packet 을 상속받은 data class 를 다른 채널로 간편하게 보낼 수 있습니다.
 또한, Packet 을 read/write 하는 과정에서 간편하게 사용할 수 있는 ByteBuf Extension 을 제공합니다.
  아래는 Packet 을 보내기/받기 전 서버에 register 하는 방법과 보내는 방법에 대한 간단한 예제입니다.
@@ -353,7 +359,7 @@ class ExampleNettyModule(
 ```
 
 ---
-### NettyChannel & NettyPlayer
+### NettyChannel 및 NettyPlayer 의 사용
 HQFramework 의 NettyServer 를 통해 연결 된 모든 채널의 정보와 플레이어를 제공합니다.
  아래는 NettyChannel/NettyPlayer 를 이용한 간단한 예제입니다.
 ```kotlin
@@ -377,9 +383,9 @@ class ExampleListener(
 ```
 
 ---
-### Packet I/O
+### 간결한 방식으로 Packet 선언하기
 HQFramework 는 Netty 채널 간 데이터를 송/수신 할 때, 해당 데이터(bytes)를 다시 객체로, 객체를 데이터로 Encode/Decode 하는 과정에서
- Boilerplate code 를 줄이기 위해 HQFramework 에서는 간편한 방식으로 Packet 을 register 할 수 있도록 도와줍니다.
+ Boilerplate code 를 줄이기 위해 HQFramework 에서는 간편한 방식으로 Packet 을 송/수신 할 수 있도록 도와줍니다.
  먼저, 다른 프로젝트에서 흔히 사용되는 방식을 설명 드리겠습니다.
 ```kotlin
 class PacketPlayOutChat : Packet<PacketListenerPlayOut> {
