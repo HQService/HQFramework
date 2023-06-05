@@ -25,6 +25,11 @@ HQFramework는 완성도가 높은 의존성 주입 라이브러리 Koin과 연�
 ---
 ### HQComponent의 사용
 아래는 Bukkit의 Listener를 자동으로 등록해주는 컴포넌트의 예시입니다. 컴포넌트의 생성과 동시에 Service 및 Plugin을 주입받아보겠습니다.
+
+<details>
+<summary>자세히</summary>
+<div markdown="1">
+
 ```kotlin
 package kr.hqservice.exampleplugin.listener
 
@@ -69,6 +74,9 @@ Hello ExamplePlugin!
 `ExampleListener`의 생성자의 첫번째 인자에는, Singleton으로 `ExampleServiceImpl` 구현체가 주입되었습니다.
 두번째 인자의 plugin은, 플러그인 메인 클래스 패키지 기준으로 자동으로 주입됩니다.
 
+ </div>
+ </details>
+ 
 ---
 ### 복잡한 의존관계에서의 HQComponent
 이번에는 여러 계층의 의존관계를 지닌 컴포넌트들로 예시를 들어보겠습니다.
