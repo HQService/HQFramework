@@ -8,7 +8,7 @@ HQFramework는 SpringFramework 에서 영감을 받아 Bukkit 및 Proxy 플랫�
 
 ## Features
 * [Component](#component)
-* [Packet I/O](#packet-i/o)
+* [Packet I/O](#packet-i\/o)
     
 ## Component
 ### Table of contents
