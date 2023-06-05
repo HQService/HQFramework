@@ -407,6 +407,7 @@ class PacketPlayOutChat : Packet<PacketListenerPlayOut> {
 }
 ```
 > 위의 코드는 net.minecraft.server.v1_12_R1 내부 서버 구현체에서 발췌 하였습니다.
+
 위의 코드는 패킷을 읽을 때 비어있는 생성자를 통하여 인스턴스를 생성하고, 그 인스턴스의 필드를 read 하는 method 를 통해 decoding 하는 방식입니다.
  통용적으로 사용되는 방식이나, Boilerplate 인 비어있는 constructor 에 대한 작성이 매 Packet 클래스마다 요구됩니다.
  아래는 HQFramework 가 ByteBuddy 를 사용하여 위의 클래스를 저희의 방식으로 정의했을 때의 대한 예제입니다.
