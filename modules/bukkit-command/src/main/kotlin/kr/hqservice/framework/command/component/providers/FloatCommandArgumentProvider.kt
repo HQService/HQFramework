@@ -2,14 +2,14 @@ package kr.hqservice.framework.command.component.providers
 
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
+import org.bukkit.Location
 import org.bukkit.command.CommandSender
-import javax.xml.stream.Location
 
 @Component
 class FloatCommandArgumentProvider : HQCommandArgumentProvider<Float> {
     override fun getTabComplete(
         commandSender: CommandSender,
-        location: Location,
+        location: Location?,
         argumentLabel: String?
     ): List<String> {
         return listOf(argumentLabel ?: "숫자")

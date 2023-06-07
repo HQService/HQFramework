@@ -6,7 +6,7 @@ abstract class HQCommandNode : HQCommand {
     private val executors: MutableMap<String, HQCommandExecutor> = mutableMapOf()
 
     internal fun addExecutor(annotation: CommandExecutor, function: KFunction<Unit>) {
-        executors[annotation.label] = HQCommandExecutor(annotation, function)
+        executors[annotation.label] = HQCommandExecutor(annotation, this, function)
     }
 
     internal fun findExecutor(key: String): HQCommandExecutor? {

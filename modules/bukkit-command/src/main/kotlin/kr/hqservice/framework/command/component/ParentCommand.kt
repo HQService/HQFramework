@@ -4,4 +4,4 @@ import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-annotation class Depend(val depends: Array<KClass<out HQCommandTree>> = [])
+annotation class ParentCommand(val binds: Array<KClass<out HQCommandTree>>)

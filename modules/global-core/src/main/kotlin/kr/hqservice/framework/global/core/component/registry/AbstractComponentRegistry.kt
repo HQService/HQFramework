@@ -96,12 +96,23 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 val componentHandler = callByInjectedParameters(
                     componentHandlerClass.constructors.first(),
                     getProvidedInstances()
-                ) ?: throw NotComponentHandlerException(componentHandlerClass)
-                processComponents(componentHandler) { component ->
-                    setup(component)
+                )
+                if (componentHandler == null) {
+                    componentHandlersQueue.offer(componentHandlerClass)
+                    if (previousHandlerQueueSize == componentHandlersQueue.size) {
+                        handlerExceptionCatchingStack++
+                    }
+                    if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
+                        throw NoBeanDefinitionsFoundException(componentHandlersQueue.toList().map { it::class })
+                    }
+                    previousHandlerQueueSize = componentHandlersQueue.size
+                } else {
+                    processComponents(componentHandler) { component ->
+                        setup(component)
+                    }
+                    componentHandlers[componentHandlerClass] = componentHandler
+                    handlerExceptionCatchingStack = 0
                 }
-                componentHandlers[componentHandlerClass] = componentHandler
-                handlerExceptionCatchingStack = 0
             } else {
                 val illegalDepends = depends.filter {
                     !it.allSuperclasses.contains(HQComponentHandler::class)

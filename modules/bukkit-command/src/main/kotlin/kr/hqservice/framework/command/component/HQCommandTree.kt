@@ -1,6 +1,8 @@
 package kr.hqservice.framework.command.component
 
+import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.command.component.registry.CommandRegistry
+import org.bukkit.command.CommandSender
 
 abstract class HQCommandTree(
     override val label: String,
@@ -17,14 +19,14 @@ abstract class HQCommandTree(
         return commandExecutors[key]
     }
 
-    internal fun getTrees(): Map<String, HQCommandTree> {
+    fun getTrees(): Map<String, HQCommandTree> {
         return commandTrees
     }
 
     internal fun getSuggestions(): List<String> {
         return mutableListOf<CommandSuggestible>().apply {
             addAll(commandTrees.values)
-            addAll(commandExecutors.values)
+            addAll(commandExecutors.values.filter { !it.hideSuggestion })
         }.sortedBy {
             it.priority
         }.map {
@@ -32,16 +34,28 @@ abstract class HQCommandTree(
         }
     }
 
-    internal fun getUsageMessages(): List<String> {
+    fun sendUsageMessages(target: CommandSender) {
+        getUsageMessages().forEach {
+            target.sendMessage(it)
+        }
+    }
+
+    private fun getUsageMessages(): List<String> {
         val trees = mutableSetOf<HQCommandTree>()
         findTreeAll(this@HQCommandTree, trees)
         return trees.flatMap {
             it.getExecutors().values
         }.sortedBy {
             it.priority
-        }.map {
-            it.description
+        }.mapNotNull {
+            it.description?.colorize()
         }
+    }
+
+    protected fun findTreeAll(): MutableSet<HQCommandTree> {
+        val result = mutableSetOf<HQCommandTree>()
+        findTreeAll(this@HQCommandTree, result)
+        return result
     }
 
     protected fun findTreeAll(tree: HQCommandTree, result: MutableSet<HQCommandTree>) {
@@ -51,7 +65,7 @@ abstract class HQCommandTree(
         }
     }
 
-    protected fun findTreeExact(arguments: List<String>): HQCommandTree? {
+    fun findTreeExact(arguments: Array<String>): HQCommandTree? {
         var tree: HQCommandTree = this
         arguments.forEach { argument ->
             tree = tree.commandTrees[argument] ?: return@findTreeExact null
@@ -59,12 +73,22 @@ abstract class HQCommandTree(
         return tree
     }
 
-    protected fun findTreeApproximate(arguments: List<String>): HQCommandTree {
+    protected fun findTreeApproximate(arguments: Array<String>): HQCommandTree {
         var tree: HQCommandTree = this
         arguments.forEach { argument ->
             tree = tree.commandTrees[argument] ?: return tree
         }
         return tree
+    }
+
+    protected fun findTreeApproximateIndexed(arguments: Array<String>): Pair<Int, HQCommandTree> {
+        var tree: HQCommandTree = this
+        var index = 0
+        arguments.forEach { argument ->
+            index++
+            tree = tree.commandTrees[argument] ?: return index to tree
+        }
+        return index to tree
     }
 
     internal fun setup(repository: CommandRegistry) {

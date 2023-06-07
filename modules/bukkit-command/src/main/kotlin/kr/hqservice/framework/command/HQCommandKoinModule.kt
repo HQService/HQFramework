@@ -12,6 +12,6 @@ import org.koin.ksp.generated.module
 @Module
 class HQCommandKoinModule : HQKoinModule {
     override fun getModule(): KoinModule {
-        return TODO()
+        return module
     }
 }

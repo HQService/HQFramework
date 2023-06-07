@@ -11,6 +11,7 @@ import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.SimplePluginManager
 import java.util.logging.Logger
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.jvm.isAccessible
 
 @ComponentHandler(
     depends = [
@@ -40,6 +41,7 @@ class CommandRootComponentHandler(
             return SimplePluginManager::class
                 .declaredMemberProperties
                 .first { it.name == "commandMap" }
+                .apply { isAccessible = true }
                 .get(pluginManager) as CommandMap
         }
     }

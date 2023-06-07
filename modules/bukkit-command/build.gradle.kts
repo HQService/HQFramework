@@ -7,6 +7,7 @@ dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
     compileOnly(libs.spigot.api)
+    ksp(libs.koin.ksp.compiler)
     api(libs.kotlinx.coroutines.core)
 
     testImplementationModule("bukkit", "test")

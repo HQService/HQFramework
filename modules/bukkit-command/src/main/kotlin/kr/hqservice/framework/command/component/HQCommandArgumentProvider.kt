@@ -1,8 +1,8 @@
 package kr.hqservice.framework.command.component
 
 import kr.hqservice.framework.global.core.component.HQComponent
+import org.bukkit.Location
 import org.bukkit.command.CommandSender
-import javax.xml.stream.Location
 
 interface HQCommandArgumentProvider<T> : HQComponent {
     /**
@@ -14,7 +14,7 @@ interface HQCommandArgumentProvider<T> : HQComponent {
      *
      * @return 자동완성을 추천할 문자열들
      */
-    fun getTabComplete(commandSender: CommandSender, location: Location, argumentLabel: String? = null): List<String>
+    fun getTabComplete(commandSender: CommandSender, location: Location?, argumentLabel: String? = null): List<String>
 
     /**
      * 명령어의 결과를 반환합니다.
