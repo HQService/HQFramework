@@ -2,37 +2,34 @@ package kr.hqservice.framework.database.test
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
-import kr.hqservice.framework.database.component.HQDataSource
-import kr.hqservice.framework.database.component.HQEntityClass
-import kr.hqservice.framework.database.component.HQRepository
+import kr.hqservice.framework.database.component.datasource.HQDataSource
+import kr.hqservice.framework.database.component.repository.HQRepository
 import kr.hqservice.framework.database.test.entity.TestEntity
 import kr.hqservice.framework.global.core.component.registry.MutableNamed
 import kr.hqservice.framework.test.Isolated
-import org.koin.core.annotation.Named
 import java.util.*
 
 @Isolated("RepositoryTest")
 @HQSingleton(binds = [TestRepository::class])
 @Component
 class TestRepositoryImpl(
-    @MutableNamed("data-source-type") private val dataSource: HQDataSource,
-    @Named("test") private val entityClass: HQEntityClass<UUID, TestEntity>,
+    @MutableNamed("data-source-type") private val dataSource: HQDataSource
 ) : TestRepository {
     override suspend fun create(id: UUID, init: TestEntity.() -> Unit): TestEntity {
         return dataSource.query {
-            entityClass.new(id, init)
+            TestEntity.new(id, init)
         }
     }
 
     override suspend fun get(id: UUID): TestEntity {
         return dataSource.query {
-            entityClass[id]
+            TestEntity[id]
         }
     }
 
     override suspend fun find(id: UUID): TestEntity? {
         return dataSource.query {
-            entityClass.findById(id)
+            TestEntity.findById(id)
         }
     }
 
@@ -55,18 +52,14 @@ class TestRepositoryImpl(
 
     override suspend fun delete(id: UUID) {
         dataSource.query {
-            entityClass[id].delete()
+            TestEntity[id].delete()
         }
     }
 
     override suspend fun count(): Long {
         return dataSource.query {
-            entityClass.count()
+            TestEntity.count()
         }
-    }
-
-    override fun getEntityClass(): HQEntityClass<UUID, TestEntity> {
-        return entityClass
     }
 
     override fun getDataSource(): HQDataSource {
@@ -74,7 +67,7 @@ class TestRepositoryImpl(
     }
 }
 
-interface TestRepository : HQRepository<UUID, TestEntity> {
+interface TestRepository : HQRepository {
     suspend fun create(id: UUID, init: TestEntity.() -> Unit): TestEntity
 
     suspend fun get(id: UUID): TestEntity

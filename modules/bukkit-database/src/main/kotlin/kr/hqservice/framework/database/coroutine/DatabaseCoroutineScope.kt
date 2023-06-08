@@ -1,9 +1,6 @@
 package kr.hqservice.framework.database.coroutine
 
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
@@ -14,7 +11,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 @Named("database")
-@HQSingleton(binds = [HQCoroutineScope::class])
+@HQSingleton(binds = [HQCoroutineScope::class, CoroutineScope::class])
 @Component
 class DatabaseCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
