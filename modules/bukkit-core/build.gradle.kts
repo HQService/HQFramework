@@ -12,6 +12,7 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     api(libs.koin.annotations)
+    api(libs.kotlinx.serialization.json)
     ksp(libs.koin.ksp.compiler)
     kapt(libs.auto.service)
     api(libs.auto.service.annotations)
