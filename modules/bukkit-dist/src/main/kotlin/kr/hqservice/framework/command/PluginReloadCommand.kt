@@ -15,27 +15,23 @@ import org.bukkit.command.CommandSender
 class PluginReloadCommand(private val server: Server) : HQCommandNode() {
     @CommandExecutor(
         label = "hardreload",
-        description = "&f/hq plugin hardreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 리로드합니다.",
+        description = "&f/hq plugin hardreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 PluginManager 에서 reload 합니다.",
         isOp = true,
         priority = 1
     )
     fun executeHardReload(sender: CommandSender, plugin: HQBukkitPlugin) {
-        if (plugin is HQFrameworkBukkitPlugin) {
-            sender.sendMessage("&cFramework 는 리로드가 지원되지 않습니다.".colorize())
-            return
-        }
         server.pluginManager.disablePlugin(plugin)
         server.pluginManager.enablePlugin(plugin)
     }
     @CommandExecutor(
         label = "lightreload",
-        description = "&f/hq plugin lightreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 lightreload합니다.",
+        description = "&f/hq plugin lightreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 HQPlugin 에서 reload 합니다.",
         isOp = true,
         priority = 2
     )
     fun executeLightReload(sender: CommandSender, plugin: HQBukkitPlugin) {
         if (plugin is HQFrameworkBukkitPlugin) {
-            sender.sendMessage("&cFramework 는 리로드가 지원되지 않습니다.".colorize())
+            sender.sendMessage("&cFramework 는 경량 리로드가 지원되지 않습니다.".colorize())
             return
         }
         plugin.reload()

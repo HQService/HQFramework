@@ -40,8 +40,8 @@ class PluginDescriptionCommand : HQCommandNode() {
         isOp = true,
         priority = 999
     )
-    fun testGreedyArguments(sender: CommandSender, @ArgumentLabel("문자잉") string: String, int: Int, plugin: HQBukkitPlugin) {
-        sender.sendMessage("$string, $int, ${plugin.name}")
+    fun testGreedyArguments(sender: CommandSender, @ArgumentLabel("문자잉") string: String, int: Int, plugin: HQBukkitPlugin, stringNullable: String? = "default", intNullable: Int?) {
+        sender.sendMessage("$string, $int, ${plugin.name}, $stringNullable, $intNullable")
     }
 
     @CommandExecutor(

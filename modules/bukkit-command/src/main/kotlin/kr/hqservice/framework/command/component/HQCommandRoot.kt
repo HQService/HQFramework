@@ -64,6 +64,11 @@ abstract class HQCommandRoot(private val name: String) : HQCommandTree(name) {
                     return@forEach
                 }
                 val argumentProvider = getArgumentProvider(parameter)
+                // 함수 인자가 nullable 이면 생략한다.
+                if (parameter.type.isMarkedNullable && argument == null) {
+                    arguments.add(null)
+                    return@forEach
+                }
                 val result = argumentProvider.getResult(senderInstance, argument)
                 if (!result || argument == null) {
                     val failureMessage = argumentProvider.getFailureMessage(sender, argument, argumentLabel)
