@@ -35,6 +35,11 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
         onPostDisable()
     }
 
+    fun reload() {
+        onDisable()
+        onEnable()
+    }
+
     final override fun getJar(): File {
         return super.getFile()
     }

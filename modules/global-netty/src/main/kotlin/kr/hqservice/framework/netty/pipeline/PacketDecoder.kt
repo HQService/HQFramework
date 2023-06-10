@@ -3,17 +3,10 @@ package kr.hqservice.framework.netty.pipeline
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToMessageDecoder
-import kr.hqservice.framework.global.core.extension.print
-import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
+import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.extension.readString
-import kr.hqservice.framework.netty.packet.server.HandShakePacket
-import net.bytebuddy.ByteBuddy
-import net.bytebuddy.description.modifier.Visibility
-import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy
-import net.bytebuddy.implementation.MethodCall
 import java.util.*
-import kotlin.jvm.Throws
 import kotlin.reflect.KClass
 
 class PacketDecoder : MessageToMessageDecoder<ByteBuf>() {

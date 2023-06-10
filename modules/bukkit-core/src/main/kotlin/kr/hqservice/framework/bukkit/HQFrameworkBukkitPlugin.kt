@@ -32,8 +32,4 @@ abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
             modules(module)
         }
     }
-
-    final override fun onPostDisable() {
-        stopKoin()
-    }
 }
