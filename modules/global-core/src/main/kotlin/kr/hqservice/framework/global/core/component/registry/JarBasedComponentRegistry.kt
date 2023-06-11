@@ -12,6 +12,10 @@ abstract class JarBasedComponentRegistry : AbstractComponentRegistry(), KoinComp
 
     abstract fun getJar(): JarFile
 
+    open fun filterComponent(clazz: Class<*>): Boolean {
+        return true
+    }
+
     final override fun getAllComponentsToScan(): Collection<Class<*>> {
         val classes: MutableSet<Class<*>> = mutableSetOf()
         val entries = getJar().entries()
@@ -20,7 +24,9 @@ abstract class JarBasedComponentRegistry : AbstractComponentRegistry(), KoinComp
             if (name.startsWith(getComponentScope()) && name.endsWith(".class")) {
                 try {
                     val clazz = Class.forName(name.removeSuffix(".class"))
-                    classes.add(clazz)
+                    if (filterComponent(clazz)) {
+                        classes.add(clazz)
+                    }
                 } catch (exception: ClassNotFoundException) {
                     exception.printStackTrace()
                 }
