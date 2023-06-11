@@ -12,7 +12,7 @@ import java.util.logging.Logger
 
 @Named("main")
 @Component
-@HQSingleton(binds = [HQCoroutineScope::class])
+@HQSingleton(binds = [HQCoroutineScope::class, CoroutineScope::class])
 class BukkitMainCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.Main) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {
