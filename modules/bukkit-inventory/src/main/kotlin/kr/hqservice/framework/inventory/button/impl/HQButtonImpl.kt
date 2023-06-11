@@ -4,14 +4,12 @@ import kr.hqservice.framework.inventory.button.HQButton
 import kr.hqservice.framework.inventory.container.HQContainer
 import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import org.bukkit.inventory.ItemStack
-import java.util.function.Consumer
 
 internal class HQButtonImpl(
     private val baseItemStack: ItemStack,
-    private val clickFunction: Consumer<ButtonClickEvent> = Consumer {},
+    private val clickFunction: (ButtonClickEvent)->Unit = {},
     private val removable: Boolean = false
 ): HQButton {
-
     override fun getItemStack(): ItemStack = baseItemStack
 
     override fun getDisplayName(): String {
@@ -23,7 +21,7 @@ internal class HQButtonImpl(
     }
 
     fun click(event: ButtonClickEvent) {
-        clickFunction.accept(event)
+        clickFunction(event)
     }
 
     override fun isRemovable(): Boolean {

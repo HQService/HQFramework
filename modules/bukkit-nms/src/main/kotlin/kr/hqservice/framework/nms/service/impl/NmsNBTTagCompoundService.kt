@@ -9,6 +9,7 @@ import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.wrapper.item.impl.NmsNBTTagCompoundWrapper
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
+import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
 @Component
@@ -26,5 +27,13 @@ class NmsNBTTagCompoundService(
 
     override fun unwrap(wrapper: NmsNBTTagCompoundWrapper): Any {
         return wrapper.nbtTag
+    }
+
+    override fun getOriginalClass(): KClass<*> {
+        return nbtTagClass
+    }
+
+    override fun getTargetClass(): KClass<*> {
+        return nbtTagClass
     }
 }

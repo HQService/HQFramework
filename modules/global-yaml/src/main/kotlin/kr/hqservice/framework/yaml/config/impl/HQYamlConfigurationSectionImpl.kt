@@ -31,11 +31,13 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getStringList(key: String): List<String> {
-        return findNode(key).getList { it as String }
+        return if(!findNode(key).isList) emptyList()
+        else findNode(key).getList { it as String }
     }
 
     override fun getIntegerList(key: String): List<Int> {
-        return findNode(key).getList {
+        return if(!findNode(key).isList) emptyList()
+        else findNode(key).getList {
             if (it is String) it.toInt()
             else it as Int
         }

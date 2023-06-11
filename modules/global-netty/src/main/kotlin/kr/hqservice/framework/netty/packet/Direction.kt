@@ -19,6 +19,11 @@ enum class Direction {
     private val handlers =
         mutableMapOf<String, LinkedList<PacketHandler<out Packet>>>()
 
+    fun <T : Packet> unregisterPacket(packetClass: KClass<T>) {
+        packetMap.remove(packetClass.qualifiedName)
+        handlers.remove(packetClass.qualifiedName)
+    }
+
     fun <T : Packet> registerPacket(packetClass: KClass<T>) {
         if (packetMap.containsKey(packetClass.qualifiedName!!))
             throw IllegalArgumentException("packet duplicated")

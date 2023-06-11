@@ -16,7 +16,6 @@ abstract class HQContainer(
     private val title: String,
     private val cancel: Boolean = true,
 ) : InventoryHolder {
-
     private var baseInventory: Inventory? = null
     private val buttons = mutableMapOf<Int, HQButtonImpl>()
 
@@ -69,5 +68,4 @@ abstract class HQContainer(
     private fun ItemStack.isMatchedType(other: ItemStack): Boolean {
         return type == other.type && durability == other.durability
     }
-
 }

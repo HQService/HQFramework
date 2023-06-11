@@ -8,12 +8,10 @@ import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import java.util.function.Consumer
 
 class HQButtonBuilder(
     private val itemStack: ItemStack
 ) {
-
     private var displayName: String = itemStack.itemMeta?.displayName ?: ""
     private var lore: List<String> = itemStack.itemMeta?.lore ?: emptyList()
     private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
@@ -26,7 +24,7 @@ class HQButtonBuilder(
             else itemStack.removeEnchantment(Enchantment.LURE)
         }
 
-    private var clickFunction: Consumer<ButtonClickEvent> = Consumer {  }
+    private var clickFunction: (ButtonClickEvent)->Unit = {}
 
     constructor(material: Material) : this(material, 1)
 
@@ -68,7 +66,7 @@ class HQButtonBuilder(
         return this
     }
 
-    fun setClickFunction(block: Consumer<ButtonClickEvent>): HQButtonBuilder {
+    fun setClickFunction(block: (ButtonClickEvent)->Unit): HQButtonBuilder {
         clickFunction = block
         return this
     }

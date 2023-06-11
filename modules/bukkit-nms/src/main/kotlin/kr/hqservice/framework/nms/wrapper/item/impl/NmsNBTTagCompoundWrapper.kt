@@ -11,7 +11,6 @@ class NmsNBTTagCompoundWrapper(
     internal val nbtTag: Any,
 ) : ItemWrapper, KoinComponent {
     private val reflectionUtil: NmsReflectionUtil by inject()
-
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
     private val getStringFunction = reflectionUtil.getFunction(nbtTagClass, "getString", listOf(String::class),

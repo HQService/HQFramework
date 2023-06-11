@@ -9,14 +9,12 @@ import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.packet.PacketWrapper
+import kr.hqservice.framework.nms.wrapper.packet.NmsPacketWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredFunctions
-import kotlin.reflect.full.declaredMembers
-import kotlin.reflect.full.staticFunctions
+import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @Component
@@ -27,27 +25,37 @@ class NmsReflectionUtilImpl(
     private val classMap = mutableMapOf<String, KClass<*>>()
     private val callableMap = mutableMapOf<String, KCallable<*>>()
 
-    private val versionName: String = server.javaClass.`package`.name.split(".")[3]
-    private val majorVersion = versionName.substring(1).split("_")[1].toInt()
+    private val versionClassName: String = server.javaClass.`package`.name.split(".")[3]
+    private val versionName: String = server.bukkitVersion.split("-")[0]
+    private val majorVersion = /*versionClassName.substring(1)*/versionName.split(".")[1].toInt()
+    private val minorVersion = try {
+        versionName.split(".")[2].toInt()
+    } catch (e: Exception) { 0 }
     private val version = Version.valueOf("V_$majorVersion")
 
-    private val craftBukkitClass = "org.bukkit.craftbukkit.$versionName."
-    private val nmsClass = "net.minecraft.".orLegacy("net.minecraft.server.$versionName.")
+    private val craftBukkitClass = "org.bukkit.craftbukkit.$versionClassName."
+    private val nmsClass = "net.minecraft.".orLegacy("net.minecraft.server.$versionClassName.")
 
-    private val entityPlayer= getNmsClass("EntityPlayer", Version.V_15.handle("server.level"))
+    private val entityPlayer = getNmsClass("EntityPlayer", Version.V_15.handle("server.level"))
+    private val packet = getNmsClass("Packet", Version.V_15.handle("network.protocol"))
     private val craftPlayer = getCraftBukkitClass("entity.CraftPlayer")
     private val playerConnection = getNmsClass("PlayerConnection", Version.V_15.handle("server.network"))
 
-    private val connection by lazy { getFunction(entityPlayer, "playerConnection", Version.V_17.handle("b")) }
+    private val connection by lazy { getField(entityPlayer, "playerConnection", Version.V_17.handle("b")) }
     private val getHandle by lazy { getFunction(craftPlayer, "getHandle") }
-    private val sendPacket by lazy { getFunction(playerConnection, "sendPacket", Version.V_18.handle("a")) }
+    private val sendPacket by lazy { getFunction(playerConnection, "sendPacket", listOf(packet), Version.V_18.handleFunction("a") {
+        setParameterClasses(packet)
+    }) }
 
     private val craftServer = getCraftBukkitClass("CraftServer")
-
     private val getServer by lazy { getFunction(craftServer, "getServer") }
 
+    override fun getNmsPlayerClass(): KClass<*> {
+        return entityPlayer
+    }
+
     override fun getVersionName(): String {
-        return versionName
+        return versionClassName
     }
 
     override fun getVersion(): Version {
@@ -58,7 +66,7 @@ class NmsReflectionUtilImpl(
         var name = className
         return classMap.computeIfAbsent(className) {
             getNmsClass(handlers.sortedByDescending { it.getVersion().ordinal }
-                .firstOrNull { it.getVersion().support(version) }?.apply {
+                .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
                     name = if(isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
                 ?: name)
@@ -82,7 +90,7 @@ class NmsReflectionUtilImpl(
     }
 
     override fun getFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
-        return getFunction(clazz, clazz.declaredFunctions, functionType, *handlers)
+        return getFunction(clazz, clazz.functions, functionType, *handlers)
     }
 
     override fun getStaticFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
@@ -97,26 +105,27 @@ class NmsReflectionUtilImpl(
         return getServer.call(server)?: throw IllegalArgumentException()
     }
 
-    override suspend fun sendPacket(player: Player, vararg packetWrapper: PacketWrapper) {
+    override suspend fun sendPacket(player: Player, vararg packetWrapper: NmsPacketWrapper) {
         val handle = getHandle.call(player)
         val connection = connection.call(handle)
-
         if(connection != null)
             packetWrapper.forEach {
-                this.sendPacket.call(connection, it.createPacket()) }
+                this.sendPacket.call(connection, it.createPacket())
+            }
     }
 
     override fun getField(clazz: KClass<*>, fieldType: KClass<*>): KCallable<*> {
-        return clazz.declaredMembers.firstOrNull {
+        return clazz.memberProperties.firstOrNull {
             it.returnType.jvmErasure.qualifiedName == fieldType.qualifiedName
         }?: throw IllegalArgumentException()
     }
 
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
         val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version) }?.getName()?: fieldName
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName()?: fieldName
 
-        return clazz.declaredMembers.firstOrNull {
+        return clazz.memberProperties.firstOrNull {
+
             it.name == type
         }?: throw IllegalArgumentException()
     }
