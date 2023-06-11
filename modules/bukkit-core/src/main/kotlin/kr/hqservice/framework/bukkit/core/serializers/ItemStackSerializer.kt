@@ -5,6 +5,8 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kr.hqservice.framework.global.core.extension.compress
+import kr.hqservice.framework.global.core.extension.decompress
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.io.BukkitObjectInputStream
 import org.bukkit.util.io.BukkitObjectOutputStream
@@ -17,7 +19,7 @@ object ItemStackSerializer : KSerializer<ItemStack> {
 
     override fun deserialize(decoder: Decoder): ItemStack {
         val base64 = Base64Coder.decode(decoder.decodeString())
-        val inputStream = ByteArrayInputStream(base64)
+        val inputStream = ByteArrayInputStream(base64.decompress())
         val dataInput = BukkitObjectInputStream(inputStream)
         val itemStack = dataInput.readObject() as ItemStack
         dataInput.close()
@@ -29,7 +31,7 @@ object ItemStackSerializer : KSerializer<ItemStack> {
         val dataOutput = BukkitObjectOutputStream(outputStream)
         dataOutput.writeObject(value)
         dataOutput.close()
-        val serialized = Base64Coder.encode(outputStream.toByteArray())
+        val serialized = Base64Coder.encode(outputStream.toByteArray().compress())
         val string = String(serialized)
         encoder.encodeString(string)
     }
