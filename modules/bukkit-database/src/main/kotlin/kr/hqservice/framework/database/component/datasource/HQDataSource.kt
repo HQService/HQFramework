@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database.component
+package kr.hqservice.framework.database.component.datasource
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -9,7 +9,7 @@ import org.jetbrains.exposed.sql.Transaction
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-sealed class HQDataSource : HQComponent, CoroutineScope {
+abstract class HQDataSource : HQComponent, CoroutineScope {
     private val hikariDataSourceLazy = lazy { HikariDataSource(getConfig()) }
     private val databaseLazy = lazy { Database.connect(hikariDataSourceLazy.value) }
 
