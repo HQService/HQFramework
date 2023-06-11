@@ -11,6 +11,7 @@ import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
+import kotlin.reflect.KClass
 
 @Component
 @Named("itemStack")
@@ -30,5 +31,13 @@ class NmsItemStackService(
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
         return asBukkitCopyFunction.call(wrapper.nmsItemStack) as? ItemStack?: throw IllegalArgumentException()
+    }
+
+    override fun getOriginalClass(): KClass<*> {
+        return ItemStack::class
+    }
+
+    override fun getTargetClass(): KClass<*> {
+        return nmsItemStackClass
     }
 }

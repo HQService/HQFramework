@@ -24,5 +24,4 @@ class MessagePacket(
         logging = buf.readBoolean()
         receivers = buf.readPlayers()
     }
-
 }

@@ -14,7 +14,6 @@ import org.koin.core.qualifier.named
 class NmsItemStackWrapper(
     internal val nmsItemStack: Any
 ) : ItemWrapper, KoinComponent {
-
     private val reflectionUtil: NmsReflectionUtil by inject()
 
     private val tagService: NmsNBTTagCompoundService by inject(named("tag"))
