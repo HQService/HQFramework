@@ -2,16 +2,16 @@ package kr.hqservice.framework.bukkit.core.component.registry
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.PluginDepend
+import kr.hqservice.framework.bukkit.core.extension.getHQConfig
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
-import org.bukkit.plugin.PluginManager
 import org.koin.core.annotation.Factory
 import java.util.jar.JarFile
 import java.util.logging.Logger
 import kotlin.reflect.KClass
-import kotlin.reflect.full.findAnnotation
 
 @Factory(binds = [ComponentRegistry::class])
 class BukkitComponentRegistry(
@@ -47,6 +47,7 @@ class BukkitComponentRegistry(
             put(HQBukkitPlugin::class, plugin)
             put(Logger::class, plugin.logger)
             put(ConfigurationSection::class, plugin.config)
+            put(HQYamlConfiguration::class, plugin.getHQConfig())
         }
     }
 }

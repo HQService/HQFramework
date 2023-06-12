@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     apiModule("global", "core")
+    apiModule("global", "yaml")
     apiModule("proxy", "core")
     compileOnly(libs.velocity.api)
     api(libs.kotlinx.coroutines.core)
