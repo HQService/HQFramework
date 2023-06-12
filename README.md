@@ -496,7 +496,7 @@ class ExampleItemListener : HQListener {
     event.isCancelled = true
     val player = event.whoClicked as Player
     val slot = event.rawSlot
-    player.sendPacket(SetVirtualItemPacket(player, slot, ItemStack(Material.BARRIER)) {
+    player.sendPacket(VirtualItemPacket(player, slot, ItemStack(Material.BARRIER)) {
       editMeta {
         displayName = "클릭 된 슬롯"
       }
