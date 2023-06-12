@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.service.impl
+package kr.hqservice.framework.nms.service.impl.item
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
@@ -7,8 +7,8 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
-import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
 import java.lang.UnsupportedOperationException
@@ -29,7 +29,7 @@ class NmsItemService(
     override fun wrap(target: NmsItemStackWrapper): NmsItemWrapper {
         return NmsItemWrapper(
             target,
-            getItemFunction.call(target.nmsItemStack)?: throw IllegalArgumentException(),
+            getItemFunction.call(target.getUnwrappedInstance())?: throw IllegalArgumentException(),
             nmsItemStackClass,
             nmsItemClass
             )

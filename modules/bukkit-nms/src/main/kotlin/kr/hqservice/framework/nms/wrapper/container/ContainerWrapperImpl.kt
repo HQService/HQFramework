@@ -1,9 +1,9 @@
-package kr.hqservice.framework.nms.wrapper.container.impl
+package kr.hqservice.framework.nms.wrapper.container
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.wrapper.container.ContainerWrapper
+import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kotlin.reflect.KClass
 
 class ContainerWrapperImpl(
@@ -25,5 +25,9 @@ class ContainerWrapperImpl(
 
     override fun getStateId(): Int {
         return stateIdField.callAccess(container) as Int
+    }
+
+    override fun getUnwrappedInstance(): Any {
+        return container
     }
 }

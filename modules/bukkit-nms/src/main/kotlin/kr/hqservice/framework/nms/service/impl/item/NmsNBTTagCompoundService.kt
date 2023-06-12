@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.service.impl
+package kr.hqservice.framework.nms.service.impl.item
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
@@ -6,7 +6,7 @@ import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.wrapper.item.impl.NmsNBTTagCompoundWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
 import kotlin.reflect.KClass
@@ -26,7 +26,7 @@ class NmsNBTTagCompoundService(
     }
 
     override fun unwrap(wrapper: NmsNBTTagCompoundWrapper): Any {
-        return wrapper.nbtTag
+        return wrapper.getUnwrappedInstance()
     }
 
     override fun getOriginalClass(): KClass<*> {

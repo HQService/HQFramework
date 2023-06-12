@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.service.impl
+package kr.hqservice.framework.nms.service.impl.container
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
@@ -6,8 +6,8 @@ import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.wrapper.container.ContainerWrapper
-import kr.hqservice.framework.nms.wrapper.container.impl.ContainerWrapperImpl
+import kr.hqservice.framework.nms.wrapper.ContainerWrapper
+import kr.hqservice.framework.nms.wrapper.container.ContainerWrapperImpl
 import org.bukkit.entity.Player
 import org.koin.core.annotation.Named
 import kotlin.reflect.KClass

@@ -1,11 +1,11 @@
-package kr.hqservice.framework.nms.wrapper.packet.impl
+package kr.hqservice.framework.nms.wrapper.packet
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.wrapper.container.ContainerWrapper
-import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
-import kr.hqservice.framework.nms.wrapper.packet.NmsPacketWrapper
+import kr.hqservice.framework.nms.wrapper.ContainerWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.NmsPacketWrapper
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -41,7 +41,7 @@ class PacketPlayOutSetSlotWrapper(
 
         return packetClass.java.getConstructor(
             Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, itemStackService.getTargetClass().java
-        ).newInstance(container.getContainerId(), container.getStateId(), slot, nmsItemStack.nmsItemStack)
+        ).newInstance(container.getContainerId(), container.getStateId(), slot, nmsItemStack.getUnwrappedInstance())
 
     }
 }

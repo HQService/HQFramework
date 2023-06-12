@@ -1,19 +1,19 @@
-package kr.hqservice.framework.nms.wrapper.item.impl
+package kr.hqservice.framework.nms.wrapper.item
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.service.impl.NmsNBTTagCompoundService
+import kr.hqservice.framework.nms.service.impl.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.item.ItemWrapper
+import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 
 class NmsItemStackWrapper(
-    internal val nmsItemStack: Any
-) : ItemWrapper, KoinComponent {
+    private val nmsItemStack: Any,
+) : NmsWrapper, KoinComponent {
     private val reflectionUtil: NmsReflectionUtil by inject()
 
     private val tagService: NmsNBTTagCompoundService by inject(named("tag"))
@@ -64,4 +64,7 @@ class NmsItemStackWrapper(
         return itemStackService.unwrap(this)
     }
 
+    override fun getUnwrappedInstance(): Any {
+        return nmsItemStack
+    }
 }

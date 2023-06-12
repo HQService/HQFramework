@@ -1,15 +1,15 @@
-package kr.hqservice.framework.nms.wrapper.item.impl
+package kr.hqservice.framework.nms.wrapper.item
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.item.ItemWrapper
+import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 class NmsNBTTagCompoundWrapper(
-    internal val nbtTag: Any,
-) : ItemWrapper, KoinComponent {
+    private val nbtTag: Any,
+) : NmsWrapper, KoinComponent {
     private val reflectionUtil: NmsReflectionUtil by inject()
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
@@ -62,5 +62,9 @@ class NmsNBTTagCompoundWrapper(
 
     fun isEmpty(): Boolean {
         return isEmptyFunction.call(nbtTag) as? Boolean?: true
+    }
+
+    override fun getUnwrappedInstance(): Any {
+        return nbtTag
     }
 }

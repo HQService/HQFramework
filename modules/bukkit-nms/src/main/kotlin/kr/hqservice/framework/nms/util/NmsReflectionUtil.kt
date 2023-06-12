@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.util
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
-import kr.hqservice.framework.nms.wrapper.packet.NmsPacketWrapper
+import kr.hqservice.framework.nms.wrapper.NmsPacketWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable

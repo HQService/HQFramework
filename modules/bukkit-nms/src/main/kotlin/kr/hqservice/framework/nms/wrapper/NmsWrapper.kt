@@ -1,3 +1,5 @@
 package kr.hqservice.framework.nms.wrapper
 
-interface NmsWrapper
+interface NmsWrapper {
+    fun getUnwrappedInstance(): Any
+}

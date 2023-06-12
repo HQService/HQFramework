@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.service.impl
+package kr.hqservice.framework.nms.service.impl.item
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
@@ -7,7 +7,7 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getStaticFunction
-import kr.hqservice.framework.nms.wrapper.item.impl.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
@@ -30,7 +30,7 @@ class NmsItemStackService(
     }
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
-        return asBukkitCopyFunction.call(wrapper.nmsItemStack) as? ItemStack?: throw IllegalArgumentException()
+        return asBukkitCopyFunction.call(wrapper.getUnwrappedInstance()) as? ItemStack?: throw IllegalArgumentException()
     }
 
     override fun getOriginalClass(): KClass<*> {
