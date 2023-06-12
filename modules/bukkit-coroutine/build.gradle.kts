@@ -8,8 +8,6 @@ dependencies {
     apiModule("bukkit", "core")
     compileOnly(libs.spigot.api)
     api(libs.kotlinx.coroutines.core)
-    kapt(libs.auto.service)
-    api(libs.auto.service.annotations)
 
     testImplementationModule("global", "core")
     testImplementationModule("bukkit", "core")

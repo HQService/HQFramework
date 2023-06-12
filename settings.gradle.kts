@@ -49,8 +49,6 @@ dependencyResolutionManagement {
             library("kotlinx-coroutines-test", "org.jetbrains.kotlinx:kotlinx-coroutines-test:${getProperty("coroutinesVersion")}")
             library("kotlinx-serialization-json", "org.jetbrains.kotlinx:kotlinx-serialization-json:${getProperty("serializationVersion")}")
 
-            library("auto-service", "com.google.auto.service:auto-service:${getProperty("autoServiceVersion")}")
-            library("auto-service-annotations", "com.google.auto.service:auto-service-annotations:${getProperty("autoServiceVersion")}")
             library("hikaricp", "com.zaxxer:HikariCP:${getProperty("hikariCPVersion")}")
             library("sqlite", "org.xerial:sqlite-jdbc:${getProperty("sqliteVersion")}")
             library("mysql-connector", "mysql:mysql-connector-java:${getProperty("mysqlConnectorVersion")}")

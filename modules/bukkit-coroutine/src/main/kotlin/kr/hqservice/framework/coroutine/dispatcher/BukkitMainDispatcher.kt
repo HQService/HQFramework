@@ -36,3 +36,24 @@ object BukkitMainDispatcher : MainCoroutineDispatcher(), Delay {
             ?: throw IllegalStateException("BukkitMainCoroutineContext 를 사용하기 위해서는, CombineContext 에 BukkitCoroutineContextElement 를 넣어주세요.")
     }
 }
+
+/**
+ * 디스패칭이 필요하지 않을 때를 구별합니다.
+ */
+@InternalCoroutinesApi
+object BukkitMainDispatcherImmediate : MainCoroutineDispatcher(), Delay {
+    override val immediate: MainCoroutineDispatcher
+        get() = this
+
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+        return !Bukkit.isPrimaryThread()
+    }
+
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        BukkitMainDispatcher.dispatch(context, block)
+    }
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        BukkitMainDispatcher.scheduleResumeAfterDelay(timeMillis, continuation)
+    }
+}
