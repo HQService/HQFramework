@@ -16,15 +16,25 @@ class NmsNBTTagCompoundWrapper(
     private val getStringFunction = reflectionUtil.getFunction(nbtTagClass, "getString", listOf(String::class),
         Version.V_15.handleFunction("l") { setParameterClasses(String::class) })
 
-    private val setStringFunction =
-        reflectionUtil.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
-            Version.V_15.handleFunction("a") { setParameterClasses(String::class, String::class) })
+    private val getIntFunction = reflectionUtil.getFunction(nbtTagClass, "getInt", listOf(String::class),
+        Version.V_15.handleFunction("i") { setParameterClasses(String::class)},
+        Version.V_17.handleFunction("h") { setParameterClasses(String::class)})
+
+    private val setIntFunction = reflectionUtil.getFunction(nbtTagClass, "setInt", listOf(String::class, Int::class),
+        Version.V_15.handleFunction("a") { setParameterClasses(String::class, Int::class)} )
+
+    private val setStringFunction = reflectionUtil.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
+        Version.V_15.handleFunction("a") { setParameterClasses(String::class, String::class) })
 
     private val removeFunction = reflectionUtil.getFunction(nbtTagClass, "remove", listOf(String::class),
         Version.V_15.handleFunction("r") { setParameterClasses(String::class) })
 
     private val containsFunction = reflectionUtil.getFunction(nbtTagClass, "contains", listOf(String::class),
         Version.V_15.handleFunction("e") { setParameterClasses(String::class) })
+
+    private val isEmptyFunction = reflectionUtil.getFunction(nbtTagClass, "isEmpty",
+        Version.V_15.handleFunction("f"),
+        Version.V_19_3.handleFunction("g"))
 
     fun getString(key: String): String? {
         return getStringFunction.call(nbtTag, key) as? String?
@@ -34,11 +44,23 @@ class NmsNBTTagCompoundWrapper(
         setStringFunction.call(nbtTag, key, value)
     }
 
+    fun getInt(key: String): Int? {
+        return getIntFunction.call(nbtTag, key) as? Int?
+    }
+
+    fun setInt(key: String, value: Int) {
+        setIntFunction.call(nbtTag, key, value)
+    }
+
     fun contains(key: String): Boolean {
         return containsFunction.call(nbtTag, key) as? Boolean?: false
     }
 
     fun remove(key: String) {
         removeFunction.call(nbtTag, key)
+    }
+
+    fun isEmpty(): Boolean {
+        return isEmptyFunction.call(nbtTag) as? Boolean?: true
     }
 }

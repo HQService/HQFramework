@@ -20,6 +20,7 @@ enum class Version{
     V_18,
     V_19,
     V_19_1,
+    V_19_3,
     V_19_4;
 
     fun support(version: Version, minor: Int = 0): Boolean {
@@ -36,7 +37,7 @@ enum class Version{
         return NameVersionHandler(this, name, changedName)
     }
 
-    fun handleFunction(name: String, block: FunctionType.()->Unit): VersionHandler {
+    fun handleFunction(name: String, block: FunctionType.()->Unit = {}): VersionHandler {
         if(name.isEmpty()) throw IllegalArgumentException("method without name")
 
         val type = FunctionType(name)
