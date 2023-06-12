@@ -23,7 +23,6 @@ bukkitResourceGenerator {
         libs.sqlite,
         libs.netty,
         libs.guava,
-        libs.auto.service.annotations,
         libs.snakeyaml,
         libs.configurate.yaml,
         libs.byte.buddy.core,
