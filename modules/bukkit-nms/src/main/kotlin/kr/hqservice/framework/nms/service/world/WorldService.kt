@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.service.impl.world
+package kr.hqservice.framework.nms.service.world
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton

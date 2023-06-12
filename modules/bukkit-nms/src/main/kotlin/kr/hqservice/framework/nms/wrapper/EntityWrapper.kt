@@ -16,4 +16,8 @@ interface EntityWrapper : NmsWrapper {
     fun teleport(location: Location)
 
     fun getNmsEntity(): Any
+
+    fun isRemoved(): Boolean
+
+    fun remove()
 }

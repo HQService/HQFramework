@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.wrapper.item
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.service.impl.item.NmsNBTTagCompoundService
+import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
@@ -38,13 +38,17 @@ class NmsItemStackWrapper(
     }
 
     fun tag(tagScope: NmsNBTTagCompoundWrapper.() -> Unit = {}): NmsNBTTagCompoundWrapper {
-        val tag = getTag()?: createNewTag()
+        val tag = getTagOrNull()?: createNewTag()
         tag.tagScope()
         setTag(tag)
         return tag
     }
 
-    fun getTag(): NmsNBTTagCompoundWrapper? {
+    fun getTag(): NmsNBTTagCompoundWrapper {
+        return getTagFunction.call(nmsItemStack)?.run(tagService::wrap)?: throw NullPointerException("nbt-tag is null")
+    }
+
+    fun getTagOrNull(): NmsNBTTagCompoundWrapper? {
         return getTagFunction.call(nmsItemStack)?.run(tagService::wrap)
     }
 

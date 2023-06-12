@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.service.impl.item
+package kr.hqservice.framework.nms.service.item
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService

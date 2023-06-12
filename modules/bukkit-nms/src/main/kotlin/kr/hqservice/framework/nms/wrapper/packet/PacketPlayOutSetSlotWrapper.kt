@@ -18,7 +18,7 @@ class PacketPlayOutSetSlotWrapper(
     private val player: Player,
     private val slot: Int,
     private val itemStack: ItemStack,
-    private val virtualBlock: (ItemStack) -> Unit = {},
+    private val virtualBlock: ItemStack.() -> Unit = {},
 ) : NmsPacketWrapper(), KoinComponent {
     private val reflectionUtil: NmsReflectionUtil by inject()
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by inject(named("itemStack"))
