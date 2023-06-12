@@ -15,9 +15,7 @@ import kotlin.reflect.full.findAnnotation
 
 @Factory(binds = [ComponentRegistry::class])
 class BukkitComponentRegistry(
-    private val plugin: HQBukkitPlugin,
-    private val pluginManager: PluginManager,
-    private val logger: Logger
+    private val plugin: HQBukkitPlugin
 ) : JarBasedComponentRegistry() {
     override fun getComponentScope(): String {
         return plugin::class.java.packageName
@@ -30,9 +28,9 @@ class BukkitComponentRegistry(
     override fun filterComponent(clazz: Class<*>): Boolean {
         val depend = clazz.kotlin.findAnnotation<PluginDepend>() ?: return true
         depend.plugins.forEach { pluginId ->
-            val plugin = pluginManager.getPlugin(pluginId)
+            val plugin = plugin.server.pluginManager.getPlugin(pluginId)
             if (plugin == null) {
-                logger.info("cannot find depending plugin with id $pluginId, excluding component ${clazz.simpleName}")
+                this.plugin.logger.info("cannot find depending plugin with id $pluginId, excluding component ${clazz.simpleName}")
                 return false
             }
         }
