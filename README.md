@@ -9,6 +9,7 @@ HQFramework는 SpringFramework 에서 영감을 받아 Bukkit 및 Proxy 플랫�
 ## Features
 * [Component](#component)
 * [Packet I/O](#packet-io)
+* [NMS](#nms)
     
 ## Component
 ### Table of contents
@@ -434,3 +435,72 @@ data class PacketPlayOutChat(
 }
 ```
 이 방식은 비어있는 constructor 를 가진 class 를 재정의하여, read method 를 통해 수신받은 데이터를 실제 Packet class 의 생성자에 주입하는 방식으로 구현 되었습니다.
+
+---
+### NMS
+### Table of contents
+* [간결한 NMS-ItemStack 편집](#nms-itemstack-편집)
+* [NMS-Packet 을 쉽게 보내기](#nms-packetwrapper-를-통해-패킷-보내기)
+
+HQFramework 를 사용하여 개발하기 껄끄러웠던 NMS 단의 코드를 더 쉽게 사용하여, 개발 경험을 더 풍부하게 늘릴 수 있습니다.
+
+---
+### NMS ItemStack 편집
+HQFramework 에서는 NMS 의 구현부 없이 Bukkit-APi 의 ItemStack 을 통해서도 NMS 단의 코드 사용을 지원합니다.
+ 아래는 ItemStack 의 NBTTagCompound 를 편집하는 간단한 예제입니다.
+> NBTTagCompound 에 Key 와 Value 설정을 간단하게 적용할 수 있습니다.
+```kotlin
+@Component
+class ExampleItemListener : HQListener {
+  @EventHandler
+  fun exampleSetString(event: PlayerInteractEvent) {
+    val player = event.player
+    val itemStack = player.inventory.itemInMainHand
+    itemStack.nms {
+      tag {
+        setString("exampleKey", "exampleValue")
+      }
+    }
+  }
+}
+```
+> 반대로 NBTTagCompound 의 값을 읽어 올 때는 아래와 같은 방식으로도 접근이 가능합니다.
+```kotlin
+@Component
+class ExampleItemListener : HQListener {
+  @EventHandler
+  fun exampleGetString(event: PlayerInteractEvent) {
+    val player = event.player
+    val itemStack = player.inventory.itemInMainHand
+    val nmsItemStack = itemStack.getNmsItemStack()
+    if (nmsItemStack.hasTag()) {
+      val nbtTagCompound = nmsItemStack.getTag()
+      if (nbtTagCompound.hasKey("exampleKey")) {
+        player.sendMessage(nbtTagCompound.getString("exampleKey"))
+      }
+    }
+  }
+}
+```
+
+---
+### NMS PacketWrapper 를 통해 패킷 보내기
+HQFramework 를 통해 NMS 의 Packet 을 Bukkit-API 의 코드만으로 쉽게 생성하여 서버에 보낼 수 있습니다.
+ 아래는 플레이어가 보고있는 인벤토리에 Packet 으로 아이템을 설정하는 간단한 예제입니다.
+> 플레이어가 인벤토리를 클릭하면 해당 슬롯에 Barrier 를 Packet 으로 설정합니다.
+```kotlin
+@Component
+class ExampleItemListener : HQListener {
+  @EventHandler
+  fun examplePacketSetItem(event: InventoryClickEvent) {
+    event.isCancelled = true
+    val player = event.whoClicked as Player
+    val slot = event.rawSlot
+    player.sendPacket(PacketPlaySetSlotWrapper(player, slot, ItemStack(Material.BARRIER)) {
+      editMeta {
+        displayName = "클릭 된 슬롯"
+      }
+    }
+  }
+}
+```
