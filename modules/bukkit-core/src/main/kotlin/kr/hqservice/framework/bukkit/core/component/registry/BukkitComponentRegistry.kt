@@ -26,8 +26,11 @@ class BukkitComponentRegistry(
     }
 
     override fun filterComponent(clazz: Class<*>): Boolean {
-        val depend = clazz.kotlin.findAnnotation<PluginDepend>() ?: return true
-        depend.plugins.forEach { pluginId ->
+        val depend = clazz.annotations.filterIsInstance<PluginDepend>()
+        if (depend.isEmpty()) {
+            return true
+        }
+        depend.first().plugins.forEach { pluginId ->
             val plugin = plugin.server.pluginManager.getPlugin(pluginId)
             if (plugin == null) {
                 this.plugin.logger.info("cannot find depending plugin with id $pluginId, excluding component ${clazz.simpleName}")
