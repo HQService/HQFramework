@@ -484,10 +484,11 @@ class ExampleItemListener : HQListener {
 ```
 
 ---
-### NMS PacketWrapper 를 통해 패킷 보내기
+### NMS Packet 를 통해 Client-Side 데이터 보내기
 HQFramework 를 통해 NMS 의 Packet 을 Bukkit-API 의 코드만으로 쉽게 생성하여 서버에 보낼 수 있습니다.
- 아래는 플레이어가 보고있는 인벤토리에 Packet 으로 아이템을 설정하는 간단한 예제입니다.
-> 플레이어가 인벤토리를 클릭하면 해당 슬롯에 Barrier 를 Packet 으로 설정합니다.
+HQFramework 에서는 Client-Side 로 NMS Packet 을 보내는 과정을 Virtual 로 정의하였습니다.
+ 아래는 플레이어가 보고있는 인벤토리에 가상으로 아이템을 설정하는 간단한 예제입니다.
+> 플레이어가 인벤토리를 클릭하면 해당 슬롯에 Barrier 를 Client-Side 로 설정합니다.
 ```kotlin
 @Component
 class ExampleItemListener : HQListener {
@@ -496,9 +497,9 @@ class ExampleItemListener : HQListener {
     event.isCancelled = true
     val player = event.whoClicked as Player
     val slot = event.rawSlot
-    player.sendPacket(VirtualItemPacket(player, slot, ItemStack(Material.BARRIER)) {
-      editMeta {
-        displayName = "클릭 된 슬롯"
+    player.virtual {
+      setItem(slot, ItemStack(Material.BARRIER) {
+        setDisplayName("클릭 된 슬롯")
       }
     }
   }
