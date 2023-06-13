@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.virtual
 
 import kr.hqservice.framework.bukkit.core.extension.colorize
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
@@ -13,7 +13,7 @@ abstract class AbstractVirtualEntity(
     private var location: Location,
     private var name: String,
 ) : Virtual, KoinComponent {
-    protected val reflectionUtil: NmsReflectionUtil by inject()
+    protected val reflectionUtil: NmsReflectionWrapper by inject()
     private val virtualEntityClasses: VirtualEntityClasses by inject()
 
     private var state: Byte = 0x7

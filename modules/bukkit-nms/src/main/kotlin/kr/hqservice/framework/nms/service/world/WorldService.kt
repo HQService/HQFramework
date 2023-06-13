@@ -4,9 +4,9 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.getFunction
 import org.bukkit.World
 import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
@@ -16,7 +16,7 @@ import kotlin.reflect.cast
 @Named("world")
 @HQSingleton(binds = [NmsService::class])
 class WorldService(
-    reflectionUtil: NmsReflectionUtil
+    reflectionUtil: NmsReflectionWrapper
 ) : NmsService<World, WorldWrapper> {
     private val craftWorldClass = reflectionUtil.getCraftBukkitClass("CraftWorld")
     private val getHandleFunction = reflectionUtil.getFunction(craftWorldClass, "getHandle")

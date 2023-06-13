@@ -7,7 +7,7 @@ import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.PacketHandler
 import kr.hqservice.framework.nms.util.NettyInjectUtil
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import java.util.Collections
@@ -17,7 +17,7 @@ import kotlin.reflect.jvm.isAccessible
 @Component
 @HQSingleton(binds = [NettyInjectUtil::class])
 class NettyInjectUtilImpl(
-    private val reflectionUtil: NmsReflectionUtil
+    private val reflectionUtil: NmsReflectionWrapper
 ) : NettyInjectUtil, HQSimpleComponent {
     override fun getPlayerChannel(player: Player): Channel {
         val entity = reflectionUtil.getEntityPlayer(player)

@@ -4,7 +4,7 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.math.Vector3fWrapper
 import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 @Named("vector3f")
 @HQSingleton(binds = [NmsService::class])
 class Vector3fService(
-    private val reflectionUtil: NmsReflectionUtil
+    private val reflectionUtil: NmsReflectionWrapper
 ) : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {
     private val vector3fClass = reflectionUtil.getNmsClass("Vector3f",
         Version.V_15.handle("core"))

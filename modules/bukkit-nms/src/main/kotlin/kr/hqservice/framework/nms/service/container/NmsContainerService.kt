@@ -4,7 +4,7 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.container.ContainerWrapperImpl
 import org.bukkit.entity.Player
@@ -15,10 +15,10 @@ import kotlin.reflect.KClass
 @Named("container")
 @HQSingleton(binds = [NmsService::class])
 class NmsContainerService(
-    private val reflectionUtil: NmsReflectionUtil
+    private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Player, ContainerWrapper> {
-    private val containerClass = reflectionUtil.getNmsClass("Container", Version.V_17.handle("world.inventory.Container", true))
-    private val activeContainerField = reflectionUtil.getField(reflectionUtil.getNmsPlayerClass(), "activeContainer",
+    private val containerClass = reflectionWrapper.getNmsClass("Container", Version.V_17.handle("world.inventory.Container", true))
+    private val activeContainerField = reflectionWrapper.getField(reflectionWrapper.getNmsPlayerClass(), "activeContainer",
         Version.V_15.handle("bx"),
         Version.V_17.handle("bV"),
         Version.V_18.handle("bW"),
@@ -27,9 +27,9 @@ class NmsContainerService(
     )
 
     override fun wrap(target: Player): ContainerWrapper {
-        val nmsPlayer = reflectionUtil.getEntityPlayer(target)
+        val nmsPlayer = reflectionWrapper.getEntityPlayer(target)
         val activeContainer = activeContainerField.call(nmsPlayer)?: throw UnsupportedOperationException()
-        return ContainerWrapperImpl(activeContainer, reflectionUtil, containerClass)
+        return ContainerWrapperImpl(activeContainer, reflectionWrapper, containerClass)
     }
 
     override fun unwrap(wrapper: ContainerWrapper): Player {

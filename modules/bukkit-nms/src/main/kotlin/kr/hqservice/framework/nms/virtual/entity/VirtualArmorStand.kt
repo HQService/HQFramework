@@ -1,6 +1,5 @@
 package kr.hqservice.framework.nms.virtual.entity
 
-import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.wrapper.entity.NmsArmorStandWrapper

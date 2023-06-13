@@ -2,13 +2,13 @@ package kr.hqservice.framework.nms.wrapper.container
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kotlin.reflect.KClass
 
 class ContainerWrapperImpl(
     private val container: Any,
-    reflectionUtil: NmsReflectionUtil,
+    reflectionUtil: NmsReflectionWrapper,
     containerClass: KClass<*>
 ) : ContainerWrapper {
     private val windowIdField = reflectionUtil.getField(containerClass, "windowId",

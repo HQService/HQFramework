@@ -5,8 +5,7 @@ import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
@@ -15,13 +14,13 @@ import kotlin.reflect.KClass
 @Named("base-component")
 @HQSingleton(binds = [NmsService::class])
 class BaseComponentService(
-    reflectionUtil: NmsReflectionUtil
+    reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<String, BaseComponentWrapper> {
-    private val componentClass = reflectionUtil.getNmsClass("IChatBaseComponent",
+    private val componentClass = reflectionWrapper.getNmsClass("IChatBaseComponent",
         Version.V_15.handle("network.chat"))
-    private val componentSerializerClass = reflectionUtil.getNmsClass("IChatBaseComponent\$ChatSerializer",
+    private val componentSerializerClass = reflectionWrapper.getNmsClass("IChatBaseComponent\$ChatSerializer",
         Version.V_15.handle("network.chat"))
-    private val serializeFunction = reflectionUtil.getFunction(componentSerializerClass, FunctionType("a", null, listOf(String::class), true))
+    private val serializeFunction = reflectionWrapper.getFunction(componentSerializerClass, FunctionType("a", null, listOf(String::class), true))
 
     override fun wrap(target: String): BaseComponentWrapper {
         return BaseComponentWrapper(target, serializeFunction.call("{\"text\": \"§f$target\"}")?: throw UnsupportedOperationException("cannot called ChatSerializer#Serialize(String) function"))

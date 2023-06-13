@@ -2,12 +2,11 @@ package kr.hqservice.framework.nms.virtual.item
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.VirtualMessage
-import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -23,11 +22,11 @@ class VirtualItem(
     private val itemStack: ItemStack,
     private val itemEditBlock: ItemMeta.() -> Unit = {},
 ) : Virtual, KoinComponent {
-    private val reflectionUtil: NmsReflectionUtil by inject()
+    private val reflectionWrapper: NmsReflectionWrapper by inject()
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by inject(named("itemStack"))
     private val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
     private val packetClass =
-        reflectionUtil.getNmsClass("PacketPlayOutSetSlot", Version.V_15.handle("network.protocol.game"))
+        reflectionWrapper.getNmsClass("PacketPlayOutSetSlot", Version.V_15.handle("network.protocol.game"))
 
     override fun createVirtualMessage(): VirtualMessage {
         val container = containerService.wrap(player)

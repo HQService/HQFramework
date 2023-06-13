@@ -1,15 +1,15 @@
 package kr.hqservice.framework.nms.wrapper.math
 
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import kotlin.reflect.KClass
 
 class Vector3fWrapper(
     private val vector3f: Any,
     targetClass: KClass<*>,
-    reflectionUtil: NmsReflectionUtil
+    reflectionUtil: NmsReflectionWrapper
 ) : NmsWrapper {
     private val getXFunction = reflectionUtil.getFunction(targetClass, "getX", Version.V_15.handleFunction("b"))
     private val getYFunction = reflectionUtil.getFunction(targetClass, "getY", Version.V_15.handleFunction("c"))

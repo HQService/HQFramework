@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.util.impl
+package kr.hqservice.framework.nms.wrapper.reflect
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
@@ -7,8 +7,8 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.virtual.Virtual
 import org.bukkit.Server
 import org.bukkit.entity.Player
@@ -18,10 +18,10 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @Component
-@HQSingleton(binds = [NmsReflectionUtil::class])
-class NmsReflectionUtilImpl(
+@HQSingleton(binds = [NmsReflectionWrapper::class])
+class NmsReflectionWrapperImpl(
     server: Server,
-) : NmsReflectionUtil, HQSimpleComponent {
+) : NmsReflectionWrapper, HQSimpleComponent {
     private val classMap = mutableMapOf<String, KClass<*>>()
     private val callableMap = mutableMapOf<String, KCallable<*>>()
 

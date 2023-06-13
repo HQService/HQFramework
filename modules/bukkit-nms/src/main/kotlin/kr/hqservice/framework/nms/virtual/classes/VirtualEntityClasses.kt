@@ -5,8 +5,8 @@ import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import org.bukkit.Location
 import org.koin.core.annotation.Named
@@ -14,7 +14,7 @@ import org.koin.core.annotation.Named
 @Component
 @HQSingleton(binds = [VirtualEntityClasses::class])
 class VirtualEntityClasses(
-    reflectionUtil: NmsReflectionUtil,
+    reflectionUtil: NmsReflectionWrapper,
     @Named("base-component") private val componentWrapper: NmsService<String, BaseComponentWrapper>,
 ) : HQSimpleComponent {
     private val entityClass = reflectionUtil.getNmsClass("EntityLiving",

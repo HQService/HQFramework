@@ -3,14 +3,14 @@ package kr.hqservice.framework.nms.wrapper.item
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.bukkit.inventory.ItemStack
 
 class NmsItemStackWrapper(
     private val nmsItemStack: Any,
-    reflectionUtil: NmsReflectionUtil,
+    reflectionUtil: NmsReflectionWrapper,
     private val tagService: NmsNBTTagCompoundService,
     private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>

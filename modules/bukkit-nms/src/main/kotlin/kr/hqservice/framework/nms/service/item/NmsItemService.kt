@@ -4,12 +4,11 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import org.koin.core.annotation.Named
-import org.koin.core.component.KoinComponent
 import java.lang.UnsupportedOperationException
 import kotlin.reflect.KClass
 
@@ -17,11 +16,11 @@ import kotlin.reflect.KClass
 @Named("item")
 @HQSingleton(binds = [NmsService::class])
 class NmsItemService(
-    private val reflectionUtil: NmsReflectionUtil
-) : KoinComponent, NmsService<NmsItemStackWrapper, NmsItemWrapper> {
-    private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
-    private val nmsItemClass = reflectionUtil.getNmsClass("Item", Version.V_15.handle("world.item"))
-    private val getItemFunction = reflectionUtil.getFunction(nmsItemStackClass, "getItem",
+    private val reflectionWrapper: NmsReflectionWrapper
+) : NmsService<NmsItemStackWrapper, NmsItemWrapper> {
+    private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
+    private val nmsItemClass = reflectionWrapper.getNmsClass("Item", Version.V_15.handle("world.item"))
+    private val getItemFunction = reflectionWrapper.getFunction(nmsItemStackClass, "getItem",
         Version.V_15.handle("b"),
         Version.V_17.handle("c"))
 
@@ -31,7 +30,7 @@ class NmsItemService(
             getItemFunction.call(target.getUnwrappedInstance())?: throw IllegalArgumentException(),
             nmsItemStackClass,
             nmsItemClass,
-            reflectionUtil
+            reflectionWrapper
             )
     }
 

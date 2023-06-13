@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.util
+package kr.hqservice.framework.nms.wrapper
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
@@ -10,7 +10,7 @@ import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 
-interface NmsReflectionUtil {
+interface NmsReflectionWrapper {
     fun getNmsPlayerClass(): KClass<*>
 
     fun getVersionName(): String
@@ -36,26 +36,26 @@ interface NmsReflectionUtil {
     suspend fun sendPacket(player: Player, vararg virtual: Virtual)
 }
 
-fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {
     return getFunction(clazz, FunctionType(name), *handlers)
 }
 
-fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, vararg handlers: VersionHandler): KCallable<*> {
     return getFunction(clazz, FunctionType(name, returnType.createType()), *handlers)
 }
 
-fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
     return getFunction(clazz, FunctionType(name, null , params), *handlers)
 }
 
-fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
     return getFunction(clazz, FunctionType(name, returnType.createType(), params), *handlers)
 }
 
-fun NmsReflectionUtil.getStaticFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getStaticFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
     return getStaticFunction(clazz, FunctionType(name, null, params, true), *handlers.map { it.static() }.toTypedArray())
 }
 
-fun NmsReflectionUtil.getStaticFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getStaticFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
     return getStaticFunction(clazz, FunctionType(name, returnType.createType(), params, true), *handlers.map { it.static() }.toTypedArray())
 }

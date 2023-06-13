@@ -5,8 +5,8 @@ import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsEntityService
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.entity.NmsArmorStandWrapper
 import kr.hqservice.framework.nms.wrapper.math.Vector3fWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
@@ -18,20 +18,20 @@ import kotlin.reflect.KClass
 @Component
 @HQSingleton(binds = [NmsArmorStandService::class])
 class NmsArmorStandService(
-    private val reflectionUtil: NmsReflectionUtil,
+    private val reflectionWrapper: NmsReflectionWrapper,
     @Named("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
     @Named("world") private val worldService: NmsService<World, WorldWrapper>,
 ) : NmsEntityService<NmsArmorStandWrapper> {
-    private val armorStandClass = reflectionUtil.getNmsClass("EntityArmorStand",
+    private val armorStandClass = reflectionWrapper.getNmsClass("EntityArmorStand",
         Version.V_15.handle("world.entity.decoration"))
 
     private val armorStandConstructor = armorStandClass.java.getConstructor(
         worldService.getTargetClass().java, Double::class.java, Double::class.java, Double::class.java)
 
-    private val setHeadPoseFunction = reflectionUtil.getFunction(armorStandClass, "setHeadPose", listOf(vector3fService.getTargetClass()),
+    private val setHeadPoseFunction = reflectionWrapper.getFunction(armorStandClass, "setHeadPose", listOf(vector3fService.getTargetClass()),
         Version.V_15.handleFunction("a") { setParameterClasses(vector3fService.getTargetClass())} )
 
-    private val getHeadPoseFunction = reflectionUtil.getFunction(armorStandClass, "getHeadPose",
+    private val getHeadPoseFunction = reflectionWrapper.getFunction(armorStandClass, "getHeadPose",
         Version.V_15.handleFunction("r"),
         Version.V_17.handleFunction("v"),
         Version.V_19.handleFunction("u"),
@@ -58,7 +58,7 @@ class NmsArmorStandService(
 
     internal fun getHeadPose(wrapper: NmsArmorStandWrapper): Vector3fWrapper {
         val headPose = getHeadPoseFunction.call(wrapper.getUnwrappedInstance())?: throw NullPointerException("head-pose is null")
-        return Vector3fWrapper(headPose, vector3fService.getTargetClass(), reflectionUtil)
+        return Vector3fWrapper(headPose, vector3fService.getTargetClass(), reflectionWrapper)
     }
 
     internal fun setHeadPose(wrapper: NmsArmorStandWrapper, triple: Triple<Float, Float, Float>) {

@@ -1,13 +1,13 @@
 package kr.hqservice.framework.nms.wrapper.item
 
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 
 class NmsNBTTagCompoundWrapper(
     private val nbtTag: Any,
-    reflectionUtil: NmsReflectionUtil
+    reflectionUtil: NmsReflectionWrapper
 ) : NmsWrapper {
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 

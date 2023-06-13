@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.wrapper.item
 
-import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.util.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import kotlin.reflect.KClass
 
@@ -10,7 +10,7 @@ class NmsItemWrapper(
     private val nmsItem: Any,
     nmsItemStackClass: KClass<*>,
     nmsItemClass: KClass<*>,
-    reflectionUtil: NmsReflectionUtil
+    reflectionUtil: NmsReflectionWrapper
 ) : NmsWrapper {
     private val getDescriptionIdFunction = reflectionUtil.getFunction(nmsItemClass, "j", listOf(nmsItemStackClass))
 
