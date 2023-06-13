@@ -8,6 +8,7 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getStaticFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
@@ -17,9 +18,8 @@ import kotlin.reflect.KClass
 @HQSingleton(binds = [NmsService::class])
 class NmsItemStackService(
     private val reflectionWrapper: NmsReflectionWrapper,
-    @Named("tag") private val tagService: NmsNBTTagCompoundService,
+    @Named("tag") private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
     @Named("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
-    @Named("itemStack") private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>
 ) : NmsService<ItemStack, NmsItemStackWrapper> {
     private val craftItemStackClass = reflectionWrapper.getCraftBukkitClass("inventory.CraftItemStack")
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
@@ -31,7 +31,7 @@ class NmsItemStackService(
         return NmsItemStackWrapper(
             asNmsCopyFunction.call(target)?: throw IllegalArgumentException(),
             reflectionWrapper,
-            tagService, itemService, itemStackService
+            tagService, itemService, this
         )
     }
 

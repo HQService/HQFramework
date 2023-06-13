@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack
 class NmsItemStackWrapper(
     private val nmsItemStack: Any,
     reflectionUtil: NmsReflectionWrapper,
-    private val tagService: NmsNBTTagCompoundService,
+    private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
     private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>
 ) : NmsWrapper {
