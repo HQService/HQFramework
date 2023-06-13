@@ -8,15 +8,19 @@ import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 
 class HQButtonBuilder(
     private val itemStack: ItemStack
 ) {
     private var displayName: String = itemStack.itemMeta?.displayName ?: ""
-    private var lore: List<String> = itemStack.itemMeta?.lore ?: emptyList()
+    private var lore: MutableList<String> = itemStack.itemMeta?.lore ?: mutableListOf()
     private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
     private var customModelData: Int = 0
     private var removable = false
+
+    private var itemMetaEditScope: ItemMeta.() -> Unit = {}
+
     var glow = false
         set(value) {
             field = value
@@ -43,7 +47,13 @@ class HQButtonBuilder(
     }
 
     fun setLore(lore: List<String>): HQButtonBuilder {
-        this.lore = lore
+        this.lore.clear()
+        this.lore.addAll(lore)
+        return this
+    }
+
+    fun addLore(lore: String): HQButtonBuilder {
+        this.lore.add(lore)
         return this
     }
 
@@ -66,8 +76,13 @@ class HQButtonBuilder(
         return this
     }
 
-    fun setClickFunction(block: (ButtonClickEvent)->Unit): HQButtonBuilder {
+    fun setClickFunction(block: (ButtonClickEvent) -> Unit): HQButtonBuilder {
         clickFunction = block
+        return this
+    }
+
+    fun setMeta(scope: ItemMeta.() -> Unit): HQButtonBuilder {
+        this.itemMetaEditScope = scope
         return this
     }
 
@@ -77,8 +92,8 @@ class HQButtonBuilder(
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
             meta.addItemFlags(*itemFlags.toTypedArray())
             try { meta.setCustomModelData(customModelData) } catch (_: Exception) {}
+            meta.itemMetaEditScope()
         }
         return HQButtonImpl(itemStack, clickFunction, removable)
     }
-
 }
