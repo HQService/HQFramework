@@ -9,11 +9,11 @@ import kotlin.reflect.KClass
 class Vector3fWrapper(
     private val vector3f: Any,
     targetClass: KClass<*>,
-    reflectionUtil: NmsReflectionWrapper
+    reflectionWrapper: NmsReflectionWrapper
 ) : NmsWrapper {
-    private val getXFunction = reflectionUtil.getFunction(targetClass, "getX", Version.V_15.handleFunction("b"))
-    private val getYFunction = reflectionUtil.getFunction(targetClass, "getY", Version.V_15.handleFunction("c"))
-    private val getZFunction = reflectionUtil.getFunction(targetClass, "getZ", Version.V_15.handleFunction("d"))
+    private val getXFunction = reflectionWrapper.getFunction(targetClass, "getX", Version.V_15.handleFunction("b"))
+    private val getYFunction = reflectionWrapper.getFunction(targetClass, "getY", Version.V_15.handleFunction("c"))
+    private val getZFunction = reflectionWrapper.getFunction(targetClass, "getZ", Version.V_15.handleFunction("d"))
 
     fun getX(): Float = getXFunction.call(vector3f) as Float
     fun getY(): Float = getYFunction.call(vector3f) as Float

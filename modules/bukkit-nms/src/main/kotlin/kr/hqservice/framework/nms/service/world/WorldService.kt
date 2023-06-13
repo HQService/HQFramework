@@ -16,11 +16,11 @@ import kotlin.reflect.cast
 @Named("world")
 @HQSingleton(binds = [NmsService::class])
 class WorldService(
-    reflectionUtil: NmsReflectionWrapper
+    reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<World, WorldWrapper> {
-    private val craftWorldClass = reflectionUtil.getCraftBukkitClass("CraftWorld")
-    private val getHandleFunction = reflectionUtil.getFunction(craftWorldClass, "getHandle")
-    private val worldClass = reflectionUtil.getNmsClass("World",
+    private val craftWorldClass = reflectionWrapper.getCraftBukkitClass("CraftWorld")
+    private val getHandleFunction = reflectionWrapper.getFunction(craftWorldClass, "getHandle")
+    private val worldClass = reflectionWrapper.getNmsClass("World",
         Version.V_15.handle("world.level"))
 
     override fun wrap(target: World): WorldWrapper {

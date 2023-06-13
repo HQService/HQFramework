@@ -12,8 +12,6 @@ class PacketHandler(
     private val player: Player
 ) : ChannelDuplexHandler(), KoinComponent {
 
-    private val reflectionUtil: NmsReflectionWrapper by inject()
-
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
         val packetName = message.javaClass.simpleName
 

@@ -7,30 +7,30 @@ import kr.hqservice.framework.nms.wrapper.NmsWrapper
 
 class NmsNBTTagCompoundWrapper(
     private val nbtTag: Any,
-    reflectionUtil: NmsReflectionWrapper
+    reflectionWrapper: NmsReflectionWrapper
 ) : NmsWrapper {
-    private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
+    private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
-    private val getStringFunction = reflectionUtil.getFunction(nbtTagClass, "getString", listOf(String::class),
+    private val getStringFunction = reflectionWrapper.getFunction(nbtTagClass, "getString", listOf(String::class),
         Version.V_15.handleFunction("l") { setParameterClasses(String::class) })
 
-    private val getIntFunction = reflectionUtil.getFunction(nbtTagClass, "getInt", listOf(String::class),
+    private val getIntFunction = reflectionWrapper.getFunction(nbtTagClass, "getInt", listOf(String::class),
         Version.V_15.handleFunction("i") { setParameterClasses(String::class)},
         Version.V_17.handleFunction("h") { setParameterClasses(String::class)})
 
-    private val setIntFunction = reflectionUtil.getFunction(nbtTagClass, "setInt", listOf(String::class, Int::class),
+    private val setIntFunction = reflectionWrapper.getFunction(nbtTagClass, "setInt", listOf(String::class, Int::class),
         Version.V_15.handleFunction("a") { setParameterClasses(String::class, Int::class)} )
 
-    private val setStringFunction = reflectionUtil.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
+    private val setStringFunction = reflectionWrapper.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
         Version.V_15.handleFunction("a") { setParameterClasses(String::class, String::class) })
 
-    private val removeFunction = reflectionUtil.getFunction(nbtTagClass, "remove", listOf(String::class),
+    private val removeFunction = reflectionWrapper.getFunction(nbtTagClass, "remove", listOf(String::class),
         Version.V_15.handleFunction("r") { setParameterClasses(String::class) })
 
-    private val containsFunction = reflectionUtil.getFunction(nbtTagClass, "contains", listOf(String::class),
+    private val containsFunction = reflectionWrapper.getFunction(nbtTagClass, "contains", listOf(String::class),
         Version.V_15.handleFunction("e") { setParameterClasses(String::class) })
 
-    private val isEmptyFunction = reflectionUtil.getFunction(nbtTagClass, "isEmpty",
+    private val isEmptyFunction = reflectionWrapper.getFunction(nbtTagClass, "isEmpty",
         Version.V_15.handleFunction("f"),
         Version.V_19_3.handleFunction("g"))
 

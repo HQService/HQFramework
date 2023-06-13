@@ -8,13 +8,13 @@ import kotlin.reflect.KClass
 
 class ContainerWrapperImpl(
     private val container: Any,
-    reflectionUtil: NmsReflectionWrapper,
+    reflectionWrapper: NmsReflectionWrapper,
     containerClass: KClass<*>
 ) : ContainerWrapper {
-    private val windowIdField = reflectionUtil.getField(containerClass, "windowId",
+    private val windowIdField = reflectionWrapper.getField(containerClass, "windowId",
         Version.V_17.handle("j")
     )
-    private val stateIdField = reflectionUtil.getField(containerClass, "q",
+    private val stateIdField = reflectionWrapper.getField(containerClass, "q",
         Version.V_19.handle("q"),
         Version.V_19_1.handle("r")
     )

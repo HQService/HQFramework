@@ -10,9 +10,9 @@ class NmsItemWrapper(
     private val nmsItem: Any,
     nmsItemStackClass: KClass<*>,
     nmsItemClass: KClass<*>,
-    reflectionUtil: NmsReflectionWrapper
+    reflectionWrapper: NmsReflectionWrapper
 ) : NmsWrapper {
-    private val getDescriptionIdFunction = reflectionUtil.getFunction(nmsItemClass, "j", listOf(nmsItemStackClass))
+    private val getDescriptionIdFunction = reflectionWrapper.getFunction(nmsItemClass, "j", listOf(nmsItemStackClass))
 
     fun getDescriptionName(): String {
         return getDescriptionIdFunction.call(nmsItem, nmsItemStackWrapper.getUnwrappedInstance()) as? String?: throw IllegalArgumentException()
