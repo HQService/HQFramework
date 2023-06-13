@@ -27,12 +27,14 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getKeys(): List<String> {
-        return root.childrenMap.keys.map { it as String }
+        return root.childrenMap.keys.map {
+            it.toString()
+        }
     }
 
     override fun getStringList(key: String): List<String> {
         return if(!findNode(key).isList) emptyList()
-        else findNode(key).getList { it as String }
+        else findNode(key).getList { it.toString() }
     }
 
     override fun getIntegerList(key: String): List<Int> {
