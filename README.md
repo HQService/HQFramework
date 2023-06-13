@@ -440,7 +440,7 @@ data class PacketPlayOutChat(
 ### NMS
 ### Table of contents
 * [간결한 NMS-ItemStack 편집](#nms-itemstack-편집)
-* [NMS-Packet 을 쉽게 보내기](#nms-packetwrapper-를-통해-패킷-보내기)
+* [NMS-Packet 을 쉽게 보내기](#nms-packet-을-virtual-을-통해-Client-Side-로-보내기)
 
 HQFramework 를 사용하여 개발하기 껄끄러웠던 NMS 단의 코드를 더 쉽게 사용하여, 개발 경험을 더 풍부하게 늘릴 수 있습니다.
 
@@ -484,7 +484,7 @@ class ExampleItemListener : HQListener {
 ```
 
 ---
-### NMS Packet 를 통해 Client-Side 데이터 보내기
+### NMS Packet 을 Virtual 을 통해 Client-Side 로 보내기
 HQFramework 를 통해 NMS 의 Packet 을 Bukkit-API 의 코드만으로 쉽게 생성하여 서버에 보낼 수 있습니다.
 HQFramework 에서는 Client-Side 로 NMS Packet 을 보내는 과정을 Virtual 로 정의하였습니다.
  아래는 플레이어가 보고있는 인벤토리에 가상으로 아이템을 설정하는 간단한 예제입니다.
