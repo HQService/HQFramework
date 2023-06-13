@@ -1,7 +1,6 @@
 package kr.hqservice.framework.nms.service.item
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQService
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
@@ -19,7 +18,7 @@ import kotlin.reflect.KClass
 @HQSingleton(binds = [NmsService::class])
 class NmsItemService(
     reflectionUtil: NmsReflectionUtil
-) : KoinComponent, NmsService<NmsItemStackWrapper, NmsItemWrapper>, HQService {
+) : KoinComponent, NmsService<NmsItemStackWrapper, NmsItemWrapper> {
     private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
     private val nmsItemClass = reflectionUtil.getNmsClass("Item", Version.V_15.handle("world.item"))
     private val getItemFunction = reflectionUtil.getFunction(nmsItemStackClass, "getItem",

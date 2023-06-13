@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.util
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
-import kr.hqservice.framework.nms.wrapper.NmsPacketWrapper
+import kr.hqservice.framework.nms.virtual.Virtual
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
@@ -33,7 +33,7 @@ interface NmsReflectionUtil {
 
     fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*>
 
-    suspend fun sendPacket(player: Player, vararg packetWrapper: NmsPacketWrapper)
+    suspend fun sendPacket(player: Player, vararg virtual: Virtual)
 }
 
 fun NmsReflectionUtil.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {

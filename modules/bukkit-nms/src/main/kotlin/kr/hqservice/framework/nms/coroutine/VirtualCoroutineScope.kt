@@ -13,10 +13,10 @@ import org.koin.core.component.getScopeName
 import java.util.logging.Level
 import java.util.logging.Logger
 
-@Named("packet")
+@Named("virtual")
 @HQSingleton(binds = [HQCoroutineScope::class])
 @Component
-class PacketCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO) {
+class VirtualCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {
             "PacketCoroutineContext 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +

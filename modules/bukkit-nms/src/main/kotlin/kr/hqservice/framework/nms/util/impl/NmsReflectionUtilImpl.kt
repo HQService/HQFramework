@@ -9,7 +9,7 @@ import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
-import kr.hqservice.framework.nms.wrapper.NmsPacketWrapper
+import kr.hqservice.framework.nms.virtual.Virtual
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
@@ -105,12 +105,16 @@ class NmsReflectionUtilImpl(
         return getServer.call(server)?: throw IllegalArgumentException()
     }
 
-    override suspend fun sendPacket(player: Player, vararg packetWrapper: NmsPacketWrapper) {
+    override suspend fun sendPacket(player: Player, vararg virtual: Virtual) {
         val handle = getHandle.call(player)
         val connection = connection.call(handle)
         if(connection != null)
-            packetWrapper.forEach {
-                this.sendPacket.call(connection, it.createPacket())
+            virtual.forEach {
+                it.createVirtualMessage()?.also { virtual ->
+                    virtual.send { packet ->
+                        sendPacket.call(connection, packet)
+                    }
+                }
             }
     }
 
@@ -123,18 +127,25 @@ class NmsReflectionUtilImpl(
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
         val type = handlers.sortedByDescending { it.getVersion().ordinal }
             .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName()?: fieldName
-
         return clazz.memberProperties.firstOrNull {
-
             it.name == type
         }?: throw IllegalArgumentException()
     }
 
     private fun getFunction(clazz: KClass<*>, functions: Collection<KCallable<*>>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
-        return callableMap.computeIfAbsent("${clazz.simpleName}#"+functionType.getName()) { _ ->
-            val type = handlers.sortedByDescending { it.getVersion().ordinal }
-                .firstOrNull { it.getVersion().support(version) }?: CallableVersionHandler(version, functionType)
-            functions.single { callable -> type.isMatched(clazz, callable) }
+        val key = "${clazz.simpleName}#" + functionType.getName()
+        return if(callableMap.contains(key)) callableMap[key]!!
+        else {
+            val type = handlers.filter { it.getVersion().support(version, minorVersion) }
+                .run {
+                    if(isEmpty()) null
+                    else maxBy { it.getVersion().ordinal }
+                } ?: CallableVersionHandler(version, functionType)
+            try {
+                functions.single { callable -> type.isMatched(clazz, callable) }
+            } catch (e: Exception) {
+                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 업습니다.\n원본 메서드 ${functionType.getName()}")
+            }
         }
     }
 

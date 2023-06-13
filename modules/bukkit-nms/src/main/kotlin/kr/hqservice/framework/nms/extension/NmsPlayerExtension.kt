@@ -3,16 +3,26 @@ package kr.hqservice.framework.nms.extension
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
-import kr.hqservice.framework.nms.wrapper.NmsPacketWrapper
+import kr.hqservice.framework.nms.virtual.Virtual
+import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
+import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.getKoin
 
 private val reflectionUtil: NmsReflectionUtil by getKoin().inject()
-private val scope: HQCoroutineScope by getKoin().inject(named("packet"))
+private val scope: HQCoroutineScope by getKoin().inject(named("virtual"))
 
-fun Player.sendPacket(vararg wrapper: NmsPacketWrapper) {
+fun Player.virtual(vararg wrapper: Virtual) {
     scope.launch {
-        reflectionUtil.sendPacket(this@sendPacket, *wrapper)
+        reflectionUtil.sendPacket(this@virtual, *wrapper)
     }
+}
+
+fun Player.virtual(factoryScope: VirtualFactory.()->Unit) {
+    val factory = VirtualFactory(this)
+    factory.factoryScope()
+    scope.launch {
+        reflectionUtil.sendPacket(factory.receiver, *factory.getVirtualList().toTypedArray()) }
 }

@@ -1,0 +1,122 @@
+package kr.hqservice.framework.nms.virtual
+
+import kr.hqservice.framework.bukkit.core.extension.colorize
+import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
+import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
+import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
+import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
+import org.bukkit.Location
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+
+abstract class AbstractVirtualEntity(
+    private var location: Location,
+    private var name: String,
+) : Virtual, KoinComponent {
+    protected val reflectionUtil: NmsReflectionUtil by inject()
+    private val virtualEntityClasses: VirtualEntityClasses by inject()
+
+    private var state: Byte = 0x7
+    protected abstract fun getEntity(): Any
+    private fun entityInitialize() {
+        if(name.isNotEmpty()) {
+            setName(name.colorize())
+            setNameVisible(true)
+        } else setNameVisible(false)
+        initialize()
+    }
+    protected abstract fun initialize()
+
+    private fun getEntityId(): Int {
+        return virtualEntityClasses.getId(getEntity())
+    }
+
+    fun getLocation(): Location {
+        return location.clone()
+    }
+
+    fun setLocation(location: Location) {
+        if(location == this.location) return
+        try {
+            virtualEntityClasses.setLocation(location, getEntity())
+            this.location = location
+            switchLocationMask()
+            switchMetaMask()
+        } catch (e: Exception) {
+            throw UnsupportedOperationException("VirtualEntity#setLocation() 메소드를 실행할 수 없습니다.", e)
+        }
+    }
+
+    fun getName(): String {
+        return name
+    }
+
+    fun setName(name: String) {
+        virtualEntityClasses.setCustomName(name, getEntity())
+        this.name = name
+        switchMetaMask()
+    }
+
+    fun setNameVisible(visible: Boolean) {
+        try {
+            virtualEntityClasses.setCustomNameVisible(visible, getEntity())
+            switchMetaMask()
+        } catch (e: Exception) {
+            throw UnsupportedOperationException("VirtualEntity#setNameVisible(Boolean) 메소드를 실행할 수 없습니다.", e)
+        }
+    }
+
+    fun setInvisible(invisible: Boolean) {
+        virtualEntityClasses.setInvisible(invisible, getEntity())
+        switchMetaMask()
+    }
+
+    fun destroy() {
+        if(!(state mask VirtualEntityState.DESTROY))
+            state = state switch VirtualEntityState.DESTROY
+    }
+
+    protected fun switchLocationMask() {
+        if(!(state mask VirtualEntityState.RELOCATE))
+            state = state switch VirtualEntityState.RELOCATE
+    }
+
+    protected fun switchMetaMask() {
+        if(!(state mask VirtualEntityState.UPDATE_META_DATA))
+            state = state switch VirtualEntityState.UPDATE_META_DATA
+    }
+
+    final override fun createVirtualMessage(): VirtualMessage? {
+        if(state mask VirtualEntityState.UNHANDLED) return null
+
+        val packets = mutableListOf<Any>()
+        if(state mask VirtualEntityState.DESTROY) {
+            state = state switch VirtualEntityState.UNHANDLED
+            return VirtualMessageImpl(virtualEntityClasses.entityDestroyPacket.newInstance(arrayOf(getEntityId()).toIntArray()))
+        }
+
+        if(state mask VirtualEntityState.CREAT) {
+            entityInitialize()
+            state = state switch VirtualEntityState.CREAT
+            packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(getEntity()))
+        }
+
+        if(state mask VirtualEntityState.UPDATE_META_DATA) {
+            state = state switch VirtualEntityState.UPDATE_META_DATA
+            packets.add(virtualEntityClasses.createMetaDataPacket(getEntity()))
+        }
+
+        if(state mask VirtualEntityState.RELOCATE) {
+            state = state switch VirtualEntityState.RELOCATE
+            packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(getEntity()))
+        }
+        return if(packets.isEmpty()) null
+        else if(packets.size == 1) VirtualMessageImpl(packets.first())
+        else VirtualListMessage(packets)
+    }
+}
+
+fun VirtualFactory.updateEntity(virtualEntity: AbstractVirtualEntity) {
+    addVirtualList(virtualEntity)
+}

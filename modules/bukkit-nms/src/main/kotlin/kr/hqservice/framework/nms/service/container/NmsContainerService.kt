@@ -1,7 +1,6 @@
 package kr.hqservice.framework.nms.service.container
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQService
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
@@ -17,7 +16,7 @@ import kotlin.reflect.KClass
 @HQSingleton(binds = [NmsService::class])
 class NmsContainerService(
     private val reflectionUtil: NmsReflectionUtil
-) : NmsService<Player, ContainerWrapper>, HQService {
+) : NmsService<Player, ContainerWrapper> {
     private val containerClass = reflectionUtil.getNmsClass("Container", Version.V_17.handle("world.inventory.Container", true))
     private val activeContainerField = reflectionUtil.getField(reflectionUtil.getNmsPlayerClass(), "activeContainer",
         Version.V_15.handle("bx"),
