@@ -24,5 +24,5 @@ fun Player.virtual(factoryScope: suspend VirtualFactory.()->Unit) {
     val factory = VirtualFactory(this)
     scope.launch {
         factory.factoryScope()
-            reflectionUtil.sendPacket(factory.receiver, *factory.getVirtualList().toTypedArray()) }
+    }
 }

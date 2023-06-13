@@ -3,7 +3,6 @@ package kr.hqservice.framework.nms.virtual
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
-import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import org.bukkit.Location
@@ -115,8 +114,4 @@ abstract class AbstractVirtualEntity(
         else if(packets.size == 1) VirtualMessageImpl(packets.first())
         else VirtualListMessage(packets)
     }
-}
-
-fun VirtualFactory.updateEntity(virtualEntity: AbstractVirtualEntity) {
-    addVirtualList(virtualEntity)
 }

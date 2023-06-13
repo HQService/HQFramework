@@ -1,16 +1,25 @@
 package kr.hqservice.framework.nms.virtual.factory
 
-import kr.hqservice.framework.nms.virtual.Virtual
+import kr.hqservice.framework.nms.util.NmsReflectionUtil
+import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
+import kr.hqservice.framework.nms.virtual.item.VirtualItem
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
+import org.koin.java.KoinJavaComponent
+
+private val reflectionUtil: NmsReflectionUtil by KoinJavaComponent.getKoin().inject()
 
 class VirtualFactory(val receiver: Player) {
-    private val virtualList: MutableList<Virtual> = mutableListOf()
-
-    internal fun addVirtualList(virtual: Virtual) {
-        virtualList.add(virtual)
+    suspend fun setItem(
+        slot: Int,
+        itemStack: ItemStack,
+        itemEditBlock: ItemMeta.() -> Unit = {}
+    ) {
+        reflectionUtil.sendPacket(receiver, VirtualItem(receiver, slot, itemStack, itemEditBlock))
     }
 
-    internal fun getVirtualList(): List<Virtual> {
-        return virtualList
+    suspend fun updateEntity(virtualEntity: AbstractVirtualEntity) {
+        reflectionUtil.sendPacket(receiver, virtualEntity)
     }
 }

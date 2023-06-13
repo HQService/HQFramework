@@ -45,9 +45,3 @@ class VirtualItem(
         return VirtualMessageImpl(message)
     }
 }
-
-fun VirtualFactory.setItem(
-    slot: Int,
-    itemStack: ItemStack,
-    itemEditBlock: ItemMeta.() -> Unit = {}
-) { addVirtualList(VirtualItem(receiver, slot, itemStack, itemEditBlock)) }
