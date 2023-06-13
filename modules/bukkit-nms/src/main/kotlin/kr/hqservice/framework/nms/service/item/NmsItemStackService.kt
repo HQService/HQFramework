@@ -7,16 +7,22 @@ import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getStaticFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.koin.core.qualifier.named
 import kotlin.reflect.KClass
 
 @Component
 @Named("itemStack")
 @HQSingleton(binds = [NmsService::class])
 class NmsItemStackService(
-    reflectionUtil: NmsReflectionUtil
+    private val reflectionUtil: NmsReflectionUtil,
+    @Named("tag") private val tagService: NmsNBTTagCompoundService,
+    @Named("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
+    @Named("itemStack") private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>
 ) : KoinComponent, NmsService<ItemStack, NmsItemStackWrapper> {
     private val craftItemStackClass = reflectionUtil.getCraftBukkitClass("inventory.CraftItemStack")
     private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
@@ -25,7 +31,11 @@ class NmsItemStackService(
     private val asBukkitCopyFunction = reflectionUtil.getStaticFunction(craftItemStackClass, "asBukkitCopy", ItemStack::class, listOf(nmsItemStackClass))
 
     override fun wrap(target: ItemStack): NmsItemStackWrapper {
-        return NmsItemStackWrapper(asNmsCopyFunction.call(target)?: throw IllegalArgumentException())
+        return NmsItemStackWrapper(
+            asNmsCopyFunction.call(target)?: throw IllegalArgumentException(),
+            reflectionUtil,
+            tagService, itemService, itemStackService
+        )
     }
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {

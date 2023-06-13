@@ -7,19 +7,14 @@ import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.bukkit.inventory.ItemStack
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import org.koin.core.qualifier.named
 
 class NmsItemStackWrapper(
     private val nmsItemStack: Any,
-) : NmsWrapper, KoinComponent {
-    private val reflectionUtil: NmsReflectionUtil by inject()
-
-    private val tagService: NmsNBTTagCompoundService by inject(named("tag"))
-    private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper> by inject(named("item"))
-    private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by inject(named("itemStack"))
-
+    reflectionUtil: NmsReflectionUtil,
+    private val tagService: NmsNBTTagCompoundService,
+    private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
+    private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>
+) : NmsWrapper {
     private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
@@ -34,7 +29,7 @@ class NmsItemStackWrapper(
     )
 
     fun hasTag(): Boolean {
-        return getTag() != null
+        return getTagOrNull() != null
     }
 
     fun tag(tagScope: NmsNBTTagCompoundWrapper.() -> Unit = {}): NmsNBTTagCompoundWrapper {

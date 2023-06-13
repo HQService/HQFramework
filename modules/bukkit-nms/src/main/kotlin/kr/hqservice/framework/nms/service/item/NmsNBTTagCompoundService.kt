@@ -15,13 +15,13 @@ import kotlin.reflect.full.createInstance
 @Named("tag")
 @HQSingleton(binds = [NmsService::class])
 class NmsNBTTagCompoundService(
-    reflectionUtil: NmsReflectionUtil
+    private val reflectionUtil: NmsReflectionUtil
 ) : KoinComponent, NmsService<Any?, NmsNBTTagCompoundWrapper> {
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound",
         Version.V_15.handle("nbt"))
 
     override fun wrap(target: Any?): NmsNBTTagCompoundWrapper {
-        return NmsNBTTagCompoundWrapper(target?: nbtTagClass.createInstance())
+        return NmsNBTTagCompoundWrapper(target?: nbtTagClass.createInstance(), reflectionUtil)
     }
 
     override fun unwrap(wrapper: NmsNBTTagCompoundWrapper): Any {

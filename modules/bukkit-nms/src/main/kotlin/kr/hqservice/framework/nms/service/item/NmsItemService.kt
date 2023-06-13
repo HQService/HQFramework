@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
 @Named("item")
 @HQSingleton(binds = [NmsService::class])
 class NmsItemService(
-    reflectionUtil: NmsReflectionUtil
+    private val reflectionUtil: NmsReflectionUtil
 ) : KoinComponent, NmsService<NmsItemStackWrapper, NmsItemWrapper> {
     private val nmsItemStackClass = reflectionUtil.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
     private val nmsItemClass = reflectionUtil.getNmsClass("Item", Version.V_15.handle("world.item"))
@@ -30,7 +30,8 @@ class NmsItemService(
             target,
             getItemFunction.call(target.getUnwrappedInstance())?: throw IllegalArgumentException(),
             nmsItemStackClass,
-            nmsItemClass
+            nmsItemClass,
+            reflectionUtil
             )
     }
 

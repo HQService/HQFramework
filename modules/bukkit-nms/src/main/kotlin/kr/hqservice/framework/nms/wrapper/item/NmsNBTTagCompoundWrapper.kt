@@ -4,13 +4,11 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.util.NmsReflectionUtil
 import kr.hqservice.framework.nms.util.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 class NmsNBTTagCompoundWrapper(
     private val nbtTag: Any,
-) : NmsWrapper, KoinComponent {
-    private val reflectionUtil: NmsReflectionUtil by inject()
+    reflectionUtil: NmsReflectionUtil
+) : NmsWrapper {
     private val nbtTagClass = reflectionUtil.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
     private val getStringFunction = reflectionUtil.getFunction(nbtTagClass, "getString", listOf(String::class),
