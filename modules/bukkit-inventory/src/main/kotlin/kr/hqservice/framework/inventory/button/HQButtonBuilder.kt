@@ -1,5 +1,6 @@
 package kr.hqservice.framework.inventory.button
 
+import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
 import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import kr.hqservice.framework.inventory.exception.IllegalMaterialException
@@ -48,12 +49,12 @@ class HQButtonBuilder(
 
     fun setLore(lore: List<String>): HQButtonBuilder {
         this.lore.clear()
-        this.lore.addAll(lore)
+        this.lore.addAll(lore.map { it.colorize() })
         return this
     }
 
     fun addLore(lore: String): HQButtonBuilder {
-        this.lore.add(lore)
+        this.lore.add(lore.colorize())
         return this
     }
 
