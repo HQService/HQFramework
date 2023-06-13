@@ -493,7 +493,7 @@ HQFramework 에서는 Client-Side 로 NMS Packet 을 보내는 과정을 Virtual
 @Component
 class ExampleItemListener : HQListener {
   @EventHandler
-  fun examplePacketSetItem(event: InventoryClickEvent) {
+  fun exampleVirtualItem(event: InventoryClickEvent) {
     event.isCancelled = true
     val player = event.whoClicked as Player
     val slot = event.rawSlot
@@ -501,6 +501,23 @@ class ExampleItemListener : HQListener {
       setItem(slot, ItemStack(Material.BARRIER) {
         setDisplayName("클릭 된 슬롯")
       }
+    }
+  }
+}
+```
+> 이번에는 플레이어가 접속하면 플레이어가 있는 위치에 가상의 ArmorStand 를 소환 해보겠습니다.
+```kotlin
+@Component
+class ExampleJoinListener : HQListener {
+  @EventHandler
+  fun exampleVirtualArmorStand(event: PlayerJoinEvent) {
+    val player = event.player
+    player.virtual {
+      val virtualEntity = VirtualArmorStand(player.location, "&7VirtualEntity &eName")
+      updateEntity(virtualEntity)
+      delay(1000)
+      virtualEntity.setName("&7VirtualEntity &aNewName")
+      updateEntity(virtualEntity)
     }
   }
 }
