@@ -59,7 +59,12 @@ class NettyChannelRegistryImpl(
         Thread {
             val players = mutableListOf<NettyPlayer>()
             ProxyServer.getInstance().players.forEach {
-                players.add(NettyPlayerImpl(it.name, it.uniqueId, connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port })) }
+                try {
+                    players.add(NettyPlayerImpl(it.name, it.uniqueId, connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port }))
+                } catch (_: Exception) {
+                    it.disconnect("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
+                }
+            }
             wrapper.sendPacket(ChannelListPacket(connectedChannels, players))
         }.start()
     }
