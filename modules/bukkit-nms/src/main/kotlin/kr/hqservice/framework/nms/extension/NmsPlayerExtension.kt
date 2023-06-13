@@ -20,9 +20,9 @@ fun Player.virtual(vararg wrapper: Virtual) {
     }
 }
 
-fun Player.virtual(factoryScope: VirtualFactory.()->Unit) {
+fun Player.virtual(factoryScope: suspend VirtualFactory.()->Unit) {
     val factory = VirtualFactory(this)
-    factory.factoryScope()
     scope.launch {
-        reflectionUtil.sendPacket(factory.receiver, *factory.getVirtualList().toTypedArray()) }
+        factory.factoryScope()
+            reflectionUtil.sendPacket(factory.receiver, *factory.getVirtualList().toTypedArray()) }
 }
