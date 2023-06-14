@@ -12,7 +12,7 @@ class BooleanCommandArgumentProvider : HQCommandArgumentProvider<Boolean> {
         location: Location?,
         argumentLabel: String?
     ): List<String> {
-        return listOf(argumentLabel ?: "frue/false")
+        return listOf(argumentLabel ?: "true/false")
     }
 
     override fun getResult(commandSender: CommandSender, string: String?): Boolean {
