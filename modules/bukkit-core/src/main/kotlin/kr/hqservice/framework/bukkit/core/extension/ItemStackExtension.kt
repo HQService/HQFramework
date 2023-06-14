@@ -16,7 +16,7 @@ fun ItemStack?.toByteArray(compress: Boolean = true): ByteArray {
 }
 
 fun ByteArray.toItemStack(decompress: Boolean = true): ItemStack {
-    return toItemArray(decompress).throwIf("단일 ItemStack 이 아닙니다.") { size > 1 }.first()
+    return toItemArray(decompress).throwIf("단일 ItemStack 이 아닙니다.") { it.size > 1 }.first()
 }
 
 fun Array<ItemStack?>.toByteArray(compress: Boolean = true): ByteArray {
