@@ -19,7 +19,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getSection(key: String): HQYamlConfigurationSection? {
-        return findNode(key).run { HQYamlConfigurationSectionImpl(this) }
+        val node = findNode(key)
+        return if(node.isVirtual) null else HQYamlConfigurationSectionImpl(node)
     }
 
     override fun getString(key: String): String {
