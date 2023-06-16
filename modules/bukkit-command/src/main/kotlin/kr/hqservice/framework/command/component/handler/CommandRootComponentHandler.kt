@@ -178,16 +178,14 @@ class CommandRootComponentHandler(
 
                 val function = executor.function
                 if (function.isSuspend) {
-                    executor.function.callSuspend(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
-                } else {
-                    mainCoroutineScope.launch {
-                        if (executor.nodeInstance is CoroutineScope) {
-                            withContext(executor.nodeInstance.coroutineContext) {
-                                executor.function.call(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
-                            }
-                        } else {
+                    if (executor.nodeInstance is CoroutineScope) {
+                        withContext(executor.nodeInstance.coroutineContext) {
                             executor.function.call(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
                         }
+                    } else executor.function.callSuspend(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
+                } else {
+                    mainCoroutineScope.launch {
+                        executor.function.call(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
                     }
                 }
             }
