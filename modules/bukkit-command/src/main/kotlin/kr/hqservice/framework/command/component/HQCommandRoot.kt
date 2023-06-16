@@ -1,7 +1,7 @@
 package kr.hqservice.framework.command.component
 
+import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.command.component.registry.CommandArgumentProviderRegistry
-import kr.hqservice.framework.global.core.extension.print
 import org.bukkit.Location
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
@@ -39,7 +39,11 @@ abstract class HQCommandRoot(private val name: String) : HQCommandTree(name) {
             }
             val treeKey = findTreeKeyApproximate(args)
 
-            val executorKey = if (args.size != treeKey.size) { args[treeKey.size] } else { args[treeKey.size - 1] }
+            val executorKey = if (args.size != treeKey.size) {
+                args[treeKey.size]
+            } else {
+                args[treeKey.size - 1]
+            }
             val tree = findTreeExact(treeKey)
             val executor = tree?.findExecutor(executorKey)
             if (executor == null) {
@@ -111,7 +115,11 @@ abstract class HQCommandRoot(private val name: String) : HQCommandTree(name) {
             }
             val treeKey = findTreeKeyApproximate(args)
             val tree = findTreeExact(treeKey)
-            val treeKeyAfter = if (args.size != treeKey.size) { args[treeKey.size] } else { args[treeKey.size - 1] }
+            val treeKeyAfter = if (args.size != treeKey.size) {
+                args[treeKey.size]
+            } else {
+                args[treeKey.size - 1]
+            }
             val executor = tree?.findExecutor(treeKeyAfter)
             if (tree != null) {
                 if (executor != null && treeKey.size + 1 != args.size) {
@@ -119,8 +127,12 @@ abstract class HQCommandRoot(private val name: String) : HQCommandTree(name) {
                         return emptyList()
                     }
                     val kParameter = executor.function.valueParameters[args.size - treeKey.size - 1]
-                    val argumentProvider = getArgumentProvider(kParameter)
-                    return argumentProvider.getTabComplete(sender, location, findArgumentLabel(kParameter))
+                    return when (val argumentProvider = getArgumentProvider(kParameter)) {
+                        is HQSuspendCommandArgumentProvider<*> -> runBlocking {
+                            argumentProvider.getTabComplete(sender, location, findArgumentLabel(kParameter))
+                        }
+                        is HQCommandArgumentProvider<*> -> argumentProvider.getTabComplete(sender, location, findArgumentLabel(kParameter))
+                    }
                 } else {
                     return tree.getSuggestions()
                 }
@@ -141,8 +153,10 @@ abstract class HQCommandRoot(private val name: String) : HQCommandTree(name) {
                 mutableArguments.toTypedArray()
             }
         }
-        private fun getArgumentProvider(parameter: KParameter): HQCommandArgumentProvider<*> {
-            val classifier = parameter.type.classifier ?: throw IllegalStateException("parameter type cannot be intersection type")
+
+        private fun getArgumentProvider(parameter: KParameter): CommandArgumentProvider<*> {
+            val classifier =
+                parameter.type.classifier ?: throw IllegalStateException("parameter type cannot be intersection type")
             return registry.getProvider(classifier)
         }
 
