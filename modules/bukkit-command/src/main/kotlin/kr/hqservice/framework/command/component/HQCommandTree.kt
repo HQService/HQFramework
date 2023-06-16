@@ -73,7 +73,7 @@ abstract class HQCommandTree(
         return tree
     }
 
-    protected fun findTreeApproximate(arguments: Array<String>): HQCommandTree {
+    fun findTreeApproximate(arguments: Array<String>): HQCommandTree {
         var tree: HQCommandTree = this
         arguments.forEach { argument ->
             tree = tree.commandTrees[argument] ?: return tree
@@ -81,7 +81,7 @@ abstract class HQCommandTree(
         return tree
     }
 
-    protected fun findTreeApproximateIndexed(arguments: Array<String>): Pair<Int, HQCommandTree> {
+    fun findTreeApproximateIndexed(arguments: Array<String>): Pair<Int, HQCommandTree> {
         var tree: HQCommandTree = this
         var index = 0
         arguments.forEach { argument ->

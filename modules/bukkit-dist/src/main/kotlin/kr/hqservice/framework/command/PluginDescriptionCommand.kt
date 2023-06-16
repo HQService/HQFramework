@@ -1,5 +1,8 @@
 package kr.hqservice.framework.command
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.command.component.ArgumentLabel
@@ -10,10 +13,14 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.extension.toHumanReadable
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import kotlin.coroutines.CoroutineContext
 
 @Component
 @ParentCommand(binds = [HQFrameworkCommand.Plugin.Description::class])
-class PluginDescriptionCommand : HQCommandNode() {
+class PluginDescriptionCommand : HQCommandNode(), CoroutineScope {
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO
+
     @CommandExecutor(
         label = "version",
         description = "&f/hq plugin description version &8<HQPlugin> &6| &7해당 HQPlugin 의 버전을 확인합니다.",
@@ -50,7 +57,9 @@ class PluginDescriptionCommand : HQCommandNode() {
         isOp = true,
         priority = 999
     )
-    fun testGreedyArguments2(sender: Player, @ArgumentLabel("문자잉2") string: String, int: Int, plugin: HQBukkitPlugin) {
+    suspend fun testGreedyArguments2(sender: Player, @ArgumentLabel("문자잉2") string: String, int: Int, plugin: HQBukkitPlugin) {
+        sender.sendMessage("$string, $int, ${plugin.name} 1111")
+        delay(3000)
         sender.sendMessage("$string, $int, ${plugin.name}")
     }
 }

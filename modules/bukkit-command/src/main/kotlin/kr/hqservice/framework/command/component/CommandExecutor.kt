@@ -8,5 +8,5 @@ annotation class CommandExecutor(
     val permission: String = "",
     val isOp: Boolean = false,
     val hideSuggestion: Boolean = false,
-    val priority: Int = 0
+    val priority: Int = 0,
 )
