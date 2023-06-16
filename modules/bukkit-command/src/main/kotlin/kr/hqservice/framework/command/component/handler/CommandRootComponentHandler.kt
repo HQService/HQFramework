@@ -180,7 +180,7 @@ class CommandRootComponentHandler(
                 if (function.isSuspend) {
                     if (executor.nodeInstance is CoroutineScope) {
                         withContext(executor.nodeInstance.coroutineContext) {
-                            executor.function.call(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
+                            executor.function.callSuspend(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
                         }
                     } else executor.function.callSuspend(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
                 } else {
