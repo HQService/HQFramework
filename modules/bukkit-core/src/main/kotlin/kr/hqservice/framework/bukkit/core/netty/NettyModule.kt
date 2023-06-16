@@ -5,14 +5,12 @@ import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.bukkit.core.netty.service.impl.HQNettyServiceImpl
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.framework.yaml.extension.yaml
 import org.bukkit.Bukkit
 import org.bukkit.plugin.Plugin
-import org.koin.core.component.KoinComponent
 import java.io.File
 import java.util.logging.Logger
 
@@ -22,7 +20,7 @@ class NettyModule(
     private val logger: Logger,
     private val channelHandler: ChannelMainHandler,
     private val nettyService: HQNettyService
-) : HQModule, KoinComponent {
+) : HQModule {
     private val nettyEnabled: Boolean get() = nettyService.isEnable()
 
     override fun onEnable() {
