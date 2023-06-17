@@ -171,7 +171,7 @@ class CommandRootComponentHandler(
                     return@commandLaunch
                 }
 
-                if (executor.permission != "" && sender.hasPermission(executor.permission) && sender !is ConsoleCommandSender) {
+                if (executor.permission != "" && sender.hasPermission(executor.permission) && sender !is ConsoleCommandSender && sender.isOp.not()) {
                     hqCommandRoot.sendPermissionDeclinedMessage(sender, executor.permission)
                     return@commandLaunch
                 }
