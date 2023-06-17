@@ -499,9 +499,7 @@ class ExampleItemListener : HQListener {
     val slot = event.rawSlot
     player.virtual {
       inventory {
-        setItem(slot, ItemStack(Material.BARRIER) {
-          setDisplayName("클릭 된 슬롯")
-        }
+        setItem(slot, ItemStack(Material.BARRIER)
       }
     }
   }
