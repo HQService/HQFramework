@@ -20,7 +20,7 @@ class DoubleCommandArgumentProvider : HQCommandArgumentProvider<Double> {
         return string?.toDoubleOrNull() != null
     }
 
-    override fun getFailureMessage(commandSender: CommandSender, string: String?, argumentLabel: String?): String? {
+    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String? {
         return "${argumentLabel ?: "숫자"}을(를) 입력해야 합니다."
     }
 

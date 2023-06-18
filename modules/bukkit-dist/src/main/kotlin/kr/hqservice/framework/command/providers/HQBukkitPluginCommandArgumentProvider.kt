@@ -27,7 +27,7 @@ class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQComm
         }
     }
 
-    override fun getFailureMessage(commandSender: CommandSender, string: String?, argumentLabel: String?): String {
+    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String {
         return if (string == null) {
             "&cHQPlugin 이름을 입력해주세요.".colorize()
         } else {

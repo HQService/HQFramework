@@ -4,7 +4,6 @@ import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
-import org.bukkit.command.CommandSender
 
 @Component
 class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
@@ -16,7 +15,7 @@ class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
         return true
     }
 
-    override fun getFailureMessage(commandSender: CommandSender, string: String?, argumentLabel: String?): String? {
+    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String? {
         return "${argumentLabel ?: "문자열"}을(를) 입력해야 합니다."
     }
 

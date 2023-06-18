@@ -4,7 +4,6 @@ import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
-import org.bukkit.command.CommandSender
 
 @Component
 class ChestRowCommandArgumentProvider : HQCommandArgumentProvider<ChestRow> {
@@ -16,7 +15,7 @@ class ChestRowCommandArgumentProvider : HQCommandArgumentProvider<ChestRow> {
         return !(int < 1 || int > 6)
     }
 
-    override fun getFailureMessage(commandSender: CommandSender, string: String?, argumentLabel: String?): String? {
+    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String? {
         return "1~6 사이의 수를 입력해주세요."
     }
 

@@ -21,13 +21,13 @@ interface HQCommandArgumentProvider<T> : CommandArgumentProvider<T> {
     /**
      * getResult 에서 false 를 반환받았을 때 반환될 메시지입니다.
      *
-     * @param commandSender 명령어 입력 주체
+     * @param context 이 메소드 실행 커맨드 context
      * @param string 입력 인자
      * @param argumentLabel @ArgumentLabel 을 통한 입력 인자 설명
      *
      * @return getResult 에서 false 를 반환받았을 때 명령어 입력 주체 에게 출력될 메시지
      */
-    fun getFailureMessage(commandSender: CommandSender, string: String?, argumentLabel: String? = null): String?
+    fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String? = null): String?
 
     /**
      * 커맨드 인자 문자열을 통하여 T 타입으로 캐스팅합니다.
@@ -65,13 +65,13 @@ interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
     /**
      * getResult 에서 false 를 반환받았을 때 반환될 메시지입니다. 이 함수는 suspend 함수 입니다.
      *
-     * @param commandSender 명령어 입력 주체
+     * @param context 이 메소드 실행 커맨드 context
      * @param string 입력 인자
      * @param argumentLabel @ArgumentLabel 을 통한 입력 인자 설명
      *
      * @return getResult 에서 false 를 반환받았을 때 명령어 입력 주체 에게 출력될 메시지
      */
-    suspend fun getFailureMessage(commandSender: CommandSender, string: String?, argumentLabel: String? = null): String?
+    suspend fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String? = null): String?
 
     /**
      * 커맨드 인자 문자열을 통하여 T 타입으로 캐스팅합니다. 이 함수는 suspend 함수 입니다.
