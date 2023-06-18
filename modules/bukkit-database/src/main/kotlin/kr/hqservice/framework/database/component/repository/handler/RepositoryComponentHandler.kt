@@ -9,6 +9,7 @@ import kr.hqservice.framework.database.component.repository.HQRepository
 import kr.hqservice.framework.database.component.repository.Table
 import kr.hqservice.framework.database.component.datasource.handler.DataSourceComponentHandler
 import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.exists
 import org.koin.core.annotation.Named
 import org.koin.core.component.KoinComponent
 import kotlin.reflect.full.findAnnotation
@@ -20,10 +21,14 @@ class RepositoryComponentHandler(
     override fun setup(element: HQRepository) {
         val table = element::class.findAnnotation<Table>() ?: return
         table.with.forEach {
-            val objectInstance = it.objectInstance ?: throw IllegalArgumentException("Table 의 object instance 를 가져올 수 없습니다.")
+            val tableInstance = it.objectInstance ?: throw IllegalArgumentException("Table 의 object instance 를 가져올 수 없습니다.")
             mainCoroutineScope.launch {
                 element.getDataSource().query {
-                    SchemaUtils.createMissingTablesAndColumns(objectInstance, withLogs = false)
+                    if(tableInstance.exists()) {
+                        SchemaUtils.addMissingColumnsStatements(tableInstance, withLogs = false)
+                    } else {
+                        SchemaUtils.create(tableInstance)
+                    }
                 }
             }
         }

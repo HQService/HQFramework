@@ -147,7 +147,7 @@ class CommandRootComponentHandler(
                                     val failureMessage =
                                         argumentProvider.getFailureMessage(commandContext, argumentForResult, argumentLabel)
                                     if (failureMessage != null) {
-                                        senderInstance.sendMessage(failureMessage)
+                                        senderInstance.sendMessage("&c$failureMessage".colorize())
                                     }
                                     isFailed = true
                                     return@withContext
