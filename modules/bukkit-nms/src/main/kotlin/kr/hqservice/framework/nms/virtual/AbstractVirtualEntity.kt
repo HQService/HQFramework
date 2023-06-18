@@ -1,11 +1,16 @@
 package kr.hqservice.framework.nms.virtual
 
 import kr.hqservice.framework.bukkit.core.extension.colorize
+import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.extension.getNmsItemStack
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
+import kr.hqservice.framework.nms.wrapper.getFunction
 import org.bukkit.Location
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -17,6 +22,7 @@ abstract class AbstractVirtualEntity(
     private val virtualEntityClasses: VirtualEntityClasses by inject()
 
     private var state: Byte = 0x7
+    private var itemContainer: List<Any>? = null
     protected abstract fun getEntity(): Any
     private fun entityInitialize() {
         if(name.isNotEmpty()) {
@@ -71,12 +77,25 @@ abstract class AbstractVirtualEntity(
         switchMetaMask()
     }
 
+    fun setEquipmentItems(items: List<Pair<EquipmentSlot, ItemStack>>) {
+        itemContainer = items.map {
+            val slot = virtualEntityClasses.getEnumItemSlot(if(it.first == EquipmentSlot.HAND) "mainhand" else it.first.name)
+            virtualEntityClasses.createBukkitPair(
+                slot,
+                it.second.getNmsItemStack().getUnwrappedInstance()
+            )
+        }
+        if(!(state mask VirtualEntityState.UPDATE_ITEM))
+            state = state switch VirtualEntityState.UPDATE_ITEM
+        switchMetaMask()
+    }
+
     fun destroy() {
         if(!(state mask VirtualEntityState.DESTROY))
             state = state switch VirtualEntityState.DESTROY
     }
 
-    protected fun switchLocationMask() {
+    private fun switchLocationMask() {
         if(!(state mask VirtualEntityState.RELOCATE))
             state = state switch VirtualEntityState.RELOCATE
     }
@@ -99,6 +118,11 @@ abstract class AbstractVirtualEntity(
             entityInitialize()
             state = state switch VirtualEntityState.CREAT
             packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(getEntity()))
+        }
+
+        if(state mask VirtualEntityState.UPDATE_ITEM) {
+            state = state switch VirtualEntityState.UPDATE_ITEM
+            packets.add(virtualEntityClasses.entityEquipmentPacket.newInstance(getEntityId(), itemContainer?: emptyList<Any>()))
         }
 
         if(state mask VirtualEntityState.UPDATE_META_DATA) {

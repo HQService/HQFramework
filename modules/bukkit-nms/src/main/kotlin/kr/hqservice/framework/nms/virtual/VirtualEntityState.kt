@@ -10,7 +10,8 @@ enum class VirtualEntityState(
     RELOCATE(0x2),
     UPDATE_META_DATA(0x4),
     DESTROY(0x8),
-    UNHANDLED(0x10);
+    UNHANDLED(0x10),
+    UPDATE_ITEM(0x20);
 }
 
 infix fun Byte.mask(state: VirtualEntityState): Boolean {

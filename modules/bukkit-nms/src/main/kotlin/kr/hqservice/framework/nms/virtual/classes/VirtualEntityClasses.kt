@@ -8,7 +8,9 @@ import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
+import kr.hqservice.framework.nms.wrapper.getStaticFunction
 import org.bukkit.Location
+import org.bukkit.inventory.EquipmentSlot
 import org.koin.core.annotation.Named
 
 @Component
@@ -27,6 +29,8 @@ class VirtualEntityClasses(
         Version.V_15.handle("network.protocol.game")).java.getConstructor(IntArray::class.java)
     internal val entityTeleportPacket = reflectionWrapper.getNmsClass("PacketPlayOutEntityTeleport",
         Version.V_15.handle("network.protocol.game")).java.getConstructor(entityClass.java)
+    internal val entityEquipmentPacket =
+        reflectionWrapper.getNmsClass("PacketPlayOutEntityEquipment", Version.V_15.handle("network.protocol.game")).java.getConstructor(Int::class.java, List::class.java)
     private val listMetadata = Version.V_19.support(reflectionWrapper.getVersion())
     private val entityMetadataPacket = if(!listMetadata) {
         reflectionWrapper.getNmsClass("PacketPlayOutEntityMetadata",
@@ -62,6 +66,14 @@ class VirtualEntityClasses(
 
     private val setInvisibleFunction = reflectionWrapper.getFunction(entityClass, "setInvisible", listOf(Boolean::class),
         Version.V_15.handleFunction("j") { setParameterClasses(Boolean::class) })
+
+    private val enumItemSlotClass = reflectionWrapper.getNmsClass("EnumItemSlot", Version.V_15.handle("world.entity"))
+    private val enumItemSlotValueOfFunction = reflectionWrapper.getStaticFunction(enumItemSlotClass, "valueOf", listOf(String::class),
+        Version.V_15.handleFunction("a") {
+            setParameterClasses(String::class)
+            static()
+        })
+    private val pairConstructor = Class.forName("com.mojang.datafixers.util.Pair").getConstructor(Any::class.java, Any::class.java)
 
     private fun getDataWatcherSingle(entity: Any): Any {
         return getDataWatcherFunction.call(entity)?: throw NoSuchMethodException("Entity#getDataWatcher() 메소드를 찾을 수 없습니다.")
@@ -100,5 +112,17 @@ class VirtualEntityClasses(
 
     fun setInvisible(invisible: Boolean, entity: Any) {
         setInvisibleFunction.call(entity, invisible)
+    }
+
+    fun getEnumItemSlot(enumItemSlot: String): Any {
+        return enumItemSlotValueOfFunction.call(enumItemSlot.lowercase())?: throw NoSuchElementException()
+    }
+
+    fun getEnumItemSlot(enumItemSlot: EquipmentSlot): Any {
+        return enumItemSlotValueOfFunction.call(enumItemSlot.name.lowercase())?: throw NoSuchElementException()
+    }
+
+    fun createBukkitPair(first: Any, second: Any): Any {
+        return pairConstructor.newInstance(first, second)
     }
 }
