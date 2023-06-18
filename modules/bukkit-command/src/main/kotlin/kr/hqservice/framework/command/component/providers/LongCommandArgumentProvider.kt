@@ -16,7 +16,7 @@ class LongCommandArgumentProvider : HQCommandArgumentProvider<Long> {
         return listOf(argumentLabel ?: "숫자")
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return string?.toLongOrNull() != null
     }
 
@@ -24,7 +24,7 @@ class LongCommandArgumentProvider : HQCommandArgumentProvider<Long> {
         return "${argumentLabel ?: "숫자"}을(를) 입력해야 합니다."
     }
 
-    override fun cast(string: String): Long {
+    override fun cast(context: CommandContext, string: String): Long {
         return string.toLong()
     }
 }

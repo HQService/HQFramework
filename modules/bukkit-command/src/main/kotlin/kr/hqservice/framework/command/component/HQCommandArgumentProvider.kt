@@ -11,12 +11,12 @@ interface HQCommandArgumentProvider<T> : CommandArgumentProvider<T> {
      * 명령어의 결과를 반환합니다.
      * 만약 명령어 인자에 알맞은 인자가 오지 않았을 경우, false 를 리턴합니다.
      *
-     * @param commandSender 명령어 입력 주체
+     * @param context 이 메소드 실행 커맨드 context
      * @param string 입력 인자
      *
      * @return 인자 입력 결과
      */
-    fun getResult(commandSender: CommandSender, string: String?): Boolean
+    fun getResult(context: CommandContext, string: String?): Boolean
 
     /**
      * getResult 에서 false 를 반환받았을 때 반환될 메시지입니다.
@@ -36,7 +36,7 @@ interface HQCommandArgumentProvider<T> : CommandArgumentProvider<T> {
      *
      * @return 인자에 맞게끔 캐스팅 된 후 반환
      */
-    fun cast(string: String): T
+    fun cast(context: CommandContext, string: String): T
 
     /**
      * 명령어 인자 자동입력을 반환합니다.
@@ -55,12 +55,12 @@ interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
      * 명령어의 결과를 반환합니다.
      * 만약 명령어 인자에 알맞은 인자가 오지 않았을 경우, false 를 리턴합니다. 이 함수는 suspend 함수 입니다.
      *
-     * @param commandSender 명령어 입력 주체
+     * @param context 이 메소드 실행 커맨드 context
      * @param string 입력 인자
      *
      * @return 인자 입력 결과
      */
-    suspend fun getResult(commandSender: CommandSender, string: String?): Boolean
+    suspend fun getResult(context: CommandContext, string: String?): Boolean
 
     /**
      * getResult 에서 false 를 반환받았을 때 반환될 메시지입니다. 이 함수는 suspend 함수 입니다.
@@ -80,7 +80,7 @@ interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
      *
      * @return 인자에 맞게끔 캐스팅 된 후 반환
      */
-    suspend fun cast(string: String): T
+    suspend fun cast(context: CommandContext, string: String): T
 
     /**
      * 명령어 인자 자동입력을 반환합니다. 이 함수는 suspend 함수 입니다.

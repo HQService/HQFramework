@@ -124,6 +124,14 @@ class CommandRootComponentHandler(
                         arguments.add(null)
                         return@forEach
                     }
+
+                    val parameterMap = executor.function.valueParameters
+                        .toMutableList()
+                        .apply { removeFirst() }
+                        .associateBy { kParameter ->
+                            args.getOrNull(kParameter.index - 1 + treeKey.size) ?: ""
+                        }
+                    val commandContext = CommandContextImpl(senderInstance, parameterMap)
                     when (val argumentProvider = getArgumentProvider(parameter)) {
                         is HQSuspendCommandArgumentProvider -> {
                             var isFailed = false
@@ -133,7 +141,8 @@ class CommandRootComponentHandler(
                                 commandCoroutineScope.coroutineContext
                             }
                             withContext(coroutineContext) withContext@{
-                                val result = argumentProvider.getResult(senderInstance, argument)
+
+                                val result = argumentProvider.getResult(commandContext, argument)
                                 if (!result || argument == null) {
                                     val failureMessage =
                                         argumentProvider.getFailureMessage(sender, argument, argumentLabel)
@@ -143,7 +152,9 @@ class CommandRootComponentHandler(
                                     isFailed = true
                                     return@withContext
                                 }
-                                val casted = argumentProvider.cast(argument)
+
+
+                                val casted = argumentProvider.cast(commandContext, argument)
                                 arguments.add(casted)
                             }
                             if (isFailed) {
@@ -154,7 +165,7 @@ class CommandRootComponentHandler(
                         is HQCommandArgumentProvider -> {
                             var isFailed = false
                             mainCoroutineScope.launch mainLaunch@{
-                                val result = argumentProvider.getResult(senderInstance, argument)
+                                val result = argumentProvider.getResult(commandContext, argument)
                                 if (!result || argument == null) {
                                     val failureMessage =
                                         argumentProvider.getFailureMessage(sender, argument, argumentLabel)
@@ -164,7 +175,7 @@ class CommandRootComponentHandler(
                                     isFailed = true
                                     return@mainLaunch
                                 }
-                                val casted = argumentProvider.cast(argument)
+                                val casted = argumentProvider.cast(commandContext, argument)
                                 arguments.add(casted)
                             }.join()
 

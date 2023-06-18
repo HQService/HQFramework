@@ -16,7 +16,7 @@ class DoubleCommandArgumentProvider : HQCommandArgumentProvider<Double> {
         return listOf(argumentLabel ?: "숫자")
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return string?.toDoubleOrNull() != null
     }
 
@@ -24,7 +24,7 @@ class DoubleCommandArgumentProvider : HQCommandArgumentProvider<Double> {
         return "${argumentLabel ?: "숫자"}을(를) 입력해야 합니다."
     }
 
-    override fun cast(string: String): Double {
+    override fun cast(context: CommandContext, string: String): Double {
         return string.toDouble()
     }
 }

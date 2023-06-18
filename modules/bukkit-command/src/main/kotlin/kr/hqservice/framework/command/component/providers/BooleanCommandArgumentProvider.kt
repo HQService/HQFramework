@@ -16,7 +16,7 @@ class BooleanCommandArgumentProvider : HQCommandArgumentProvider<Boolean> {
         return listOf(argumentLabel ?: "true/false")
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return string.equals("true", true) || string.equals("false", true)
     }
 
@@ -24,7 +24,7 @@ class BooleanCommandArgumentProvider : HQCommandArgumentProvider<Boolean> {
         return "${argumentLabel ?: "true/false"}을(를) 입력해야 합니다."
     }
 
-    override fun cast(string: String): Boolean {
+    override fun cast(context: CommandContext, string: String): Boolean {
         return string.toBoolean()
     }
 }

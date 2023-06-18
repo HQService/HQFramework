@@ -12,7 +12,7 @@ class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
         return listOf(argumentLabel ?: "문자열")
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return true
     }
 
@@ -20,7 +20,7 @@ class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
         return "${argumentLabel ?: "문자열"}을(를) 입력해야 합니다."
     }
 
-    override fun cast(string: String): String {
+    override fun cast(context: CommandContext, string: String): String {
         return string
     }
 }

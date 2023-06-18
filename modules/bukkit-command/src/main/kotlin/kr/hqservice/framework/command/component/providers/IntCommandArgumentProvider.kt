@@ -12,7 +12,7 @@ class IntCommandArgumentProvider : HQCommandArgumentProvider<Int> {
         return listOf(argumentLabel ?: "정수")
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return string?.toIntOrNull() != null
     }
 
@@ -20,7 +20,7 @@ class IntCommandArgumentProvider : HQCommandArgumentProvider<Int> {
         return "${argumentLabel ?: "정수"}을(를) 입력해야 합니다."
     }
 
-    override fun cast(string: String): Int {
+    override fun cast(context: CommandContext, string: String): Int {
         return string.toInt()
     }
 }

@@ -21,7 +21,7 @@ class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQComm
         }
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().any {
             it.name.lowercase() == string?.lowercase()
         }
@@ -35,7 +35,7 @@ class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQComm
         }
     }
 
-    override fun cast(string: String): HQBukkitPlugin {
+    override fun cast(context: CommandContext, string: String): HQBukkitPlugin {
         return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().first { it.name.lowercase() == string.lowercase() }
     }
 }
