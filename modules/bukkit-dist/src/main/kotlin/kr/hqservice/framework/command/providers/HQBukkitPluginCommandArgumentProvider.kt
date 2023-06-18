@@ -2,6 +2,7 @@ package kr.hqservice.framework.command.providers
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.colorize
+import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
@@ -11,7 +12,7 @@ import org.bukkit.command.CommandSender
 @Component
 class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQCommandArgumentProvider<HQBukkitPlugin> {
     override fun getTabComplete(
-        commandSender: CommandSender,
+        context: CommandContext,
         location: Location?,
         argumentLabel: String?
     ): List<String> {
@@ -20,7 +21,7 @@ class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQComm
         }
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().any {
             it.name.lowercase() == string?.lowercase()
         }
@@ -34,7 +35,7 @@ class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQComm
         }
     }
 
-    override fun cast(string: String): HQBukkitPlugin {
+    override fun cast(context: CommandContext, string: String): HQBukkitPlugin {
         return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().first { it.name.lowercase() == string.lowercase() }
     }
 }

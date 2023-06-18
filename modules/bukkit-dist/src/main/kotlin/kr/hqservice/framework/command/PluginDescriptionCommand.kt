@@ -5,10 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.colorize
-import kr.hqservice.framework.command.component.ArgumentLabel
-import kr.hqservice.framework.command.component.CommandExecutor
-import kr.hqservice.framework.command.component.HQCommandNode
-import kr.hqservice.framework.command.component.ParentCommand
+import kr.hqservice.framework.command.component.*
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.extension.toHumanReadable
 import org.bukkit.command.CommandSender
@@ -47,7 +44,7 @@ class PluginDescriptionCommand : HQCommandNode(), CoroutineScope {
         isOp = true,
         priority = 999
     )
-    fun testGreedyArguments(sender: CommandSender, @ArgumentLabel("문자잉") string: String, int: Int, plugin: HQBukkitPlugin, stringNullable: String? = "default", intNullable: Int?) {
+    fun testGreedyArguments(sender: CommandSender, @ArgumentLabel("문자잉") string: String, @ContextKey("intint") int: Int, plugin: HQBukkitPlugin, stringNullable: String? = "default", intNullable: Int?) {
         sender.sendMessage("$string, $int, ${plugin.name}, $stringNullable, $intNullable")
     }
 

@@ -3,6 +3,7 @@ package kr.hqservice.framework.command.component.handler
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.command.component.*
+import kr.hqservice.framework.command.component.impl.CommandContextImpl
 import kr.hqservice.framework.command.component.registry.CommandArgumentProviderRegistry
 import kr.hqservice.framework.command.component.registry.CommandRegistry
 import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
@@ -57,7 +58,10 @@ class CommandRootComponentHandler(
             .first { it.name == "commandMap" }
             .apply { isAccessible = true }
             .get(pluginManager) as CommandMap
-        commandMap.register(hqCommandRoot.getFallbackPrefix(), HQBukkitCommand(hqCommandRoot, commandCoroutineScope, mainCoroutineScope, argumentProviderRepository))
+        commandMap.register(
+            hqCommandRoot.getFallbackPrefix(),
+            HQBukkitCommand(hqCommandRoot, commandCoroutineScope, mainCoroutineScope, argumentProviderRepository)
+        )
     }
 
     private class HQBukkitCommand(
@@ -95,12 +99,14 @@ class CommandRootComponentHandler(
                     sender.sendMessage("&c플레이어만 사용할 수 있는 명령어입니다.".colorize())
                     return true
                 }
+
                 ConsoleCommandSender::class -> if (sender is ConsoleCommandSender) {
                     sender
                 } else {
                     sender.sendMessage("&c콘솔에서만 사용할 수 있는 명령어입니다.".colorize())
                     return true
                 }
+
                 else -> throw IllegalArgumentException("not command sender")
             }
 
@@ -118,6 +124,14 @@ class CommandRootComponentHandler(
                         arguments.add(null)
                         return@forEach
                     }
+
+                    val parameterMap = executor.function.valueParameters
+                        .toMutableList()
+                        .apply { removeFirst() }
+                        .associateBy { kParameter ->
+                            args.getOrNull(kParameter.index - 1 + treeKey.size) ?: ""
+                        }
+                    val commandContext = CommandContextImpl(senderInstance, parameterMap)
                     when (val argumentProvider = getArgumentProvider(parameter)) {
                         is HQSuspendCommandArgumentProvider -> {
                             var isFailed = false
@@ -127,35 +141,41 @@ class CommandRootComponentHandler(
                                 commandCoroutineScope.coroutineContext
                             }
                             withContext(coroutineContext) withContext@{
-                                val result = argumentProvider.getResult(senderInstance, argument)
+
+                                val result = argumentProvider.getResult(commandContext, argument)
                                 if (!result || argument == null) {
-                                    val failureMessage = argumentProvider.getFailureMessage(sender, argument, argumentLabel)
+                                    val failureMessage =
+                                        argumentProvider.getFailureMessage(sender, argument, argumentLabel)
                                     if (failureMessage != null) {
                                         senderInstance.sendMessage(failureMessage)
                                     }
                                     isFailed = true
                                     return@withContext
                                 }
-                                val casted = argumentProvider.cast(argument)
+
+
+                                val casted = argumentProvider.cast(commandContext, argument)
                                 arguments.add(casted)
                             }
                             if (isFailed) {
                                 return@commandLaunch
                             }
                         }
+
                         is HQCommandArgumentProvider -> {
                             var isFailed = false
                             mainCoroutineScope.launch mainLaunch@{
-                                val result = argumentProvider.getResult(senderInstance, argument)
+                                val result = argumentProvider.getResult(commandContext, argument)
                                 if (!result || argument == null) {
-                                    val failureMessage = argumentProvider.getFailureMessage(sender, argument, argumentLabel)
+                                    val failureMessage =
+                                        argumentProvider.getFailureMessage(sender, argument, argumentLabel)
                                     if (failureMessage != null) {
                                         senderInstance.sendMessage("&c$failureMessage".colorize())
                                     }
                                     isFailed = true
                                     return@mainLaunch
                                 }
-                                val casted = argumentProvider.cast(argument)
+                                val casted = argumentProvider.cast(commandContext, argument)
                                 arguments.add(casted)
                             }.join()
 
@@ -180,9 +200,17 @@ class CommandRootComponentHandler(
                 if (function.isSuspend) {
                     if (executor.nodeInstance is CoroutineScope) {
                         withContext(executor.nodeInstance.coroutineContext) {
-                            executor.function.callSuspend(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
+                            executor.function.callSuspend(
+                                executor.nodeInstance,
+                                senderInstance,
+                                *arguments.toTypedArray()
+                            )
                         }
-                    } else executor.function.callSuspend(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
+                    } else executor.function.callSuspend(
+                        executor.nodeInstance,
+                        senderInstance,
+                        *arguments.toTypedArray()
+                    )
                 } else {
                     mainCoroutineScope.launch {
                         executor.function.call(executor.nodeInstance, senderInstance, *arguments.toTypedArray())
@@ -220,12 +248,26 @@ class CommandRootComponentHandler(
                         return emptyList()
                     }
                     val kParameter = executor.function.valueParameters[args.size - treeKey.size - 1]
-
+                    val parameterMap = args
+                        .toMutableList()
+                        .apply {
+                            repeat(treeKey.size + 1) {
+                                this.removeFirst()
+                            }
+                        }.mapIndexed { index, argument ->
+                            argument to executor.function.valueParameters[index + 1]
+                        }.toMap()
+                    val context = CommandContextImpl(sender, parameterMap)
                     return when (val argumentProvider = getArgumentProvider(kParameter)) {
                         is HQSuspendCommandArgumentProvider<*> -> runBlocking {
-                            argumentProvider.getTabComplete(sender, location, findArgumentLabel(kParameter))
+                            argumentProvider.getTabComplete(context, location, findArgumentLabel(kParameter))
                         }
-                        is HQCommandArgumentProvider<*> -> argumentProvider.getTabComplete(sender, location, findArgumentLabel(kParameter))
+
+                        is HQCommandArgumentProvider<*> -> argumentProvider.getTabComplete(
+                            context,
+                            location,
+                            findArgumentLabel(kParameter)
+                        )
                     }
                 } else {
                     return tree.getSuggestions()
@@ -249,7 +291,8 @@ class CommandRootComponentHandler(
         }
 
         private fun getArgumentProvider(parameter: KParameter): CommandArgumentProvider<*> {
-            val classifier = parameter.type.classifier ?: throw IllegalStateException("parameter type cannot be intersection type")
+            val classifier =
+                parameter.type.classifier ?: throw IllegalStateException("parameter type cannot be intersection type")
             return registry.getProvider(classifier)
         }
 

@@ -1,5 +1,6 @@
 package kr.hqservice.framework.command.component.providers
 
+import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
@@ -7,11 +8,11 @@ import org.bukkit.command.CommandSender
 
 @Component
 class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
-    override fun getTabComplete(commandSender: CommandSender, location: Location?, argumentLabel: String?): List<String> {
+    override fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String?): List<String> {
         return listOf(argumentLabel ?: "문자열")
     }
 
-    override fun getResult(commandSender: CommandSender, string: String?): Boolean {
+    override fun getResult(context: CommandContext, string: String?): Boolean {
         return true
     }
 
@@ -19,7 +20,7 @@ class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
         return "${argumentLabel ?: "문자열"}을(를) 입력해야 합니다."
     }
 
-    override fun cast(string: String): String {
+    override fun cast(context: CommandContext, string: String): String {
         return string
     }
 }
