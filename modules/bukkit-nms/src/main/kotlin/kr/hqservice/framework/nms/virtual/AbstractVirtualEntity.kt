@@ -125,14 +125,14 @@ abstract class AbstractVirtualEntity(
             packets.add(virtualEntityClasses.entityEquipmentPacket.newInstance(getEntityId(), itemContainer?: emptyList<Any>()))
         }
 
-        if(state mask VirtualEntityState.UPDATE_META_DATA) {
-            state = state switch VirtualEntityState.UPDATE_META_DATA
-            packets.add(virtualEntityClasses.createMetaDataPacket(getEntity()))
-        }
-
         if(state mask VirtualEntityState.RELOCATE) {
             state = state switch VirtualEntityState.RELOCATE
             packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(getEntity()))
+        }
+
+        if(state mask VirtualEntityState.UPDATE_META_DATA) {
+            state = state switch VirtualEntityState.UPDATE_META_DATA
+            packets.add(virtualEntityClasses.createMetaDataPacket(getEntity()))
         }
         return if(packets.isEmpty()) null
         else if(packets.size == 1) VirtualMessageImpl(packets.first())
