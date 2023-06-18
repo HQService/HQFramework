@@ -10,6 +10,7 @@ dependencies {
     compileOnly(libs.spigot.api)
     ksp(libs.koin.ksp.compiler)
     api(libs.kotlinx.coroutines.core)
+    api(libs.guava)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)

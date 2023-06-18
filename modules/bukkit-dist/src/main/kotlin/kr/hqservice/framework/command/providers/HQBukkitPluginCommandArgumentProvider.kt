@@ -2,6 +2,7 @@ package kr.hqservice.framework.command.providers
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.colorize
+import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
@@ -11,7 +12,7 @@ import org.bukkit.command.CommandSender
 @Component
 class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQCommandArgumentProvider<HQBukkitPlugin> {
     override fun getTabComplete(
-        commandSender: CommandSender,
+        context: CommandContext,
         location: Location?,
         argumentLabel: String?
     ): List<String> {

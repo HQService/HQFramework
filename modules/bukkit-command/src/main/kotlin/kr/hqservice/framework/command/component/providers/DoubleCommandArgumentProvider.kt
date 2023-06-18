@@ -1,5 +1,6 @@
 package kr.hqservice.framework.command.component.providers
 
+import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
@@ -8,7 +9,7 @@ import org.bukkit.command.CommandSender
 @Component
 class DoubleCommandArgumentProvider : HQCommandArgumentProvider<Double> {
     override fun getTabComplete(
-        commandSender: CommandSender,
+        context: CommandContext,
         location: Location?,
         argumentLabel: String?
     ): List<String> {

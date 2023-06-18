@@ -41,13 +41,13 @@ interface HQCommandArgumentProvider<T> : CommandArgumentProvider<T> {
     /**
      * 명령어 인자 자동입력을 반환합니다.
      *
-     * @param commandSender 명령어 입력 주체
+     * @param context 이 메소드 실행 커맨드 context
      * @param location 명령어 입력 위치
      * @param argumentLabel @ArgumentLabel 을 통한 입력 인자 설명
      *
      * @return 자동완성을 추천할 문자열들
      */
-    fun getTabComplete(commandSender: CommandSender, location: Location?, argumentLabel: String? = null): List<String>
+    fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String? = null): List<String>
 }
 
 interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
@@ -85,11 +85,11 @@ interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
     /**
      * 명령어 인자 자동입력을 반환합니다. 이 함수는 suspend 함수 입니다.
      *
-     * @param commandSender 명령어 입력 주체
+     * @param context 이 메소드 실행 커맨드 context
      * @param location 명령어 입력 위치
      * @param argumentLabel @ArgumentLabel 을 통한 입력 인자 설명
      *
      * @return 자동완성을 추천할 문자열들
      */
-    suspend fun getTabComplete(commandSender: CommandSender, location: Location?, argumentLabel: String? = null): List<String>
+    suspend fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String? = null): List<String>
 }

@@ -1,5 +1,6 @@
 package kr.hqservice.framework.command.component.providers
 
+import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
@@ -7,7 +8,7 @@ import org.bukkit.command.CommandSender
 
 @Component
 class StringCommandArgumentProvider : HQCommandArgumentProvider<String> {
-    override fun getTabComplete(commandSender: CommandSender, location: Location?, argumentLabel: String?): List<String> {
+    override fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String?): List<String> {
         return listOf(argumentLabel ?: "문자열")
     }
 
