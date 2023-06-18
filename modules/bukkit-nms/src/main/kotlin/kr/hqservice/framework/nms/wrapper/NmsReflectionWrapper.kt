@@ -34,6 +34,8 @@ interface NmsReflectionWrapper {
     fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*>
 
     suspend fun sendPacket(player: Player, vararg virtual: Virtual)
+
+    suspend fun sendPacket(players: List<Player>, vararg virtual: Virtual)
 }
 
 fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {

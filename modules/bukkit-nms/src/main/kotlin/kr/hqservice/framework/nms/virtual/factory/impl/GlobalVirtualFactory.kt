@@ -32,7 +32,6 @@ class GlobalVirtualFactory(
     }
 
     override suspend fun updateEntity(virtualEntity: AbstractVirtualEntity) {
-        receivers.forEach {
-            reflectionWrapper.sendPacket(it, virtualEntity) }
+        reflectionWrapper.sendPacket(receivers, virtualEntity)
     }
 }

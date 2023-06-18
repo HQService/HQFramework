@@ -30,7 +30,9 @@ class NmsReflectionWrapperImpl(
     private val majorVersion = /*versionClassName.substring(1)*/versionName.split(".")[1].toInt()
     private val minorVersion = try {
         versionName.split(".")[2].toInt()
-    } catch (e: Exception) { 0 }
+    } catch (e: Exception) {
+        0
+    }
     private val version = Version.valueOf("V_$majorVersion")
 
     private val craftBukkitClass = "org.bukkit.craftbukkit.$versionClassName."
@@ -43,9 +45,11 @@ class NmsReflectionWrapperImpl(
 
     private val connection by lazy { getField(entityPlayer, "playerConnection", Version.V_17.handle("b")) }
     private val getHandle by lazy { getFunction(craftPlayer, "getHandle") }
-    private val sendPacket by lazy { getFunction(playerConnection, "sendPacket", listOf(packet), Version.V_18.handleFunction("a") {
-        setParameterClasses(packet)
-    }) }
+    private val sendPacket by lazy {
+        getFunction(playerConnection, "sendPacket", listOf(packet), Version.V_18.handleFunction("a") {
+            setParameterClasses(packet)
+        })
+    }
 
     private val craftServer = getCraftBukkitClass("CraftServer")
     private val getServer by lazy { getFunction(craftServer, "getServer") }
@@ -67,7 +71,7 @@ class NmsReflectionWrapperImpl(
         return classMap.computeIfAbsent(className) {
             getNmsClass(handlers.sortedByDescending { it.getVersion().ordinal }
                 .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
-                    name = if(isChangedName()) "" else ".$name"
+                    name = if (isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
                 ?: name)
         }
@@ -89,26 +93,34 @@ class NmsReflectionWrapperImpl(
         }
     }
 
-    override fun getFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
+    override fun getFunction(
+        clazz: KClass<*>,
+        functionType: FunctionType,
+        vararg handlers: VersionHandler,
+    ): KCallable<*> {
         return getFunction(clazz, clazz.functions, functionType, *handlers)
     }
 
-    override fun getStaticFunction(clazz: KClass<*>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
+    override fun getStaticFunction(
+        clazz: KClass<*>,
+        functionType: FunctionType,
+        vararg handlers: VersionHandler,
+    ): KCallable<*> {
         return getFunction(clazz, clazz.staticFunctions, functionType, *handlers)
     }
 
     override fun getEntityPlayer(player: Player): Any {
-        return getHandle.call(player)?: throw IllegalArgumentException()
+        return getHandle.call(player) ?: throw IllegalArgumentException()
     }
 
     override fun getNmsServer(server: Server): Any {
-        return getServer.call(server)?: throw IllegalArgumentException()
+        return getServer.call(server) ?: throw IllegalArgumentException()
     }
 
     override suspend fun sendPacket(player: Player, vararg virtual: Virtual) {
         val handle = getHandle.call(player)
         val connection = connection.call(handle)
-        if(connection != null)
+        if (connection != null)
             virtual.forEach {
                 it.createVirtualMessage()?.also { virtual ->
                     virtual.send { packet ->
@@ -118,27 +130,46 @@ class NmsReflectionWrapperImpl(
             }
     }
 
+    override suspend fun sendPacket(players: List<Player>, vararg virtual: Virtual) {
+        virtual.forEach {
+            it.createVirtualMessage()?.also { virtual ->
+                players.forEach { player ->
+                    val handle = getHandle.call(player)
+                    val connection = connection.call(handle)
+                    if(connection != null) virtual.send { packet ->
+                        sendPacket.call(connection, packet)
+                    }
+                }
+            }
+        }
+    }
+
     override fun getField(clazz: KClass<*>, fieldType: KClass<*>): KCallable<*> {
         return clazz.memberProperties.firstOrNull {
             it.returnType.jvmErasure.qualifiedName == fieldType.qualifiedName
-        }?: throw IllegalArgumentException()
+        } ?: throw IllegalArgumentException()
     }
 
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
         val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName()?: fieldName
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: fieldName
         return clazz.memberProperties.firstOrNull {
             it.name == type
-        }?: throw IllegalArgumentException()
+        } ?: throw IllegalArgumentException()
     }
 
-    private fun getFunction(clazz: KClass<*>, functions: Collection<KCallable<*>>, functionType: FunctionType, vararg handlers: VersionHandler): KCallable<*> {
+    private fun getFunction(
+        clazz: KClass<*>,
+        functions: Collection<KCallable<*>>,
+        functionType: FunctionType,
+        vararg handlers: VersionHandler,
+    ): KCallable<*> {
         val key = "${clazz.simpleName}#" + functionType.getName()
-        return if(callableMap.contains(key)) callableMap[key]!!
+        return if (callableMap.contains(key)) callableMap[key]!!
         else {
             val type = handlers.filter { it.getVersion().support(version, minorVersion) }
                 .run {
-                    if(isEmpty()) null
+                    if (isEmpty()) null
                     else maxBy { it.getVersion().ordinal }
                 } ?: CallableVersionHandler(version, functionType)
             try {
