@@ -4,6 +4,7 @@ import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.component.*
 import kr.hqservice.framework.global.core.component.error.*
+import kr.hqservice.framework.global.core.extension.print
 import org.koin.core.annotation.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
@@ -36,6 +37,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
         val componentClasses = mutableListOf<Class<*>>()
+        val qualifierProviderClasses = mutableListOf<Class<*>>()
         val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
         for (clazz in getAllComponentsToScan()) {
             val annotations = clazz.annotations
@@ -46,15 +48,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             } else if (annotations.filterIsInstance<Component>().isNotEmpty()) {
                 componentClasses.add(clazz)
             } else if (annotations.filterIsInstance<QualifierProvider>().isNotEmpty()) {
-                val key = annotations.filterIsInstance<QualifierProvider>().first().key
-                val qualifierProvider = callByInjectedParameters(
-                    clazz.kotlin.constructors.first(),
-                    getProvidedInstances()
-                ) as? MutableNamedProvider ?: throw IllegalStateException("not qualifier provider")
-                qualifierProviders[key] = qualifierProvider
+                qualifierProviderClasses.add(clazz)
             }
         }
-        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(componentClasses.map { it.kotlin })
+        val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(
+            componentClasses.map { it.kotlin }
+        ).apply { addAll(qualifierProviderClasses.map { it.kotlin }) }
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var componentExceptionCatchingStack = 0
@@ -66,8 +65,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             }
 
             val constructor = component.constructors.first()
-            val instance = callByInjectedParameters(constructor, getProvidedInstances())
-            if (instance == null) {
+
+            fun back() {
                 componentClassesQueue.offer(component)
                 if (previousComponentQueueSize == componentClassesQueue.size) {
                     componentExceptionCatchingStack++
@@ -76,9 +75,32 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     throw NoBeanDefinitionsFoundException(componentClassesQueue.toList())
                 }
                 previousComponentQueueSize = componentClassesQueue.size
+            }
+
+            val instance = try {
+                callByInjectedParameters(constructor, getProvidedInstances())
+            } catch (exception: QualifierNotFoundException) {
+                back()
+                continue
+            }
+
+            if (instance == null) {
+                back()
+                continue
             } else {
-                componentInstances.addSafely(instance)
-                tryCreateBeanModule(component, instance)
+                try {
+                    tryCreateBeanModule(component, instance)
+                } catch (exception: QualifierNotFoundException) {
+                    back()
+                    continue
+                }
+                if (instance is HQComponent) {
+                    componentInstances.addSafely(instance)
+                } else if (instance is MutableNamedProvider) {
+                    val key = component.annotations.filterIsInstance<QualifierProvider>().first().key
+                    qualifierProviders[key] = instance
+                }
+
                 componentExceptionCatchingStack = 0
             }
         }
@@ -182,7 +204,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         if (injectedParameters.any { it == null }) {
             return null
         }
-        return kFunction.call(*injectedParameters.toTypedArray())
+        return try {
+            kFunction.call(*injectedParameters.toTypedArray())
+        } catch (illegalArgumentException: IllegalArgumentException) {
+            kFunction.instanceParameter.print("instanceParameter: ")
+            kFunction.parameters.print("parameters: ")
+            injectedParameters.print("injectedParamaters: ")
+            throw illegalArgumentException
+        }
     }
 
     private fun injectParameters(kFunction: KFunction<*>, providedInstanceMap: Map<KClass<*>, *>? = null): List<Any?> {
@@ -190,7 +219,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val parameterKClass = parameter.type.classifier as KClass<*>
             if (providedInstanceMap != null) {
                 val providedInstance =
-                    providedInstanceMap.filter { parameterKClass.isSubclassOf(it.key) }.values.firstOrNull()
+                    providedInstanceMap.filter { parameterKClass == it.key }.values.firstOrNull()
                 if (providedInstance != null) {
                     return@map providedInstance
                 }
@@ -290,7 +319,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         } else if (element.hasAnnotation<MutableNamed>()) {
             val key = element.findAnnotation<MutableNamed>()!!.key
             val qualifierProvider =
-                qualifierProviders[key] ?: throw NullPointerException("MutableNamedQualifier not found")
+                qualifierProviders[key] ?: throw QualifierNotFoundException()
             val provided = qualifierProvider.provideQualifier()
             StringQualifier(provided)
         } else {
