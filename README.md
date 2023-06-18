@@ -22,7 +22,7 @@ HQFramework는 SpringFramework 에서 영감을 받아 Bukkit 및 Proxy 플랫�
   * [MutableNamed](#mutablenamed)
 
 HQFramework는 완성도가 높은 의존성 주입 라이브러리 Koin과 연결할 수 있는 Component 기능을 제공합니다.
- Component는 Singleton의 형태로 자동 생성되며, 의존성 주입과 함께 생성되며, 필요에 따라 생성된 Component를 Bean으로 등록해주기도 합니다.
+ Component는 Singleton의 형태로 자동 생성될 수 있으며, 의존성 주입과 함께 생성되며, 필요에 따라 생성된 Component를 Bean으로 등록해주기도 합니다.
  
 ---
 ### HQComponent의 사용
