@@ -92,11 +92,10 @@ abstract class HQCommandTree(
     }
 
     internal fun setup(registry: CommandRegistry) {
-        registry.getNodes(this::class).forEach { node ->
-            node.getExecutors().forEach { (executorKey, executor) ->
-                commandExecutors[executorKey] = executor
-            }
+        registry.getExecutors(this::class).forEach { (executorKey, executor) ->
+            commandExecutors[executorKey] = executor
         }
+
 
         registry.getTrees(this::class).forEach { tree ->
             commandTrees[tree.label] = tree

@@ -12,7 +12,7 @@ import org.bukkit.command.CommandSender
 
 @Component
 @ParentCommand(binds = [HQFrameworkCommand.Plugin::class])
-class PluginReloadCommand(private val server: Server) : HQCommandNode() {
+class PluginReloadCommand(private val server: Server) : HQCommandNode {
     @CommandExecutor(
         label = "hardreload",
         description = "&f/hq plugin hardreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 PluginManager 에서 reload 합니다.",

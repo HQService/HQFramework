@@ -12,7 +12,7 @@ import org.bukkit.command.CommandSender
 
 @Component
 @ParentCommand(binds = [HQFrameworkCommand::class])
-class PluginListCommand(private val server: Server) : HQCommandNode() {
+class PluginListCommand(private val server: Server) : HQCommandNode {
     @CommandExecutor(
         label = "plugins",
         description = "&f/hq plugins &6| &7HQPlugin 을 의존하는 플러그인들을 출력합니다.",

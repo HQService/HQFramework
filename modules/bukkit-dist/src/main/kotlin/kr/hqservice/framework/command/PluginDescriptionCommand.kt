@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 
 @Component
 @ParentCommand(binds = [HQFrameworkCommand.Plugin.Description::class])
-class PluginDescriptionCommand : HQCommandNode(), CoroutineScope {
+class PluginDescriptionCommand : HQCommandNode, CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO
 
