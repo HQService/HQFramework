@@ -219,7 +219,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val parameterKClass = parameter.type.classifier as KClass<*>
             if (providedInstanceMap != null) {
                 val providedInstance =
-                    providedInstanceMap.filter { parameterKClass.isSuperclassOf(it.key) }.values.firstOrNull()
+                    providedInstanceMap.filter { parameterKClass == it.key }.values.firstOrNull()
                 if (providedInstance != null) {
                     return@map providedInstance
                 }
