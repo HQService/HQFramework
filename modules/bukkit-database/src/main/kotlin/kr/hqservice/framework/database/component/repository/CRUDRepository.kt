@@ -5,7 +5,7 @@ interface CRUDRepository<ID : Comparable<ID>, E> : HQRepository {
 
     suspend fun get(id: ID): E
 
-    suspend fun getAll(): Iterable<E>
+    suspend fun getAll(): Collection<E>
 
     suspend fun find(id: ID): E?
 

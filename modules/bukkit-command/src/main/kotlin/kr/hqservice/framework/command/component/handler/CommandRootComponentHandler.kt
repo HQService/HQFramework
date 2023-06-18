@@ -10,6 +10,7 @@ import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponen
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.component.handler.impl.KoinModuleComponentHandler
+import kr.hqservice.framework.global.core.extension.print
 import org.bukkit.Location
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
@@ -132,6 +133,7 @@ class CommandRootComponentHandler(
                             args.getOrNull(kParameter.index - 1 + treeKey.size) ?: ""
                         }
                     val commandContext = CommandContextImpl(senderInstance, parameterMap)
+                    val argumentForResult = if (argument.print("argument: ") == argumentLabel.print("label: ")) null else argument
                     when (val argumentProvider = getArgumentProvider(parameter)) {
                         is HQSuspendCommandArgumentProvider -> {
                             var isFailed = false
@@ -142,10 +144,11 @@ class CommandRootComponentHandler(
                             }
                             withContext(coroutineContext) withContext@{
 
-                                val result = argumentProvider.getResult(commandContext, argument)
-                                if (!result || argument == null) {
+
+                                val result = argumentProvider.getResult(commandContext, argumentForResult)
+                                if (!result || argumentForResult == null) {
                                     val failureMessage =
-                                        argumentProvider.getFailureMessage(commandContext, argument, argumentLabel)
+                                        argumentProvider.getFailureMessage(commandContext, argumentForResult, argumentLabel)
                                     if (failureMessage != null) {
                                         senderInstance.sendMessage(failureMessage)
                                     }
@@ -154,7 +157,7 @@ class CommandRootComponentHandler(
                                 }
 
 
-                                val casted = argumentProvider.cast(commandContext, argument)
+                                val casted = argumentProvider.cast(commandContext, argumentForResult)
                                 arguments.add(casted)
                             }
                             if (isFailed) {
@@ -165,17 +168,17 @@ class CommandRootComponentHandler(
                         is HQCommandArgumentProvider -> {
                             var isFailed = false
                             mainCoroutineScope.launch mainLaunch@{
-                                val result = argumentProvider.getResult(commandContext, argument)
-                                if (!result || argument == null) {
+                                val result = argumentProvider.getResult(commandContext, argumentForResult)
+                                if (!result || argumentForResult == null) {
                                     val failureMessage =
-                                        argumentProvider.getFailureMessage(commandContext, argument, argumentLabel)
+                                        argumentProvider.getFailureMessage(commandContext, argumentForResult, argumentLabel)
                                     if (failureMessage != null) {
                                         senderInstance.sendMessage("&c$failureMessage".colorize())
                                     }
                                     isFailed = true
                                     return@mainLaunch
                                 }
-                                val casted = argumentProvider.cast(commandContext, argument)
+                                val casted = argumentProvider.cast(commandContext, argumentForResult)
                                 arguments.add(casted)
                             }.join()
 

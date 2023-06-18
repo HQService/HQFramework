@@ -23,7 +23,7 @@ class RepositoryComponentHandler(
             val objectInstance = it.objectInstance ?: throw IllegalArgumentException("Table 의 object instance 를 가져올 수 없습니다.")
             mainCoroutineScope.launch {
                 element.getDataSource().query {
-                    SchemaUtils.createMissingTablesAndColumns(objectInstance)
+                    SchemaUtils.createMissingTablesAndColumns(objectInstance, withLogs = false)
                 }
             }
         }
