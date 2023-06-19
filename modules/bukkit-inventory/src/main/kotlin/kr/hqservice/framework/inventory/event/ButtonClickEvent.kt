@@ -6,12 +6,21 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 
 interface ButtonClickEvent {
-
     fun getSlot(): Int
+
     fun getRawSlot(): Int
+
     fun getClickType(): ClickType
+
     fun getContainer(): HQContainer
+
     fun getButton(): HQButton
+
     fun getWhoClicked(): Player
 
+    fun isShiftClick(): Boolean
+
+    fun isPressedQuickSlotButton(): Boolean
+
+    fun getQuickSlotButton(): Int
 }

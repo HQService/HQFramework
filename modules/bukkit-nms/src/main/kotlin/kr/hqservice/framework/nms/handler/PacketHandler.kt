@@ -3,14 +3,11 @@ package kr.hqservice.framework.nms.handler
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.entity.Player
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 class PacketHandler(
     private val player: Player
-) : ChannelDuplexHandler(), KoinComponent {
+) : ChannelDuplexHandler() {
 
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
         val packetName = message.javaClass.simpleName

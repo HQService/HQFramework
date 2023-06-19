@@ -12,7 +12,6 @@ internal class ButtonClickEventImpl(
     private val button: HQButton,
     private val event: InventoryClickEvent
 ): ButtonClickEvent {
-
     override fun getSlot(): Int {
         return event.slot
     }
@@ -37,4 +36,15 @@ internal class ButtonClickEventImpl(
         return button
     }
 
+    override fun isShiftClick(): Boolean {
+        return event.isShiftClick
+    }
+
+    override fun isPressedQuickSlotButton(): Boolean {
+        return event.hotbarButton >= 0
+    }
+
+    override fun getQuickSlotButton(): Int {
+        return event.hotbarButton
+    }
 }

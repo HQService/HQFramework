@@ -4,12 +4,17 @@ import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
 import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import kr.hqservice.framework.inventory.exception.IllegalMaterialException
+import kr.hqservice.framework.inventory.util.PlayerSkullRepository
 import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
+import org.koin.java.KoinJavaComponent.getKoin
+import java.util.UUID
+
+private val skullRepository: PlayerSkullRepository by getKoin().inject()
 
 class HQButtonBuilder(
     original: ItemStack
@@ -37,6 +42,9 @@ class HQButtonBuilder(
     constructor(material: Material, amount: Int) : this(ItemStack(material, amount)) {
         if (material == Material.AIR || !material.isItem) throw IllegalMaterialException(material)
     }
+
+    constructor(skullUniqueId: UUID) : this(skullUniqueId, 1)
+    constructor(skullUniqueId: UUID, amount: Int) : this(skullRepository.getPlayerSkull(skullUniqueId, amount))
 
     @Deprecated(message = "setDurability")
     constructor(material: Material, amount: Int, data: Short) : this(material, amount) {
@@ -80,6 +88,11 @@ class HQButtonBuilder(
 
     fun setClickFunction(block: (ButtonClickEvent) -> Unit): HQButtonBuilder {
         clickFunction = block
+        return this
+    }
+
+    fun setGlow(glow: Boolean): HQButtonBuilder {
+        this.glow = glow
         return this
     }
 
