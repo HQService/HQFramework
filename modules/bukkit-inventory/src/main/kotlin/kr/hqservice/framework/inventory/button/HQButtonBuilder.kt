@@ -14,8 +14,6 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.koin.java.KoinJavaComponent.getKoin
 import java.util.UUID
 
-private val skullRepository: PlayerSkullRepository by getKoin().inject()
-
 class HQButtonBuilder(
     original: ItemStack
 ) {
@@ -24,6 +22,7 @@ class HQButtonBuilder(
     private var lore: MutableList<String> = itemStack.itemMeta?.lore ?: mutableListOf()
     private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
     private var customModelData: Int = 0
+    private var owningPlayer: UUID? = null
     private var removable = false
 
     private var itemMetaEditScope: ItemMeta.() -> Unit = {}
@@ -43,12 +42,14 @@ class HQButtonBuilder(
         if (material == Material.AIR || !material.isItem) throw IllegalMaterialException(material)
     }
 
-    constructor(skullUniqueId: UUID) : this(skullUniqueId, 1)
-    constructor(skullUniqueId: UUID, amount: Int) : this(skullRepository.getPlayerSkull(skullUniqueId, amount))
-
     @Deprecated(message = "setDurability")
     constructor(material: Material, amount: Int, data: Short) : this(material, amount) {
         itemStack.durability = data
+    }
+
+    fun setOwningPlayer(uniqueId: UUID): HQButtonBuilder {
+        owningPlayer = uniqueId
+        return this
     }
 
     fun setDisplayName(name: String): HQButtonBuilder {
@@ -109,6 +110,9 @@ class HQButtonBuilder(
             try { meta.setCustomModelData(customModelData) } catch (_: Exception) {}
             meta.itemMetaEditScope()
         }
-        return HQButtonImpl(itemStack, clickFunction, removable)
+        if(owningPlayer != null && itemStack.type != Material.PLAYER_HEAD) {
+            owningPlayer = null
+        }
+        return HQButtonImpl(itemStack, clickFunction, removable, owningPlayer)
     }
 }

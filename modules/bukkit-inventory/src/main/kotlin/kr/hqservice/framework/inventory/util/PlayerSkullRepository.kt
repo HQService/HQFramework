@@ -2,44 +2,66 @@ package kr.hqservice.framework.inventory.util
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import kotlinx.coroutines.launch
+import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
-import org.bukkit.Bukkit
-import org.bukkit.Material
+import org.bukkit.Server
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
+import org.koin.core.annotation.Named
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @Component
 @HQSingleton(binds = [PlayerSkullRepository::class])
-class PlayerSkullRepository : HQSimpleComponent {
+class PlayerSkullRepository(
+    private val server: Server,
+    @Named("url-reader") private val urlReaderCoroutineScope: HQCoroutineScope
+) : HQSimpleComponent {
     private val skinTagMap = mutableMapOf<UUID, String>()
+    private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()
     private val gson = Gson()
 
-    fun getPlayerSkull(targetUniqueId: UUID, amount: Int): ItemStack {
-        val skinTag = skinTagMap.computeIfAbsent(targetUniqueId) {
-            try {
-                val contents =
-                    getURLContents("https://sessionserver.mojang.com/session/minecraft/profile/$targetUniqueId")
-                val jsonObject = gson.fromJson(contents, JsonObject::class.java)
-                val value = jsonObject.getAsJsonArray("properties")[0].asJsonObject["value"].asString
-                val decoded = String(Base64.getDecoder().decode(value))
-                val newObject = gson.fromJson(decoded, JsonObject::class.java)
-                val skinUrl = newObject.getAsJsonObject("textures").getAsJsonObject("SKIN")["url"].asString
-                val skin = "{\"textures\":{\"SKIN\":{\"url\":\"$skinUrl\"}}}".toByteArray()
-                val encoded = Base64.getEncoder().encode(skin)
-                val hash = Arrays.hashCode(encoded).toLong()
-                val hashAsId = UUID(hash, hash)
-                "{SkullOwner:{Id:\"$hashAsId\", Properties:{textures:[{Value:\"$value\"}]}}}"
-            } catch (e: Exception) {
-                throw IllegalStateException("cannot found player skull $targetUniqueId", e) } }
-
-        val baseItem = ItemStack(Material.PLAYER_HEAD, amount)
-        return Bukkit.getServer().unsafe.modifyItemStack(baseItem, skinTag)
+    fun setOwnerPlayer(targetUniqueId: UUID, inventory: Inventory, slot: Int) {
+        val itemStack = inventory.getItem(slot)?: return
+        if(skinTagMap.containsKey(targetUniqueId)) {
+            server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!)
+        } else {
+            if(lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
+            else {
+                val queue = ConcurrentLinkedQueue<ItemStack>()
+                lambdaQueueMap[targetUniqueId] = queue
+                queue.offer(itemStack)
+                urlReaderCoroutineScope.launch {
+                    val contents =
+                        getURLContents("https://sessionserver.mojang.com/session/minecraft/profile/$targetUniqueId")
+                    val jsonObject = gson.fromJson(contents, JsonObject::class.java)
+                    val value = jsonObject.getAsJsonArray("properties")[0].asJsonObject["value"].asString
+                    val decoded = String(Base64.getDecoder().decode(value))
+                    val newObject = gson.fromJson(decoded, JsonObject::class.java)
+                    val skinUrl = newObject.getAsJsonObject("textures").getAsJsonObject("SKIN")["url"].asString
+                    val skin = "{\"textures\":{\"SKIN\":{\"url\":\"$skinUrl\"}}}".toByteArray()
+                    val encoded = Base64.getEncoder().encode(skin)
+                    val hash = Arrays.hashCode(encoded).toLong()
+                    val hashAsId = UUID(hash, hash)
+                    val tag = "{SkullOwner:{Id:\"$hashAsId\", Properties:{textures:[{Value:\"$value\"}]}}}"
+                    skinTagMap[targetUniqueId] = tag
+                    lambdaQueueMap.remove(targetUniqueId)
+                    while(queue.isNotEmpty()) {
+                        try {
+                            server.unsafe.modifyItemStack(queue.poll(), tag)
+                        } catch (_: Exception) {}
+                    }
+                }
+            }
+        }
     }
 
     private fun getURLContents(stringUrl: String): String {
