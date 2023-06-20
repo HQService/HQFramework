@@ -9,6 +9,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
+import org.bukkit.event.inventory.InventoryOpenEvent
 import org.bukkit.inventory.InventoryView
 
 @Component
@@ -29,6 +30,7 @@ class HQContainerHandler: HQListener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun inventoryClose(event: InventoryCloseEvent) {
         getContainer(event.view)?.apply {
+            removeViewer(event.player.uniqueId)
             onClose(event)
         }
     }
