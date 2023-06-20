@@ -103,7 +103,7 @@ class HQButtonBuilder(
     }
 
     fun build(): HQButton {
-        itemStack.itemMeta = itemStack.itemMeta?.also { meta ->
+        val scope: (ItemMeta) -> Unit = { meta ->
             meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName))
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
             meta.addItemFlags(*itemFlags.toTypedArray())
@@ -113,6 +113,7 @@ class HQButtonBuilder(
         if(owningPlayer != null && itemStack.type != Material.PLAYER_HEAD) {
             owningPlayer = null
         }
-        return HQButtonImpl(itemStack, clickFunction, removable, owningPlayer)
+        itemStack.itemMeta = itemStack.itemMeta?.also(scope)
+        return HQButtonImpl(itemStack, clickFunction, removable, owningPlayer, scope)
     }
 }

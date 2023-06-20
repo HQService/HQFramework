@@ -6,6 +6,7 @@ import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import kr.hqservice.framework.inventory.util.PlayerSkullRepository
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 import org.koin.java.KoinJavaComponent
 import java.util.UUID
 
@@ -16,8 +17,11 @@ internal class HQButtonImpl(
     private val clickFunction: (ButtonClickEvent)->Unit = {},
     private val removable: Boolean = false,
     private val owningPlayer: UUID? = null,
+    private val metaEditScope: (ItemMeta) -> Unit = {}
 ): HQButton {
-    override fun getItemStack(): ItemStack = baseItemStack
+    override fun getItemStack(): ItemStack {
+        return baseItemStack
+    }
 
     override fun getDisplayName(): String {
         return baseItemStack.itemMeta?.displayName?: baseItemStack.type.name.lowercase()
@@ -31,9 +35,13 @@ internal class HQButtonImpl(
         clickFunction(event)
     }
 
+    internal fun hasOwningPlayer(): Boolean {
+        return owningPlayer != null
+    }
+
     internal fun checkOwningPlayer(slot: Int, inventory: Inventory) {
         if(owningPlayer != null) {
-            skullRepository.setOwnerPlayer(owningPlayer, inventory, slot)
+            skullRepository.setOwnerPlayer(owningPlayer, inventory, slot, metaEditScope)
         }
     }
 

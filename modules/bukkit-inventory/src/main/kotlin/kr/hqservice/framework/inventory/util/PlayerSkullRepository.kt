@@ -11,6 +11,7 @@ import org.bukkit.Server
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 import org.koin.core.annotation.Named
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -29,10 +30,12 @@ class PlayerSkullRepository(
     private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()
     private val gson = Gson()
 
-    fun setOwnerPlayer(targetUniqueId: UUID, inventory: Inventory, slot: Int) {
+    fun setOwnerPlayer(targetUniqueId: UUID, inventory: Inventory, slot: Int, metaScope: (ItemMeta) -> Unit) {
         val itemStack = inventory.getItem(slot)?: return
         if(skinTagMap.containsKey(targetUniqueId)) {
-            server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!)
+            server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!).apply {
+                itemMeta = itemMeta?.also(metaScope)
+            }
         } else {
             if(lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
             else {
@@ -56,7 +59,9 @@ class PlayerSkullRepository(
                     lambdaQueueMap.remove(targetUniqueId)
                     while(queue.isNotEmpty()) {
                         try {
-                            server.unsafe.modifyItemStack(queue.poll(), tag)
+                            server.unsafe.modifyItemStack(queue.poll(), tag).apply {
+                                itemMeta = itemMeta?.also(metaScope)
+                            }
                         } catch (_: Exception) {}
                     }
                 }

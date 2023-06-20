@@ -33,9 +33,11 @@ abstract class HQContainer(
 
         if (original?.isMatchedType(button.getItemStack()) == true)
             original.itemMeta = button.getItemStack().itemMeta
-        else inventory.setItem(slot, button.getItemStack().clone())
+        else {
+            inventory.setItem(slot, button.getItemStack().clone())
+            button.checkOwningPlayer(slot, inventory)
+        }
 
-        button.checkOwningPlayer(slot, inventory)
     }
 
     internal fun getButton(slot: Int): HQButtonImpl? = buttons[slot]
