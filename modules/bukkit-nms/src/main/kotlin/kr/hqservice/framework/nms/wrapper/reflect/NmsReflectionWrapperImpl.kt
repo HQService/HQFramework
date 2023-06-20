@@ -10,6 +10,7 @@ import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.virtual.Virtual
+import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
@@ -125,6 +126,7 @@ class NmsReflectionWrapperImpl(
                 it.createVirtualMessage()?.also { virtual ->
                     virtual.send { packet ->
                         sendPacket.call(connection, packet)
+                        if(it is VirtualContainer) player.updateInventory()
                     }
                 }
             }
