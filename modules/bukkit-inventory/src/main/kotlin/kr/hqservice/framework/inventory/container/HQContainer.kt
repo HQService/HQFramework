@@ -1,16 +1,19 @@
 package kr.hqservice.framework.inventory.container
 
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
+import kr.hqservice.framework.inventory.handler.HQContainerHandler
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
+import org.bukkit.event.inventory.InventoryEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.Plugin
+import org.koin.java.KoinJavaComponent.getKoin
 import java.util.UUID
 
 abstract class HQContainer(
@@ -26,7 +29,7 @@ abstract class HQContainer(
     open fun onClick(event: InventoryClickEvent) {}
     open fun onDrag(event: InventoryDragEvent) {}
     open fun onClose(event: InventoryCloseEvent) {}
-    open fun onOpen(inventory: Inventory, vararg players: Player) {}
+    open fun onOpen(vararg players: Player) {}
 
     internal fun registerButton(slot: Int, button: HQButtonImpl) {
         if (buttons[slot] == button) return
@@ -74,7 +77,7 @@ abstract class HQContainer(
                 plugin.server.scheduler.runTaskLater(plugin, Runnable { open(player) }, 1)
             } else player.openInventory(inventory)
         }
-        onOpen(inventory, *players)
+        onOpen(*players)
     }
 
     @Suppress("deprecation")
