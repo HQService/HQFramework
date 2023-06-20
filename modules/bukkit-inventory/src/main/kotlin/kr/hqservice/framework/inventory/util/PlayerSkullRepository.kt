@@ -30,12 +30,13 @@ class PlayerSkullRepository(
     private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()
     private val gson = Gson()
 
-    fun setOwnerPlayer(targetUniqueId: UUID, inventory: Inventory, slot: Int, metaScope: (ItemMeta) -> Unit) {
+    fun setOwnerPlayer(targetUniqueId: UUID, inventory: Inventory, slot: Int, targetedItemStack: ItemStack, metaScope: (ItemMeta) -> Unit) {
         val itemStack = inventory.getItem(slot)?: return
         if(skinTagMap.containsKey(targetUniqueId)) {
-            server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!).apply {
-                itemMeta = itemMeta?.also(metaScope)
-            }
+            if(!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack))
+                server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!).apply {
+                    itemMeta = itemMeta?.also(metaScope)
+                }
         } else {
             if(lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
             else {
@@ -59,9 +60,11 @@ class PlayerSkullRepository(
                     lambdaQueueMap.remove(targetUniqueId)
                     while(queue.isNotEmpty()) {
                         try {
-                            server.unsafe.modifyItemStack(queue.poll(), tag).apply {
-                                itemMeta = itemMeta?.also(metaScope)
-                            }
+                            val element = queue.poll()
+                            if(!element.type.isAir && targetedItemStack.isSimilar(element))
+                                server.unsafe.modifyItemStack(element, tag).apply {
+                                    itemMeta = itemMeta?.also(metaScope)
+                                }
                         } catch (_: Exception) {}
                     }
                 }

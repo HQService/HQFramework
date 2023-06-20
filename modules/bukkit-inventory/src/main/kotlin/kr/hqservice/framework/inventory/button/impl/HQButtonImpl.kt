@@ -41,7 +41,7 @@ internal class HQButtonImpl(
 
     internal fun checkOwningPlayer(slot: Int, inventory: Inventory) {
         if(owningPlayer != null) {
-            skullRepository.setOwnerPlayer(owningPlayer, inventory, slot, metaEditScope)
+            skullRepository.setOwnerPlayer(owningPlayer, inventory, slot, baseItemStack, metaEditScope)
         }
     }
 
