@@ -30,7 +30,6 @@ class HQContainerHandler: HQListener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun inventoryClose(event: InventoryCloseEvent) {
         getContainer(event.view)?.apply {
-            removeViewer(event.player.uniqueId)
             onClose(event)
         }
     }

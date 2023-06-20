@@ -8,7 +8,7 @@ class TestContainer(
     private val settingBlock: HQContainer.()-> Unit
 ): HQContainer(9, title) {
 
-    override fun initializing(inventory: Inventory) {
+    override fun initialize(inventory: Inventory) {
         settingBlock.invoke(this)
     }
 
