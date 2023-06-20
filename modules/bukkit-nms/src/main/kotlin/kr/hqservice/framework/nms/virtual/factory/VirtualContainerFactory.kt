@@ -11,19 +11,25 @@ import org.bukkit.inventory.meta.ItemMeta
 class VirtualContainerFactory(
     private val receiver: Player,
 ) {
-    private val messages: MutableList<Virtual> = mutableListOf()
+    private val setSlotItems = mutableMapOf<Int, VirtualItem>()
+    private var titlePacket: VirtualContainer? = null
 
     fun setItem(
         slot: Int,
         itemStack: ItemStack,
         itemEditBlock: ItemMeta.() -> Unit = {}
-    ) { messages.add(VirtualItem(receiver, slot, itemStack, itemEditBlock)) }
+    ) { setSlotItems[slot] = VirtualItem(receiver, slot, itemStack, itemEditBlock) }
 
-    fun setTitle(
-        title: String
-    ) { messages.add(VirtualContainer(receiver, title.colorize())) }
+    fun setTitle(title: String) { titlePacket = VirtualContainer(receiver, title.colorize()) }
 
     fun getMessages(): Array<Virtual> {
+        val messages = mutableListOf<Virtual>()
+        titlePacket?.apply(messages::add)
+        receiver.openInventory.topInventory.contents.forEachIndexed { index, itemStack: ItemStack? ->
+            setSlotItems[index]?: itemStack?.run {
+                VirtualItem(receiver, index, this)
+            }?.apply { messages.add(this) }
+        }
         return messages.toTypedArray()
     }
 }
