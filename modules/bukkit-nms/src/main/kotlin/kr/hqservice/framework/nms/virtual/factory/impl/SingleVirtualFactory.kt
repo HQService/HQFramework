@@ -24,6 +24,10 @@ class SingleVirtualFactory(
         )
     }
 
+    override fun getViewers(): List<Player> {
+        return listOf(receiver)
+    }
+
     override suspend fun inventory(containerFactoryScope: VirtualContainerFactory.() -> Unit) {
         val containerFactory = VirtualContainerFactory(receiver)
         containerFactory.containerFactoryScope()

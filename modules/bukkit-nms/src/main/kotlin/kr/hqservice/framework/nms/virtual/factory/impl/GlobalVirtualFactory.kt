@@ -23,6 +23,10 @@ class GlobalVirtualFactory(
             reflectionWrapper.sendPacket(it, VirtualItem(it, slot, itemStack, itemEditBlock)) }
     }
 
+    override fun getViewers(): List<Player> {
+        return receivers
+    }
+
     override suspend fun inventory(containerFactoryScope: VirtualContainerFactory.() -> Unit) {
         receivers.forEach {
             val containerFactory = VirtualContainerFactory(it)
