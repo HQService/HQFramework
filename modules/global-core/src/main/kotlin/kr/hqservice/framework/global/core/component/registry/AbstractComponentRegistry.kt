@@ -119,6 +119,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     componentHandlerClass.constructors.first(),
                     getProvidedInstances()
                 )
+
                 if (componentHandler == null) {
                     componentHandlersQueue.offer(componentHandlerClass)
                     if (previousHandlerQueueSize == componentHandlersQueue.size) {
