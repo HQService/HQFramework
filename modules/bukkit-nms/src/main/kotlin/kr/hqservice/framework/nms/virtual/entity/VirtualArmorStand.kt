@@ -22,6 +22,11 @@ class VirtualArmorStand(
         init(this)
     }
 
+    fun setSmall(small: Boolean) {
+        wrapper.setSmall(small)
+        switchMetaMask()
+    }
+
     fun getHeadPose(): Triple<Float, Float, Float> {
         return wrapper.getHeadPose()
     }

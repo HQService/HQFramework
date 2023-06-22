@@ -2,18 +2,19 @@ package kr.hqservice.framework.region.location.impl
 
 import kr.hqservice.framework.region.location.BlockLocation
 import kr.hqservice.framework.region.math.Point
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.block.Block
 
-data class BlockLocationImpl(
-    private val world: World,
+data class LazyBlockLocation(
+    private val worldName: String,
     private val vector3I: Point,
 ) : BlockLocation {
-    constructor(world: World, x: Int, y: Int, z: Int) : this(world, Point(x, y, z))
+    constructor(worldName: String, x: Int, y: Int, z: Int) : this(worldName, Point(x, y, z))
 
     override fun getWorld(): World {
-        return world
+        return Bukkit.getWorld(worldName)?: throw NullPointerException("$worldName 월드를 찾을 수 없습니다.")
     }
 
     override fun getX(): Int {
@@ -33,7 +34,7 @@ data class BlockLocationImpl(
     }
 
     override fun toLocation(): Location {
-        return Location(world, getX() + .5, getY() + .5, getZ() + .5)
+        return Location(getWorld(), getX() + .5, getY() + .5, getZ() + .5)
     }
 
     override fun getBlock(): Block {
@@ -41,7 +42,7 @@ data class BlockLocationImpl(
     }
 
     override fun toString(): String {
-        return "BlockLocation=[world=${world.name}, x=${getX()}, y=${getY()}, z=${getZ()}]"
+        return "BlockLocation=[world=${worldName}, x=${getX()}, y=${getY()}, z=${getZ()}]"
     }
 
     override fun clone(): BlockLocation {
@@ -49,7 +50,7 @@ data class BlockLocationImpl(
     }
 
     override fun hashCode(): Int {
-        var result = world.name.hashCode()
+        var result = worldName.hashCode()
         result = 31 * result + vector3I.hashCode()
         return result
     }

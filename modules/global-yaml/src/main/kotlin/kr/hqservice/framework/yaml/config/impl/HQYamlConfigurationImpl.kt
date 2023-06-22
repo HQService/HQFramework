@@ -3,6 +3,11 @@ package kr.hqservice.framework.yaml.config.impl
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.SafeConstructor
+import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 
 class HQYamlConfigurationImpl : HQYamlConfiguration {
@@ -17,9 +22,11 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun save(file: File) {
-        val loader = loader?: return
         val rootSection = rootSection?: return
-        loader.save(rootSection.getRoot())
+        YAMLConfigurationLoader
+            .builder()
+            .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
+            .setFile(file).build().save(rootSection.getRoot())
     }
 
     override fun reload() {

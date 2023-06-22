@@ -37,6 +37,11 @@ class NmsArmorStandService(
         Version.V_19.handleFunction("u"),
         Version.V_19_4.handleFunction("x"))
 
+    private val setSmallFunction = reflectionWrapper.getFunction(armorStandClass, "setSmall", listOf(Boolean::class) ,
+        Version.V_15.handleFunction("n") { setParameterClasses(Boolean::class)},
+        Version.V_17.handleFunction("a") { setParameterClasses(Boolean::class)},
+        Version.V_19_4.handleFunction("t") { setParameterClasses(Boolean::class)})
+
     override fun wrap(target: Location): NmsArmorStandWrapper {
         val bukkitWorld = target.world?: throw NullPointerException("world is null")
         val nmsWorld = worldService.wrap(bukkitWorld).getUnwrappedInstance()
@@ -64,5 +69,9 @@ class NmsArmorStandService(
     internal fun setHeadPose(wrapper: NmsArmorStandWrapper, triple: Triple<Float, Float, Float>) {
         val vector3f = vector3fService.wrap(triple).getUnwrappedInstance()
         setHeadPoseFunction.call(wrapper.getUnwrappedInstance(), vector3f)
+    }
+
+    internal fun setSmall(wrapper: NmsArmorStandWrapper, small: Boolean) {
+        setSmallFunction.call(wrapper.getUnwrappedInstance(), small)
     }
 }

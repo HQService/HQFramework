@@ -16,6 +16,10 @@ class NmsArmorStandWrapper(
         service.setHeadPose(this, triple)
     }
 
+    fun setSmall(small: Boolean) {
+        service.setSmall(this, small)
+    }
+
     override fun getUnwrappedInstance(): Any {
         return baseEntity
     }
