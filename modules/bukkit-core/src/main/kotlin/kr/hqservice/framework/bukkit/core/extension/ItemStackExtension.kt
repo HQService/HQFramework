@@ -11,10 +11,6 @@ import org.bukkit.util.io.BukkitObjectOutputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
-fun ItemStack.getDisplayName(): String {
-    return if (this.itemMeta?.hasDisplayName() == true) this.itemMeta!!.displayName else this.type.name
-}
-
 fun ItemStack?.toByteArray(compress: Boolean = true): ByteArray {
     return arrayOf(this).toByteArray(compress)
 }

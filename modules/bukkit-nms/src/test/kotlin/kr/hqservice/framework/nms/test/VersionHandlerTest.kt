@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms.test
 import kr.hqservice.framework.global.core.extension.print
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import java.util.Locale
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class VersionHandlerTest {
@@ -14,6 +15,8 @@ class VersionHandlerTest {
 
         majorVersion.print("major: ")
         minorVersion.print("minor: ")
+
+        println(Locale.KOREA.toString())
     }
 
 }

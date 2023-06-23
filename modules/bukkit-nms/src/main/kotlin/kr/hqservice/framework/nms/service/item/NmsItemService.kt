@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms.service.item
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
@@ -16,7 +17,8 @@ import kotlin.reflect.KClass
 @Named("item")
 @HQSingleton(binds = [NmsService::class])
 class NmsItemService(
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: NmsReflectionWrapper,
+    private val languageRegistry: LanguageRegistry,
 ) : NmsService<NmsItemStackWrapper, NmsItemWrapper> {
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
     private val nmsItemClass = reflectionWrapper.getNmsClass("Item", Version.V_15.handle("world.item"))
@@ -30,7 +32,8 @@ class NmsItemService(
             getItemFunction.call(target.getUnwrappedInstance())?: throw IllegalArgumentException(),
             nmsItemStackClass,
             nmsItemClass,
-            reflectionWrapper
+            reflectionWrapper,
+            languageRegistry
             )
     }
 
