@@ -39,6 +39,10 @@ class NmsItemStackService(
         return asBukkitCopyFunction.call(wrapper.getUnwrappedInstance()) as? ItemStack?: throw IllegalArgumentException()
     }
 
+    override fun getWrapper(nmsInstance: Any): NmsItemStackWrapper {
+        return NmsItemStackWrapper(nmsInstance, reflectionWrapper, tagService, itemService, this)
+    }
+
     override fun getOriginalClass(): KClass<*> {
         return ItemStack::class
     }

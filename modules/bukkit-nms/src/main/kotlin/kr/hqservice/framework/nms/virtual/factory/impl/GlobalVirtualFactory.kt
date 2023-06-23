@@ -1,9 +1,9 @@
 package kr.hqservice.framework.nms.virtual.factory.impl
 
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
-import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
+import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -11,7 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta
 
 class GlobalVirtualFactory(
     private val receivers: List<Player>,
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: NmsReflectionWrapper,
 ): VirtualFactory {
     @Deprecated("use inventory()")
     override suspend fun setItem(

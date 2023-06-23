@@ -6,10 +6,15 @@ import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.PacketHandler
+import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.util.NettyInjectUtil
+import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import org.koin.core.annotation.Named
 import java.util.Collections
 import java.util.LinkedList
 import kotlin.reflect.jvm.isAccessible
@@ -17,7 +22,8 @@ import kotlin.reflect.jvm.isAccessible
 @Component
 @HQSingleton(binds = [NettyInjectUtil::class])
 class NettyInjectUtilImpl(
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: NmsReflectionWrapper,
+    private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NettyInjectUtil, HQSimpleComponent {
     override fun getPlayerChannel(player: Player): Channel {
         val entity = reflectionWrapper.getEntityPlayer(player)
@@ -63,7 +69,7 @@ class NettyInjectUtilImpl(
         val pipeline = channel.pipeline()
 
         if(pipeline.get("hq_injector") == null)
-            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player))
+            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player, virtualHandlerRegistry))
     }
 
     override fun removeHandler(channel: Channel) {

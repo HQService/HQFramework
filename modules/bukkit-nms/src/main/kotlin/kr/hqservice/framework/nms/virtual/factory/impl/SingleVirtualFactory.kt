@@ -1,27 +1,28 @@
 package kr.hqservice.framework.nms.virtual.factory.impl
 
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
-import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
+import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
+import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 
 class SingleVirtualFactory(
     private val receiver: Player,
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: NmsReflectionWrapper,
+    private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>,
 ) : VirtualFactory {
     @Deprecated("use inventory()")
     override suspend fun setItem(
         slot: Int,
         itemStack: ItemStack,
-        itemEditBlock: ItemMeta.() -> Unit
+        itemEditBlock: ItemMeta.() -> Unit,
     ) {
-        reflectionWrapper.sendPacket(receiver,
-            VirtualItem(receiver, slot, itemStack, itemEditBlock)
-        )
+        reflectionWrapper.sendPacket(receiver, VirtualItem(receiver, slot, itemStack, itemEditBlock))
     }
 
     override fun getViewers(): List<Player> {
