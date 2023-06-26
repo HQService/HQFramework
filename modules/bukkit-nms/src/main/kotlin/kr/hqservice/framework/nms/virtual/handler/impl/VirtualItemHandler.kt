@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms.virtual.handler.impl
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.extension.getNmsItemStack
 import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
@@ -21,17 +22,19 @@ class VirtualItemHandler(
 
     override fun checkCondition(message: Any): Boolean {
         return if(message::class.simpleName == "PacketPlayOutWindowItems") {
-            /*val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
-            containerId == targetContainer*/
-            true
+            val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
+            containerId == targetContainer
         } else false
     }
 
+    override fun unregisterType(): HandlerUnregisterType {
+        return HandlerUnregisterType.READ
+    }
+
     override fun unregisterCondition(message: Any): Boolean {
-        return if(message::class.simpleName == "PacketPlayInCloseWindow") {
-            /*val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
-            containerId == targetContainer*/
-            true
+        return if(message::class.simpleName == "PacketPlayOutOpenWindow") {
+            val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
+            containerId == targetContainer
         } else false
     }
 
