@@ -19,7 +19,7 @@ class VirtualViewFactory(
         this.filter = filter
     }
 
-    fun item(itemStackScope: (index: Int, itemStack: ItemStack) -> Unit) {
+    fun item(itemStackScope: (slot: Int, itemStack: ItemStack) -> Unit) {
         this.item = itemStackScope
     }
 
