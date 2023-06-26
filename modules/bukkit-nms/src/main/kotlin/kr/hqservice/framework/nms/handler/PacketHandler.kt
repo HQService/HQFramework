@@ -8,7 +8,7 @@ import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import org.bukkit.entity.Player
 
 class PacketHandler(
-    player: Player,
+    private val player: Player,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : ChannelDuplexHandler() {
     private val uniqueId = player.uniqueId
