@@ -4,7 +4,6 @@ import kr.hqservice.framework.bungee.core.HQBungeePlugin
 import kr.hqservice.framework.bungee.core.component.HQListener
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
-import net.md_5.bungee.api.plugin.Plugin
 import net.md_5.bungee.api.plugin.PluginManager
 
 @ComponentHandler

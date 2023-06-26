@@ -1,18 +1,13 @@
 package kr.hqservice.framework.netty.packet.channel
 
 import io.netty.buffer.ByteBuf
-import kr.hqservice.framework.global.core.extension.compress
-import kr.hqservice.framework.global.core.extension.decompress
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
-import kr.hqservice.framework.netty.api.impl.NettyPlayerImpl
 import kr.hqservice.framework.netty.packet.Packet
-import kr.hqservice.framework.netty.packet.extension.*
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
-import java.util.*
+import kr.hqservice.framework.netty.packet.extension.readChannels
+import kr.hqservice.framework.netty.packet.extension.readPlayers
+import kr.hqservice.framework.netty.packet.extension.writeChannels
+import kr.hqservice.framework.netty.packet.extension.writePlayers
 
 class ChannelListPacket(
     private var channels: MutableList<NettyChannel>,

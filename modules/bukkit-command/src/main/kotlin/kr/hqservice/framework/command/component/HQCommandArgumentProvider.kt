@@ -2,7 +2,6 @@ package kr.hqservice.framework.command.component
 
 import kr.hqservice.framework.global.core.component.HQComponent
 import org.bukkit.Location
-import org.bukkit.command.CommandSender
 
 sealed interface CommandArgumentProvider<T> : HQComponent
 
