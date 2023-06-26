@@ -14,12 +14,11 @@ class PlayerConnectionListener(
 ) : HQListener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun onJoin(event: PlayerJoinEvent) {
-        val channel = injectUtil.getPlayerChannel(event.player)
-        injectUtil.injectHandler(event.player, channel)
+        injectUtil.injectHandler(event.player)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onQuit(event: PlayerQuitEvent) {
-        injectUtil.removeHandler(injectUtil.getPlayerChannel(event.player))
+        injectUtil.removeHandler(event.player)
     }
 }
