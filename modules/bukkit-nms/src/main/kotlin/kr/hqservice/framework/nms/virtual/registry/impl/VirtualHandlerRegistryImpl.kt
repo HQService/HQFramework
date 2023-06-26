@@ -19,6 +19,10 @@ class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
         handlers[uniqueId]?.remove(handler)
     }
 
+    override fun cleanup(uniqueId: UUID) {
+        handlers.remove(uniqueId)
+    }
+
     override fun getHandlers(uniqueId: UUID): List<VirtualHandler> {
         return handlers[uniqueId]?: emptyList()
     }

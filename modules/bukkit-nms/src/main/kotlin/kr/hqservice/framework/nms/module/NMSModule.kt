@@ -21,18 +21,11 @@ class NMSModule(
         plugin.getResource("lang/ko_kr.json")
             ?.apply { languageRegistry.registerLanguage(this, Locale.KOREA) }
 
-        plugin.server.onlinePlayers.forEach {
-            val channel = injectUtil.getPlayerChannel(it)
-            injectUtil.injectHandler(it, channel)
-        }
+        plugin.server.onlinePlayers.forEach(injectUtil::injectHandler)
     }
 
     override fun onDisable() {
-        plugin.server.onlinePlayers.forEach {
-            val channel = injectUtil.getPlayerChannel(it)
-            injectUtil.removeHandler(channel)
-        }
-
+        plugin.server.onlinePlayers.forEach(injectUtil::removeHandler)
         virtualScope.cancel()
     }
 }

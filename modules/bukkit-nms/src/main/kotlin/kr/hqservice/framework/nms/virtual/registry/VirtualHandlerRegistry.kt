@@ -9,5 +9,7 @@ interface VirtualHandlerRegistry : HQSimpleComponent {
 
     fun unregister(uniqueId: UUID, handler: VirtualHandler)
 
+    fun cleanup(uniqueId: UUID)
+
     fun getHandlers(uniqueId: UUID): List<VirtualHandler>
 }

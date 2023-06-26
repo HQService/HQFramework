@@ -3,26 +3,15 @@ package kr.hqservice.framework.nms.handler
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
-import kr.hqservice.framework.global.core.extension.print
-import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
-import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
-import org.koin.core.annotation.Named
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
-import kotlin.reflect.jvm.isAccessible
 
 class PacketHandler(
-    player: Player,
+    private val player: Player,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : ChannelDuplexHandler() {
     private val uniqueId = player.uniqueId
-    private val name = player.name
 
     @Suppress("unchecked_cast")
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
@@ -51,4 +40,10 @@ class PacketHandler(
         super.channelRead(context, message)
     }
 
+    override fun channelInactive(ctx: ChannelHandlerContext) {
+        if(ctx.pipeline().get("hq_injector") != null) {
+            virtualHandlerRegistry.cleanup(uniqueId)
+            ctx.pipeline().remove("hq_injector")
+        }
+    }
 }
