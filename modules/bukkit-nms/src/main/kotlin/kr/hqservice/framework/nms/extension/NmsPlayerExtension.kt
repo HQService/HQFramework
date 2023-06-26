@@ -15,7 +15,6 @@ import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.getKoin
 
