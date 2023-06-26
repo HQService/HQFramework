@@ -13,7 +13,7 @@ class VirtualItemHandler(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val targetContainer: Int,
     private var filter: (Int, ItemStack) -> Boolean,
-    private var item: ItemStack.() -> Unit
+    private var item: (index: Int, itemStack: ItemStack) -> Unit
 ) : VirtualHandler {
     override fun getNmsSimpleNames(): List<String> {
         return listOf(/*"PacketPlayOutSetSlot", */"PacketPlayOutWindowItems")
@@ -55,7 +55,7 @@ class VirtualItemHandler(
                     val wrapper = itemStackService.getWrapper(any)
                     val bukkitItemStack = wrapper.getBukkitItemStack()
                     if(filter(index, bukkitItemStack)) {
-                        list[index] = bukkitItemStack.apply(item).getNmsItemStack().getUnwrappedInstance()
+                        list[index] = bukkitItemStack.apply{ item(index, bukkitItemStack) }.getNmsItemStack().getUnwrappedInstance()
                     }
                 }
             }

@@ -13,13 +13,13 @@ class VirtualViewFactory(
     private val containerId: Int
 ) {
     private var filter: (Int, ItemStack) -> Boolean = { _, _ -> true }
-    private var item: ItemStack.() -> Unit = {}
+    private var item: (Int, ItemStack) -> Unit = { _, _ -> }
 
     fun condition(filter : (slot: Int, original: ItemStack) -> Boolean) {
         this.filter = filter
     }
 
-    fun item(itemStackScope: ItemStack.() -> Unit) {
+    fun item(itemStackScope: (index: Int, itemStack: ItemStack) -> Unit) {
         this.item = itemStackScope
     }
 
