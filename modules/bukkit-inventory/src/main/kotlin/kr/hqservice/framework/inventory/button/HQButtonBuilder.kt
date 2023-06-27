@@ -4,15 +4,12 @@ import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
 import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import kr.hqservice.framework.inventory.exception.IllegalMaterialException
-import kr.hqservice.framework.inventory.util.PlayerSkullRepository
-import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
-import org.koin.java.KoinJavaComponent.getKoin
-import java.util.UUID
+import java.util.*
 
 class HQButtonBuilder(
     original: ItemStack
@@ -104,8 +101,8 @@ class HQButtonBuilder(
 
     fun build(): HQButton {
         val scope: (ItemMeta) -> Unit = { meta ->
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName))
-            meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
+            meta.setDisplayName(displayName.colorize())
+            meta.lore = lore.map { it.colorize() }
             meta.addItemFlags(*itemFlags.toTypedArray())
             try { meta.setCustomModelData(customModelData) } catch (_: Exception) {}
             meta.itemMetaEditScope()
