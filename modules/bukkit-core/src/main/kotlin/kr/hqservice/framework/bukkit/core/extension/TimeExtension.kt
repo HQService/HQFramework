@@ -18,6 +18,6 @@ fun String.toLocalDateTime() = LocalDateTime.parse(this, formatter)
 
 fun LocalDateTime.toFormattedTime() = format(formatter)
 
-fun ZonedDateTime.getBetweenSeconds() = Duration.between(LocalDateTime.now(), this).seconds
+fun LocalDateTime.getBetweenSeconds() = Duration.between(LocalDateTime.now(), this).seconds
 
-fun ZonedDateTime.isTimeAfter() = ZonedDateTime.now().isAfter(this)
+fun LocalDateTime.isTimeAfter() = LocalDateTime.now().isAfter(this)

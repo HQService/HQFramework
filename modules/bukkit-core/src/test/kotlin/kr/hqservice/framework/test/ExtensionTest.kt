@@ -30,17 +30,32 @@ class ExtensionTest {
 
     @Test
     fun time_test() {
-        println("2022년 06월 28일 15시 01분 13초".toLocalDateTime())
+        val time = LocalDateTime.now().plusHours(2)
+        println(time.getBetweenSeconds())
     }
 
     @Test
     fun player_test() {
+        println("%player%님은 %age%살입니다.".replace(
+            "%player%" to "Cosine_A", "%age%" to "20"
+        ))
+    }
 
+    @Test
+    fun list_test() {
+        val list = listOf("%player%는 %age%살입니다.", "%age%살은 MZ입니다.").replace(
+            "%player%" to "Cosine_A",
+            "%age%" to "20"
+        )
+        list.forEach(::println)
     }
 
     @Test
     fun number_test() {
-        println("10".isInt())
+        println("Int인지: " + "10".isInt())
+        println("Long인지: " + "10000000000000000000000".isLong())
+        println("Double인지: " + "10.0".isDouble())
+        println("Float인지: " + "1000.0".isFloat())
     }
 
     @Test
@@ -49,8 +64,9 @@ class ExtensionTest {
         repeat(36) {
             inventory.setItem(it, ItemStack(Material.STONE))
         }
-        println(inventory.getEmptySlots())
-        println(inventory.isAddable(ItemStack(Material.BOOK)))
+        //println("남은 슬롯: " + inventory.getEmptySlots())
+        println("BOOK 추가 가능한지: " + inventory.isAddable(ItemStack(Material.BOOK)))
+        println("STONE 추가 가능한지: " + inventory.isAddable(ItemStack(Material.STONE)))
     }
 
     @Test
@@ -71,6 +87,6 @@ class ExtensionTest {
     @Test
     fun count_test() {
         val list = listOf("가", "가", "가", "나", "다", "다")
-        println(list.getCount("다"))
+        println("다 갯수: " + list.getCount("다"))
     }
 }
