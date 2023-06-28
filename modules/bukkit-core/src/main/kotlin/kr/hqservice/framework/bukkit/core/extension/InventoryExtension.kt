@@ -10,8 +10,8 @@ fun Inventory.getEmptySlots(): Collection<Int> {
     }
 }
 
-fun Inventory.isAddable(item: ItemStack): Boolean {
+/*fun Inventory.isAddable(item: ItemStack): Boolean {
     return storageContents.any {
         it == null || it.type == Material.AIR || (it.isSimilar(item) && it.amount + item.amount <= it.maxStackSize)
     }
-}
+}*/
