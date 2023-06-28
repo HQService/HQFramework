@@ -18,7 +18,7 @@ class HQButtonBuilder(
     private var displayName: String = itemStack.itemMeta?.displayName ?: ""
     private var lore: MutableList<String> = itemStack.itemMeta?.lore ?: mutableListOf()
     private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
-    private var customModelData: Int = 0
+    private var customModelData: Int = itemStack.itemMeta?.customModelData?: 0
     private var owningPlayer: UUID? = null
     private var removable = false
 
