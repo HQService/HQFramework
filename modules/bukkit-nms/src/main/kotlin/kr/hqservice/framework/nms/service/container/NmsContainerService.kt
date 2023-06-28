@@ -32,6 +32,10 @@ class NmsContainerService(
         return ContainerWrapperImpl(activeContainer, reflectionWrapper, containerClass)
     }
 
+    override fun getWrapper(nmsInstance: Any): ContainerWrapper {
+        return ContainerWrapperImpl(nmsInstance, reflectionWrapper, containerClass)
+    }
+
     override fun unwrap(wrapper: ContainerWrapper): Player {
         throw UnsupportedOperationException()
     }

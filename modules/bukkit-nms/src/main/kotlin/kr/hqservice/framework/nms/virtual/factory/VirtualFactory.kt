@@ -10,7 +10,7 @@ interface VirtualFactory {
     suspend fun setItem(
         slot: Int,
         itemStack: ItemStack,
-        itemEditBlock: ItemMeta.() -> Unit = {}
+        itemEditBlock: ItemMeta.() -> Unit
     )
 
     fun getViewers(): List<Player>

@@ -10,8 +10,8 @@ interface NettyInjectUtil {
 
     fun getServerChannels(server: Server): List<Channel>
 
-    fun injectHandler(player: Player, channel: Channel)
+    fun injectHandler(player: Player)
 
-    fun removeHandler(channel: Channel)
+    fun removeHandler(player: Player)
 
 }

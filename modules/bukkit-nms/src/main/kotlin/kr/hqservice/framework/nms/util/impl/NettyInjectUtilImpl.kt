@@ -1,36 +1,40 @@
 package kr.hqservice.framework.nms.util.impl
 
 import io.netty.channel.Channel
+import io.netty.channel.ChannelPipeline
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.PacketHandler
 import kr.hqservice.framework.nms.util.NettyInjectUtil
+import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import java.util.Collections
 import java.util.LinkedList
+import java.util.UUID
 import kotlin.reflect.jvm.isAccessible
 
 @Component
 @HQSingleton(binds = [NettyInjectUtil::class])
 class NettyInjectUtilImpl(
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: NmsReflectionWrapper,
+    private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NettyInjectUtil, HQSimpleComponent {
+    private val cachedChannels = mutableMapOf<UUID, ChannelPipeline>()
+    private val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection", Version.V_15.handle("server.network.ServerGamePacketListenerImpl", true))
+    private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))
+    private val connectionField = reflectionWrapper.getField(listenerClass, connectionClass)
+    private val channelField = reflectionWrapper.getField(connectionClass, Channel::class)
+
     override fun getPlayerChannel(player: Player): Channel {
         val entity = reflectionWrapper.getEntityPlayer(player)
-        val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection", Version.V_15.handle("server.network.ServerGamePacketListenerImpl", true))
         val listener = reflectionWrapper.getField(entity::class, listenerClass).call(entity)
-
-        val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))
-        val connectionField = reflectionWrapper.getField(listenerClass, connectionClass)
         val connection = connectionField.call(listener)
 
-        val channelField = reflectionWrapper.getField(connectionClass, Channel::class)
         channelField.isAccessible = true
-
         return channelField.call(connection) as Channel
     }
 
@@ -59,17 +63,20 @@ class NettyInjectUtilImpl(
         return Collections.unmodifiableList(output)
     }
 
-    override fun injectHandler(player: Player, channel: Channel) {
+    override fun injectHandler(player: Player) {
+        val channel = getPlayerChannel(player)
         val pipeline = channel.pipeline()
 
-        if(pipeline.get("hq_injector") == null)
-            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player))
+        if(pipeline.get("hq_injector") == null) {
+            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player, virtualHandlerRegistry))
+        }
     }
 
-    override fun removeHandler(channel: Channel) {
-        val pipeline = channel.pipeline()
-
-        if(pipeline.get("hq_injector") != null)
+    override fun removeHandler(player: Player) {
+        val pipeline = getPlayerChannel(player).pipeline()
+        if(pipeline.get("hq_injector") != null) {
+            virtualHandlerRegistry.cleanup(player.uniqueId)
             pipeline.remove("hq_injector")
+        }
     }
 }

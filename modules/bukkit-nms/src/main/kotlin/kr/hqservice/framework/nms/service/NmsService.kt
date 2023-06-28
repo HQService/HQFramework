@@ -9,6 +9,10 @@ interface NmsService<T, W: NmsWrapper> : HQService {
 
     fun unwrap(wrapper: W): T
 
+    fun getWrapper(nmsInstance: Any): W {
+        throw UnsupportedOperationException("")
+    }
+
     fun getOriginalClass(): KClass<*>
 
     fun getTargetClass(): KClass<*>
