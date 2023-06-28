@@ -18,7 +18,8 @@ class HQButtonBuilder(
     private var displayName: String = itemStack.itemMeta?.displayName ?: ""
     private var lore: MutableList<String> = itemStack.itemMeta?.lore ?: mutableListOf()
     private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
-    private var customModelData: Int = itemStack.itemMeta?.customModelData?: 0
+    private var customModelData: Int = if (itemStack.itemMeta?.hasCustomModelData() == true) { itemStack.itemMeta!!.customModelData } else { 0 }
+
     private var owningPlayer: UUID? = null
     private var removable = false
 
@@ -104,7 +105,9 @@ class HQButtonBuilder(
             meta.setDisplayName(displayName.colorize())
             meta.lore = lore.map { it.colorize() }
             meta.addItemFlags(*itemFlags.toTypedArray())
-            try { meta.setCustomModelData(customModelData) } catch (_: Exception) {}
+            if (meta.hasCustomModelData()) {
+                meta.setCustomModelData(customModelData)
+            }
             meta.itemMetaEditScope()
         }
         if(owningPlayer != null && itemStack.type != Material.PLAYER_HEAD) {
