@@ -30,8 +30,8 @@ class ExtensionTest {
 
     @Test
     fun time_test() {
-        val time = LocalDateTime.now().plusHours(2)
-        println(time.getBetweenSeconds())
+        val time = LocalDateTime.now().plusHours(-2)
+        println("시간 지남: " + time.isTimeAfter())
     }
 
     @Test
