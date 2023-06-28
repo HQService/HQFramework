@@ -3,7 +3,9 @@ package kr.hqservice.framework.bukkit.core.extension
 import kr.hqservice.framework.bukkit.core.color.pattern.Gradient
 import kr.hqservice.framework.bukkit.core.color.pattern.Solid
 import net.md_5.bungee.api.ChatColor
+import org.bukkit.Bukkit
 import java.awt.Color
+import java.util.*
 
 private val specialColors = arrayOf("&l", "&n", "&m", "&o", "&k", "§l", "§n", "§m", "§o", "§k")
 private val patterns = listOf(Gradient, Solid)
@@ -53,3 +55,17 @@ fun String.gradient(startHexCode: String, endHexCode: String): String {
 fun String.translateAlternateColorCodes(): String {
     return ChatColor.translateAlternateColorCodes('&', this)
 }
+
+val String.uniqueId get() = UUID.fromString(this)
+
+fun String.replace(vararg pairs: Pair<String, String>): String {
+    return pairs.fold(this) { acc, (oldValue, newValue) -> acc.replace(oldValue, newValue) }
+}
+
+fun String.isInt() = toIntOrNull() != null
+
+fun String.isLong() = toLongOrNull() != null
+
+fun String.isDouble() = toDoubleOrNull() != null
+
+fun String.isFloat() = toFloatOrNull() != null
