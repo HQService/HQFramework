@@ -30,7 +30,7 @@ class GlobalVirtualFactory(
 
     override suspend fun setCamera(virtualEntity: AbstractVirtualEntity?) {
         receivers.forEach {
-            val virtualCamera = VirtualCamera(it, virtualEntity)
+            val virtualCamera = VirtualCamera(it, virtualEntity, reflectionWrapper)
             reflectionWrapper.sendPacket(it, virtualCamera)
         }
     }

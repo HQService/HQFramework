@@ -31,7 +31,7 @@ class SingleVirtualFactory(
     }
 
     override suspend fun setCamera(virtualEntity: AbstractVirtualEntity?) {
-        val virtualCamera = VirtualCamera(receiver, virtualEntity)
+        val virtualCamera = VirtualCamera(receiver, virtualEntity, reflectionWrapper)
         reflectionWrapper.sendPacket(receiver, virtualCamera)
     }
 

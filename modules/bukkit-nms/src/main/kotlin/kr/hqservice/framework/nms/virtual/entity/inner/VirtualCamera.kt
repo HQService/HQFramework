@@ -7,14 +7,12 @@ import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.entity.Player
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 class VirtualCamera(
     private val player: Player,
-    private val virtualEntity: AbstractVirtualEntity?
-) : Virtual, KoinComponent {
-    private val reflectionWrapper: NmsReflectionWrapper by inject()
+    private val virtualEntity: AbstractVirtualEntity?,
+    private val reflectionWrapper: NmsReflectionWrapper
+) : Virtual {
     private val entityClass = reflectionWrapper.getNmsClass("Entity", Version.V_15.handle("world.entity"))
     private val stateChangePacketClass = reflectionWrapper.getNmsClass("PacketPlayOutGameStateChange", Version.V_15.handle("network.protocol.game"))
     private val changeGameModeType = reflectionWrapper.getStaticField(stateChangePacketClass, "d").call()!!
