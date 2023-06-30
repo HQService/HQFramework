@@ -15,6 +15,8 @@ interface VirtualFactory {
 
     fun getViewers(): List<Player>
 
+    suspend fun setCamera(virtualEntity: AbstractVirtualEntity?)
+
     suspend fun inventory(containerFactoryScope: VirtualContainerFactory.() -> Unit)
 
     suspend fun updateEntity(virtualEntity: AbstractVirtualEntity)

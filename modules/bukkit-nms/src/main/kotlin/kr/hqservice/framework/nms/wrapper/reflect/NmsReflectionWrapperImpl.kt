@@ -160,6 +160,14 @@ class NmsReflectionWrapperImpl(
         } ?: throw IllegalArgumentException()
     }
 
+    override fun getStaticField(clazz: KClass<*>, staticFieldName: String, vararg handlers: VersionHandler): KCallable<*> {
+        val type = handlers.sortedByDescending { it.getVersion().ordinal }
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
+        return clazz.staticProperties.firstOrNull {
+            it.name == type
+        } ?: throw IllegalArgumentException()
+    }
+
     private fun getFunction(
         clazz: KClass<*>,
         functions: Collection<KCallable<*>>,
