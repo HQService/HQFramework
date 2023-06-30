@@ -50,6 +50,11 @@ class HQButtonBuilder(
         return this
     }
 
+    fun setGlowItem(glow: Boolean): HQButtonBuilder {
+        this.glow = glow
+        return this
+    }
+
     fun setDisplayName(name: String): HQButtonBuilder {
         displayName = name
         return this
