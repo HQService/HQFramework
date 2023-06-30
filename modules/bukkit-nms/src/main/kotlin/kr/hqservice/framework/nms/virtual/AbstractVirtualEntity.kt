@@ -5,10 +5,13 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.getNmsItemStack
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
+import kr.hqservice.framework.nms.virtual.factory.VirtualViewFactory
+import kr.hqservice.framework.nms.virtual.factory.impl.SingleVirtualFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.wrapper.getFunction
 import org.bukkit.Location
+import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
@@ -23,7 +26,7 @@ abstract class AbstractVirtualEntity(
 
     private var state: Byte = 0x7
     private var itemContainer: List<Any>? = null
-    protected abstract fun getEntity(): Any
+    abstract fun getEntity(): Any
     private fun entityInitialize() {
         if(name.isNotEmpty()) {
             setName(name.colorize())
