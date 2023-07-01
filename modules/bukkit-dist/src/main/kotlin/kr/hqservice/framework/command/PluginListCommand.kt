@@ -15,9 +15,9 @@ import org.bukkit.command.CommandSender
 class PluginListCommand(private val server: Server) : HQCommandNode {
     @CommandExecutor(
         label = "plugins",
-        description = "&f/hq plugins &6| &7HQPlugin 을 의존하는 플러그인들을 출력합니다.",
+        description = "&6| &7HQPlugin 을 의존하는 플러그인들을 출력합니다.",
         isOp = true,
-        priority = 0
+        priority = 100
     )
     fun sendPluginList(target: CommandSender) {
         val hqPlugins = server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>()

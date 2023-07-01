@@ -35,9 +35,28 @@ abstract class HQCommandTree(
     }
 
     fun sendUsageMessages(target: CommandSender) {
-        getUsageMessages().forEach {
+        target.sendMessage(label)
+        getDescriptions().forEach {
             target.sendMessage(it)
         }
+        /*getUsageMessages().forEach {
+            target.sendMessage(it)
+        }*/
+    }
+
+    private fun getDescriptions(padding: String = ""): List<String> {
+        val result = mutableListOf<String>()
+        for((i, executor) in commandExecutors.values.sortedBy { it.priority }.withIndex()) {
+            val lastNode = (i + 1 == commandExecutors.size) && commandTrees.isEmpty()
+            val prefix = if(lastNode) "└ " else "├ "
+            result.add((padding + prefix + executor.label + " " + executor.description).colorize())
+        }
+        for((i, child) in commandTrees.values.sortedBy { it.priority }.withIndex()) {
+            val lastTree = i + 1 == commandTrees.size
+            result.add(padding + (if(lastTree) "└ " else "├ ") + child.label)
+            result.addAll(child.getDescriptions("$padding${if(lastTree) "" else "│"}   "))
+        }
+        return result
     }
 
     private fun getUsageMessages(): List<String> {
