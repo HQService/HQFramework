@@ -14,6 +14,10 @@ fun ItemStack.toExposedBlob(): ExposedBlob {
     return this.toByteArray().toExposedBlob()
 }
 
+fun Array<ItemStack?>.toExposedBlob(): ExposedBlob {
+    return this.toByteArray().toExposedBlob()
+}
+
 fun ExposedBlob.toItemStack(): ItemStack {
     return this.bytes.toItemStack()
 }
