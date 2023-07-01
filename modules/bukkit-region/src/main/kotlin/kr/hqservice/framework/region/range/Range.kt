@@ -34,8 +34,10 @@ sealed class Range(
 
     fun collidesWith(range: Range): Boolean {
         return if (this === range) true
-        else contains(range.minPosition) || contains(range.maxPosition)
-                || range.contains(minPosition) || range.contains(maxPosition)
+        else {
+            val difference = range - this
+            range.size != difference.size
+        }
     }
 
     open fun getCenter(): BlockLocation {

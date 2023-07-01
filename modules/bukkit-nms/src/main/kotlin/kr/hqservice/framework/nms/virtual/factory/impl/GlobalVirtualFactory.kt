@@ -1,6 +1,7 @@
 package kr.hqservice.framework.nms.virtual.factory.impl
 
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
+import kr.hqservice.framework.nms.virtual.entity.inner.VirtualCamera
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
@@ -25,6 +26,13 @@ class GlobalVirtualFactory(
 
     override fun getViewers(): List<Player> {
         return receivers
+    }
+
+    override suspend fun setCamera(virtualEntity: AbstractVirtualEntity?) {
+        receivers.forEach {
+            val virtualCamera = VirtualCamera(it, virtualEntity, reflectionWrapper)
+            reflectionWrapper.sendPacket(it, virtualCamera)
+        }
     }
 
     override suspend fun inventory(containerFactoryScope: VirtualContainerFactory.() -> Unit) {
