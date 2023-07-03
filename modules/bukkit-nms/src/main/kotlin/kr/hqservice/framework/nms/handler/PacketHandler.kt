@@ -26,7 +26,6 @@ class PacketHandler(
             .getHandlers(uniqueId)
             .filter { it.checkCondition(message) }
             .forEach { it.handle(message) }
-
         super.write(context, message, promise)
     }
 
@@ -37,6 +36,11 @@ class PacketHandler(
                     || it.unregisterType() == HandlerUnregisterType.ALL)
                     && it.unregisterCondition(message)
             }.forEach { virtualHandlerRegistry.unregister(uniqueId, it) }
+
+        virtualHandlerRegistry
+            .getHandlers(uniqueId)
+            .filter { it.checkCondition(message) }
+            .forEach { it.handle(message) }
         super.channelRead(context, message)
     }
 
