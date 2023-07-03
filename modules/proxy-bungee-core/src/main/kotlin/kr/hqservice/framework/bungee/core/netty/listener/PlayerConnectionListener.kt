@@ -23,7 +23,8 @@ class PlayerConnectionListener(
             event.connection.uniqueId?: UUID.randomUUID(),
             null
         )
-        val packet = PlayerConnectionPacket(nettyPlayer, PlayerConnectionState.PRE_CONNECT, getChannelByAddress(event.connection.address))
+
+        val packet = PlayerConnectionPacket(nettyPlayer, PlayerConnectionState.PRE_CONNECT, getChannelByPort(event.connection.virtualHost.port))
         channelContainer.loopChannels { it.sendPacket(packet) }
     }
 
@@ -84,4 +85,10 @@ class PlayerConnectionListener(
         } catch (e: IllegalArgumentException) { null }
     }
 
+    private fun getChannelByPort(port: Int): NettyChannel? {
+        return try {
+            val name = channelContainer.getChannelNameByPort(port)
+            NettyChannelImpl(port, name)
+        } catch (e: IllegalArgumentException) { null }
+    }
 }
