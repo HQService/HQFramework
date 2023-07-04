@@ -6,6 +6,7 @@ import io.netty.handler.codec.MessageToByteEncoder
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.extension.writeString
+import kr.hqservice.framework.netty.packet.server.RelayingResult
 import kotlin.jvm.Throws
 
 class PacketEncoder : MessageToByteEncoder<Packet>() {
@@ -14,14 +15,17 @@ class PacketEncoder : MessageToByteEncoder<Packet>() {
         if(packet == null)
             throw IllegalArgumentException("packet is null")
 
-        val packetClass = packet::class
-        if(Direction.OUTBOUND.findPacketByClass(packetClass) == null)
-            throw IllegalArgumentException("packet is not registered to outbound")
+        if(packet is RelayingResult) {
+            packet.write(out)
+        } else {
+            val packetClass = packet::class
+            if (Direction.OUTBOUND.findPacketByClass(packetClass) == null)
+                throw IllegalArgumentException("packet is not registered to outbound")
 
-        out.writeString(packetClass.qualifiedName
-            ?: throw IllegalStateException("'${packetClass}' has not qualified name"))
+            out.writeString(packetClass.qualifiedName ?: throw IllegalStateException("'${packetClass}' has not qualified name"))
 
-        out.writeBoolean(packet.isCallbackResult())
-        packet.write(out)
+            out.writeBoolean(packet.isCallbackResult())
+            packet.write(out)
+        }
     }
 }

@@ -8,7 +8,7 @@ class RelayingResult(
     val array: ByteArray
 ) : Packet() {
     override fun write(buf: ByteBuf) {
-        throw UnsupportedOperationException("relaying result shouldn't access write method")
+        buf.writeBytes(array)
     }
 
     override fun read(buf: ByteBuf) {
