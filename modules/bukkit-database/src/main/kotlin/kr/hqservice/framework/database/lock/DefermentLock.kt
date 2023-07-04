@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database.coroutine
+package kr.hqservice.framework.database.lock
 
 import kotlinx.coroutines.Job
 import org.bukkit.entity.Player

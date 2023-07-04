@@ -4,13 +4,12 @@ import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
-import kr.hqservice.framework.database.coroutine.DefermentCoroutineScope
-import kr.hqservice.framework.database.coroutine.DefermentLock
 import kr.hqservice.framework.database.event.PlayerRepositoryLoadedEvent
+import kr.hqservice.framework.database.lock.DefermentLock
+import kr.hqservice.framework.database.lock.impl.DisconnectDefermentLock
 import kr.hqservice.framework.database.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionPacket
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
@@ -28,8 +27,8 @@ class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
     @Named("main") private val mainCoroutineScope: CoroutineScope,
     @Named("database") private val databaseCoroutineScope: CoroutineScope,
-    private val defermentCoroutineScope: DefermentCoroutineScope,
-    private val defermentLock: DefermentLock,
+    @Named("switch") private val switchDefermentLock: DefermentLock,
+    @Named("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
     private val server: Server,
     private val pluginManager: PluginManager,
     private val packetSender: PacketSender,
@@ -47,12 +46,12 @@ class PlayerConnectionPacketHandler(
     }
 
     private fun ensureLoad(playerId: UUID) {
-        val lock = defermentLock.findLock(playerId)
+        val lock = switchDefermentLock.findLock(playerId)
         if (lock != null) {
-            defermentLock.unlock(playerId)
+            switchDefermentLock.unlock(playerId)
         } else {
-            defermentCoroutineScope.launch {
-                defermentLock.tryLock(playerId) {
+            databaseCoroutineScope.launch {
+                switchDefermentLock.tryLock(playerId) {
                     mainCoroutineScope.launch {
                         server.getPlayer(it)?.kickPlayer("데이터 로드 시점을 받아오지 못하였습니다.")
                         cancel()
@@ -79,21 +78,45 @@ class PlayerConnectionPacketHandler(
         }
         when (packet.state) {
             PlayerConnectionState.PRE_SWITCH_CHANNEL -> {
-                println("preswitched: ${packet.player}, ${packet.sourceChannel?.getPort()}")
                 val player = server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
-                defermentCoroutineScope.launch {
+                databaseCoroutineScope.launch {
                     saveAll(player).join()
                     val nextChannel = packet.sourceChannel ?: throw NullPointerException("null 이면 안되는데...")
-                    packetSender.sendPacket(nextChannel.getPort().print("sendto: "), PlayerDataSavedPacket(packet.player))
-                    println("packet send")
+                    packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                 }
             }
             PlayerConnectionState.DISCONNECT -> {
-//                val player = server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
-//                saveAll(player)
+                val lock = disconnectDefermentLock.findLock(packet.player.getUniqueId())
+                if (lock == null) {
+                    databaseCoroutineScope.launch {
+                        disconnectDefermentLock.tryLock(packet.player.getUniqueId(), 500L) {}
+                    }
+                } else {
+                    disconnectDefermentLock.unlock(packet.player.getUniqueId())
+                }
             }
 
             else -> {}
+        }
+    }
+    @EventHandler
+    fun onPlayerProxyQuit(event: PlayerQuitEvent) {
+        if (!nettyService.isEnable()) {
+            return
+        }
+        databaseCoroutineScope.launch {
+            val lock = disconnectDefermentLock.findLock(event.player.uniqueId)
+            if (lock != null) {
+                saveAll(event.player)
+            } else {
+                var timedOut = false
+                disconnectDefermentLock.tryLock(event.player, 500L) {
+                    timedOut = true
+                }
+                if (!timedOut) {
+                    saveAll(event.player)
+                }
+            }
         }
     }
 
@@ -110,11 +133,11 @@ class PlayerConnectionPacketHandler(
     fun onLoad(event: PlayerDataPreLoadEvent): Unit = runBlocking blocking@{
         var cancelled = false
         if (nettyService.isEnable()) {
-            val lock = defermentLock.findLock(event.player.uniqueId)
+            val lock = switchDefermentLock.findLock(event.player.uniqueId)
             if (lock != null) {
-                defermentLock.unlock(event.player.uniqueId)
+                switchDefermentLock.unlock(event.player.uniqueId)
             } else {
-                defermentLock.tryLock(event.player) whenTimedOut@{ player ->
+                switchDefermentLock.tryLock(event.player) whenTimedOut@{ player ->
                     mainCoroutineScope.launch {
                         player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                         cancelled = true
