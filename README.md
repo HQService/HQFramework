@@ -102,7 +102,7 @@ interface ExampleConfig : ConfigurationSection, HQSimpleComponent { fun getConfi
 class ExampleServiceImpl(private val config: ExampleConfig) : ExampleService {
   override fun printAndReturn(): String {
     val string = config.getConfiguratedString()
-    println("configuratedString: $string"
+    println("configuratedString: $string")
     return string
   }
 }
