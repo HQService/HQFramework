@@ -2,8 +2,11 @@ package kr.hqservice.framework.database.component.repository
 
 import org.bukkit.entity.Player
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
-abstract class HQPlayerRepository<V> : HQMemoryRepository<UUID, V>() {
+abstract class HQPlayerRepository<V>(
+    dataMap: MutableMap<UUID, V> = ConcurrentHashMap<UUID, V>()
+) : HQRepository, MutableMap<UUID, V> by dataMap {
     internal suspend fun onLoad(player: Player) {
         val value = getDataSource().query {
             load(player)
