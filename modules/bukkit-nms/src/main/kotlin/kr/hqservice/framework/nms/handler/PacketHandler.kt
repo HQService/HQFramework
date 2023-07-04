@@ -3,18 +3,28 @@ package kr.hqservice.framework.nms.handler
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
+import kr.hqservice.framework.global.core.extension.print
+import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
 
 class PacketHandler(
     private val player: Player,
+    private val plugin: Plugin,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : ChannelDuplexHandler() {
     private val uniqueId = player.uniqueId
+    private var first = false
 
     @Suppress("unchecked_cast")
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
+        if(!first) {
+            first = true
+            plugin.server.pluginManager.callEvent(PlayerDataPreLoadEvent(player))
+        }
+
         virtualHandlerRegistry
             .getHandlers(uniqueId)
             .filter { (it.unregisterType() == HandlerUnregisterType.WRITE

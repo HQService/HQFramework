@@ -12,6 +12,7 @@ import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
 import java.util.Collections
 import java.util.LinkedList
 import java.util.UUID
@@ -20,10 +21,10 @@ import kotlin.reflect.jvm.isAccessible
 @Component
 @HQSingleton(binds = [NettyInjectUtil::class])
 class NettyInjectUtilImpl(
+    private val plugin: Plugin,
     private val reflectionWrapper: NmsReflectionWrapper,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NettyInjectUtil, HQSimpleComponent {
-    private val cachedChannels = mutableMapOf<UUID, ChannelPipeline>()
     private val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection", Version.V_15.handle("server.network.ServerGamePacketListenerImpl", true))
     private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))
     private val connectionField = reflectionWrapper.getField(listenerClass, connectionClass)
@@ -68,7 +69,7 @@ class NettyInjectUtilImpl(
         val pipeline = channel.pipeline()
 
         if(pipeline.get("hq_injector") == null) {
-            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player, virtualHandlerRegistry))
+            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player, plugin, virtualHandlerRegistry))
         }
     }
 

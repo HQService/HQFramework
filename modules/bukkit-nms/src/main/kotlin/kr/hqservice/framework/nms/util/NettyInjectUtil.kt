@@ -5,7 +5,6 @@ import org.bukkit.Server
 import org.bukkit.entity.Player
 
 interface NettyInjectUtil {
-
     fun getPlayerChannel(player: Player): Channel
 
     fun getServerChannels(server: Server): List<Channel>
@@ -13,5 +12,4 @@ interface NettyInjectUtil {
     fun injectHandler(player: Player)
 
     fun removeHandler(player: Player)
-
 }

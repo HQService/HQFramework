@@ -16,3 +16,11 @@ fun HQYamlConfiguration.findDatabaseHost(): DatabaseHost? {
 fun HQYamlConfiguration.getDatabaseHost(): DatabaseHost {
     return findDatabaseHost() ?: throw NullPointerException("database config 가 존재하지 않습니다.")
 }
+
+fun HQYamlConfiguration.getDatabaseType(): String {
+    return getString("database.type")
+}
+
+fun HQYamlConfiguration.getDatabasePath(): String {
+    return getString("database.path")
+}

@@ -7,6 +7,8 @@ dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
     apiModule("bukkit", "coroutine")
+    apiModule("bukkit", "nms")
+    apiModule("global", "netty")
     compileOnly(libs.spigot.api)
     api(libs.kotlinx.coroutines.core)
     api(libs.exposed.core)
@@ -14,6 +16,8 @@ dependencies {
     api(libs.exposed.jdbc)
     api(libs.exposed.java.time)
     api(libs.hikaricp)
+    api(libs.koin.core)
+    api(libs.koin.annotations)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mysql.connector)
