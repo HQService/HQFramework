@@ -6,16 +6,19 @@ import kr.hqservice.framework.netty.packet.extension.readString
 import kr.hqservice.framework.netty.packet.extension.writeString
 
 class RelayingPacket(
-    var packet: Packet,
-    var targetServer: String = "-1"
-) : Packet() {
+    var packet: Packet?,
+    var targetServer: String = "-1",
     private var relay: ByteArray? = null
+) : Packet() {
 
     override fun write(buf: ByteBuf) {
         buf.writeString(targetServer)
-        buf.writeString(packet::class.qualifiedName!!)
-        buf.writeBoolean(packet.isCallbackResult())
-        packet.write(buf)
+        packet?.apply {
+            buf.writeString(this::class.qualifiedName!!)
+            buf.writeBoolean(this.isCallbackResult())
+            write(buf)
+        }
+        relay?.apply(buf::writeBytes)
     }
 
     override fun read(buf: ByteBuf) {
@@ -25,7 +28,7 @@ class RelayingPacket(
         relay = relayAble
     }
 
-    fun getRelay(): ByteArray {
+    fun getRelayByte(): ByteArray {
         return relay!!
     }
 }

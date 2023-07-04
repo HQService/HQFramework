@@ -5,7 +5,6 @@ import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.netty.HQNettyBootstrap
-import kr.hqservice.framework.netty.api.NettyServer
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
@@ -62,12 +61,16 @@ class NettyServerBootstrap(
                 try {
                     val port = packet.targetServer.toInt()
                     if (port == -1) {
-                        channelRegistry.forEachChannels { it.sendPacket(RelayingResult(packet.getRelay())) }
+                        channelRegistry.forEachChannels {
+                            //it.sendPacket(RelayingResult(packet.getRelay()))
+                            it.channel.writeAndFlush(RelayingResult(packet.getRelayByte()))
+                        }
                         return@addListener
                     } else channelRegistry.getChannelByPort(port)
                 } catch (e: NumberFormatException) {
                     channelRegistry.getChannelByServerName(packet.targetServer)
-                }.sendPacket(RelayingResult(packet.getRelay()))
+                }.channel.writeAndFlush(RelayingResult(packet.getRelayByte()))
+            /*sendPacket(RelayingResult(packet.getRelay()))*/
             } catch (e: IllegalArgumentException) {
                 logger.severe("Relaying packet failed due to TargetServer Offline!")
             }

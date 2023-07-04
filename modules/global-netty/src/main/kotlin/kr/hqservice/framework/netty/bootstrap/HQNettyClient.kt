@@ -35,8 +35,8 @@ class HQNettyClient(
 
     fun start(isBootUp: Boolean): CompletableFuture<Channel> {
         if (isBootUp) {
+            Direction.OUTBOUND.registerPacket(RelayingPacket::class)
             Direction.INBOUND.registerPacket(ShutdownPacket::class)
-            Direction.INBOUND.registerPacket(RelayingPacket::class)
             Direction.INBOUND.registerPacket(ChannelListPacket::class)
             Direction.INBOUND.registerPacket(ChannelConnectedPacket::class)
             Direction.INBOUND.registerPacket(ChannelDisconnectedPacket::class)
