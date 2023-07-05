@@ -58,7 +58,7 @@ package kr.hqservice.exampleplugin.service.impl
 @HQSingleton(binds = [ExampleService::class])
 class ExampleServiceImpl : ExampleService {
   override fun doAnything(plugin: Plugin) {
-    println("Hello ${plugin.name}!"
+    println("Hello ${plugin.name}!")
   }
 }
 ```
@@ -102,7 +102,7 @@ interface ExampleConfig : ConfigurationSection, HQSimpleComponent { fun getConfi
 class ExampleServiceImpl(private val config: ExampleConfig) : ExampleService {
   override fun printAndReturn(): String {
     val string = config.getConfiguratedString()
-    println("configuratedString: $string"
+    println("configuratedString: $string")
     return string
   }
 }
