@@ -68,7 +68,7 @@ abstract class HQCommandTree(
                         "<${argumentLabel}> "
                     }
                 }
-            val component = TextComponent((padding + prefix + executor.label + " " + parameters + "<s:eaedaf>" +  executor.description).colorize())
+            val component = TextComponent((padding + prefix + executor.label + " " + parameters + "&7" +  executor.description).colorize())
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${executor.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
 
