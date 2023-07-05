@@ -15,7 +15,7 @@ import org.bukkit.command.CommandSender
 class PluginListCommand(private val server: Server) : HQCommandNode {
     @CommandExecutor(
         label = "plugins",
-        description = "&7HQPlugin 을 의존하는 플러그인들을 출력합니다.",
+        description = "HQPlugin 을 의존하는 플러그인들을 출력합니다.",
         isOp = true,
         priority = 100
     )
