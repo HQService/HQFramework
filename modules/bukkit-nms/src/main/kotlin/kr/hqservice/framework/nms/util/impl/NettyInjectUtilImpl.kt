@@ -69,15 +69,20 @@ class NettyInjectUtilImpl(
         val pipeline = channel.pipeline()
 
         if(pipeline.get("hq_injector") == null) {
-            pipeline.addBefore("packet_handler", "hq_injector", PacketHandler(player, plugin, virtualHandlerRegistry))
+            pipeline.addBefore("packet_handler", "hq_packet_handler", PacketHandler(player, plugin, virtualHandlerRegistry))
         }
     }
 
     override fun removeHandler(player: Player) {
-        val pipeline = getPlayerChannel(player).pipeline()
-        if(pipeline.get("hq_injector") != null) {
+        val channel = getPlayerChannel(player)
+        channel.eventLoop().submit {
             virtualHandlerRegistry.cleanup(player.uniqueId)
-            pipeline.remove("hq_injector")
+            channel.pipeline().remove("hq_packet_handler")
+            return@submit Unit
         }
+        /*if(pipeline.get("hq_packet_handler") != null) {
+            virtualHandlerRegistry.cleanup(player.uniqueId)
+            pipeline.remove("hq_packet_handler")
+        }*/
     }
 }
