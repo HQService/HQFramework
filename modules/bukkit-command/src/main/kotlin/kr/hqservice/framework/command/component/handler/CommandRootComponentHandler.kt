@@ -16,6 +16,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.command.defaults.BukkitCommand
 import org.bukkit.entity.Player
+import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.SimplePluginManager
 import org.koin.core.annotation.Named
@@ -36,6 +37,7 @@ import kotlin.reflect.jvm.jvmErasure
     ]
 )
 class CommandRootComponentHandler(
+    private val plugin: Plugin,
     private val pluginManager: PluginManager,
     private val logger: Logger,
     private val commandRegistry: CommandRegistry,
@@ -60,11 +62,12 @@ class CommandRootComponentHandler(
             .get(pluginManager) as CommandMap
         commandMap.register(
             hqCommandRoot.getFallbackPrefix(),
-            HQBukkitCommand(hqCommandRoot, commandCoroutineScope, mainCoroutineScope, argumentProviderRepository)
+            HQBukkitCommand(plugin, hqCommandRoot, commandCoroutineScope, mainCoroutineScope, argumentProviderRepository)
         )
     }
 
     private class HQBukkitCommand(
+        private val plugin: Plugin,
         private val hqCommandRoot: HQCommandRoot,
         private val commandCoroutineScope: CoroutineScope,
         private val mainCoroutineScope: CoroutineScope,
@@ -73,7 +76,7 @@ class CommandRootComponentHandler(
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
             if (args.isEmpty()) {
-                hqCommandRoot.sendUsageMessages(sender)
+                hqCommandRoot.sendUsageMessages(sender, arrayOf(commandLabel), plugin.name)
                 return true
             }
             val treeKey = findTreeKeyApproximate(args)
@@ -87,7 +90,7 @@ class CommandRootComponentHandler(
             val executor = tree?.findExecutor(executorKey)
             if (executor == null) {
                 val approximateTree = hqCommandRoot.findTreeApproximate(treeKey)
-                approximateTree.sendUsageMessages(sender)
+                approximateTree.sendUsageMessages(sender, arrayOf(commandLabel, *treeKey), plugin.name)
                 return true
             }
 

@@ -20,7 +20,7 @@ class PluginDescriptionCommand : HQCommandNode, CoroutineScope {
 
     @CommandExecutor(
         label = "version",
-        description = "&f/hq plugin description version &8<HQPlugin> &6| &7해당 HQPlugin 의 버전을 확인합니다.",
+        description = "해당 HQPlugin 의 버전을 확인합니다.",
         isOp = true,
         priority = 2
     )
@@ -30,7 +30,7 @@ class PluginDescriptionCommand : HQCommandNode, CoroutineScope {
 
     @CommandExecutor(
         label = "authors",
-        description = "&f/hq plugin description authors &8<HQPlugin> &6| &7해당 HQPlugin 의 개발자를 확인합니다.",
+        description = "해당 HQPlugin 의 개발자를 확인합니다.",
         isOp = true,
         priority = 3
     )
@@ -40,7 +40,7 @@ class PluginDescriptionCommand : HQCommandNode, CoroutineScope {
 
     @CommandExecutor(
         label = "testgreedy",
-        description = "testgreedy",
+        description = "",
         isOp = true,
         priority = 999
     )
@@ -50,7 +50,7 @@ class PluginDescriptionCommand : HQCommandNode, CoroutineScope {
 
     @CommandExecutor(
         label = "testgreedy11",
-        description = "testgreedy11",
+        description = "",
         isOp = true,
         priority = 999
     )

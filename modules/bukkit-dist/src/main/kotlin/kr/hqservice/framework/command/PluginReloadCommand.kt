@@ -15,7 +15,7 @@ import org.bukkit.command.CommandSender
 class PluginReloadCommand(private val server: Server) : HQCommandNode {
     @CommandExecutor(
         label = "hardreload",
-        description = "&f/hq plugin hardreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 PluginManager 에서 reload 합니다.",
+        description = "HQPlugin 을 의존하는 플러그인을 PluginManager 에서 reload 합니다.",
         isOp = true,
         priority = 1
     )
@@ -25,7 +25,7 @@ class PluginReloadCommand(private val server: Server) : HQCommandNode {
     }
     @CommandExecutor(
         label = "lightreload",
-        description = "&f/hq plugin lightreload &8<HQPlugin> &6| &7HQPlugin 을 의존하는 플러그인을 HQPlugin 에서 reload 합니다.",
+        description = "HQPlugin 을 의존하는 플러그인을 HQPlugin 에서 reload 합니다.",
         isOp = true,
         priority = 2
     )
