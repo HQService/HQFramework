@@ -1,10 +1,10 @@
 package kr.hqservice.framework.database.util
 
 import kr.hqservice.framework.database.DatabaseHost
-import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 
-fun HQYamlConfiguration.findDatabaseHost(): DatabaseHost? {
-    val section = getSection("database") ?: return null
+fun HQYamlConfigurationSection.findDatabaseHost(sectionKey: String = "database"): DatabaseHost? {
+    val section = getSection(sectionKey) ?: return null
     val host = section.getString("host")
     val port = section.getInt("port")
     val user = section.getString("user")
@@ -13,14 +13,14 @@ fun HQYamlConfiguration.findDatabaseHost(): DatabaseHost? {
     return DatabaseHost(host, port, user, password, database)
 }
 
-fun HQYamlConfiguration.getDatabaseHost(): DatabaseHost {
-    return findDatabaseHost() ?: throw NullPointerException("database config 가 존재하지 않습니다.")
+fun HQYamlConfigurationSection.getDatabaseHost(sectionKey: String = "database"): DatabaseHost {
+    return findDatabaseHost(sectionKey) ?: throw NullPointerException("database config 가 존재하지 않습니다.")
 }
 
-fun HQYamlConfiguration.getDatabaseType(): String {
-    return getString("database.type")
+fun HQYamlConfigurationSection.getDatabaseType(sectionKey: String = "database"): String {
+    return getString("$sectionKey.type")
 }
 
-fun HQYamlConfiguration.getDatabasePath(): String {
-    return getString("database.path")
+fun HQYamlConfigurationSection.getDatabasePath(sectionKey: String = "database"): String {
+    return getString("$sectionKey.path")
 }
