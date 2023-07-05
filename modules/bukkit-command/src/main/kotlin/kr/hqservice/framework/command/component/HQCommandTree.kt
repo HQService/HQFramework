@@ -80,7 +80,7 @@ abstract class HQCommandTree(
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${child.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
             result.add(component)
-            result.addAll(child.getTextComponents("$padding${if(lastTree) " " else " ┃"}   ", pointer + child.label + " "))
+            result.addAll(child.getTextComponents("$padding${if(lastTree) " " else "§7 ┃§f"}   ", pointer + child.label + " "))
         }
         return result
     }
