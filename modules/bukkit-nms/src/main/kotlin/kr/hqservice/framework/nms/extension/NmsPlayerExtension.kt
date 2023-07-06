@@ -1,12 +1,10 @@
 package kr.hqservice.framework.nms.extension
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.factory.VirtualViewFactory
 import kr.hqservice.framework.nms.virtual.factory.impl.GlobalVirtualFactory
@@ -26,17 +24,17 @@ private val containerService: NmsService<Player, ContainerWrapper> by getKoin().
 private val handlerRegistry: VirtualHandlerRegistry by getKoin().inject()
 private val scope: HQCoroutineScope by getKoin().inject(named("virtual"))
 
-fun Player.virtual(vararg wrapper: Virtual) {
-    scope.launch {
-        reflectionWrapper.sendPacket(this@virtual, *wrapper) }
+suspend fun Player.virtualScope(factoryScope: suspend VirtualFactory.() -> Unit) {
+    val factory: VirtualFactory = SingleVirtualFactory(this, reflectionWrapper, itemStackService)
+    factory.factoryScope()
 }
 
-fun Player.virtual(distance: Double = .0, coroutineScope: CoroutineScope = scope, factoryScope: suspend VirtualFactory.()->Unit): Job {
+fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.()->Unit): Job {
     val factory: VirtualFactory = if(distance > .0) {
         val receivers = location.world?.getNearbyEntities(location, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
         GlobalVirtualFactory(receivers, reflectionWrapper)
     } else SingleVirtualFactory(this, reflectionWrapper, itemStackService)
-    return coroutineScope.launch {
+    return scope.launch {
         factory.factoryScope() }
 }
 
@@ -48,11 +46,6 @@ fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -
     }
 }
 
-//fun virtualView(viewFactoryScope: VirtualViewFactory.() -> Unit) {
-//        val scope = VirtualViewFactory(itemStackService, refectionWrapper, containerService.wrap(receiver).getContainerId())
-//        scope.viewFactoryScope()
-//        handlerRegistry.register(receiver.uniqueId, scope.create())
-//    }
 fun Player.virtualView(viewFactoryScope: VirtualViewFactory.() -> Unit) {
     val scope = VirtualViewFactory(itemStackService, reflectionWrapper, containerService.wrap(this).getContainerId())
     scope.viewFactoryScope()
