@@ -10,7 +10,7 @@ HQFramework는 SpringFramework 에서 영감을 받아 Bukkit 및 Proxy 플랫�
 <a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo." width="120"></a>
 
 ### Gradle
-HQFramework 에 대한 의존성을 추가합니다. (추가로 원하는 모듈을 추가할 수 있습니다.):
+프로젝트에 HQFramework에 대한 의존성을 추가합니다. (추가로 원하는 모듈을 추가할 수 있습니다.):
 ```kotlin
 repositories {
     maven("https://maven.hqservice.kr/repository/maven-public/")
