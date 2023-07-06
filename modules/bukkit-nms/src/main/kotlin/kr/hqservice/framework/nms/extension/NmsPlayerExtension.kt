@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.extension
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
@@ -29,19 +30,19 @@ fun Player.virtual(vararg wrapper: Virtual) {
         reflectionWrapper.sendPacket(this@virtual, *wrapper) }
 }
 
-fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.()->Unit) {
+fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.()->Unit): Job {
     val factory: VirtualFactory = if(distance > .0) {
         val receivers = location.world?.getNearbyEntities(location, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
         GlobalVirtualFactory(receivers, reflectionWrapper)
     } else SingleVirtualFactory(this, reflectionWrapper, itemStackService)
-    scope.launch {
+    return scope.launch {
         factory.factoryScope() }
 }
 
-fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -> Unit) {
+fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -> Unit): Job {
     val receivers = world?.getNearbyEntities(this, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
     val factory = GlobalVirtualFactory(receivers, reflectionWrapper)
-    scope.launch {
+    return scope.launch {
         factory.factoryScope() }
 }
 

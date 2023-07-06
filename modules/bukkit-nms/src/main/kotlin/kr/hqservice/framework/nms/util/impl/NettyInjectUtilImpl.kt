@@ -68,7 +68,7 @@ class NettyInjectUtilImpl(
         val channel = getPlayerChannel(player)
         val pipeline = channel.pipeline()
 
-        if(pipeline.get("hq_injector") == null) {
+        if(pipeline.get("hq_packet_handler") == null) {
             pipeline.addBefore("packet_handler", "hq_packet_handler", PacketHandler(player, plugin, virtualHandlerRegistry))
         }
     }

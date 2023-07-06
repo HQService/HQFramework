@@ -21,7 +21,7 @@ class NMSModule(
         plugin.getResource("lang/ko_kr.json")
             ?.apply { languageRegistry.registerLanguage(this, Locale.KOREA) }
 
-        plugin.server.onlinePlayers.forEach(injectUtil::injectHandler)
+        //plugin.server.onlinePlayers.forEach(injectUtil::injectHandler)
     }
 
     override fun onDisable() {
