@@ -16,6 +16,13 @@ pluginManagement {
     }
 }
 
+file(rootProject.projectDir.path + "/credentials.gradle.kts").let {
+    if (it.exists()) {
+        apply(it.path)
+    }
+}
+
+
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
@@ -23,6 +30,7 @@ dependencyResolutionManagement {
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+        maven("https://maven.hqservice.kr/repository/maven-public/")
     }
 
     versionCatalogs {

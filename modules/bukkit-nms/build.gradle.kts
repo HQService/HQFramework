@@ -14,7 +14,6 @@ dependencies {
     api(libs.netty)
     api(libs.koin.core)
     api(libs.koin.annotations)
-    ksp(libs.koin.ksp.compiler)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)

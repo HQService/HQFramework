@@ -13,7 +13,6 @@ dependencies {
     api(libs.koin.core)
     api(libs.koin.annotations)
     api(libs.kotlinx.serialization.json)
-    ksp(libs.koin.ksp.compiler)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)

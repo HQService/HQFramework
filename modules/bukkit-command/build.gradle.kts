@@ -8,7 +8,6 @@ dependencies {
     apiModule("bukkit", "core")
     apiModule("bukkit", "coroutine")
     compileOnly(libs.spigot.api)
-    ksp(libs.koin.ksp.compiler)
     api(libs.kotlinx.coroutines.core)
     api(libs.guava)
 

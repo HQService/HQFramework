@@ -1,6 +1,5 @@
 plugins {
     id("hqframework.shared")
-    id("hqframework.publish")
     id("hqframework.shadow")
     id("hqframework.runtime-dependency-relocator")
 }
@@ -11,7 +10,6 @@ dependencies {
     implementationModule("proxy", "core")
     implementationModule("proxy", "velocity-core")
     kapt(libs.velocity.api)
-    ksp(libs.koin.ksp.compiler)
     relocatedRuntimeScope("kr.hqservice.framework.shadow") {
         implementation(libs.kotlinx.coroutines.core)
         implementation(libs.koin.core)

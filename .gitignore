@@ -1,6 +1,7 @@
 .gradle
 build/
 build_outputs/
+credentials.gradle.kts
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/

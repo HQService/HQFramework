@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.MinimalExternalModuleDependency
 import org.gradle.api.provider.Provider
 import org.gradle.kotlin.dsl.exclude
+import org.gradle.kotlin.dsl.extra
 
 class ConfigureExtensions : Plugin<Project> {
     override fun apply(target: Project) {}
@@ -15,4 +16,8 @@ fun Project.excludedRuntimeDependencies(vararg dependencyProviders: Provider<Min
         configurations.runtimeClasspath.get().exclude(dependency.get().group, dependency.get().name)
     }
     return dependencyProviders.toList()
+}
+
+fun Project.getProperty(key: String): String? {
+    return extra[key]?.toString()
 }

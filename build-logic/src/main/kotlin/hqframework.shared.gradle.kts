@@ -16,6 +16,10 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
 
+dependencies {
+    "ksp"("io.insert-koin:koin-ksp-compiler:${getProperty("koinAnnotationsVersion")}")
+}
+
 extensions.configure<KotlinJvmProjectExtension>("kotlin") {
     sourceSets.named("main").configure {
         kotlin.srcDir("build/generated/ksp/main/kotlin")
