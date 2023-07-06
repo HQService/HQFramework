@@ -1,6 +1,9 @@
 package kr.hqservice.framework.nms.extension
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
@@ -17,6 +20,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.getKoin
+import kotlin.coroutines.CoroutineContext
 
 private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
 private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by getKoin().inject(named("itemStack"))
@@ -29,20 +33,21 @@ fun Player.virtual(vararg wrapper: Virtual) {
         reflectionWrapper.sendPacket(this@virtual, *wrapper) }
 }
 
-fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.()->Unit) {
+fun Player.virtual(distance: Double = .0, coroutineScope: CoroutineScope = scope, factoryScope: suspend VirtualFactory.()->Unit): Job {
     val factory: VirtualFactory = if(distance > .0) {
         val receivers = location.world?.getNearbyEntities(location, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
         GlobalVirtualFactory(receivers, reflectionWrapper)
     } else SingleVirtualFactory(this, reflectionWrapper, itemStackService)
-    scope.launch {
+    return coroutineScope.launch {
         factory.factoryScope() }
 }
 
-fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -> Unit) {
+fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -> Unit): Job {
     val receivers = world?.getNearbyEntities(this, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
     val factory = GlobalVirtualFactory(receivers, reflectionWrapper)
-    scope.launch {
-        factory.factoryScope() }
+    return scope.launch {
+        factory.factoryScope()
+    }
 }
 
 //fun virtualView(viewFactoryScope: VirtualViewFactory.() -> Unit) {
