@@ -30,10 +30,12 @@ abstract class HQCommandTree(
         return commandTrees
     }
 
-    internal fun getSuggestions(): List<String> {
+    internal fun getSuggestions(sender: CommandSender): List<String> {
         return mutableListOf<CommandSuggestible>().apply {
             addAll(commandTrees.values)
-            addAll(commandExecutors.values.filter { !it.hideSuggestion })
+            addAll(commandExecutors.values.filter {
+                !it.hideSuggestion && (sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission))))
+            })
         }.sortedBy {
             it.priority
         }.map {
@@ -43,24 +45,31 @@ abstract class HQCommandTree(
 
     fun sendUsageMessages(target: CommandSender, where: Array<String>, pluginName: String) {
         val label = where.joinToString(" ")
-        target.sendColorizedMessage("&f[<g:f58027>$pluginName</g:e8eb42>&f] <s:eded8e>Command Help Line")
-        target.sendColorizedMessage("<s:9c9c83>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        target.sendColorizedMessage("  &fnonnull parameter - <>")
-        target.sendColorizedMessage("  &fnullable parameter - []")
-        target.sendColorizedMessage("<s:9c9c83>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        val component = TextComponent("/$label")
-        component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/$label ")
-        component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
-        target.spigot().sendMessage(component)
-        getTextComponents("", "/$label ").forEach {
-            target.spigot().sendMessage(it)
-        }
+        val components = getTextComponents(target, "", "/$label ")
+        if(components.isNotEmpty()) {
+            val component = TextComponent("/$label")
+            component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/$label ")
+            component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
+            target.sendColorizedMessage("&f[<g:f58027>$pluginName</g:e8eb42>&f] <s:eded8e>Command Help Line")
+            target.sendColorizedMessage("<s:9c9c83>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            target.sendColorizedMessage("  &fnonnull parameter - <>")
+            target.sendColorizedMessage("  &fnullable parameter - []")
+            target.sendColorizedMessage("<s:9c9c83>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+            target.spigot().sendMessage(component)
+            components.forEach {
+                target.spigot().sendMessage(it)
+            }
+        } else target.sendMessage("§fUnknown command. Type \"/help\" for help.")
     }
 
-    private fun getTextComponents(padding: String = "", pointer: String = ""): List<TextComponent> {
+    private fun getTextComponents(sender: CommandSender, padding: String = "", pointer: String = ""): List<TextComponent> {
         val result = mutableListOf<TextComponent>()
-        for((i, executor) in commandExecutors.values.sortedBy { it.priority }.withIndex()) {
-            val lastNode = (i + 1 == commandExecutors.size) && commandTrees.isEmpty()
+        val filteredExecutors = commandExecutors.values.filter {
+            sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission)))
+        }
+        for((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
+            val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()
             val prefix = if(lastNode) " §7┗━§f" else " §7┣━§f"
             val parameters =
                 executor.function.valueParameters.toMutableList().apply { removeFirst() }.joinToString("") {
@@ -82,8 +91,11 @@ abstract class HQCommandTree(
             val component = TextComponent(padding + (if(lastTree) " §7┗━§f" else " §7┣━§f") + child.label)
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${child.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
-            result.add(component)
-            result.addAll(child.getTextComponents("$padding${if(lastTree) " " else "§7 ┃§f"}   ", pointer + child.label + " "))
+            val childComponents = child.getTextComponents(sender, "$padding${if(lastTree) " " else "§7 ┃§f"}   ", pointer + child.label + " ")
+            if(childComponents.isNotEmpty()) {
+                result.add(component)
+                result.addAll(childComponents)
+            }
         }
         return result
     }

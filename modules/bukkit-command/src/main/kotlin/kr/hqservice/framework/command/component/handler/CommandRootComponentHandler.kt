@@ -234,7 +234,7 @@ class CommandRootComponentHandler(
             location: Location?
         ): List<String> {
             if (args.first().length == 0) {
-                return hqCommandRoot.getSuggestions().filter { it.startsWith(args.last()) }
+                return hqCommandRoot.getSuggestions(sender).filter { it.startsWith(args.last()) }
             }
             val treeKey = findTreeKeyApproximate(args)
             val tree = hqCommandRoot.findTreeExact(treeKey)
@@ -272,7 +272,7 @@ class CommandRootComponentHandler(
                         )
                     }.filter { it.startsWith(args.last()) }
                 } else {
-                    return tree.getSuggestions().filter { it.startsWith(args.last()) }
+                    return tree.getSuggestions(sender).filter { it.startsWith(args.last()) }
                 }
             }
             return emptyList()
