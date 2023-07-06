@@ -9,6 +9,7 @@ import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
 import net.md_5.bungee.api.event.*
 import net.md_5.bungee.api.plugin.Listener
 import net.md_5.bungee.event.EventHandler
+import net.md_5.bungee.event.EventPriority
 import java.net.InetSocketAddress
 import java.util.*
 
@@ -28,7 +29,7 @@ class PlayerConnectionListener(
         channelContainer.loopChannels { it.sendPacket(packet) }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun playerServerPreSwitchEvent(event: ServerConnectEvent) {
         val from = event.player.server?: return
         if(event.target.address == from.address) return

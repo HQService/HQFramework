@@ -48,7 +48,10 @@ abstract class HQCommandTree(
         target.sendColorizedMessage("  &fnonnull parameter - <>")
         target.sendColorizedMessage("  &fnullable parameter - []")
         target.sendColorizedMessage("<s:9c9c83>&m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        target.sendColorizedMessage("/$label")
+        val component = TextComponent("/$label")
+        component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/$label")
+        component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
+        target.spigot().sendMessage(component)
         getTextComponents("", "/$label ").forEach {
             target.spigot().sendMessage(it)
         }
