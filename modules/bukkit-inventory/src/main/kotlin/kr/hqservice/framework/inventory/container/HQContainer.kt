@@ -1,8 +1,8 @@
 package kr.hqservice.framework.inventory.container
 
+import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
@@ -12,7 +12,7 @@ import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.Plugin
 
-abstract class HQContainer(
+open class HQContainer(
     private val size: Int,
     private val title: String,
     private val cancel: Boolean = true,
@@ -21,7 +21,8 @@ abstract class HQContainer(
     private val buttons = mutableMapOf<Int, HQButtonImpl>()
     private var plugin: Plugin? = null
 
-    protected abstract fun initialize(inventory: Inventory)
+    protected open fun initialize(inventory: Inventory) {}
+
     open fun onClick(event: InventoryClickEvent) {}
     open fun onDrag(event: InventoryDragEvent) {}
     open fun onClose(event: InventoryCloseEvent) {}
@@ -45,7 +46,7 @@ abstract class HQContainer(
     final override fun getInventory(): Inventory {
         return baseInventory ?: Bukkit.createInventory(
             this, size,
-            ChatColor.translateAlternateColorCodes('&', title)
+            title.colorize()
         ).apply {
             baseInventory = this
             initialize(this)
