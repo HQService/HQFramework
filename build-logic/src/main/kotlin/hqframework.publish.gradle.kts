@@ -24,7 +24,7 @@ val sourcesJar by tasks.registering(Jar::class) {
 
 publishing {
     publications {
-        create<MavenPublication>("maven") {
+        create<MavenPublication>("nexus") {
             groupId = project.extra["projectGroup"]!!.toString()
             artifactId = "${project.rootProject.name.lowercase()}-${project.project.name.lowercase()}"
             version = project.extra["projectVersion"]!!.toString()
