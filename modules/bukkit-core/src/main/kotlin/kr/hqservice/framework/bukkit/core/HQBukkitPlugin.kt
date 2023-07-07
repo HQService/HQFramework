@@ -16,6 +16,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
     protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+    open val group = "HQPlugin"
 
     final override fun onLoad() {
         onPreLoad()
