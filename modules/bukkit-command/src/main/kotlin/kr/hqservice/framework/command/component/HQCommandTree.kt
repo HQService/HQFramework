@@ -144,7 +144,6 @@ abstract class HQCommandTree(
             commandExecutors[executorKey] = executor
         }
 
-
         registry.getTrees(this::class).forEach { tree ->
             commandTrees[tree.label] = tree
             tree.setup(registry)

@@ -6,6 +6,7 @@ import kr.hqservice.framework.command.component.*
 import kr.hqservice.framework.command.component.impl.CommandContextImpl
 import kr.hqservice.framework.command.component.registry.CommandArgumentProviderRegistry
 import kr.hqservice.framework.command.component.registry.CommandRegistry
+import kr.hqservice.framework.coroutine.bukkitDelay
 import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
@@ -46,11 +47,14 @@ class CommandRootComponentHandler(
     @Named("main") private val mainCoroutineScope: CoroutineScope
 ) : HQComponentHandler<HQCommandRoot> {
     override fun setup(element: HQCommandRoot) {
-        element.setup(commandRegistry)
         if (pluginManager is SimplePluginManager) {
             register(element, pluginManager)
         } else {
             logger.info("skipping registration while mocking")
+        }
+        mainCoroutineScope.launch {
+            bukkitDelay(1)
+            element.setup(commandRegistry)
         }
     }
 
@@ -62,7 +66,13 @@ class CommandRootComponentHandler(
             .get(pluginManager) as CommandMap
         commandMap.register(
             hqCommandRoot.getFallbackPrefix(),
-            HQBukkitCommand(plugin, hqCommandRoot, commandCoroutineScope, mainCoroutineScope, argumentProviderRepository)
+            HQBukkitCommand(
+                plugin,
+                hqCommandRoot,
+                commandCoroutineScope,
+                mainCoroutineScope,
+                argumentProviderRepository
+            )
         )
     }
 
@@ -148,7 +158,11 @@ class CommandRootComponentHandler(
                                 val result = argumentProvider.getResult(commandContext, argumentForResult)
                                 if (!result || argumentForResult == null) {
                                     val failureMessage =
-                                        argumentProvider.getFailureMessage(commandContext, argumentForResult, argumentLabel)
+                                        argumentProvider.getFailureMessage(
+                                            commandContext,
+                                            argumentForResult,
+                                            argumentLabel
+                                        )
                                     if (failureMessage != null) {
                                         senderInstance.sendMessage("&c$failureMessage".colorize())
                                     }
@@ -170,7 +184,11 @@ class CommandRootComponentHandler(
                                 val result = argumentProvider.getResult(commandContext, argumentForResult)
                                 if (!result || argumentForResult == null) {
                                     val failureMessage =
-                                        argumentProvider.getFailureMessage(commandContext, argumentForResult, argumentLabel)
+                                        argumentProvider.getFailureMessage(
+                                            commandContext,
+                                            argumentForResult,
+                                            argumentLabel
+                                        )
                                     if (failureMessage != null) {
                                         senderInstance.sendMessage("&c$failureMessage".colorize())
                                     }
