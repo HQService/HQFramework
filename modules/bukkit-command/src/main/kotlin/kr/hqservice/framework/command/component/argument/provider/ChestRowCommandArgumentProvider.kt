@@ -1,7 +1,8 @@
-package kr.hqservice.framework.command.component.providers
+package kr.hqservice.framework.command.component.argument.provider
 
 import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
+import kr.hqservice.framework.command.component.argument.ChestRow
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
 
@@ -32,8 +33,4 @@ class ChestRowCommandArgumentProvider : HQCommandArgumentProvider<ChestRow> {
     ): List<String> {
         return listOf("1", "2", "3", "4", "5", "6")
     }
-}
-
-interface ChestRow {
-    val row: Int
 }

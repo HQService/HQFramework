@@ -1,4 +1,4 @@
-package kr.hqservice.framework.command.component.providers
+package kr.hqservice.framework.command.component.argument.provider
 
 import kr.hqservice.framework.command.component.CommandContext
 import kr.hqservice.framework.command.component.HQCommandArgumentProvider
