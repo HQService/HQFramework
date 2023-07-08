@@ -1,7 +1,7 @@
 package kr.hqservice.framework.command.component.handler
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.bukkit.core.extension.colorize
+import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.command.component.*
 import kr.hqservice.framework.command.component.impl.CommandContextImpl
 import kr.hqservice.framework.command.component.registry.CommandArgumentProviderRegistry
@@ -109,14 +109,14 @@ class CommandRootComponentHandler(
                 Player::class -> if (sender is Player) {
                     sender
                 } else {
-                    sender.sendMessage("&c플레이어만 사용할 수 있는 명령어입니다.".colorize())
+                    sender.sendColorizedMessage("&c플레이어만 사용할 수 있는 명령어입니다.")
                     return true
                 }
 
                 ConsoleCommandSender::class -> if (sender is ConsoleCommandSender) {
                     sender
                 } else {
-                    sender.sendMessage("&c콘솔에서만 사용할 수 있는 명령어입니다.".colorize())
+                    sender.sendColorizedMessage("&c콘솔에서만 사용할 수 있는 명령어입니다.")
                     return true
                 }
 
@@ -164,7 +164,7 @@ class CommandRootComponentHandler(
                                             argumentLabel
                                         )
                                     if (failureMessage != null) {
-                                        senderInstance.sendMessage("&c$failureMessage".colorize())
+                                        senderInstance.sendColorizedMessage("&c$failureMessage")
                                     }
                                     isFailed = true
                                     return@withContext
@@ -190,7 +190,7 @@ class CommandRootComponentHandler(
                                             argumentLabel
                                         )
                                     if (failureMessage != null) {
-                                        senderInstance.sendMessage("&c$failureMessage".colorize())
+                                        senderInstance.sendColorizedMessage("&c$failureMessage")
                                     }
                                     isFailed = true
                                     return@mainLaunch
