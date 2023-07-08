@@ -1,19 +1,21 @@
 package kr.hqservice.framework.global.core.component.registry
 
-import kr.hqservice.framework.global.core.component.handler.ComponentHandler
-import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.component.*
 import kr.hqservice.framework.global.core.component.error.*
+import kr.hqservice.framework.global.core.component.handler.ComponentHandler
+import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
 import org.koin.core.annotation.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
+import org.koin.core.definition.Definition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
 import org.koin.core.instance.SingleInstanceFactory
 import org.koin.core.module.Module
+import org.koin.core.parameter.ParametersHolder
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.StringQualifier
 import org.koin.core.qualifier.TypeQualifier
@@ -37,6 +39,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
         val componentClasses = mutableListOf<Class<*>>()
+        val beanClasses = mutableListOf<Class<*>>()
         val qualifierProviderClasses = mutableListOf<Class<*>>()
         val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
         for (clazz in getAllComponentsToScan()) {
@@ -49,22 +52,22 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentClasses.add(clazz)
             } else if (annotations.filterIsInstance<QualifierProvider>().isNotEmpty()) {
                 qualifierProviderClasses.add(clazz)
+            } else if (annotations.filterIsInstance<Bean>().isNotEmpty()) {
+                beanClasses.add(clazz)
             }
         }
         val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(
             componentClasses.map { it.kotlin }
-        ).apply { addAll(qualifierProviderClasses.map { it.kotlin }) }
+        ).apply {
+            addAll(qualifierProviderClasses.map { it.kotlin })
+            addAll(beanClasses.map { it.kotlin })
+        }
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var componentExceptionCatchingStack = 0
         var previousComponentQueueSize = componentClassesQueue.size
         while (componentClassesQueue.isNotEmpty()) {
             val component = componentClassesQueue.poll()
-            if (component.constructors.size > 1) {
-                throw ConstructorConflictException(component)
-            }
-
-            val constructor = component.constructors.first()
 
             fun back() {
                 componentClassesQueue.offer(component)
@@ -78,7 +81,17 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             }
 
             val instance = try {
-                callByInjectedParameters(constructor, getProvidedInstances())
+                if (component.hasAnnotation<Bean>()) {
+                    tryCreateBeanModule(component) {
+                        callByInjectedParameters(component.constructors.first(), getProvidedInstances(), it)
+                    }
+                    continue
+                }
+                if (component.constructors.size > 1) {
+                    throw ConstructorConflictException(component)
+                }
+
+                callByInjectedParameters(component.constructors.first(), getProvidedInstances())
             } catch (exception: QualifierNotFoundException) {
                 back()
                 continue
@@ -89,7 +102,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 continue
             } else {
                 try {
-                    tryCreateBeanModule(component, instance)
+                    tryCreateBeanModule(component) { instance }
                 } catch (exception: QualifierNotFoundException) {
                     back()
                     continue
@@ -199,9 +212,10 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
      */
     private fun <T : Any> callByInjectedParameters(
         kFunction: KFunction<T>,
-        providedInstanceMap: Map<KClass<*>, *>? = null
+        providedInstanceMap: Map<KClass<*>, *>? = null,
+        parametersHolder: ParametersHolder? = null
     ): T? {
-        val injectedParameters = injectParameters(kFunction, providedInstanceMap)
+        val injectedParameters = injectParameters(kFunction, providedInstanceMap, parametersHolder)
         if (injectedParameters.any { it == null }) {
             return null
         }
@@ -215,14 +229,25 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
-    private fun injectParameters(kFunction: KFunction<*>, providedInstanceMap: Map<KClass<*>, *>? = null): List<Any?> {
-        return kFunction.parameters.map { parameter ->
+    private fun injectParameters(
+        kFunction: KFunction<*>,
+        providedInstanceMap: Map<KClass<*>, *>? = null,
+        parametersHolder: ParametersHolder?
+    ): List<Any?> {
+        return kFunction.parameters.mapIndexed { index, parameter ->
             val parameterKClass = parameter.type.classifier as KClass<*>
+            if (parametersHolder != null) {
+                val parameterFromHolder = parametersHolder.values.getOrNull(index)
+                if (parameterFromHolder != null) {
+                    return@mapIndexed parameterFromHolder
+                }
+            }
+
             if (providedInstanceMap != null) {
                 val providedInstance =
                     providedInstanceMap.filter { parameterKClass == it.key }.values.firstOrNull()
                 if (providedInstance != null) {
-                    return@map providedInstance
+                    return@mapIndexed providedInstance
                 }
             }
 
@@ -241,7 +266,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * 모듈을 생성합니다. 만약 아무런 타입의 Bean 도 아닐 경우, 생성되지 않습니다.
      */
-    private fun <T : Any> tryCreateBeanModule(klass: KClass<T>, instance: Any) {
+    private fun <T> tryCreateBeanModule(klass: KClass<*>, instance: Definition<T>) {
         val scopeQualifier = getScopeQualifier(klass)
         val qualifier = getQualifier(klass)
         val bean = getBeanProperties(klass) ?: return
@@ -263,16 +288,15 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         getKoin().loadModules(listOf(module))
     }
 
-    private fun <T : Any> createSingletonBeanModule(
-        klass: KClass<T>,
-        instance: Any,
+    private fun <T> createSingletonBeanModule(
+        klass: KClass<*>,
+        instance: Definition<T>,
         scopeQualifier: Qualifier = getKoin().scopeRegistry.rootScope.scopeQualifier,
         qualifier: Qualifier? = null,
         secondaryTypes: List<KClass<*>>,
         createdAtStart: Boolean = false
     ): Module {
-        val beanDefinition =
-            BeanDefinition(scopeQualifier, klass, qualifier, { instance }, Kind.Singleton, secondaryTypes)
+        val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Singleton, secondaryTypes)
         val singletonInstanceFactory = SingleInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
             indexPrimaryType(singletonInstanceFactory)
@@ -280,16 +304,15 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
-    private fun <T : Any> createFactoryBeanModule(
-        klass: KClass<T>,
-        instance: Any,
+    private fun <T> createFactoryBeanModule(
+        klass: KClass<*>,
+        instance: Definition<T>,
         scopeQualifier: Qualifier = getKoin().scopeRegistry.rootScope.scopeQualifier,
         qualifier: Qualifier? = null,
         secondaryTypes: List<KClass<*>>,
         createdAtStart: Boolean = false
     ): Module {
-        val beanDefinition =
-            BeanDefinition(scopeQualifier, klass, qualifier, { instance }, Kind.Factory, secondaryTypes)
+        val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Factory, secondaryTypes)
         val factoryInstanceFactory = FactoryInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
             indexPrimaryType(factoryInstanceFactory)
