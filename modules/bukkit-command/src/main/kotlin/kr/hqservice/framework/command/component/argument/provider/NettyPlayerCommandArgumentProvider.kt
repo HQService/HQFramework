@@ -19,7 +19,11 @@ class NettyPlayerCommandArgumentProvider(
     }
 
     override suspend fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String? {
-        return "${argumentLabel ?: "플레이어"}를(을) 찾을 수 없습니다."
+        val label = argumentLabel ?: "플레이어"
+        if (string == null) {
+            return "${label}을(를) 입력해주세요."
+        }
+        return "${label}을(를) 찾을 수 없습니다."
     }
 
     override suspend fun cast(context: CommandContext, string: String): NettyPlayer {
