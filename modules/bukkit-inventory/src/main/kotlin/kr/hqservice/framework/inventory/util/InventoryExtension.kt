@@ -21,8 +21,12 @@ fun PlayerInventory.hasSpace(vararg itemStack: ItemStack): Boolean {
         repeat(8) {
             addItem(uniqueItem)
         }
-        addItem(*this@hasSpace.extraContents)
-        addItem(*this@hasSpace.storageContents)
+        if (this@hasSpace.extraContents.isNotEmpty()) {
+            addItem(*this@hasSpace.extraContents.filter { it != null && !it.type.isAir }.toTypedArray())
+        }
+        if (this@hasSpace.storageContents.isNotEmpty()) {
+            addItem(*this@hasSpace.storageContents.filter { it != null && !it.type.isAir }.toTypedArray())
+        }
     }
     val add = inventoryCloned.addItem(*itemStack.clone())
     return add.isEmpty()
