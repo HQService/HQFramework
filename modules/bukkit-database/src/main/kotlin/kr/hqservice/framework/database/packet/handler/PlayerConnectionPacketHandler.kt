@@ -79,9 +79,9 @@ class PlayerConnectionPacketHandler(
         when (packet.state) {
             PlayerConnectionState.PRE_SWITCH_CHANNEL -> {
                 val player = server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
+                val nextChannel = packet.sourceChannel ?: return // 열리지 않은 서버
                 databaseCoroutineScope.launch {
                     saveAll(player).join()
-                    val nextChannel = packet.sourceChannel ?: throw NullPointerException("null 이면 안되는데...")
                     packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                 }
             }
