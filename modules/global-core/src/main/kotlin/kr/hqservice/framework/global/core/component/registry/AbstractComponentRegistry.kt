@@ -11,6 +11,7 @@ import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Definition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
+import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
 import org.koin.core.instance.SingleInstanceFactory
@@ -75,7 +76,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     componentExceptionCatchingStack++
                 }
                 if (componentExceptionCatchingStack == componentClassesQueue.size) {
-                    throw NoBeanDefinitionsFoundException(componentClassesQueue.toList())
+                    printFriendlyException(componentClassesQueue.toList())
+                    throw NoBeanDefinitionsFoundException(listOf())
                 }
                 previousComponentQueueSize = componentClassesQueue.size
             }
@@ -90,9 +92,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 if (component.constructors.size > 1) {
                     throw ConstructorConflictException(component)
                 }
-
                 callByInjectedParameters(component.constructors.first(), getProvidedInstances())
             } catch (exception: QualifierNotFoundException) {
+                back()
+                continue
+            } catch (exception: ComponentCreationException) {
                 back()
                 continue
             }
@@ -139,7 +143,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                         handlerExceptionCatchingStack++
                     }
                     if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
-                        throw NoBeanDefinitionsFoundException(componentHandlersQueue.toList().map { it::class })
+                        printFriendlyException(componentHandlersQueue.toList().map { it::class })
+                        throw NoBeanDefinitionsFoundException(listOf())
                     }
                     previousHandlerQueueSize = componentHandlersQueue.size
                 } else {
@@ -197,6 +202,31 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         return componentInstances.getComponent(key)
     }
 
+    private object Color {
+        const val ANSI_RESET = "\u001B[0m"
+        const val ANSI_RED = "\u001B[31m"
+        const val ANSI_GREEN = "\u001B[32m"
+        const val ANSI_CYAN = "\u001B[36m"
+    }
+    private fun printFriendlyException(classes: List<KClass<*>>) {
+        classes.forEach { kClass ->
+            val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
+            val injected = injectParameters(kClass.primaryConstructor!!, getProvidedInstances(), null)
+            val parameterDisplays = parameters.mapIndexed { index, kParameter ->
+                val simpleName = kParameter.type.jvmErasure.simpleName
+                val qualifier = getQualifier(kParameter)?.value
+                val color = if (injected[index] != null) Color.ANSI_GREEN else Color.ANSI_RED
+                if (qualifier != null) {
+                    "${color}${simpleName}(q: ${qualifier})${Color.ANSI_RESET}"
+                } else {
+                    "${color}${simpleName}${Color.ANSI_RESET}"
+                }
+            }
+
+            println("${kClass.java.packageName}.${Color.ANSI_CYAN}${kClass.simpleName}${Color.ANSI_RESET}: [${parameterDisplays.joinToString()}]")
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun getComponentHandlerType(componentHandlerClass: KClass<*>): KClass<*> {
         return componentHandlerClass
@@ -223,8 +253,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             kFunction.call(*injectedParameters.toTypedArray())
         } catch (illegalArgumentException: IllegalArgumentException) {
             kFunction.instanceParameter.print("instanceParameter: ")
-            kFunction.parameters.print("parameters: ")
-            injectedParameters.print("injectedParamaters: ")
+            kFunction.parameters.map { it.type.jvmErasure.simpleName }.joinToString().print("parameters: ")
+            injectedParameters.map { if (it == null) null else it::class.simpleName }.joinToString().print("injectedParameters: ")
             throw illegalArgumentException
         }
     }
@@ -257,7 +287,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
             val factory = getKoin().instanceRegistry.instances[indexKey]
             val defaultContext = InstanceContext(getKoin(), getKoin().getScope(scopeQualifier.value))
-            factory?.get(defaultContext)
+
+            try {
+                factory?.get(defaultContext)
+            } catch (exception: InstanceCreationException) {
+                throw ComponentCreationException()
+            } catch (exception: IllegalStateException) {
+                throw ComponentCreationException()
+            }
         }.toList()
     }
 
@@ -273,14 +310,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
         val module = when (bean.first) {
             Kind.Factory -> createFactoryBeanModule(klass, instance, scopeQualifier, qualifier, bean.second.toList())
-            Kind.Singleton -> createSingletonBeanModule(
-                klass,
-                instance,
-                scopeQualifier,
-                qualifier,
-                bean.second.toList()
-            )
-
+            Kind.Singleton -> createSingletonBeanModule(klass, instance, scopeQualifier, qualifier, bean.second.toList())
             else -> {
                 return
             }
