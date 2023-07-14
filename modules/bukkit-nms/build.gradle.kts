@@ -7,7 +7,6 @@ dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
     apiModule("bukkit", "coroutine")
-    apiModule("bukkit", "inventory")
     compileOnly(libs.spigot.api)
     api(libs.kotlinx.coroutines.core)
     api(libs.exposed.core)

@@ -33,6 +33,8 @@ class NettyInjectUtilImpl(
     override fun getPlayerChannel(player: Player): Channel {
         val entity = reflectionWrapper.getEntityPlayer(player)
         val listener = reflectionWrapper.getField(entity::class, listenerClass).call(entity)
+
+        connectionField.isAccessible = true
         val connection = connectionField.call(listener)
 
         channelField.isAccessible = true
