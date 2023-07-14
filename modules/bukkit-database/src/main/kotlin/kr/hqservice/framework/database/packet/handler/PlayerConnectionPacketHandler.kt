@@ -34,11 +34,12 @@ class PlayerConnectionPacketHandler(
     private val packetSender: PacketSender,
     private val nettyService: HQNettyService,
 ) : HQListener {
-    private fun saveAll(player: Player): Job {
+    private fun saveAndClear(player: Player): Job {
         return databaseCoroutineScope.launch {
             val saveJobs = playerRepositoryRegistry.getAll().map {
                 launch {
                     it.onSave(player)
+                    it.remove(player.uniqueId)
                 }
             }
             saveJobs.joinAll()
@@ -81,7 +82,7 @@ class PlayerConnectionPacketHandler(
                 val player = server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
                 val nextChannel = packet.sourceChannel ?: return // 열리지 않은 서버
                 databaseCoroutineScope.launch {
-                    saveAll(player).join()
+                    saveAndClear(player).join()
                     packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                 }
             }
@@ -89,7 +90,7 @@ class PlayerConnectionPacketHandler(
                 val lock = disconnectDefermentLock.findLock(packet.player.getUniqueId())
                 if (lock == null) {
                     databaseCoroutineScope.launch {
-                        disconnectDefermentLock.tryLock(packet.player.getUniqueId(), 500L) {}
+                        disconnectDefermentLock.tryLock(packet.player.getUniqueId(), 1000L) {}
                     }
                 } else {
                     disconnectDefermentLock.unlock(packet.player.getUniqueId())
@@ -107,14 +108,14 @@ class PlayerConnectionPacketHandler(
         databaseCoroutineScope.launch {
             val lock = disconnectDefermentLock.findLock(event.player.uniqueId)
             if (lock != null) {
-                saveAll(event.player)
+                saveAndClear(event.player)
             } else {
                 var timedOut = false
-                disconnectDefermentLock.tryLock(event.player, 500L) {
+                disconnectDefermentLock.tryLock(event.player, 1000L) {
                     timedOut = true
                 }
                 if (!timedOut) {
-                    saveAll(event.player)
+                    saveAndClear(event.player)
                 }
             }
         }
@@ -126,7 +127,7 @@ class PlayerConnectionPacketHandler(
         if (nettyService.isEnable()) {
             return
         }
-        saveAll(event.player)
+        saveAndClear(event.player)
     }
 
     @EventHandler
@@ -161,7 +162,6 @@ class PlayerConnectionPacketHandler(
     fun unlockWhenSaved(event: AsyncNettyPacketReceivedEvent) {
         val packet = event.packet
         if (packet is PlayerDataSavedPacket) {
-            println("player data saved packet received")
             ensureLoad(packet.player.getUniqueId())
         }
     }
