@@ -38,7 +38,9 @@ abstract class HQView(
         players.map { player ->
             this.launch {
                 CreateScope(this@HQView).onCreate(inventory)
-                player.openInventory(inventory)
+                withContext(Dispatchers.BukkitMain) {
+                    player.openInventory(inventory)
+                }
                 RenderScope(this@HQView, player).onRender(player, inventory)
                 buttons.values.forEach { buttonElement ->
                     buttonElement.invokeOnRender(ButtonRenderEvent(this@HQView, buttonElement, player))
