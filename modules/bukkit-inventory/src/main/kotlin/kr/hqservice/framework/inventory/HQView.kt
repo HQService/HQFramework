@@ -28,18 +28,18 @@ abstract class HQView(
     override val coroutineContext: CoroutineContext
         get() = CoroutineName("HQViewCoroutine") + job + Dispatchers.BukkitMain
 
-    protected abstract suspend fun CreateScope.onCreate(inventory: Inventory)
-    protected open suspend fun RenderScope.onRender(viewer: Player, inventory: Inventory) {}
+    protected abstract suspend fun CreateScope.onCreate()
+    protected open suspend fun RenderScope.onRender(viewer: Player) {}
     protected open suspend fun CloseScope.onClose(viewer: Player) {}
 
     suspend fun open(vararg players: Player) = coroutineScope {
         players.map { player ->
             this.launch {
-                CreateScope(this@HQView).onCreate(inventory)
+                CreateScope(this@HQView).onCreate()
                 withContext(Dispatchers.BukkitMain) {
                     player.openInventory(inventory)
                 }
-                RenderScope(this@HQView, player).onRender(player, inventory)
+                RenderScope(this@HQView, player).onRender(player)
                 buttons.values.forEach { buttonElement ->
                     buttonElement.invokeOnRender(ButtonRenderEvent(this@HQView, buttonElement, player))
                 }
