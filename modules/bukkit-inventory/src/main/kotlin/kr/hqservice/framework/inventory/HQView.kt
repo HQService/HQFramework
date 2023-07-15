@@ -23,7 +23,6 @@ abstract class HQView(
 ) : InventoryLifecycle {
     private val job = Job()
     val ownedLifecycles: MutableList<LifecycleOwner> = mutableListOf()
-    var previousInventory: Inventory? = null
     private var baseInventory: Inventory? = null
     private val buttons: MutableMap<Int, ButtonElement> = mutableMapOf()
 
