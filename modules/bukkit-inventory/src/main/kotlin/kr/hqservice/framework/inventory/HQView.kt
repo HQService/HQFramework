@@ -7,7 +7,6 @@ import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
 import kr.hqservice.framework.inventory.element.ButtonElement
 import kr.hqservice.framework.inventory.element.TitleElement
 import kr.hqservice.framework.inventory.event.ButtonRenderEvent
-import kr.hqservice.framework.inventory.exception.BbaktongException
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -52,10 +51,6 @@ abstract class HQView(
         return baseInventory ?: Bukkit.createInventory(this, size, title.colorize()).apply {
             baseInventory = this
         }
-    }
-
-    fun refresh() {
-        throw BbaktongException()
     }
 
     fun getButton(index: Int): ButtonElement? {
