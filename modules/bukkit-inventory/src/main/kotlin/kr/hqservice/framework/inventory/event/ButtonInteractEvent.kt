@@ -1,15 +1,14 @@
 package kr.hqservice.framework.inventory.event
 
-import kr.hqservice.framework.inventory.button.HQButton
-import kr.hqservice.framework.inventory.container.HQContainer
+import kr.hqservice.framework.inventory.HQView
+import kr.hqservice.framework.inventory.element.ButtonElement
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 
-
-class ButtonClickEvent(
-    private val container: HQContainer,
-    private val button: HQButton,
+class ButtonInteractEvent(
+    private val view: HQView,
+    private val buttonElement: ButtonElement,
     private val event: InventoryClickEvent
 ) {
     fun getSlot(): Int {
@@ -24,16 +23,16 @@ class ButtonClickEvent(
         return event.click
     }
 
-    fun getContainer(): HQContainer {
-        return container
+    fun getView(): HQView {
+        return view
     }
 
     fun getWhoClicked(): Player {
         return event.whoClicked as Player
     }
 
-    fun getButton(): HQButton {
-        return button
+    fun getButtonElement(): ButtonElement {
+        return buttonElement
     }
 
     fun isShiftClick(): Boolean {

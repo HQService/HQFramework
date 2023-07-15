@@ -11,6 +11,32 @@ import org.bukkit.util.io.BukkitObjectOutputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
+// ItemStack builder extensions
+
+inline fun <reified T : ItemMeta> ItemStack.meta(
+    block: T.() -> Unit,
+): ItemStack = apply {
+    itemMeta = (itemMeta as? T)?.apply(block) ?: itemMeta
+}
+
+fun ItemStack.displayName(displayName: String?): ItemStack = meta<ItemMeta> {
+    this.setDisplayName(displayName)
+}
+
+fun ItemStack.lore(lore: List<String>): ItemStack = meta<ItemMeta> {
+    this.lore = lore
+}
+
+fun ItemStack.addLore(lore: String): ItemStack = meta<ItemMeta> {
+    this.lore = this.lore?.apply { add(lore) } ?: listOf(lore)
+}
+
+fun ItemStack.customModelData(data: Int): ItemStack = meta<ItemMeta> {
+    this.setCustomModelData(data)
+}
+
+// ItemStack serialization extensions
+
 fun ItemStack?.toByteArray(compress: Boolean = true): ByteArray {
     return arrayOf(this).toByteArray(compress)
 }
