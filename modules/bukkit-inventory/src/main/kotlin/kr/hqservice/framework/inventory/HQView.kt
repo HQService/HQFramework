@@ -65,6 +65,9 @@ abstract class HQView(
     internal fun invokeOnClose(player: Player) {
         launch {
             CloseScope().onClose(player)
+            if (this@HQView.inventory.viewers.isEmpty()) {
+                this@HQView.dispose()
+            }
         }
     }
 
