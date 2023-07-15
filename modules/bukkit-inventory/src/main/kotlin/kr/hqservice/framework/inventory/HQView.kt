@@ -6,6 +6,7 @@ import kr.hqservice.framework.coroutine.extension.BukkitMain
 import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
 import kr.hqservice.framework.inventory.element.ButtonElement
 import kr.hqservice.framework.inventory.element.TitleElement
+import kr.hqservice.framework.inventory.event.ButtonRenderEvent
 import kr.hqservice.framework.inventory.exception.BbaktongException
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -35,10 +36,13 @@ abstract class HQView(
 
     suspend fun open(vararg players: Player) = coroutineScope {
         players.map { player ->
-            launch {
+            this.launch {
                 CreateScope(this@HQView).onCreate(inventory)
                 player.openInventory(inventory)
                 RenderScope(this@HQView, player).onRender(player, inventory)
+                buttons.values.forEach { buttonElement ->
+                    buttonElement.invokeOnRender(ButtonRenderEvent(this@HQView, buttonElement, player))
+                }
             }
         }.joinAll()
     }

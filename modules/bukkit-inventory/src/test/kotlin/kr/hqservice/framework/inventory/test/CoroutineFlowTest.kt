@@ -1,10 +1,11 @@
 package kr.hqservice.framework.inventory.test
 
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kr.hqservice.framework.global.core.extension.print
 import org.junit.jupiter.api.Test
+import kotlin.coroutines.CoroutineContext
 
 class CoroutineFlowTest {
 
@@ -44,5 +45,25 @@ class CoroutineFlowTest {
     interface CallbackTestListener {
 
         suspend fun onCallback(value: Int)
+    }
+
+    @Test
+    fun scopeTest() = runTest {
+        CoroutineScope(Job() + CoroutineName("nameA")).launch {
+            TestCoroutineClass().invoke()
+        }
+    }
+
+    class TestCoroutineClass : CoroutineScope {
+        private val job = Job()
+
+        override val coroutineContext: CoroutineContext
+            get() = CoroutineName("nameB") + Dispatchers.IO + job
+
+        suspend fun invoke() = coroutineScope {
+            this@coroutineScope.launch {
+                this.coroutineContext[CoroutineName.Key]?.name.print("name: ") // nameA
+            }
+        }
     }
 }

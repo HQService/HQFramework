@@ -10,7 +10,7 @@ class ButtonInteractEvent(
     private val view: HQView,
     private val buttonElement: ButtonElement,
     private val event: InventoryClickEvent
-) {
+) : ButtonEvent {
     fun getSlot(): Int {
         return event.slot
     }
@@ -23,18 +23,6 @@ class ButtonInteractEvent(
         return event.click
     }
 
-    fun getView(): HQView {
-        return view
-    }
-
-    fun getWhoClicked(): Player {
-        return event.whoClicked as Player
-    }
-
-    fun getButtonElement(): ButtonElement {
-        return buttonElement
-    }
-
     fun isShiftClick(): Boolean {
         return event.isShiftClick
     }
@@ -45,5 +33,17 @@ class ButtonInteractEvent(
 
     fun getQuickSlotButton(): Int {
         return event.hotbarButton
+    }
+
+    override fun getView(): HQView {
+        return view
+    }
+
+    override fun getButtonElement(): ButtonElement {
+        return buttonElement
+    }
+
+    override fun getPlayer(): Player {
+        return event.whoClicked as Player
     }
 }

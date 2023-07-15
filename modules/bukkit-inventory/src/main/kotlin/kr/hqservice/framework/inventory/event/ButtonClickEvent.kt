@@ -6,7 +6,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 
-
 class ButtonClickEvent(
     private val container: HQContainer,
     private val button: HQButton,
