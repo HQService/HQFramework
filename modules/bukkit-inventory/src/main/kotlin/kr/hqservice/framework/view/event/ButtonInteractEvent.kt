@@ -1,14 +1,14 @@
-package kr.hqservice.framework.inventory.event
+package kr.hqservice.framework.view.event
 
-import kr.hqservice.framework.inventory.button.HQButton
-import kr.hqservice.framework.inventory.container.HQContainer
+import kr.hqservice.framework.view.HQView
+import kr.hqservice.framework.view.element.ButtonElement
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 
-class ButtonClickEvent(
-    private val container: HQContainer,
-    private val button: HQButton,
+data class ButtonInteractEvent(
+    val view: HQView,
+    val buttonElement: ButtonElement,
     private val event: InventoryClickEvent
 ) {
     fun getSlot(): Int {
@@ -23,18 +23,6 @@ class ButtonClickEvent(
         return event.click
     }
 
-    fun getContainer(): HQContainer {
-        return container
-    }
-
-    fun getWhoClicked(): Player {
-        return event.whoClicked as Player
-    }
-
-    fun getButton(): HQButton {
-        return button
-    }
-
     fun isShiftClick(): Boolean {
         return event.isShiftClick
     }
@@ -45,5 +33,9 @@ class ButtonClickEvent(
 
     fun getQuickSlotButton(): Int {
         return event.hotbarButton
+    }
+
+    fun getPlayer(): Player {
+        return event.whoClicked as Player
     }
 }

@@ -1,15 +1,14 @@
 package kr.hqservice.framework.inventory.handler
 
-import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.bukkit.core.component.HQListener
+import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.inventory.container.HQContainer
-import kr.hqservice.framework.inventory.event.impl.ButtonClickEventImpl
+import kr.hqservice.framework.inventory.event.ButtonClickEvent
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
-import org.bukkit.event.inventory.InventoryOpenEvent
 import org.bukkit.inventory.InventoryView
 
 @Component
@@ -22,7 +21,7 @@ class HQContainerHandler: HQListener {
 
             getButton(event.rawSlot)?.also { button ->
                 event.isCancelled = true
-                button.click(ButtonClickEventImpl(this, button, event))
+                button.click(ButtonClickEvent(this, button, event))
             }?: onClick(event)
         }
     }
