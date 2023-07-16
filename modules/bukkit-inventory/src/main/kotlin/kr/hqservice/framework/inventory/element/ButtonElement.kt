@@ -5,6 +5,7 @@ import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
 import kr.hqservice.framework.inventory.event.ButtonInteractEvent
 import kr.hqservice.framework.inventory.event.ButtonRenderEvent
 import kr.hqservice.framework.inventory.state.State
+import kr.hqservice.framework.inventory.state.SubscribableState
 import org.bukkit.inventory.ItemStack
 
 class ButtonElement(private val itemStack: ItemStack, private val lifecycleOwner: LifecycleOwner) : ViewElement {
@@ -36,6 +37,7 @@ class ButtonElement(private val itemStack: ItemStack, private val lifecycleOwner
     override fun subscribe(vararg states: State<*>) {
         states.forEach { state ->
             lifecycleOwner.launch {
+                state as SubscribableState
                 state.getStateFlow().collect {
                     itemStackBuilder(this@ButtonElement.itemStack)
                 }

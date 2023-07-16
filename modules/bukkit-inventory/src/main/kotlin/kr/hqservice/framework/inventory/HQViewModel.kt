@@ -6,7 +6,7 @@ import kotlinx.coroutines.Job
 import kr.hqservice.framework.coroutine.extension.BukkitMain
 import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
 import kr.hqservice.framework.inventory.state.State
-import kr.hqservice.framework.inventory.state.impl.MutableState
+import kr.hqservice.framework.inventory.state.impl.MutableStateFlowState
 import kotlin.coroutines.CoroutineContext
 
 abstract class HQViewModel : LifecycleOwner {
@@ -16,7 +16,7 @@ abstract class HQViewModel : LifecycleOwner {
         get() = CoroutineName("HQViewModelCoroutine") + job + Dispatchers.BukkitMain
 
     protected fun <T : Any> state(data: T): State<T> {
-        return MutableState(data)
+        return MutableStateFlowState(data)
     }
 
     final override fun dispose() {

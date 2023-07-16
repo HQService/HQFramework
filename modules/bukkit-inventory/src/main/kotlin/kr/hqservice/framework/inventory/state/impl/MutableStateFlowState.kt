@@ -2,9 +2,9 @@ package kr.hqservice.framework.inventory.state.impl
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kr.hqservice.framework.inventory.state.State
+import kr.hqservice.framework.inventory.state.SubscribableState
 
-class MutableState<T : Any> internal constructor(value: T) : State<T> {
+class MutableStateFlowState<T : Any> internal constructor(value: T) : SubscribableState<T> {
     private val stateFlow = MutableStateFlow(value)
 
     override fun get(): T {
