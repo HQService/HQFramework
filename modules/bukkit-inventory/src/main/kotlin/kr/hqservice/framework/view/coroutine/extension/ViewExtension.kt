@@ -1,7 +1,7 @@
-package kr.hqservice.framework.inventory.coroutine.extension
+package kr.hqservice.framework.view.coroutine.extension
 
-import kr.hqservice.framework.inventory.HQView
-import kr.hqservice.framework.inventory.HQViewModel
+import kr.hqservice.framework.view.HQView
+import kr.hqservice.framework.view.HQViewModel
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.Qualifier

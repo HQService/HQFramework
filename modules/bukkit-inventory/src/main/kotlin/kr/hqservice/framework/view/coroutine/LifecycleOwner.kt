@@ -1,4 +1,4 @@
-package kr.hqservice.framework.inventory.coroutine
+package kr.hqservice.framework.view.coroutine
 
 import kotlinx.coroutines.CoroutineScope
 

@@ -1,13 +1,14 @@
-package kr.hqservice.framework.inventory.element
+package kr.hqservice.framework.view.element
 
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
-import kr.hqservice.framework.inventory.state.State
-import kr.hqservice.framework.inventory.state.SubscribableState
 import kr.hqservice.framework.nms.extension.virtual
+import kr.hqservice.framework.view.coroutine.LifecycleOwner
+import kr.hqservice.framework.view.state.State
+import kr.hqservice.framework.view.state.SubscribableState
 import org.bukkit.entity.Player
 
-class TitleElement(private val viewer: Player, private val title: String, private val lifecycleOwner: LifecycleOwner) : ViewElement {
+class TitleElement(private val viewer: Player, private val title: String, private val lifecycleOwner: LifecycleOwner) :
+    ViewElement {
     internal fun setTitle() {
         viewer.virtual {
             inventory {

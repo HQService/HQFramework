@@ -1,12 +1,12 @@
-package kr.hqservice.framework.inventory
+package kr.hqservice.framework.view
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.coroutine.extension.BukkitMain
-import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
-import kr.hqservice.framework.inventory.element.ButtonElement
-import kr.hqservice.framework.inventory.element.TitleElement
-import kr.hqservice.framework.inventory.event.ButtonRenderEvent
+import kr.hqservice.framework.view.coroutine.LifecycleOwner
+import kr.hqservice.framework.view.element.ButtonElement
+import kr.hqservice.framework.view.element.TitleElement
+import kr.hqservice.framework.view.event.ButtonRenderEvent
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -76,7 +76,8 @@ abstract class HQView(
 
 class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle by inventoryLifecycle, ButtonPlaceable
 
-class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Player) : InventoryLifecycle by inventoryLifecycle, ButtonPlaceable {
+class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Player) : InventoryLifecycle by inventoryLifecycle,
+    ButtonPlaceable {
     fun title(title: String, titleScope: TitleElement.() -> Unit = {}) {
         titleScope(TitleElement(player, title, this).apply { setTitle() })
     }

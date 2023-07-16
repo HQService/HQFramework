@@ -1,16 +1,16 @@
-package kr.hqservice.framework.inventory.event
+package kr.hqservice.framework.view.event
 
-import kr.hqservice.framework.inventory.HQView
-import kr.hqservice.framework.inventory.element.ButtonElement
+import kr.hqservice.framework.view.HQView
+import kr.hqservice.framework.view.element.ButtonElement
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 
-class ButtonInteractEvent(
-    private val view: HQView,
-    private val buttonElement: ButtonElement,
+data class ButtonInteractEvent(
+    val view: HQView,
+    val buttonElement: ButtonElement,
     private val event: InventoryClickEvent
-) : ButtonEvent {
+) {
     fun getSlot(): Int {
         return event.slot
     }
@@ -35,15 +35,7 @@ class ButtonInteractEvent(
         return event.hotbarButton
     }
 
-    override fun getView(): HQView {
-        return view
-    }
-
-    override fun getButtonElement(): ButtonElement {
-        return buttonElement
-    }
-
-    override fun getPlayer(): Player {
+    fun getPlayer(): Player {
         return event.whoClicked as Player
     }
 }

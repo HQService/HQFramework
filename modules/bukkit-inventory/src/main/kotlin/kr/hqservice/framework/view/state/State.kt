@@ -1,4 +1,4 @@
-package kr.hqservice.framework.inventory.state
+package kr.hqservice.framework.view.state
 
 interface State<T> {
     fun get(): T

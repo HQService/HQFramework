@@ -1,4 +1,4 @@
-package kr.hqservice.framework.inventory
+package kr.hqservice.framework.view
 
 import org.koin.core.parameter.ParametersDefinition
 import org.koin.core.qualifier.named

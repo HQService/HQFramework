@@ -1,9 +1,9 @@
-package kr.hqservice.framework.inventory.handler
+package kr.hqservice.framework.view.handler
 
 import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.inventory.HQView
-import kr.hqservice.framework.inventory.event.ButtonInteractEvent
+import kr.hqservice.framework.view.HQView
+import kr.hqservice.framework.view.event.ButtonInteractEvent
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority

@@ -1,4 +1,4 @@
-package kr.hqservice.framework.inventory.coroutine.scope
+package kr.hqservice.framework.inventory.coroutine
 
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName

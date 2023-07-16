@@ -1,11 +1,11 @@
-package kr.hqservice.framework.inventory.element
+package kr.hqservice.framework.view.element
 
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.inventory.coroutine.LifecycleOwner
-import kr.hqservice.framework.inventory.event.ButtonInteractEvent
-import kr.hqservice.framework.inventory.event.ButtonRenderEvent
-import kr.hqservice.framework.inventory.state.State
-import kr.hqservice.framework.inventory.state.SubscribableState
+import kr.hqservice.framework.view.coroutine.LifecycleOwner
+import kr.hqservice.framework.view.event.ButtonInteractEvent
+import kr.hqservice.framework.view.event.ButtonRenderEvent
+import kr.hqservice.framework.view.state.State
+import kr.hqservice.framework.view.state.SubscribableState
 import org.bukkit.inventory.ItemStack
 
 class ButtonElement(private val itemStack: ItemStack, private val lifecycleOwner: LifecycleOwner) : ViewElement {
