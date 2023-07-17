@@ -8,7 +8,6 @@ import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.view.HQView
 import kr.hqservice.framework.view.navigator.Navigator
-import kr.hqservice.framework.view.navigator.NavigatorContext
 import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -29,11 +28,7 @@ class NavigatorImpl : Navigator {
             }
         }.joinAll()
 
-        val contexts = players.map { player ->
-            NavigatorContext(player, this@NavigatorImpl)
-        }.toTypedArray()
-
-        view.open(*contexts)
+        view.open(*players)
     }
 
     override suspend fun goPrevious(player: Player) {
@@ -44,14 +39,14 @@ class NavigatorImpl : Navigator {
         }
         viewStack.pop()
         if (viewStack.isNotEmpty()) {
-            viewStack.peek().open(NavigatorContext(player, this@NavigatorImpl))
+            viewStack.peek().open(player)
         }
     }
 
     override suspend fun goFirst(player: Player) {
         val currentView = currentView[player.uniqueId] ?: return
         if (currentView.size == 1) {
-            currentView.pop().open(NavigatorContext(player, this@NavigatorImpl))
+            currentView.pop().open(player)
         } else {
             while (currentView.size > 1) {
                 currentView.pop()

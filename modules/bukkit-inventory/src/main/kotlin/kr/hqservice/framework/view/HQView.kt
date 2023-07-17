@@ -7,7 +7,6 @@ import kr.hqservice.framework.view.coroutine.LifecycleOwner
 import kr.hqservice.framework.view.element.ButtonElement
 import kr.hqservice.framework.view.element.TitleElement
 import kr.hqservice.framework.view.event.ButtonRenderEvent
-import kr.hqservice.framework.view.navigator.NavigatorContext
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -26,7 +25,7 @@ abstract class HQView(
     internal val ownedLifecycles: MutableList<LifecycleOwner> = mutableListOf()
     private var baseInventory = lazy { Bukkit.createInventory(this@HQView, size, title.colorize()) }
     private val buttons: MutableMap<Int, ButtonElement> = mutableMapOf()
-    private val contexts: MutableMap<UUID, NavigatorContext> = mutableMapOf()
+    internal val viewers: MutableList<UUID> = mutableListOf()
 
     override val coroutineContext: CoroutineContext
         get() = CoroutineName("HQViewCoroutine") + job + Dispatchers.BukkitMain
@@ -35,10 +34,9 @@ abstract class HQView(
     protected open suspend fun RenderScope.onRender(viewer: Player) {}
     protected open suspend fun CloseScope.onClose(viewer: Player) {}
 
-    internal suspend fun open(vararg navigatorContext: NavigatorContext) = coroutineScope {
-        navigatorContext.map { context ->
-            val player = context.player
-            contexts[player.uniqueId] = context
+    internal suspend fun open(vararg viewer: Player) = coroutineScope {
+        viewer.map { player ->
+            viewers.add(player.uniqueId)
             this.launch {
                 CreateScope(this@HQView).onCreate()
                 withContext(Dispatchers.BukkitMain) {
@@ -63,13 +61,6 @@ abstract class HQView(
     internal fun invokeOnClose(player: Player) {
         launch {
             CloseScope().onClose(player)
-            for(context in contexts.values) {
-                if (context.getOpenedViews().filterIsInstance(this::class.java).isNotEmpty()) {
-                    this@HQView.dispose()
-                    break
-                }
-            }
-            contexts[player.uniqueId]?.goPrevious() ?: throw NullPointerException("플레이어 ${player.name} 의 navigator context 를 찾을 수 없습니다.")
         }
     }
 

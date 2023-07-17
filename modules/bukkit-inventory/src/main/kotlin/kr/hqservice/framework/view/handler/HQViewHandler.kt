@@ -1,9 +1,12 @@
 package kr.hqservice.framework.view.handler
 
+import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.view.CloseScope
 import kr.hqservice.framework.view.HQView
 import kr.hqservice.framework.view.event.ButtonInteractEvent
+import kr.hqservice.framework.view.navigator.Navigator
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -12,7 +15,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.InventoryView
 
 @Component
-class HQViewHandler : HQListener {
+class HQViewHandler(private val navigator: Navigator) : HQListener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun inventoryClick(event: InventoryClickEvent) {
         getView(event.view)?.apply {
@@ -31,6 +34,15 @@ class HQViewHandler : HQListener {
         val player = event.player
         if (view != null && player is Player) {
             view.invokeOnClose(player)
+            for(viewerId in view.viewers) {
+                if (navigator.openedViews(viewerId).filterIsInstance(this::class.java).isNotEmpty()) {
+                    view.dispose()
+                    break
+                }
+            }
+            view.launch {
+                navigator.goPrevious(player)
+            }
         }
     }
 
