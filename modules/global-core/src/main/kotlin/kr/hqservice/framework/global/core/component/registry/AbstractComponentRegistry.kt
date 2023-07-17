@@ -227,7 +227,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun getComponentHandlerType(componentHandlerClass: KClass<*>): KClass<*> {
         return componentHandlerClass
             .supertypes
@@ -307,18 +306,16 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val scopeQualifier = getScopeQualifier(klass)
         val qualifier = getQualifier(klass)
         val property = getBeanProperties(klass) ?: return
-        val types = if (property.second.isEmpty()) {
-            klass.allSuperclasses.toList()
+        val types: List<KClass<*>> = if (property.binds.isEmpty()) {
+            klass.allSuperclasses.toMutableList().apply { add(klass) }
         } else {
-            property.second.toList()
+            property.binds.toList()
         }
 
-        val module = when (property.first) {
-            Kind.Factory -> createFactoryBeanModule(klass, instance, scopeQualifier, qualifier, types)
-            Kind.Singleton -> createSingletonBeanModule(klass, instance, scopeQualifier, qualifier, types)
-            else -> {
-                return
-            }
+        val module = when (property.kind) {
+            Kind.Factory -> createFactoryBeanModule(klass, instance, scopeQualifier, qualifier, types, property.isPrimary)
+            Kind.Singleton -> createSingletonBeanModule(klass, instance, scopeQualifier, qualifier, types, property.isPrimary)
+            Kind.Scoped -> return
         }
         getKoin().loadModules(listOf(module))
     }
@@ -329,13 +326,17 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         scopeQualifier: Qualifier = getKoin().scopeRegistry.rootScope.scopeQualifier,
         qualifier: Qualifier? = null,
         secondaryTypes: List<KClass<*>>,
+        isPrimary: Boolean = false,
         createdAtStart: Boolean = false
     ): Module {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Singleton, secondaryTypes)
         val singletonInstanceFactory = SingleInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            indexPrimaryType(singletonInstanceFactory)
-            indexSecondaryTypes(singletonInstanceFactory)
+            if (isPrimary) {
+                indexPrimaryType(singletonInstanceFactory)
+            } else {
+                indexSecondaryTypes(singletonInstanceFactory)
+            }
         }
     }
 
@@ -345,13 +346,17 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         scopeQualifier: Qualifier = getKoin().scopeRegistry.rootScope.scopeQualifier,
         qualifier: Qualifier? = null,
         secondaryTypes: List<KClass<*>>,
+        isPrimary: Boolean = false,
         createdAtStart: Boolean = false
     ): Module {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Factory, secondaryTypes)
         val factoryInstanceFactory = FactoryInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            indexPrimaryType(factoryInstanceFactory)
-            indexSecondaryTypes(factoryInstanceFactory)
+            if (isPrimary) {
+                indexPrimaryType(factoryInstanceFactory)
+            } else {
+                indexSecondaryTypes(factoryInstanceFactory)
+            }
         }
     }
 
@@ -389,17 +394,23 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * 빈의 종류와 Bind 타입들을 구합니다.
      */
-    private fun getBeanProperties(klass: KClass<*>): Pair<Kind, Array<KClass<*>>>? {
+    private fun getBeanProperties(klass: KClass<*>): BeanProperty? {
         val factory = klass.findAnnotation<HQFactory>()
         val single = klass.findAnnotation<HQSingleton>()
         if (factory != null && single != null) {
             throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
         }
-
+        val isPrimary = klass.findAnnotation<Primary>() != null
         return when (true) {
-            (factory != null) -> Pair(Kind.Factory, factory.binds)
-            (single != null) -> Pair(Kind.Singleton, single.binds)
+            (factory != null) -> BeanProperty(Kind.Factory, factory.binds, isPrimary)
+            (single != null) -> BeanProperty(Kind.Singleton, single.binds, isPrimary)
             else -> null
         }
     }
+
+    private class BeanProperty(
+        val kind: Kind,
+        val binds: Array<KClass<*>>,
+        val isPrimary: Boolean
+    )
 }
