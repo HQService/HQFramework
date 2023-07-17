@@ -306,11 +306,16 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun <T> tryCreateBeanModule(klass: KClass<*>, instance: Definition<T>) {
         val scopeQualifier = getScopeQualifier(klass)
         val qualifier = getQualifier(klass)
-        val bean = getBeanProperties(klass) ?: return
+        val property = getBeanProperties(klass) ?: return
+        val types = if (property.second.isEmpty()) {
+            klass.allSuperclasses.toList()
+        } else {
+            property.second.toList()
+        }
 
-        val module = when (bean.first) {
-            Kind.Factory -> createFactoryBeanModule(klass, instance, scopeQualifier, qualifier, bean.second.toList())
-            Kind.Singleton -> createSingletonBeanModule(klass, instance, scopeQualifier, qualifier, bean.second.toList())
+        val module = when (property.first) {
+            Kind.Factory -> createFactoryBeanModule(klass, instance, scopeQualifier, qualifier, types)
+            Kind.Singleton -> createSingletonBeanModule(klass, instance, scopeQualifier, qualifier, types)
             else -> {
                 return
             }
