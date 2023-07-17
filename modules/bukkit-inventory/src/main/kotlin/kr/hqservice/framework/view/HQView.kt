@@ -7,12 +7,14 @@ import kr.hqservice.framework.view.coroutine.LifecycleOwner
 import kr.hqservice.framework.view.element.ButtonElement
 import kr.hqservice.framework.view.element.TitleElement
 import kr.hqservice.framework.view.event.ButtonRenderEvent
+import kr.hqservice.framework.view.navigator.NavigatorContext
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
+import java.util.UUID
 import kotlin.coroutines.CoroutineContext
 
 abstract class HQView(
@@ -21,9 +23,10 @@ abstract class HQView(
     val cancel: Boolean = true
 ) : InventoryLifecycle {
     private val job = Job()
-    val ownedLifecycles: MutableList<LifecycleOwner> = mutableListOf()
-    private var baseInventory: Inventory? = null
+    internal val ownedLifecycles: MutableList<LifecycleOwner> = mutableListOf()
+    private var baseInventory = lazy { Bukkit.createInventory(this@HQView, size, title.colorize()) }
     private val buttons: MutableMap<Int, ButtonElement> = mutableMapOf()
+    private val contexts: MutableMap<UUID, NavigatorContext> = mutableMapOf()
 
     override val coroutineContext: CoroutineContext
         get() = CoroutineName("HQViewCoroutine") + job + Dispatchers.BukkitMain
@@ -32,8 +35,10 @@ abstract class HQView(
     protected open suspend fun RenderScope.onRender(viewer: Player) {}
     protected open suspend fun CloseScope.onClose(viewer: Player) {}
 
-    suspend fun open(vararg players: Player) = coroutineScope {
-        players.map { player ->
+    internal suspend fun open(vararg navigatorContext: NavigatorContext) = coroutineScope {
+        navigatorContext.map { context ->
+            val player = context.player
+            contexts[player.uniqueId] = context
             this.launch {
                 CreateScope(this@HQView).onCreate()
                 withContext(Dispatchers.BukkitMain) {
@@ -48,9 +53,7 @@ abstract class HQView(
     }
 
     final override fun getInventory(): Inventory {
-        return baseInventory ?: Bukkit.createInventory(this, size, title.colorize()).apply {
-            baseInventory = this
-        }
+        return baseInventory.value
     }
 
     fun getButton(index: Int): ButtonElement? {
@@ -60,9 +63,13 @@ abstract class HQView(
     internal fun invokeOnClose(player: Player) {
         launch {
             CloseScope().onClose(player)
-            if (this@HQView.inventory.viewers.isEmpty()) {
-                this@HQView.dispose()
+            for(context in contexts.values) {
+                if (context.getOpenedViews().filterIsInstance(this::class.java).isNotEmpty()) {
+                    this@HQView.dispose()
+                    break
+                }
             }
+            contexts[player.uniqueId]?.goPrevious() ?: throw NullPointerException("플레이어 ${player.name} 의 navigator context 를 찾을 수 없습니다.")
         }
     }
 
