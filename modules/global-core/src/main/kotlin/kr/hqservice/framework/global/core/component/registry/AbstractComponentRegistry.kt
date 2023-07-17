@@ -11,6 +11,7 @@ import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Definition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
+import org.koin.core.error.DefinitionOverrideException
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
@@ -310,8 +311,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val scopeQualifier = getScopeQualifier(klass)
         val qualifier = getQualifier(klass)
         val property = getBeanProperties(klass)
-        val types: List<KClass<*>> = if (property.binds.isEmpty()) {
-            klass.allSuperclasses.toMutableList().apply { add(klass) }
+        val secondaryTypes: List<KClass<*>> = if (property.binds.isEmpty()) {
+            klass.allSuperclasses.toList()
         } else {
             property.binds.toList()
         }
@@ -322,8 +323,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 instance,
                 scopeQualifier,
                 qualifier,
-                types,
-                property.isPrimary
+                secondaryTypes
             )
 
             Kind.Singleton -> createSingletonBeanModule(
@@ -331,13 +331,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 instance,
                 scopeQualifier,
                 qualifier,
-                types,
-                property.isPrimary
+                secondaryTypes
             )
 
             Kind.Scoped -> return
         }
-        getKoin().loadModules(listOf(module))
+        getKoin().loadModules(listOf(module), allowOverride = !property.isPrimary)
     }
 
     private fun <T> createSingletonBeanModule(
@@ -346,17 +345,16 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         scopeQualifier: Qualifier = getKoin().scopeRegistry.rootScope.scopeQualifier,
         qualifier: Qualifier? = null,
         secondaryTypes: List<KClass<*>>,
-        isPrimary: Boolean = false,
         createdAtStart: Boolean = false
     ): Module {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Singleton, secondaryTypes)
         val singletonInstanceFactory = SingleInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            if (isPrimary) {
+            try {
                 indexPrimaryType(singletonInstanceFactory)
-            } else {
                 indexSecondaryTypes(singletonInstanceFactory)
-            }
+            } catch (_: DefinitionOverrideException) {}
+
         }
     }
 
@@ -366,17 +364,15 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         scopeQualifier: Qualifier = getKoin().scopeRegistry.rootScope.scopeQualifier,
         qualifier: Qualifier? = null,
         secondaryTypes: List<KClass<*>>,
-        isPrimary: Boolean = false,
         createdAtStart: Boolean = false
     ): Module {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Factory, secondaryTypes)
         val factoryInstanceFactory = FactoryInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            if (isPrimary) {
+            try {
                 indexPrimaryType(factoryInstanceFactory)
-            } else {
                 indexSecondaryTypes(factoryInstanceFactory)
-            }
+            } catch (_: DefinitionOverrideException) {}
         }
     }
 
@@ -426,7 +422,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             (single != null) -> BeanProperty(Kind.Singleton, single.binds, isPrimary)
             else -> BeanProperty(
                 Kind.Singleton,
-                klass.allSuperclasses.toMutableList().apply { add(klass) }.toTypedArray(),
+                klass.allSuperclasses.toTypedArray(),
                 isPrimary
             )
         }
