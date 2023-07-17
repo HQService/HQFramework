@@ -34,14 +34,14 @@ class HQViewHandler(private val navigator: Navigator) : HQListener {
         val player = event.player
         if (view != null && player is Player) {
             view.invokeOnClose(player)
+            view.launch {
+                navigator.goPrevious(player)
+            }
             for(viewerId in view.viewers) {
                 if (navigator.openedViews(viewerId).filterIsInstance(this::class.java).isNotEmpty()) {
                     view.dispose()
                     break
                 }
-            }
-            view.launch {
-                navigator.goPrevious(player)
             }
         }
     }
