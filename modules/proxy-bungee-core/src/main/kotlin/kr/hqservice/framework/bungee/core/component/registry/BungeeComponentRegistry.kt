@@ -24,7 +24,11 @@ class BungeeComponentRegistry(@InjectedParam private val plugin: HQBungeePlugin)
             put(HQPlugin::class, plugin)
             put(plugin::class, plugin)
             put(Logger::class, plugin.logger)
-            put(HQYamlConfiguration::class, File(plugin.dataFolder, "config.yml").yaml())
+            put(HQYamlConfiguration::class, getConfiguration())
         }
+    }
+
+    override fun getConfiguration(): HQYamlConfiguration {
+        return File(plugin.dataFolder, "config.yml").yaml()
     }
 }

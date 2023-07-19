@@ -5,6 +5,8 @@ import kr.hqservice.framework.global.core.component.error.*
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 import org.koin.core.annotation.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
@@ -38,6 +40,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
+
+    abstract fun getConfiguration(): HQYamlConfiguration
 
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
@@ -402,6 +406,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 qualifierProviders[key] ?: throw QualifierNotFoundException()
             val provided = qualifierProvider.provideQualifier()
             StringQualifier(provided)
+        } else if (element.hasAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()){
+            val value = element.findAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()!!.value
+            if (value.startsWith("#")) {
+                return StringQualifier(getConfiguration().getString(value.removePrefix("#")))
+            }
+            return StringQualifier(value)
         } else {
             null
         }

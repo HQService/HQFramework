@@ -47,7 +47,11 @@ class BukkitComponentRegistry(
             put(HQBukkitPlugin::class, plugin)
             put(Logger::class, plugin.logger)
             put(ConfigurationSection::class, plugin.config)
-            put(HQYamlConfiguration::class, plugin.getHQConfig())
+            put(HQYamlConfiguration::class, getConfiguration())
         }
+    }
+
+    override fun getConfiguration(): HQYamlConfiguration {
+        return plugin.getHQConfig()
     }
 }
