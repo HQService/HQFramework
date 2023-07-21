@@ -13,6 +13,7 @@ dependencies {
     api(libs.koin.core)
     api(libs.koin.annotations)
     api(libs.kotlinx.serialization.json)
+    implementation(libs.netty)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)

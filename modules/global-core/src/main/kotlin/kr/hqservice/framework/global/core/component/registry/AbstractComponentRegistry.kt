@@ -6,13 +6,9 @@ import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
-import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
 import org.koin.core.annotation.*
 import org.koin.core.component.KoinComponent
-import org.koin.core.definition.BeanDefinition
-import org.koin.core.definition.Definition
-import org.koin.core.definition.Kind
-import org.koin.core.definition.indexKey
+import org.koin.core.definition.*
 import org.koin.core.error.DefinitionOverrideException
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
@@ -27,14 +23,15 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
 abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
-    private companion object {
-        val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
-        val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
+    companion object {
+        private val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+        private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
     }
 
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
@@ -267,6 +264,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
+    open fun injectProxy(
+        kParameter: KParameter,
+        qualifier: Qualifier?,
+        scopeQualifier: Qualifier?
+    ): Any? {
+        return null
+    }
+
     private fun injectParameters(
         kFunction: KFunction<*>,
         providedInstanceMap: Map<KClass<*>, *>? = null,
@@ -292,6 +297,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val qualifier = getQualifier(parameter)
             val scopeQualifier = getScopeQualifier(kFunction)
             val indexKey = indexKey(parameterKClass, qualifier, scopeQualifier)
+
+            val proxy = injectProxy(parameter, qualifier, scopeQualifier)
+            if (proxy != null) {
+                return@mapIndexed proxy
+            }
 
             val factory = getKoin().instanceRegistry.instances[indexKey]
             val defaultContext = InstanceContext(getKoin(), getKoin().getScope(scopeQualifier.value))
@@ -402,8 +412,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             StringQualifier(element.findAnnotation<Named>()!!.value)
         } else if (element.hasAnnotation<MutableNamed>()) {
             val key = element.findAnnotation<MutableNamed>()!!.key
-            val qualifierProvider =
-                qualifierProviders[key] ?: throw QualifierNotFoundException()
+            val qualifierProvider = qualifierProviders[key] ?: throw QualifierNotFoundException()
             val provided = qualifierProvider.provideQualifier()
             StringQualifier(provided)
         } else if (element.hasAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()){

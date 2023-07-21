@@ -27,7 +27,7 @@ class RepositoryComponentHandler(
         table.with.forEach {
             val tableInstance = it.objectInstance ?: throw IllegalArgumentException("Table 의 object instance 를 가져올 수 없습니다.")
             mainCoroutineScope.launch {
-                element.getDataSource().query {
+                element.dataSource.query {
                     try {
                         if(tableInstance.exists()) {
                             SchemaUtils.addMissingColumnsStatements(tableInstance, withLogs = false)

@@ -1,22 +1,30 @@
 package kr.hqservice.framework.bukkit.core.component.registry
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
 import kr.hqservice.framework.bukkit.core.component.PluginDepend
 import kr.hqservice.framework.bukkit.core.extension.getHQConfig
-import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin
-import org.koin.core.annotation.Factory
+import org.koin.core.qualifier.Qualifier
 import java.util.jar.JarFile
 import java.util.logging.Logger
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.jvm.jvmErasure
 
-@Factory(binds = [ComponentRegistry::class])
 class BukkitComponentRegistry(
     private val plugin: HQBukkitPlugin
-) : JarBasedComponentRegistry() {
+) : JarBasedComponentRegistry(), InstanceFactoryRegistry {
+    private companion object {
+        val registeredInstanceFactories: MutableMap<KClass<*>, HQInstanceFactory<*>> = mutableMapOf()
+    }
+
     override fun getComponentScope(): String {
         return plugin::class.java.packageName
     }
@@ -51,7 +59,29 @@ class BukkitComponentRegistry(
         }
     }
 
+    override fun injectProxy(
+        kParameter: KParameter,
+        qualifier: Qualifier?,
+        scopeQualifier: Qualifier?
+    ): Any? {
+        for ((type, factory) in registeredInstanceFactories) {
+            if (type.starProjectedType.classifier == kParameter.type.classifier) {
+                return factory.createInstance(plugin, qualifier, scopeQualifier)
+            }
+        }
+        return null
+    }
+
     override fun getConfiguration(): HQYamlConfiguration {
         return plugin.getHQConfig()
+    }
+
+    override fun <T> registerInstanceFactory(instanceFactory: HQInstanceFactory<T>) {
+        val factoryType = instanceFactory::class.supertypes
+            .first { it.isSubtypeOf(HQInstanceFactory::class.starProjectedType) }
+            .arguments
+            .first()
+            .type!!.jvmErasure
+        registeredInstanceFactories[factoryType] = instanceFactory
     }
 }
