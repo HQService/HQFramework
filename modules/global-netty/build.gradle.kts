@@ -10,7 +10,7 @@ dependencies {
     implementation(libs.byte.buddy.agent)
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
-    implementation(libs.netty)
+    api(libs.netty)
     api(libs.guava)
 
     testImplementationModule("global", "yaml")

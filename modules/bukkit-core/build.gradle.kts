@@ -11,7 +11,7 @@ dependencies {
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
-    api(libs.koin.annotations)
+    implementation(libs.koin.annotations)
     api(libs.kotlinx.serialization.json)
     implementation(libs.netty)
 
