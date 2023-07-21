@@ -4,13 +4,13 @@ import kr.hqservice.framework.database.component.datasource.HQDataSource
 import kr.hqservice.framework.database.component.repository.HQRepository
 import kr.hqservice.framework.database.test.entity.TestEntity
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.component.registry.MutableNamed
 import kr.hqservice.framework.test.Isolated
 import java.util.*
 
 @Isolated("RepositoryTest")
-@HQSingleton(binds = [TestRepository::class])
+@Singleton(binds = [TestRepository::class])
 @Component
 class TestRepositoryImpl(
     @MutableNamed("data-source-type") private val dataSource: HQDataSource

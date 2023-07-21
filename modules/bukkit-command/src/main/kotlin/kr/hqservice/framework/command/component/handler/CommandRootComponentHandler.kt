@@ -11,6 +11,7 @@ import kr.hqservice.framework.command.component.registry.CommandArgumentProvider
 import kr.hqservice.framework.command.component.registry.CommandRegistry
 import kr.hqservice.framework.coroutine.bukkitDelay
 import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.component.handler.impl.KoinModuleComponentHandler
@@ -23,7 +24,6 @@ import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.SimplePluginManager
-import org.koin.core.annotation.Named
 import java.util.logging.Logger
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KParameter
@@ -49,8 +49,8 @@ class CommandRootComponentHandler(
     private val logger: Logger,
     private val commandRegistry: CommandRegistry,
     private val argumentProviderRepository: CommandArgumentProviderRegistry,
-    @Named("command") private val commandCoroutineScope: CoroutineScope,
-    @Named("main") private val mainCoroutineScope: CoroutineScope
+    @Qualifier("command") private val commandCoroutineScope: CoroutineScope,
+    @Qualifier("main") private val mainCoroutineScope: CoroutineScope
 ) : HQComponentHandler<HQCommandRoot> {
     override fun setup(element: HQCommandRoot) {
         if (pluginManager is SimplePluginManager) {

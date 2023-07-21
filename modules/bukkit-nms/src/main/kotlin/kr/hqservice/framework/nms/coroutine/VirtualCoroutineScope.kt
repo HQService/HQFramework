@@ -7,14 +7,14 @@ import kotlinx.coroutines.job
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import org.koin.core.annotation.Named
 import org.koin.core.component.getScopeName
 import java.util.logging.Level
 import java.util.logging.Logger
 
 @Named("virtual")
-@HQSingleton(binds = [HQCoroutineScope::class])
+@Singleton(binds = [HQCoroutineScope::class])
 @Component
 class VirtualCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO) {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->

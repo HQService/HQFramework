@@ -6,7 +6,7 @@ import kotlinx.coroutines.launch
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.Server
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -20,7 +20,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Component
-@HQSingleton(binds = [PlayerSkullRepository::class])
+@Singleton(binds = [PlayerSkullRepository::class])
 class PlayerSkullRepository(
     private val server: Server,
     @Named("url-reader") private val urlReaderCoroutineScope: HQCoroutineScope

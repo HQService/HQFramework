@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.service.chat
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.service.NmsService
@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 @Component
 @Named("base-component")
-@HQSingleton(binds = [NmsService::class])
+@Singleton(binds = [NmsService::class])
 class BaseComponentService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<String, BaseComponentWrapper> {

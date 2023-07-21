@@ -4,8 +4,8 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import kr.hqservice.framework.command.component.*
 import kr.hqservice.framework.command.component.registry.CommandRegistry
+import kr.hqservice.framework.global.core.component.Bean
 import org.bukkit.command.CommandSender
-import org.koin.core.annotation.Single
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
@@ -14,7 +14,7 @@ import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.jvmErasure
 
-@Single(binds = [CommandRegistry::class])
+@Bean
 class CommandRegistryImpl : CommandRegistry {
     private val commandNodes: Multimap<KClass<out HQCommand>, HQCommandNode> = ArrayListMultimap.create()
     private val commandTrees: Multimap<KClass<out HQCommand>, HQCommandTree> = ArrayListMultimap.create()

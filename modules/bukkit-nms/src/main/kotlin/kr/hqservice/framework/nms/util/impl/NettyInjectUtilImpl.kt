@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.util.impl
 import io.netty.channel.Channel
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.PacketHandler
 import kr.hqservice.framework.nms.util.NettyInjectUtil
@@ -16,7 +16,7 @@ import java.util.*
 import kotlin.reflect.jvm.isAccessible
 
 @Component
-@HQSingleton(binds = [NettyInjectUtil::class])
+@Singleton(binds = [NettyInjectUtil::class])
 class NettyInjectUtilImpl(
     private val plugin: Plugin,
     private val reflectionWrapper: NmsReflectionWrapper,

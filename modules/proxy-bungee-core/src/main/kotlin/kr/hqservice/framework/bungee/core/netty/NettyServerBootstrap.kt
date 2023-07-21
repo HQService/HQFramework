@@ -3,7 +3,7 @@ package kr.hqservice.framework.bungee.core.netty
 import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Direction
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
 @Component
-@HQSingleton(binds = [NettyServerBootstrap::class])
+@Singleton(binds = [NettyServerBootstrap::class])
 class NettyServerBootstrap(
     private val logger: Logger,
     private val config: HQYamlConfiguration,

@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.service.math
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 
 @Component
 @Named("vector3f")
-@HQSingleton(binds = [NmsService::class])
+@Singleton(binds = [NmsService::class])
 class Vector3fService(
     private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {

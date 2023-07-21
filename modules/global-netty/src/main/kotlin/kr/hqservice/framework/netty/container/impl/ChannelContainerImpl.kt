@@ -2,13 +2,13 @@ package kr.hqservice.framework.netty.container.impl
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.container.ChannelContainer
 
 @Component
-@HQSingleton(binds = [ChannelContainer::class])
+@Singleton(binds = [ChannelContainer::class])
 class ChannelContainerImpl : ChannelContainer, HQSimpleComponent {
     private val channelMap = mutableMapOf<NettyChannel, MutableList<NettyPlayer>>()
 

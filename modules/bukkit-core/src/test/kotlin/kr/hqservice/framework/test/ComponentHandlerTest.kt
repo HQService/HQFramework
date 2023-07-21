@@ -6,15 +6,14 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
-import kr.hqservice.framework.bukkit.HQFrameworkBukkitModule
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.*
 import kr.hqservice.framework.bukkit.core.component.handler.ListenerComponentHandler
 import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQFactory
+import kr.hqservice.framework.global.core.component.Factory
 import kr.hqservice.framework.global.core.component.HQModule
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
 import kr.hqservice.framework.global.core.component.handler.impl.ModuleComponentHandler
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
@@ -79,7 +78,7 @@ class ComponentHandlerTest : KoinComponent {
         }
     }
 
-    @HQSingleton
+    @Singleton
     @Component
     @ExcludeTestSearch
     class TestComponentA : TestHQModule, HQListener
@@ -88,7 +87,7 @@ class ComponentHandlerTest : KoinComponent {
     @ExcludeTestSearch
     class TestComponentB : TestHQModule
 
-    @HQFactory(binds = [TestComponentC::class])
+    @Factory(binds = [TestComponentC::class])
     @Component
     @ExcludeTestSearch
     class TestComponentC : TestHQModule
@@ -108,7 +107,7 @@ class ComponentHandlerTest : KoinComponent {
     @ExcludeTestSearch
     class TestComponentE(componentF: TestComponentF) : TestHQModule
 
-    @HQSingleton(binds = [TestComponentF::class])
+    @Singleton(binds = [TestComponentF::class])
     @Component
     @ExcludeTestSearch
     class TestComponentF : TestHQModule

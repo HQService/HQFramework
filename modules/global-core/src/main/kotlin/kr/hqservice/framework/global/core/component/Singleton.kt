@@ -4,6 +4,6 @@ import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-annotation class HQFactory(val binds: Array<KClass<*>> = [])
+annotation class Singleton(val binds: Array<KClass<*>> = [])
 
-typealias Factory = HQFactory
+typealias HQSingleton = Singleton

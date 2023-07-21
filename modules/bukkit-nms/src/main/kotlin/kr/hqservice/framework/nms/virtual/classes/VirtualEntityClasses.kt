@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.virtual.classes
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
@@ -14,7 +14,7 @@ import org.bukkit.inventory.EquipmentSlot
 import org.koin.core.annotation.Named
 
 @Component
-@HQSingleton(binds = [VirtualEntityClasses::class])
+@Singleton(binds = [VirtualEntityClasses::class])
 class VirtualEntityClasses(
     reflectionWrapper: NmsReflectionWrapper,
     @Named("base-component") private val componentWrapper: NmsService<String, BaseComponentWrapper>,

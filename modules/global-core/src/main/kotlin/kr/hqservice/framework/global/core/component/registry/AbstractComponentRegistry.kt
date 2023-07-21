@@ -437,8 +437,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
      * 빈의 종류와 Bind 타입들을 구합니다.
      */
     private fun getBeanProperties(klass: KClass<*>): BeanProperty {
-        val factory = klass.findAnnotation<HQFactory>()
-        val single = klass.findAnnotation<HQSingleton>()
+        val factory = klass.findAnnotation<Factory>()
+        val single = klass.findAnnotation<Singleton>()
         if (factory != null && single != null) {
             throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
         }

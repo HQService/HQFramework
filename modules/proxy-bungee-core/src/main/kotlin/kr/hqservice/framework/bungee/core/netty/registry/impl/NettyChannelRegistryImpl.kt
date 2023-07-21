@@ -6,7 +6,7 @@ import kr.hqservice.framework.bungee.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.impl.NettyChannelImpl
@@ -21,7 +21,7 @@ import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import net.md_5.bungee.api.ProxyServer
 
 @Component
-@HQSingleton(binds = [NettyChannelRegistry::class])
+@Singleton(binds = [NettyChannelRegistry::class])
 class NettyChannelRegistryImpl(
     private val config: HQYamlConfiguration
 ) : NettyChannelRegistry, HQSimpleComponent {

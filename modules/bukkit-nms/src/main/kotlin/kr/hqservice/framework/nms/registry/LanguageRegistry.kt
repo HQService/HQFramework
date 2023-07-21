@@ -3,14 +3,14 @@ package kr.hqservice.framework.nms.registry
 import com.google.gson.Gson
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import java.util.*
 
 @Component
-@HQSingleton(binds = [LanguageRegistry::class])
+@Singleton(binds = [LanguageRegistry::class])
 class LanguageRegistry : HQSimpleComponent {
     private val languageMap = mutableMapOf<Locale, Map<String, String>>()
 

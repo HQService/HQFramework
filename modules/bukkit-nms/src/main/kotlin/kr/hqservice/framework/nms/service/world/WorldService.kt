@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.service.world
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
@@ -14,7 +14,7 @@ import kotlin.reflect.cast
 
 @Component
 @Named("world")
-@HQSingleton(binds = [NmsService::class])
+@Singleton(binds = [NmsService::class])
 class WorldService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<World, WorldWrapper> {

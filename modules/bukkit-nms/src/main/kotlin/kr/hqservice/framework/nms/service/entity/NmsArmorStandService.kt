@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.service.entity
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsEntityService
 import kr.hqservice.framework.nms.service.NmsService
@@ -16,7 +16,7 @@ import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
 
 @Component
-@HQSingleton(binds = [NmsArmorStandService::class])
+@Singleton(binds = [NmsArmorStandService::class])
 class NmsArmorStandService(
     private val reflectionWrapper: NmsReflectionWrapper,
     @Named("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
