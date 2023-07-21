@@ -24,6 +24,6 @@ class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
     }
 
     override fun getHandlers(uniqueId: UUID): List<VirtualHandler> {
-        return handlers[uniqueId]?: emptyList()
+        return handlers[uniqueId] ?: emptyList()
     }
 }

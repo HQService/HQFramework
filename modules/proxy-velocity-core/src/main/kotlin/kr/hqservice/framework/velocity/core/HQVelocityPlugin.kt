@@ -86,7 +86,8 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
             while (`in`.nextJarEntry.also { entry = it } != null) {
                 if (entry.name == "velocity-plugin.json") {
                     InputStreamReader(`in`, StandardCharsets.UTF_8).use { pluginInfoReader ->
-                        val json: Map<String, JsonElement> = Json.parseToJsonElement(pluginInfoReader.readText()).jsonObject
+                        val json: Map<String, JsonElement> =
+                            Json.parseToJsonElement(pluginInfoReader.readText()).jsonObject
                         return json["main"]!!.jsonPrimitive.content
                     }
                 }

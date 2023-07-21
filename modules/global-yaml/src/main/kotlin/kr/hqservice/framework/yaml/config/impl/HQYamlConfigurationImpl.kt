@@ -14,11 +14,11 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     override fun load(file: File) {
         loader = YAMLConfigurationLoader.builder().setFile(file).build()
         rootSection = HQYamlConfigurationSectionImpl(loader!!.load())
-        if(cachedFile == null) cachedFile = file
+        if (cachedFile == null) cachedFile = file
     }
 
     override fun save(file: File) {
-        val rootSection = rootSection?: return
+        val rootSection = rootSection ?: return
         YAMLConfigurationLoader
             .builder()
             .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
@@ -40,15 +40,15 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getKeys(): List<String> {
-        return rootSection?.getKeys()?: emptyList()
+        return rootSection?.getKeys() ?: emptyList()
     }
 
     override fun getStringList(key: String): List<String> {
-        return rootSection?.getStringList(key)?: emptyList()
+        return rootSection?.getStringList(key) ?: emptyList()
     }
 
     override fun getIntegerList(key: String): List<Int> {
-        return rootSection?.getIntegerList(key)?: emptyList()
+        return rootSection?.getIntegerList(key) ?: emptyList()
     }
 
     override fun getBoolean(key: String): Boolean {
@@ -56,15 +56,15 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getInt(key: String): Int {
-        return rootSection?.getInt(key)?: 0
+        return rootSection?.getInt(key) ?: 0
     }
 
     override fun getDouble(key: String): Double {
-        return rootSection?.getDouble(key)?: .0
+        return rootSection?.getDouble(key) ?: .0
     }
 
     override fun getLong(key: String): Long {
-        return rootSection?.getLong(key)?: 0
+        return rootSection?.getLong(key) ?: 0
     }
 
     override fun set(key: String, value: Any?) {

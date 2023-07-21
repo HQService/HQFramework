@@ -32,7 +32,7 @@ class VirtualArmorStand(
     }
 
     fun setHeadPose(x: Float, y: Float, z: Float) {
-        wrapper.setHeadPose(Triple(x,y,z))
+        wrapper.setHeadPose(Triple(x, y, z))
         switchMetaMask()
     }
 }

@@ -17,8 +17,12 @@ class HQButtonBuilder(
     private val itemStack = original.clone()
     private var displayName: String = itemStack.itemMeta?.displayName ?: ""
     private var lore: MutableList<String> = itemStack.itemMeta?.lore ?: mutableListOf()
-    private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags ?.toMutableSet()?: mutableSetOf()
-    private var customModelData: Int = if (itemStack.itemMeta?.hasCustomModelData() == true) { itemStack.itemMeta!!.customModelData } else { 0 }
+    private var itemFlags: MutableSet<ItemFlag> = itemStack.itemMeta?.itemFlags?.toMutableSet() ?: mutableSetOf()
+    private var customModelData: Int = if (itemStack.itemMeta?.hasCustomModelData() == true) {
+        itemStack.itemMeta!!.customModelData
+    } else {
+        0
+    }
 
     private var owningPlayer: UUID? = null
     private var removable = false
@@ -32,7 +36,7 @@ class HQButtonBuilder(
             else itemStack.removeEnchantment(Enchantment.LURE)
         }
 
-    private var clickFunction: (ButtonClickEvent)->Unit = {}
+    private var clickFunction: (ButtonClickEvent) -> Unit = {}
 
     constructor(material: Material) : this(material, 1)
 
@@ -115,7 +119,7 @@ class HQButtonBuilder(
             }
             meta.itemMetaEditScope()
         }
-        if(owningPlayer != null && itemStack.type != Material.PLAYER_HEAD) {
+        if (owningPlayer != null && itemStack.type != Material.PLAYER_HEAD) {
             owningPlayer = null
         }
         itemStack.itemMeta = itemStack.itemMeta?.also(scope)

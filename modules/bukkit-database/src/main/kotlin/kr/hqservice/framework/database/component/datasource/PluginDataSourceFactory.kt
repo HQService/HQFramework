@@ -20,6 +20,7 @@ class PluginDataSourceFactory(
     instanceFactoryRegistry: InstanceFactoryRegistry
 ) : KoinComponent, HQInstanceFactory<HQDataSource>, HQModule {
     private val dataSources: MutableMap<String, HQDataSource> = ConcurrentHashMap()
+
     init {
         instanceFactoryRegistry.registerInstanceFactory(this)
     }
@@ -37,7 +38,7 @@ class PluginDataSourceFactory(
             return dataSources[dataSourceKey]!!
         }
 
-        val dataSource = when(dataSourceId) {
+        val dataSource = when (dataSourceId) {
             "mysql" -> {
                 val host = if (configSection == null) {
                     plugin.getHQConfig().getDatabaseHost()

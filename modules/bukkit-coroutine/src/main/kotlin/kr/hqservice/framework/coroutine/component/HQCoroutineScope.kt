@@ -6,7 +6,8 @@ import kr.hqservice.framework.coroutine.PluginCoroutineContextElement
 import kr.hqservice.framework.global.core.component.HQComponent
 import kotlin.coroutines.CoroutineContext
 
-abstract class HQCoroutineScope(plugin: HQBukkitPlugin, private val dispatcher: CoroutineDispatcher) : CoroutineScope, HQComponent {
+abstract class HQCoroutineScope(plugin: HQBukkitPlugin, private val dispatcher: CoroutineDispatcher) : CoroutineScope,
+    HQComponent {
     private val supervisorJob = SupervisorJob()
     private val pluginCoroutineContextElement = PluginCoroutineContextElement(plugin)
 

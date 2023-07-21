@@ -17,7 +17,8 @@ import java.util.logging.Logger
 @Named("disconnect")
 @HQSingleton(binds = [DefermentLock::class])
 @Component
-class DisconnectDefermentLock(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO), DefermentLock {
+class DisconnectDefermentLock(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO),
+    DefermentLock {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {
             "DisconnectDefermentCoroutine 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +

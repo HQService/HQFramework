@@ -3,7 +3,7 @@ package kr.hqservice.framework.netty.api
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.PacketHandler
-import java.util.UUID
+import java.util.*
 import kotlin.reflect.KClass
 
 interface NettyServer {

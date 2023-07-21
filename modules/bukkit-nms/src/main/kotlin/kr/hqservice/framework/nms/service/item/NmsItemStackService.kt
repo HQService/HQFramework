@@ -24,19 +24,30 @@ class NmsItemStackService(
     private val craftItemStackClass = reflectionWrapper.getCraftBukkitClass("inventory.CraftItemStack")
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
 
-    private val asNmsCopyFunction = reflectionWrapper.getStaticFunction(craftItemStackClass, "asNMSCopy", nmsItemStackClass, listOf(ItemStack::class))
-    private val asBukkitCopyFunction = reflectionWrapper.getStaticFunction(craftItemStackClass, "asBukkitCopy", ItemStack::class, listOf(nmsItemStackClass))
+    private val asNmsCopyFunction = reflectionWrapper.getStaticFunction(
+        craftItemStackClass,
+        "asNMSCopy",
+        nmsItemStackClass,
+        listOf(ItemStack::class)
+    )
+    private val asBukkitCopyFunction = reflectionWrapper.getStaticFunction(
+        craftItemStackClass,
+        "asBukkitCopy",
+        ItemStack::class,
+        listOf(nmsItemStackClass)
+    )
 
     override fun wrap(target: ItemStack): NmsItemStackWrapper {
         return NmsItemStackWrapper(
-            asNmsCopyFunction.call(target)?: throw IllegalArgumentException(),
+            asNmsCopyFunction.call(target) ?: throw IllegalArgumentException(),
             reflectionWrapper,
             tagService, itemService, this
         )
     }
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
-        return asBukkitCopyFunction.call(wrapper.getUnwrappedInstance()) as? ItemStack?: throw IllegalArgumentException()
+        return asBukkitCopyFunction.call(wrapper.getUnwrappedInstance()) as? ItemStack
+            ?: throw IllegalArgumentException()
     }
 
     override fun getWrapper(nmsInstance: Any): NmsItemStackWrapper {

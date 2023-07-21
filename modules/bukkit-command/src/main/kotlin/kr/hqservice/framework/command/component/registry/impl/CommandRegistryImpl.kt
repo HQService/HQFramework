@@ -18,7 +18,8 @@ import kotlin.reflect.jvm.jvmErasure
 class CommandRegistryImpl : CommandRegistry {
     private val commandNodes: Multimap<KClass<out HQCommand>, HQCommandNode> = ArrayListMultimap.create()
     private val commandTrees: Multimap<KClass<out HQCommand>, HQCommandTree> = ArrayListMultimap.create()
-    private val commandExecutors: Multimap<KClass<out HQCommandTree>, Pair<String, HQCommandExecutor>> = ArrayListMultimap.create()
+    private val commandExecutors: Multimap<KClass<out HQCommandTree>, Pair<String, HQCommandExecutor>> =
+        ArrayListMultimap.create()
 
     override fun <T : HQCommandTree> addNode(parent: KClass<T>, node: HQCommandNode) {
         commandNodes.put(parent, node)

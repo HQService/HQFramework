@@ -23,8 +23,8 @@ class ChannelWrapper(
         this.enabled = enabled
     }
 
-    fun<T : Packet> startCallback(packet: Packet, type: KClass<T>, onReceived: (packet: T)-> Unit) {
-        val handler = object: PacketCallbackHandler<T> {
+    fun <T : Packet> startCallback(packet: Packet, type: KClass<T>, onReceived: (packet: T) -> Unit) {
+        val handler = object : PacketCallbackHandler<T> {
             override fun onCallbackReceived(packet: T) {
                 onReceived(packet)
             }
@@ -33,8 +33,8 @@ class ChannelWrapper(
     }
 
     fun sendPacket(packet: Packet) {
-        if(enabled) {
-            if(handler.connectionState == ConnectionState.CONNECTED) {
+        if (enabled) {
+            if (handler.connectionState == ConnectionState.CONNECTED) {
                 channel.writeAndFlush(packet)
             } else logger.severe("Some logic tried to send packet before connection established or disconnected. (Packet: ${packet::class.simpleName})")
         }

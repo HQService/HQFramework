@@ -7,7 +7,6 @@ import kr.hqservice.framework.command.component.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
 import org.bukkit.Server
-import org.bukkit.command.CommandSender
 
 @Component
 class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQCommandArgumentProvider<HQBukkitPlugin> {
@@ -36,6 +35,7 @@ class HQBukkitPluginCommandArgumentProvider(private val server: Server) : HQComm
     }
 
     override fun cast(context: CommandContext, string: String): HQBukkitPlugin {
-        return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().first { it.name.lowercase() == string.lowercase() }
+        return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>()
+            .first { it.name.lowercase() == string.lowercase() }
     }
 }

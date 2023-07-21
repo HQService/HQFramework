@@ -7,15 +7,18 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
-import kotlin.reflect.full.*
+import kotlin.reflect.full.functions
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.staticFunctions
+import kotlin.reflect.full.staticProperties
 import kotlin.reflect.jvm.jvmErasure
 
 @Component
@@ -126,7 +129,7 @@ class NmsReflectionWrapperImpl(
                 it.createVirtualMessage()?.also { virtual ->
                     virtual.send { packet ->
                         sendPacket.call(connection, packet)
-                        if(it is VirtualContainer) player.updateInventory()
+                        if (it is VirtualContainer) player.updateInventory()
                     }
                 }
             }
@@ -138,7 +141,7 @@ class NmsReflectionWrapperImpl(
                 players.forEach { player ->
                     val handle = getHandle.call(player)
                     val connection = connection.call(handle)
-                    if(connection != null) virtual.send { packet ->
+                    if (connection != null) virtual.send { packet ->
                         sendPacket.call(connection, packet)
                     }
                 }
@@ -160,7 +163,11 @@ class NmsReflectionWrapperImpl(
         } ?: throw IllegalArgumentException()
     }
 
-    override fun getStaticField(clazz: KClass<*>, staticFieldName: String, vararg handlers: VersionHandler): KCallable<*> {
+    override fun getStaticField(
+        clazz: KClass<*>,
+        staticFieldName: String,
+        vararg handlers: VersionHandler
+    ): KCallable<*> {
         val type = handlers.sortedByDescending { it.getVersion().ordinal }
             .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
         return clazz.staticProperties.firstOrNull {

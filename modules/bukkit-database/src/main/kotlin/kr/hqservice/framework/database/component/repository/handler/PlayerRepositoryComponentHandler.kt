@@ -6,7 +6,8 @@ import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 
 @ComponentHandler
-class PlayerRepositoryComponentHandler(private val playerRepositoryRegistry: PlayerRepositoryRegistry) : HQComponentHandler<HQPlayerRepository<*>> {
+class PlayerRepositoryComponentHandler(private val playerRepositoryRegistry: PlayerRepositoryRegistry) :
+    HQComponentHandler<HQPlayerRepository<*>> {
     override fun setup(element: HQPlayerRepository<*>) {
         playerRepositoryRegistry.register(element)
     }

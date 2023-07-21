@@ -4,13 +4,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.factory.VirtualViewFactory
 import kr.hqservice.framework.nms.virtual.factory.impl.GlobalVirtualFactory
 import kr.hqservice.framework.nms.virtual.factory.impl.SingleVirtualFactory
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -29,17 +29,22 @@ suspend fun Player.virtualScope(factoryScope: suspend VirtualFactory.() -> Unit)
     factory.factoryScope()
 }
 
-fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.()->Unit): Job {
-    val factory: VirtualFactory = if(distance > .0) {
-        val receivers = location.world?.getNearbyEntities(location, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
+fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.() -> Unit): Job {
+    val factory: VirtualFactory = if (distance > .0) {
+        val receivers =
+            location.world?.getNearbyEntities(location, distance, distance, distance)?.filterIsInstance<Player>()
+                ?.filter { it.isOnline } ?: emptyList()
         GlobalVirtualFactory(receivers, reflectionWrapper)
     } else SingleVirtualFactory(this, reflectionWrapper, itemStackService)
     return scope.launch {
-        factory.factoryScope() }
+        factory.factoryScope()
+    }
 }
 
 fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -> Unit): Job {
-    val receivers = world?.getNearbyEntities(this, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }?: emptyList()
+    val receivers =
+        world?.getNearbyEntities(this, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }
+            ?: emptyList()
     val factory = GlobalVirtualFactory(receivers, reflectionWrapper)
     return scope.launch {
         factory.factoryScope()

@@ -23,7 +23,8 @@ class PluginListCommand(
         priority = 100
     )
     fun sendPluginList(target: CommandSender) {
-        val hqPlugins = server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().groupBy { it.group }.toMutableMap()
+        val hqPlugins =
+            server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>().groupBy { it.group }.toMutableMap()
         target.sendMessage("<s:b0fc90>All HQ Plugins (${hqPlugins.values.sumOf { it.size }}):".colorize())
         hqPlugins.remove("HQPlugin")?.apply {
             target.sendMessage(" <s:74b1f7>HQPlugin (${size}):".colorize())

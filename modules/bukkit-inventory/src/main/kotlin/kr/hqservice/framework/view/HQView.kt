@@ -76,7 +76,8 @@ abstract class HQView(
 
 class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle by inventoryLifecycle, ButtonPlaceable
 
-class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Player) : InventoryLifecycle by inventoryLifecycle,
+class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Player) :
+    InventoryLifecycle by inventoryLifecycle,
     ButtonPlaceable {
     fun title(title: String, titleScope: TitleElement.() -> Unit = {}) {
         titleScope(TitleElement(player, title, this).apply { setTitle() })

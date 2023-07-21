@@ -7,7 +7,8 @@ import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.component.handler.impl.KoinModuleComponentHandler
 
 @ComponentHandler(depends = [KoinModuleComponentHandler::class])
-class CommandArgumentProviderComponentHandler(private val registry: CommandArgumentProviderRegistry) : HQComponentHandler<CommandArgumentProvider<*>> {
+class CommandArgumentProviderComponentHandler(private val registry: CommandArgumentProviderRegistry) :
+    HQComponentHandler<CommandArgumentProvider<*>> {
     override fun setup(element: CommandArgumentProvider<*>) {
         registry.addProvider(element)
     }

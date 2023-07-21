@@ -33,13 +33,23 @@ class VirtualContainer(
         val container = containerService.wrap(player)
 
         val bukkitView = bukkitViewFunction.call(container.getUnwrappedInstance())
-        if(bukkitView !is InventoryView) throw UnsupportedOperationException("error1")
+        if (bukkitView !is InventoryView) throw UnsupportedOperationException("error1")
 
         val type = bukkitView.topInventory.type
         val size = bukkitView.topInventory.size
-        val containerType = VirtualContainerType.getType(type, size)?: return null
+        val containerType = VirtualContainerType.getType(type, size) ?: return null
         val virtualContainerType = containerType.getVirtualType(containersClass)
-        val constructor = packetClass.java.getConstructor(Int::class.javaPrimitiveType, containersClass.java, baseComponentService.getTargetClass().java)
-        return VirtualMessageImpl(constructor.newInstance(container.getContainerId(), virtualContainerType, baseComponentService.wrap(title).getUnwrappedInstance()))
+        val constructor = packetClass.java.getConstructor(
+            Int::class.javaPrimitiveType,
+            containersClass.java,
+            baseComponentService.getTargetClass().java
+        )
+        return VirtualMessageImpl(
+            constructor.newInstance(
+                container.getContainerId(),
+                virtualContainerType,
+                baseComponentService.wrap(title).getUnwrappedInstance()
+            )
+        )
     }
 }

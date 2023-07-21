@@ -1,7 +1,6 @@
 package kr.hqservice.framework.nms.util.impl
 
 import io.netty.channel.Channel
-import io.netty.channel.ChannelPipeline
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
@@ -13,9 +12,7 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
-import java.util.Collections
-import java.util.LinkedList
-import java.util.UUID
+import java.util.*
 import kotlin.reflect.jvm.isAccessible
 
 @Component
@@ -25,7 +22,10 @@ class NettyInjectUtilImpl(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NettyInjectUtil, HQSimpleComponent {
-    private val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection", Version.V_15.handle("server.network.ServerGamePacketListenerImpl", true))
+    private val listenerClass = reflectionWrapper.getNmsClass(
+        "PlayerConnection",
+        Version.V_15.handle("server.network.ServerGamePacketListenerImpl", true)
+    )
     private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))
     private val connectionField = reflectionWrapper.getField(listenerClass, connectionClass)
     private val channelField = reflectionWrapper.getField(connectionClass, Channel::class)
@@ -45,7 +45,8 @@ class NettyInjectUtilImpl(
         val nmsServer = reflectionWrapper.getNmsServer(server)
         val mcServerClass = reflectionWrapper.getNmsClass("MinecraftServer", Version.V_15.handle("server"))
 
-        val serverConnectionListener = reflectionWrapper.getNmsClass("ServerConnection", Version.V_15.handle("server.network"))
+        val serverConnectionListener =
+            reflectionWrapper.getNmsClass("ServerConnection", Version.V_15.handle("server.network"))
         val listenerField = reflectionWrapper.getField(mcServerClass, serverConnectionListener)
         listenerField.isAccessible = true
         val listener = listenerField.call(nmsServer)
@@ -70,8 +71,12 @@ class NettyInjectUtilImpl(
         val channel = getPlayerChannel(player)
         val pipeline = channel.pipeline()
 
-        if(pipeline.get("hq_packet_handler") == null) {
-            pipeline.addBefore("packet_handler", "hq_packet_handler", PacketHandler(player, plugin, virtualHandlerRegistry))
+        if (pipeline.get("hq_packet_handler") == null) {
+            pipeline.addBefore(
+                "packet_handler",
+                "hq_packet_handler",
+                PacketHandler(player, plugin, virtualHandlerRegistry)
+            )
         }
     }
 

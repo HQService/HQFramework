@@ -34,7 +34,11 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
                 "HQFramework", "1.0.0",
                 HQFrameworkBukkitMock::class.java.name
             )
-            val instance = MockBukkit.getMock().pluginManager.loadPlugin(HQFrameworkBukkitMock::class.java, description, arrayOfNulls(0))
+            val instance = MockBukkit.getMock().pluginManager.loadPlugin(
+                HQFrameworkBukkitMock::class.java,
+                description,
+                arrayOfNulls(0)
+            )
             MockBukkit.getMock().pluginManager.enablePlugin(instance)
             plugin = instance as HQFrameworkBukkitMock
             return plugin!!
@@ -54,9 +58,15 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
     }
 
     internal constructor() : super()
-    internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+    internal constructor(
+        loader: JavaPluginLoader,
+        description: PluginDescriptionFile,
+        dataFolder: File,
+        file: File
+    ) : super(loader, description, dataFolder, file)
 
-    public override val componentRegistry: ComponentRegistry = spyk(BukkitComponentRegistry(this), recordPrivateCalls = true)
+    public override val componentRegistry: ComponentRegistry =
+        spyk(BukkitComponentRegistry(this), recordPrivateCalls = true)
 
     override fun onPreEnable() {
         stubComponentRepository()

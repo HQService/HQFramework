@@ -16,7 +16,6 @@ import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.component.KoinComponent
-import java.lang.NumberFormatException
 import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
@@ -32,7 +31,7 @@ class NettyServerBootstrap(
     fun initializing() {
         val future = HQNettyBootstrap(logger, config).initServer()
         future.whenCompleteAsync { _, throwable ->
-            if(throwable != null) {
+            if (throwable != null) {
                 logger.severe("failed to bootup successfully.")
                 throwable.printStackTrace()
             } else logger.info("server initialization success!")
@@ -43,7 +42,9 @@ class NettyServerBootstrap(
         registerDefaultListeners()
     }
 
-    fun shutdown() { channelRegistry.shutdown() }
+    fun shutdown() {
+        channelRegistry.shutdown()
+    }
 
     private fun registerDefaultListeners() {
         Direction.INBOUND.addListener(HandShakePacket::class) { packet, wrapper ->
@@ -70,7 +71,7 @@ class NettyServerBootstrap(
                 } catch (e: NumberFormatException) {
                     channelRegistry.getChannelByServerName(packet.targetServer)
                 }.channel.writeAndFlush(RelayingResult(packet.getRelayByte()))
-            /*sendPacket(RelayingResult(packet.getRelay()))*/
+                /*sendPacket(RelayingResult(packet.getRelay()))*/
             } catch (e: IllegalArgumentException) {
                 logger.severe("Relaying packet failed due to TargetServer Offline!")
             }
@@ -78,7 +79,7 @@ class NettyServerBootstrap(
 
         Direction.INBOUND.addListener(BroadcastPacket::class) { packet, _ ->
             val targetChannel = packet.targetChannel
-            if(targetChannel != null) {
+            if (targetChannel != null) {
                 packetSender.sendMessageToChannel(targetChannel, packet.message, packet.logging)
             } else packetSender.broadcast(packet.message, packet.logging)
         }

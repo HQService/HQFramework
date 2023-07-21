@@ -4,11 +4,10 @@ import com.google.gson.Gson
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.HQSingleton
-import org.bukkit.plugin.Plugin
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.Locale
+import java.util.*
 
 @Component
 @HQSingleton(binds = [LanguageRegistry::class])

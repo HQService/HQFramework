@@ -12,7 +12,7 @@ class PingCalculator {
 
     fun process(ms: Long) {
         lastPing = ms
-        if(lastIndex < 10)
+        if (lastIndex < 10)
             pingArray[lastIndex++] = ms
         else {
             var sum = 0L

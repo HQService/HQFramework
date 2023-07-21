@@ -10,7 +10,6 @@ import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import org.koin.core.annotation.Named
-import java.lang.UnsupportedOperationException
 import kotlin.reflect.KClass
 
 @Component
@@ -22,19 +21,21 @@ class NmsItemService(
 ) : NmsService<NmsItemStackWrapper, NmsItemWrapper> {
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
     private val nmsItemClass = reflectionWrapper.getNmsClass("Item", Version.V_15.handle("world.item"))
-    private val getItemFunction = reflectionWrapper.getFunction(nmsItemStackClass, "getItem",
+    private val getItemFunction = reflectionWrapper.getFunction(
+        nmsItemStackClass, "getItem",
         Version.V_15.handle("b"),
-        Version.V_17.handle("c"))
+        Version.V_17.handle("c")
+    )
 
     override fun wrap(target: NmsItemStackWrapper): NmsItemWrapper {
         return NmsItemWrapper(
             target,
-            getItemFunction.call(target.getUnwrappedInstance())?: throw IllegalArgumentException(),
+            getItemFunction.call(target.getUnwrappedInstance()) ?: throw IllegalArgumentException(),
             nmsItemStackClass,
             nmsItemClass,
             reflectionWrapper,
             languageRegistry
-            )
+        )
     }
 
     override fun unwrap(wrapper: NmsItemWrapper): NmsItemStackWrapper {

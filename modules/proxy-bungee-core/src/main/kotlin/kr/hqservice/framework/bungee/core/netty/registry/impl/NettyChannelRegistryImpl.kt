@@ -45,7 +45,14 @@ class NettyChannelRegistryImpl(
 
         val connectedChannels = mutableListOf<NettyChannel>()
         connectedChannels.add(channelVO)
-        nameChannelContainer.forEach { (channelName, wrap) -> connectedChannels.add(NettyChannelImpl(wrap.port, channelName)) }
+        nameChannelContainer.forEach { (channelName, wrap) ->
+            connectedChannels.add(
+                NettyChannelImpl(
+                    wrap.port,
+                    channelName
+                )
+            )
+        }
         portChannelContainer.values.forEach { it.sendPacket(connectedPacket) }
 
         portChannelContainer[port] = wrapper
@@ -54,13 +61,19 @@ class NettyChannelRegistryImpl(
         val handlerBoss = wrapper.channel.pipeline().get(BossHandler::class.java)
         handlerBoss.setDisconnectionHandler(this::onChannelInactive)
         handlerBoss.setPacketPreprocessHandler { packet, wrap ->
-            ProxyServer.getInstance().pluginManager.callEvent(NettyPacketReceivedEvent(packet, wrap)) }
+            ProxyServer.getInstance().pluginManager.callEvent(NettyPacketReceivedEvent(packet, wrap))
+        }
 
         Thread {
             val players = mutableListOf<NettyPlayer>()
             ProxyServer.getInstance().players.forEach {
                 try {
-                    players.add(NettyPlayerImpl(it.name, it.uniqueId, connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port }))
+                    players.add(
+                        NettyPlayerImpl(
+                            it.name,
+                            it.uniqueId,
+                            connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port })
+                    )
                 } catch (_: Exception) {
                     it.disconnect("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
                 }
@@ -69,7 +82,7 @@ class NettyChannelRegistryImpl(
         }.start()
     }
 
-    override fun loopChannels(block: (ChannelWrapper)->Unit) {
+    override fun loopChannels(block: (ChannelWrapper) -> Unit) {
         portChannelContainer.values.forEach(block)
     }
 

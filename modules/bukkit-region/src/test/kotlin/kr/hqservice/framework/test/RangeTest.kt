@@ -4,15 +4,15 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.region.extension.asBlockLocation
-import org.bukkit.Location
-import org.bukkit.World
 import kr.hqservice.framework.region.extension.rangeTo
 import kr.hqservice.framework.region.range.DimensionRange
 import kr.hqservice.framework.region.range.LineRange
 import kr.hqservice.framework.region.range.enums.LineAxis
 import kr.hqservice.framework.region.range.enums.Offset
 import kr.hqservice.framework.region.range.enums.PlaneAxis
+import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.World
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -35,7 +35,7 @@ class RangeTest {
     fun createRangeTest() {
         val blockLocation1 = Location(world, -50.5, 1.5, 10.5).asBlockLocation()
         val blockLocation2 = Location(world, 12.5, 55.5, 125.5).asBlockLocation()
-        val range = blockLocation1 .. blockLocation2
+        val range = blockLocation1..blockLocation2
 
         assertIs<DimensionRange>(range)
         assertIsNot<LineRange>(range)
@@ -53,13 +53,13 @@ class RangeTest {
     fun collisionTest() {
         val blockLocation1 = Location(world, -50.5, 1.5, 10.5).asBlockLocation()
         val blockLocation2 = Location(world, 12.5, 55.5, 125.5).asBlockLocation()
-        val range = blockLocation1 .. blockLocation2
+        val range = blockLocation1..blockLocation2
 
         val blockLocation3 = Location(world, 10.5, 10.2, 22.5).asBlockLocation()
         val blockLocation4 = Location(world, -20.5, 22.2, 50.5).asBlockLocation()
         assertTrue(range.contains(blockLocation3))
 
-        val otherRange = blockLocation3 .. blockLocation4
+        val otherRange = blockLocation3..blockLocation4
 
         assertTrue(range.collidesWith(otherRange))
         assertTrue(otherRange.collidesWith(range))
@@ -69,20 +69,21 @@ class RangeTest {
     fun iterableTest() {
         val blockLocation1 = Location(world, 5.5, 55.5, 10.5).asBlockLocation()
         val blockLocation2 = Location(world, 5.5, 55.5, 20.5).asBlockLocation()
-        val range = blockLocation1 .. blockLocation2
+        val range = blockLocation1..blockLocation2
         range.print("range_instance= ")
         range.minPosition.print("min= ")
         range.maxPosition.print("max= ")
 
 
         val iter = range.iterator()
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             val next = iter.next()
             next.print("next= ")
         }
 
         range.forEach {
-            it.getBlock().type = Material.STONE }
+            it.getBlock().type = Material.STONE
+        }
 
         assertEquals(range.random().getBlock().type, Material.STONE)
     }

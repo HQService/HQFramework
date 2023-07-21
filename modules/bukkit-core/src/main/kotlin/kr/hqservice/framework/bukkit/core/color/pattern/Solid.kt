@@ -10,7 +10,7 @@ internal object Solid : TextColorPattern {
     override fun colorize(text: String): String {
         var result: String = text
         val matcher = pattern.matcher(text)
-        while(matcher.find()) {
+        while (matcher.find()) {
             val hexColor = matcher.group(1)
             val color = ChatColor.of(Color(hexColor.toInt(16)))
             result = result.replace(matcher.group(), color.toString())

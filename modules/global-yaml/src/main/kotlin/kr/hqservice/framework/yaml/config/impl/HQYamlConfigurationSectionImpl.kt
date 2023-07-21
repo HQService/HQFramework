@@ -9,7 +9,7 @@ open class HQYamlConfigurationSectionImpl(
     private fun findNode(fullPath: String): ConfigurationNode {
         val nodeKeys = fullPath.split('.')
         var pointer = root
-        for(element in nodeKeys)
+        for (element in nodeKeys)
             pointer = pointer.getNode(element)
         return pointer
     }
@@ -20,7 +20,7 @@ open class HQYamlConfigurationSectionImpl(
 
     override fun getSection(key: String): HQYamlConfigurationSection? {
         val node = findNode(key)
-        return if(node.isVirtual) null else HQYamlConfigurationSectionImpl(node)
+        return if (node.isVirtual) null else HQYamlConfigurationSectionImpl(node)
     }
 
     override fun getString(key: String): String {
@@ -34,12 +34,12 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getStringList(key: String): List<String> {
-        return if(!findNode(key).isList) emptyList()
+        return if (!findNode(key).isList) emptyList()
         else findNode(key).getList { it.toString() }
     }
 
     override fun getIntegerList(key: String): List<Int> {
-        return if(!findNode(key).isList) emptyList()
+        return if (!findNode(key).isList) emptyList()
         else findNode(key).getList {
             if (it is String) it.toInt()
             else it as Int

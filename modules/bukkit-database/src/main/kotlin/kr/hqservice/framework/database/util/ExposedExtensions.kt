@@ -13,7 +13,6 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption

@@ -15,9 +15,12 @@ import kotlin.reflect.KClass
 class Vector3fService(
     private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {
-    private val vector3fClass = reflectionWrapper.getNmsClass("Vector3f",
-        Version.V_15.handle("core"))
-    private val vector3fConstructor = vector3fClass.java.getConstructor(Float::class.java, Float::class.java, Float::class.java)
+    private val vector3fClass = reflectionWrapper.getNmsClass(
+        "Vector3f",
+        Version.V_15.handle("core")
+    )
+    private val vector3fConstructor =
+        vector3fClass.java.getConstructor(Float::class.java, Float::class.java, Float::class.java)
 
     override fun wrap(target: Triple<Float, Float, Float>): Vector3fWrapper {
         val vector3f = vector3fConstructor.newInstance(target.first, target.second, target.third)

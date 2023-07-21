@@ -53,10 +53,12 @@ class HQNettyClient(
 
             val container = container as ChannelContainerImpl
             Direction.INBOUND.addListener(ChannelConnectedPacket::class) { packet, _ ->
-                container.registerChannel(packet.channel) }
+                container.registerChannel(packet.channel)
+            }
 
             Direction.INBOUND.addListener(ChannelDisconnectedPacket::class) { packet, _ ->
-                container.unregisterChannel(packet.channel) }
+                container.unregisterChannel(packet.channel)
+            }
 
             Direction.INBOUND.addListener(ChannelListPacket::class) { packet, _ ->
                 /*println("ChannelListPacket Received Log -> ")
@@ -78,12 +80,14 @@ class HQNettyClient(
                 print("   channel: ")
                 packet.sourceChannel.printLog(false)
                 println(")")*/
-                when(packet.state) {
+                when (packet.state) {
                     PlayerConnectionState.CONNECTED,
                     PlayerConnectionState.SWITCHED_CHANNEL ->
                         container.addPlayer(packet.player)
+
                     PlayerConnectionState.DISCONNECT ->
                         container.removePlayer(packet.player)
+
                     else -> {}
                 }
             }
@@ -100,16 +104,15 @@ class HQNettyClient(
             .addListener(ChannelFutureListener {
                 if (it.isSuccess) {
                     future.complete(it.channel())
-                }
-                else future.completeExceptionally(it.cause())
+                } else future.completeExceptionally(it.cause())
             })
         return future
     }
 
     private fun NettyChannel?.printLog(tab: Boolean) {
-        if(this == null) print("null\n")
+        if (this == null) print("null\n")
         else {
-            val first = if(tab) "\t" else ""
+            val first = if (tab) "\t" else ""
             print("\n")
             println("$first\tname: ${getName()}")
             println("$first\tport: ${getPort()}")

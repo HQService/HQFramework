@@ -40,6 +40,6 @@ class ChannelContainerImpl : ChannelContainer, HQSimpleComponent {
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {
-        return channelMap[channel]?: throw IllegalArgumentException("unknown channel ${channel.getName()}")
+        return channelMap[channel] ?: throw IllegalArgumentException("unknown channel ${channel.getName()}")
     }
 }

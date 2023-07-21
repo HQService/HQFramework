@@ -5,7 +5,7 @@ import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.nms.handler.impl.NameVersionHandler
 
-enum class Version{
+enum class Version {
     V_7,
     V_8,
     V_9,
@@ -24,7 +24,7 @@ enum class Version{
     V_19_4;
 
     fun support(version: Version, minor: Int = 0): Boolean {
-        return if(minor != 0) try {
+        return if (minor != 0) try {
             support(Version.valueOf("${version.name}_$minor"))
         } catch (_: Exception) {
             support(version)
@@ -37,8 +37,8 @@ enum class Version{
         return NameVersionHandler(this, name, changedName)
     }
 
-    fun handleFunction(name: String, block: FunctionType.()->Unit = {}): VersionHandler {
-        if(name.isEmpty()) throw IllegalArgumentException("method without name")
+    fun handleFunction(name: String, block: FunctionType.() -> Unit = {}): VersionHandler {
+        if (name.isEmpty()) throw IllegalArgumentException("method without name")
 
         val type = FunctionType(name)
         block(type)

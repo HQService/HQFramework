@@ -9,7 +9,8 @@ import kotlin.reflect.jvm.jvmErasure
 abstract class DefinitionException(private val detailMessage: String, val classes: List<KClass<*>>) : Exception() {
     override val message: String
         get() = "$detailMessage: " +
-                classes.map { "\n$it [${getDetailedParameterInfoMessage(it)}]" }.toString().replace("[", "").replace("]", "") + "\n" +
+                classes.map { "\n$it [${getDetailedParameterInfoMessage(it)}]" }.toString().replace("[", "")
+                    .replace("]", "") + "\n" +
                 ""
 
     private fun getDetailedParameterInfoMessage(kClass: KClass<*>): String {

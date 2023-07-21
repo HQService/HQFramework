@@ -1,8 +1,8 @@
 package kr.hqservice.framework.command.component.handler
 
-import kr.hqservice.framework.command.component.ParentCommand
 import kr.hqservice.framework.command.component.HQCommandRoot
 import kr.hqservice.framework.command.component.HQCommandTree
+import kr.hqservice.framework.command.component.ParentCommand
 import kr.hqservice.framework.command.component.registry.CommandRegistry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
@@ -17,7 +17,8 @@ class CommandTreeComponentHandler(private val registry: CommandRegistry) :
             return
         }
 
-        val parentCommand = element::class.findAnnotation<ParentCommand>() ?: throw IllegalStateException("Command trees must have parent tree command(s)")
+        val parentCommand = element::class.findAnnotation<ParentCommand>()
+            ?: throw IllegalStateException("Command trees must have parent tree command(s)")
         parentCommand.binds.forEach { parentTree ->
             registry.addTree(parentTree, element)
         }

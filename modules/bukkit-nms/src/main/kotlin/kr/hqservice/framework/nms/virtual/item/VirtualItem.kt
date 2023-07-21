@@ -2,12 +2,12 @@ package kr.hqservice.framework.nms.virtual.item
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.ContainerWrapper
-import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
+import kr.hqservice.framework.nms.wrapper.ContainerWrapper
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -39,7 +39,10 @@ class VirtualItem(
                 }
             )
         val message = packetClass.java.getConstructor(
-            Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, itemStackService.getTargetClass().java
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            Int::class.javaPrimitiveType,
+            itemStackService.getTargetClass().java
         ).newInstance(container.getContainerId(), container.getStateId(), slot, nmsItemStack.getUnwrappedInstance())
         return VirtualMessageImpl(message)
     }

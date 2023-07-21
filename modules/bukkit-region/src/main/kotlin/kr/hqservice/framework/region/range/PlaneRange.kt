@@ -3,8 +3,8 @@ package kr.hqservice.framework.region.range
 import kr.hqservice.framework.region.location.BlockLocation
 import kr.hqservice.framework.region.location.impl.BlockLocationImpl
 import kr.hqservice.framework.region.range.enums.LineAxis
-import kr.hqservice.framework.region.range.enums.PlaneAxis
 import kr.hqservice.framework.region.range.enums.Offset
+import kr.hqservice.framework.region.range.enums.PlaneAxis
 
 class PlaneRange(
     minPosition: BlockLocation,

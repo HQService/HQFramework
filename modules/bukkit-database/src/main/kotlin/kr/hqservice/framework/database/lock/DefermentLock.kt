@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import java.util.*
 
 interface DefermentLock {
-    suspend fun tryLock(player: Player, timedOut: Long = 3000L, whenTimedOut: suspend (Player) -> Unit) : Job
+    suspend fun tryLock(player: Player, timedOut: Long = 3000L, whenTimedOut: suspend (Player) -> Unit): Job
 
     suspend fun tryLock(playerId: UUID, timedOut: Long = 3000L, whenTimedOut: suspend (UUID) -> Unit): Job
 

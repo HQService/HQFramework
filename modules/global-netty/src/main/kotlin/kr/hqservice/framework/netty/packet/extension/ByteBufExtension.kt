@@ -11,7 +11,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.util.UUID
+import java.util.*
 import kotlin.experimental.and
 
 fun ByteBuf.writeVarInt(value: Int) {
@@ -19,10 +19,10 @@ fun ByteBuf.writeVarInt(value: Int) {
     do {
         var part = current.and(0x7F)
         current = current.ushr(7)
-        if(current != 0)
+        if (current != 0)
             part = part.or(0x80)
         writeByte(part)
-    } while(current != 0)
+    } while (current != 0)
 }
 
 fun ByteBuf.readVarInt(maxBytes: Int): Int {
@@ -32,9 +32,9 @@ fun ByteBuf.readVarInt(maxBytes: Int): Int {
     do {
         `in` = readByte()
         out = out.or(`in`.and(Byte.MAX_VALUE).toInt().shl(bytes++ * 7))
-        if(bytes > maxBytes)
+        if (bytes > maxBytes)
             throw RuntimeException("VarInt too big")
-    } while(`in`.and(0x80.toByte()).toInt() == 128)
+    } while (`in`.and(0x80.toByte()).toInt() == 128)
     return out
 }
 
@@ -73,7 +73,7 @@ fun ByteBuf.readUUID(): UUID {
 }
 
 fun ByteBuf.writeChannel(nettyChannel: NettyChannel?) {
-    if(nettyChannel == null) writeString("null-channel")
+    if (nettyChannel == null) writeString("null-channel")
     else {
         writeString(nettyChannel.getName())
         writeInt(nettyChannel.getPort())
@@ -82,7 +82,7 @@ fun ByteBuf.writeChannel(nettyChannel: NettyChannel?) {
 
 fun ByteBuf.readChannel(): NettyChannel? {
     val name = readString()
-    if(name == "null-channel") return null
+    if (name == "null-channel") return null
     val port = readInt()
     return NettyChannelImpl(port, name)
 }
@@ -111,7 +111,7 @@ fun ByteBuf.readPlayer(): NettyPlayer {
 }
 
 fun ByteBuf.writePlayers(nettyPlayers: List<NettyPlayer>) {
-    if(nettyPlayers.isEmpty()) writeBytes(ByteArray(0))
+    if (nettyPlayers.isEmpty()) writeBytes(ByteArray(0))
     else ByteArrayOutputStream().use {
         ObjectOutputStream(it).use { oos ->
             oos.writeInt(nettyPlayers.size)
@@ -121,7 +121,7 @@ fun ByteBuf.writePlayers(nettyPlayers: List<NettyPlayer>) {
                 player.getChannel()?.apply {
                     oos.writeInt(getPort())
                     oos.writeUTF(getName())
-                }?: oos.writeInt(-1)
+                } ?: oos.writeInt(-1)
             }
         }
         val byteArray = it.toByteArray().compress()
@@ -147,6 +147,7 @@ fun ByteBuf.readPlayers(): List<NettyPlayer> {
                 }
             }
         }
-    } catch (_: Exception) {}
+    } catch (_: Exception) {
+    }
     return players
 }

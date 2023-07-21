@@ -14,7 +14,7 @@ class CommandContextImpl(
     private val parameterMap: Map<String, KParameter>
 ) : CommandContext {
     //                     contextKey, argument
-    private val arguments: Map<String, String> = parameterMap.map { (argument, kParameter)->
+    private val arguments: Map<String, String> = parameterMap.map { (argument, kParameter) ->
         getContextKey(kParameter) to argument
     }.toMap()
 

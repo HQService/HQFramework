@@ -5,7 +5,6 @@ import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
 import kr.hqservice.framework.bukkit.core.component.PluginDepend
 import kr.hqservice.framework.bukkit.core.extension.getHQConfig
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.plugin.Plugin

@@ -1,10 +1,10 @@
 package kr.hqservice.framework.database.test
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.database.component.datasource.HQDataSource
 import kr.hqservice.framework.database.component.repository.HQRepository
 import kr.hqservice.framework.database.test.entity.TestEntity
+import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.global.core.component.registry.MutableNamed
 import kr.hqservice.framework.test.Isolated
 import java.util.*

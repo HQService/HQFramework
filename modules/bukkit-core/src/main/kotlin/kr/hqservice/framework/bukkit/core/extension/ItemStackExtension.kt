@@ -49,23 +49,23 @@ fun Array<ItemStack?>.toByteArray(compress: Boolean = true): ByteArray {
     ByteArrayOutputStream().use {
         BukkitObjectOutputStream(it).use { outputStream ->
             outputStream.writeInt(size)
-            map { itemStack -> itemStack?: ItemStack(Material.AIR) }
+            map { itemStack -> itemStack ?: ItemStack(Material.AIR) }
                 .forEach(outputStream::writeObject)
         }
         return it.toByteArray()
-            .run { if(compress) compress() else this }
+            .run { if (compress) compress() else this }
     }
 }
 
 fun ByteArray.toItemArray(decompress: Boolean = true): Array<ItemStack> {
     ByteArrayInputStream(run {
-        if(decompress) decompress()
+        if (decompress) decompress()
         else this
     }).use {
         BukkitObjectInputStream(it).use { inputStream ->
             val size = inputStream.readInt()
             val list = mutableListOf<ItemStack>()
-            for(i in 0 until size)
+            for (i in 0 until size)
                 list.add(inputStream.readObject() as ItemStack)
             return list.toTypedArray()
         }
@@ -80,5 +80,5 @@ fun ItemStack.editMeta(block: ItemMeta.() -> Unit): ItemStack {
 fun ItemMeta.addLine(line: String) {
     lore = lore?.apply {
         add(line)
-    }?: mutableListOf(line)
+    } ?: mutableListOf(line)
 }

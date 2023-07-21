@@ -11,7 +11,12 @@ import java.util.logging.Logger
 
 abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     constructor() : super()
-    internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+    internal constructor(
+        loader: JavaPluginLoader,
+        description: PluginDescriptionFile,
+        dataFolder: File,
+        file: File
+    ) : super(loader, description, dataFolder, file)
 
     protected open val componentRegistry: Lazy<BukkitComponentRegistry> = lazy { BukkitComponentRegistry(this) }
     open val group = "HQPlugin"
@@ -54,8 +59,8 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     private fun loadConfigIfExist() {
         val stream = getResource("config.yml") ?: return
         val file = File(dataFolder, "config.yml")
-        if(!dataFolder.exists()) dataFolder.mkdirs()
-        if(!file.exists()) file.bufferedWriter().use {  writer ->
+        if (!dataFolder.exists()) dataFolder.mkdirs()
+        if (!file.exists()) file.bufferedWriter().use { writer ->
             stream.reader().readLines().forEach {
                 writer.appendLine(it)
             }

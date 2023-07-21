@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test
 class HQCommandTreeTest {
     @Test
     fun test() {
-        val rootNode = Node(1,
+        val rootNode = Node(
+            1,
             listOf(
                 Node(
                     2,
@@ -16,9 +17,11 @@ class HQCommandTreeTest {
                     )
                 ),
                 Node(3),
-                Node(8, listOf(
-                    Node(9)
-                )),
+                Node(
+                    8, listOf(
+                        Node(9)
+                    )
+                ),
             )
         )
         val allNodes = mutableListOf<Node>()
@@ -31,9 +34,9 @@ class HQCommandTreeTest {
 
     data class Node(val value: Int, val children: List<Node> = listOf()) {
         fun printNode(printer: String = "") {
-            for((index, child) in children.withIndex()) {
+            for ((index, child) in children.withIndex()) {
                 val lastNode = index + 1 == children.size
-                val iia = if(lastNode) "└─ " else "├─ "
+                val iia = if (lastNode) "└─ " else "├─ "
                 println(printer + iia + child.value)
                 child.printNode(printer + if (!lastNode) "│ " else "  ")
             }

@@ -10,6 +10,7 @@ class PlayerRepositoryLoadedEvent(
     companion object {
         @JvmStatic
         val HANDLER_LIST = HandlerList()
+
         @JvmStatic
         fun getHandlerList() = HANDLER_LIST
     }

@@ -6,9 +6,14 @@ import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
-import org.koin.core.annotation.*
+import org.koin.core.annotation.KoinInternalApi
+import org.koin.core.annotation.Named
+import org.koin.core.annotation.Scope
 import org.koin.core.component.KoinComponent
-import org.koin.core.definition.*
+import org.koin.core.definition.BeanDefinition
+import org.koin.core.definition.Definition
+import org.koin.core.definition.Kind
+import org.koin.core.definition.indexKey
 import org.koin.core.error.DefinitionOverrideException
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
@@ -367,7 +372,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             try {
                 indexPrimaryType(singletonInstanceFactory)
                 indexSecondaryTypes(singletonInstanceFactory)
-            } catch (_: DefinitionOverrideException) {}
+            } catch (_: DefinitionOverrideException) {
+            }
 
         }
     }
@@ -386,7 +392,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             try {
                 indexPrimaryType(factoryInstanceFactory)
                 indexSecondaryTypes(factoryInstanceFactory)
-            } catch (_: DefinitionOverrideException) {}
+            } catch (_: DefinitionOverrideException) {
+            }
         }
     }
 
@@ -415,7 +422,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val qualifierProvider = qualifierProviders[key] ?: throw QualifierNotFoundException()
             val provided = qualifierProvider.provideQualifier()
             StringQualifier(provided)
-        } else if (element.hasAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()){
+        } else if (element.hasAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()) {
             val value = element.findAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()!!.value
             if (value.startsWith("#")) {
                 return StringQualifier(getConfiguration().getString(value.removePrefix("#")))
