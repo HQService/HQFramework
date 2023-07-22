@@ -34,9 +34,9 @@ import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
 abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
-    companion object {
-        private val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
-        private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
+    private companion object {
+        val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+        val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
     }
 
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
@@ -53,7 +53,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
         for (clazz in getAllComponentsToScan()) {
             val annotations = clazz.annotations
-
             if (annotations.filterIsInstance<ComponentHandler>().isNotEmpty()) {
                 val componentHandlerType = getComponentHandlerType(clazz.kotlin)
                 unsortedComponentHandlers[componentHandlerType] = clazz.kotlin as KClass<HQComponentHandler<*>>
