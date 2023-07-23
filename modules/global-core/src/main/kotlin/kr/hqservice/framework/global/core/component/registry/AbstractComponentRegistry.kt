@@ -20,7 +20,6 @@ import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
 import org.koin.core.instance.SingleInstanceFactory
 import org.koin.core.module.Module
-import org.koin.core.parameter.ParametersHolder
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.StringQualifier
 import org.koin.core.qualifier.TypeQualifier
@@ -83,7 +82,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     componentExceptionCatchingStack++
                 }
                 if (componentExceptionCatchingStack == componentClassesQueue.size) {
-                    printFriendlyException(componentClassesQueue.toList())
+                    // printFriendlyException(componentClassesQueue.toList())
                     throw NoBeanDefinitionsFoundException(listOf())
                 }
                 previousComponentQueueSize = componentClassesQueue.size
@@ -92,7 +91,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val instance = try {
                 if (component.hasAnnotation<Bean>()) {
                     tryCreateBeanModule(component) {
-                        callByInjectedParameters(component.constructors.first(), getProvidedInstances(), it)
+                        callByInjectedParameters(component.constructors.first(), getProvidedInstances())
                     }
                     continue
                 }
@@ -220,7 +219,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun printFriendlyException(classes: List<KClass<*>>) {
         classes.forEach { kClass ->
             val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
-            val injected = injectParameters(kClass.primaryConstructor!!, getProvidedInstances(), null)
+            val injected = injectParameters(kClass.primaryConstructor!!, getProvidedInstances())
             val parameterDisplays = parameters.mapIndexed { index, kParameter ->
                 val simpleName = kParameter.type.jvmErasure.simpleName
                 val qualifier = getQualifier(kParameter)?.value
@@ -251,18 +250,25 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun <T : Any> callByInjectedParameters(
         kFunction: KFunction<T>,
         providedInstanceMap: Map<KClass<*>, *>? = null,
-        parametersHolder: ParametersHolder? = null
     ): T? {
-        val injectedParameters = injectParameters(kFunction, providedInstanceMap, parametersHolder)
+        val injectedParameters = injectParameters(kFunction, providedInstanceMap)
         if (injectedParameters.any { it == null }) {
             return null
         }
         return try {
             kFunction.call(*injectedParameters.toTypedArray())
         } catch (illegalArgumentException: IllegalArgumentException) {
-            kFunction.instanceParameter.print("instanceParameter: ")
-            kFunction.parameters.map { it.type.jvmErasure.simpleName }.joinToString().print("parameters: ")
-            injectedParameters.map { if (it == null) null else it::class.simpleName }.joinToString()
+            kFunction
+                .instanceParameter
+                .print("instanceParameter: ")
+            kFunction
+                .parameters
+                .map { it.type.jvmErasure.simpleName }
+                .joinToString()
+                .print("parameters: ")
+            injectedParameters
+                .map { if (it == null) null else it::class.simpleName }
+                .joinToString()
                 .print("injectedParameters: ")
             throw illegalArgumentException
         }
@@ -279,20 +285,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun injectParameters(
         kFunction: KFunction<*>,
         providedInstanceMap: Map<KClass<*>, *>? = null,
-        parametersHolder: ParametersHolder?
     ): List<Any?> {
         return kFunction.parameters.mapIndexed { index, parameter ->
             val parameterKClass = parameter.type.classifier as KClass<*>
-            if (parametersHolder != null) {
-                val parameterFromHolder = parametersHolder.values.getOrNull(index)
-                if (parameterFromHolder != null) {
-                    return@mapIndexed parameterFromHolder
-                }
-            }
 
             if (providedInstanceMap != null) {
-                val providedInstance =
-                    providedInstanceMap.filter { parameterKClass == it.key }.values.firstOrNull()
+                val providedInstance = providedInstanceMap.filter { parameterKClass == it.key }.values.firstOrNull()
                 if (providedInstance != null) {
                     return@mapIndexed providedInstance
                 }
@@ -306,7 +304,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             if (proxy != null) {
                 return@mapIndexed proxy
             }
-
             val factory = getKoin().instanceRegistry.instances[indexKey]
             val defaultContext = InstanceContext(getKoin(), getKoin().getScope(scopeQualifier.value))
 
@@ -329,10 +326,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val scopeQualifier = getScopeQualifier(klass)
         val qualifier = getQualifier(klass)
         val property = getBeanProperties(klass)
-        val secondaryTypes: List<KClass<*>> = if (property.binds.isEmpty()) {
+        val secondaryTypes: List<KClass<*>> = property.binds.ifEmpty {
             klass.allSuperclasses.toList()
-        } else {
-            property.binds.toList()
         }
 
         val module = when (property.kind) {
@@ -424,9 +419,10 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         } else if (element.hasAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()) {
             val value = element.findAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()!!.value
             if (value.startsWith("#")) {
-                return StringQualifier(getConfiguration().getString(value.removePrefix("#")))
+                StringQualifier(getConfiguration().getString(value.removePrefix("#")))
+            } else {
+                StringQualifier(value)
             }
-            return StringQualifier(value)
         } else {
             null
         }
@@ -443,11 +439,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
         val isPrimary = klass.findAnnotation<Primary>() != null
         return when (true) {
-            (factory != null) -> BeanProperty(Kind.Factory, factory.binds, isPrimary)
-            (single != null) -> BeanProperty(Kind.Singleton, single.binds, isPrimary)
+            (factory != null) -> BeanProperty(Kind.Factory, factory.binds.toList(), isPrimary)
+            (single != null) -> BeanProperty(Kind.Singleton, single.binds.toList(), isPrimary)
             else -> BeanProperty(
                 Kind.Singleton,
-                klass.allSuperclasses.toTypedArray(),
+                klass.allSuperclasses.toList(),
                 isPrimary
             )
         }
@@ -455,7 +451,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
     private class BeanProperty(
         val kind: Kind,
-        val binds: Array<KClass<*>>,
+        val binds: List<KClass<*>>,
         val isPrimary: Boolean
     )
 }
