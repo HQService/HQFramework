@@ -11,9 +11,9 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 
 abstract class HQDataSource : HQComponent, CoroutineScope {
     private val hikariDataSourceLazy = lazy { HikariDataSource(getConfig()) }
-    private val databaseLazy = lazy { Database.connect(hikariDataSourceLazy.value) }
+    protected val databaseLazy = lazy { Database.connect(hikariDataSourceLazy.value) }
 
-    fun setupDatabase() {
+    internal open fun setupDatabase() {
         databaseLazy.value
     }
 

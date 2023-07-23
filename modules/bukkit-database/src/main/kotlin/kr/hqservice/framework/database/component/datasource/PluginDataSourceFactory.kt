@@ -3,27 +3,26 @@ package kr.hqservice.framework.database.component.datasource
 import kotlinx.coroutines.CoroutineScope
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
-import kr.hqservice.framework.bukkit.core.component.registry.InstanceFactoryRegistry
 import kr.hqservice.framework.bukkit.core.extension.getHQConfig
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.database.util.getDatabaseHost
 import kr.hqservice.framework.database.util.getDatabasePath
+import kr.hqservice.framework.database.util.getDatabaseType
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.global.core.component.Qualifier
+import kr.hqservice.framework.global.core.util.AnsiColor
+import org.bukkit.plugin.Plugin
 import org.koin.core.component.KoinComponent
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KAnnotatedElement
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.hasAnnotation
 
 @Component
 class PluginDataSourceFactory(
-    @Qualifier("database") private val coroutineScope: HQCoroutineScope,
-    instanceFactoryRegistry: InstanceFactoryRegistry
-) : KoinComponent, HQInstanceFactory<HQDataSource>, HQModule {
+    @Qualifier("database") private val coroutineScope: HQCoroutineScope
+) : KoinComponent, HQInstanceFactory<HQDataSource> {
     private val dataSources: MutableMap<String, HQDataSource> = ConcurrentHashMap()
-
-    init {
-        instanceFactoryRegistry.registerInstanceFactory(this)
-    }
 
     @Synchronized
     fun getDataSource(
@@ -54,15 +53,21 @@ class PluginDataSourceFactory(
                 } else {
                     plugin.getHQConfig().getDatabasePath(configSection)
                 }
-                object : SQLiteDataSource(dbPath, poolName), CoroutineScope by coroutineScope {}
+                object : SQLiteDataSource(getSQLitePath(plugin, dbPath), poolName), CoroutineScope by coroutineScope {}
             }
 
             else -> {
-                throw IllegalArgumentException("해당 $dataSourceId 아이디의 DataSource 는 지원하지 않습니다.")
+                throw IllegalArgumentException("해당 '$dataSourceId' 아이디의 DataSource 는 지원하지 않습니다.")
             }
         }
         dataSources[dataSourceKey] = dataSource
+        dataSource.setupDatabase()
+        plugin.logger.info("${AnsiColor.GREEN}$dataSourceId DataSource 를 사용합니다.${AnsiColor.RESET}")
         return dataSource
+    }
+
+    private fun getSQLitePath(plugin: Plugin, databasePath: String): String {
+        return "plugins/${plugin.dataFolder.nameWithoutExtension}/$databasePath"
     }
 
     private fun getDataSourceKey(pluginName: String, dataSourceId: String): String {
@@ -71,12 +76,18 @@ class PluginDataSourceFactory(
 
     override fun createInstance(
         plugin: HQBukkitPlugin,
+        annotatedElement: KAnnotatedElement,
         qualifier: org.koin.core.qualifier.Qualifier?,
         scopeQualifier: org.koin.core.qualifier.Qualifier?
     ): HQDataSource {
-        if (qualifier == null) {
+        return if (annotatedElement.hasAnnotation<DataSource>()) {
+            val config = annotatedElement.findAnnotation<DataSource>()!!.configPath
+            val type = plugin.getHQConfig().getString(config)
+            getDataSource(plugin, type)
+        } else if (qualifier == null) {
             throw IllegalArgumentException("Qualifier 을 찾을 수 없어 DataSource 생성에 실패하였습니다.")
+        } else {
+            getDataSource(plugin, qualifier.value)
         }
-        return getDataSource(plugin, qualifier.value)
     }
 }

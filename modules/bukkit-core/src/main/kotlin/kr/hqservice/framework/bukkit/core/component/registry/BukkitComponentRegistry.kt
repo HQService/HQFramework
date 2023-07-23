@@ -65,7 +65,7 @@ class BukkitComponentRegistry(
     ): Any? {
         for ((type, factory) in registeredInstanceFactories) {
             if (type.starProjectedType.classifier == kParameter.type.classifier) {
-                return factory.createInstance(plugin, qualifier, scopeQualifier)
+                return factory.createInstance(plugin, kParameter, qualifier, scopeQualifier)
             }
         }
         return null
