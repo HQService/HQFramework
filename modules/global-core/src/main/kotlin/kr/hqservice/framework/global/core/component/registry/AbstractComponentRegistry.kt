@@ -83,7 +83,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     componentExceptionCatchingStack++
                 }
                 if (componentExceptionCatchingStack == componentClassesQueue.size) {
-                    // printFriendlyException(componentClassesQueue.toList())
+                    printFriendlyException(componentClassesQueue.toList())
                     throw NoBeanDefinitionsFoundException(listOf())
                 }
                 previousComponentQueueSize = componentClassesQueue.size
