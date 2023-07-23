@@ -22,7 +22,7 @@ abstract class HQView(
     val cancel: Boolean = true
 ) : InventoryLifecycle {
     private val job = Job()
-    internal val ownedLifecycles: MutableList<LifecycleOwner> = mutableListOf()
+    val _ownedLifecycles: MutableList<LifecycleOwner> = mutableListOf()
     private var baseInventory = lazy { Bukkit.createInventory(this@HQView, size, title.colorize()) }
     private val buttons: MutableMap<Int, ButtonElement> = mutableMapOf()
     internal val viewers: MutableList<UUID> = mutableListOf()
@@ -65,7 +65,7 @@ abstract class HQView(
     }
 
     final override fun dispose() {
-        ownedLifecycles.forEach { lifecycleOwner ->
+        _ownedLifecycles.forEach { lifecycleOwner ->
             lifecycleOwner.dispose()
         }
         job.cancel()

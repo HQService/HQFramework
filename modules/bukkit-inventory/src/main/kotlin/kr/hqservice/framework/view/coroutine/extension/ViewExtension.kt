@@ -15,6 +15,6 @@ inline fun <reified T : HQViewModel> HQView.viewModels(
     noinline parameters: ParametersDefinition? = null
 ): Lazy<T> {
     return KoinJavaComponent.getKoin().scopeRegistry.rootScope.inject<T>(qualifier, mode, parameters).apply {
-        this@viewModels.ownedLifecycles.add(this.value)
+        this@viewModels._ownedLifecycles.add(this.value)
     }
 }
