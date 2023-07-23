@@ -17,7 +17,8 @@ class PacketDecoder : MessageToMessageDecoder<ByteBuf>() {
         val callbackResult = buf.readBoolean()
 
         val packetClass = Class.forName(packetName).kotlin as KClass<Packet>
-        val wrapper = Direction.INBOUND.findPacketByClass(packetClass)?: throw NullPointerException("unregistered packet ('${packetName}')")
+        val wrapper = Direction.INBOUND.findPacketByClass(packetClass)
+            ?: throw NullPointerException("unregistered packet ('${packetName}')")
         val codecClass = wrapper.codecClass
         val codecPacket = codecClass.getConstructor().newInstance()
 
@@ -27,7 +28,8 @@ class PacketDecoder : MessageToMessageDecoder<ByteBuf>() {
         val params = mutableListOf<Any?>()
 
         packetConstructor.parameters.forEach {
-            val field = codecClass.getDeclaredField(it.name?: throw IllegalArgumentException("not found field ${it.name}"))
+            val field =
+                codecClass.getDeclaredField(it.name ?: throw IllegalArgumentException("not found field ${it.name}"))
             field.isAccessible = true
             params.add(field.get(codecPacket))
             field.isAccessible = false

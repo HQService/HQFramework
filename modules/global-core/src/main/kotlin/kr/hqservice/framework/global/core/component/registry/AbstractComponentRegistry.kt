@@ -5,12 +5,16 @@ import kr.hqservice.framework.global.core.component.error.*
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
-import org.koin.core.annotation.*
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import org.koin.core.annotation.KoinInternalApi
+import org.koin.core.annotation.Named
+import org.koin.core.annotation.Scope
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Definition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
+import org.koin.core.error.DefinitionOverrideException
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
 import org.koin.core.instance.InstanceContext
@@ -24,6 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
@@ -33,9 +38,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
         val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
     }
+
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
+
+    abstract fun getConfiguration(): HQYamlConfiguration
 
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
@@ -45,7 +53,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
         for (clazz in getAllComponentsToScan()) {
             val annotations = clazz.annotations
-
             if (annotations.filterIsInstance<ComponentHandler>().isNotEmpty()) {
                 val componentHandlerType = getComponentHandlerType(clazz.kotlin)
                 unsortedComponentHandlers[componentHandlerType] = clazz.kotlin as KClass<HQComponentHandler<*>>
@@ -121,7 +128,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentExceptionCatchingStack = 0
             }
         }
-        val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> = ConcurrentLinkedQueue(unsortedComponentHandlers.values.toMutableList() + componentHandlers.keys)
+        val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> =
+            ConcurrentLinkedQueue(unsortedComponentHandlers.values.toMutableList() + componentHandlers.keys)
         var handlerExceptionCatchingStack = 0
         var previousHandlerQueueSize = componentHandlersQueue.size
 
@@ -208,6 +216,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         const val ANSI_GREEN = "\u001B[32m"
         const val ANSI_CYAN = "\u001B[36m"
     }
+
     private fun printFriendlyException(classes: List<KClass<*>>) {
         classes.forEach { kClass ->
             val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
@@ -227,7 +236,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun getComponentHandlerType(componentHandlerClass: KClass<*>): KClass<*> {
         return componentHandlerClass
             .supertypes
@@ -254,9 +262,18 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         } catch (illegalArgumentException: IllegalArgumentException) {
             kFunction.instanceParameter.print("instanceParameter: ")
             kFunction.parameters.map { it.type.jvmErasure.simpleName }.joinToString().print("parameters: ")
-            injectedParameters.map { if (it == null) null else it::class.simpleName }.joinToString().print("injectedParameters: ")
+            injectedParameters.map { if (it == null) null else it::class.simpleName }.joinToString()
+                .print("injectedParameters: ")
             throw illegalArgumentException
         }
+    }
+
+    open fun injectProxy(
+        kParameter: KParameter,
+        qualifier: Qualifier?,
+        scopeQualifier: Qualifier?
+    ): Any? {
+        return null
     }
 
     private fun injectParameters(
@@ -285,6 +302,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val scopeQualifier = getScopeQualifier(kFunction)
             val indexKey = indexKey(parameterKClass, qualifier, scopeQualifier)
 
+            val proxy = injectProxy(parameter, qualifier, scopeQualifier)
+            if (proxy != null) {
+                return@mapIndexed proxy
+            }
+
             val factory = getKoin().instanceRegistry.instances[indexKey]
             val defaultContext = InstanceContext(getKoin(), getKoin().getScope(scopeQualifier.value))
 
@@ -306,16 +328,33 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun <T> tryCreateBeanModule(klass: KClass<*>, instance: Definition<T>) {
         val scopeQualifier = getScopeQualifier(klass)
         val qualifier = getQualifier(klass)
-        val bean = getBeanProperties(klass) ?: return
-
-        val module = when (bean.first) {
-            Kind.Factory -> createFactoryBeanModule(klass, instance, scopeQualifier, qualifier, bean.second.toList())
-            Kind.Singleton -> createSingletonBeanModule(klass, instance, scopeQualifier, qualifier, bean.second.toList())
-            else -> {
-                return
-            }
+        val property = getBeanProperties(klass)
+        val secondaryTypes: List<KClass<*>> = if (property.binds.isEmpty()) {
+            klass.allSuperclasses.toList()
+        } else {
+            property.binds.toList()
         }
-        getKoin().loadModules(listOf(module))
+
+        val module = when (property.kind) {
+            Kind.Factory -> createFactoryBeanModule(
+                klass,
+                instance,
+                scopeQualifier,
+                qualifier,
+                secondaryTypes
+            )
+
+            Kind.Singleton -> createSingletonBeanModule(
+                klass,
+                instance,
+                scopeQualifier,
+                qualifier,
+                secondaryTypes
+            )
+
+            Kind.Scoped -> return
+        }
+        getKoin().loadModules(listOf(module), allowOverride = !property.isPrimary)
     }
 
     private fun <T> createSingletonBeanModule(
@@ -329,8 +368,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Singleton, secondaryTypes)
         val singletonInstanceFactory = SingleInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            indexPrimaryType(singletonInstanceFactory)
-            indexSecondaryTypes(singletonInstanceFactory)
+            try {
+                indexPrimaryType(singletonInstanceFactory)
+                indexSecondaryTypes(singletonInstanceFactory)
+            } catch (_: DefinitionOverrideException) {
+            }
+
         }
     }
 
@@ -345,8 +388,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Factory, secondaryTypes)
         val factoryInstanceFactory = FactoryInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            indexPrimaryType(factoryInstanceFactory)
-            indexSecondaryTypes(factoryInstanceFactory)
+            try {
+                indexPrimaryType(factoryInstanceFactory)
+                indexSecondaryTypes(factoryInstanceFactory)
+            } catch (_: DefinitionOverrideException) {
+            }
         }
     }
 
@@ -372,10 +418,15 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             StringQualifier(element.findAnnotation<Named>()!!.value)
         } else if (element.hasAnnotation<MutableNamed>()) {
             val key = element.findAnnotation<MutableNamed>()!!.key
-            val qualifierProvider =
-                qualifierProviders[key] ?: throw QualifierNotFoundException()
+            val qualifierProvider = qualifierProviders[key] ?: throw QualifierNotFoundException()
             val provided = qualifierProvider.provideQualifier()
             StringQualifier(provided)
+        } else if (element.hasAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()) {
+            val value = element.findAnnotation<kr.hqservice.framework.global.core.component.Qualifier>()!!.value
+            if (value.startsWith("#")) {
+                return StringQualifier(getConfiguration().getString(value.removePrefix("#")))
+            }
+            return StringQualifier(value)
         } else {
             null
         }
@@ -384,17 +435,27 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * 빈의 종류와 Bind 타입들을 구합니다.
      */
-    private fun getBeanProperties(klass: KClass<*>): Pair<Kind, Array<KClass<*>>>? {
-        val factory = klass.findAnnotation<HQFactory>()
-        val single = klass.findAnnotation<HQSingleton>()
+    private fun getBeanProperties(klass: KClass<*>): BeanProperty {
+        val factory = klass.findAnnotation<Factory>()
+        val single = klass.findAnnotation<Singleton>()
         if (factory != null && single != null) {
             throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
         }
-
+        val isPrimary = klass.findAnnotation<Primary>() != null
         return when (true) {
-            (factory != null) -> Pair(Kind.Factory, factory.binds)
-            (single != null) -> Pair(Kind.Singleton, single.binds)
-            else -> null
+            (factory != null) -> BeanProperty(Kind.Factory, factory.binds, isPrimary)
+            (single != null) -> BeanProperty(Kind.Singleton, single.binds, isPrimary)
+            else -> BeanProperty(
+                Kind.Singleton,
+                klass.allSuperclasses.toTypedArray(),
+                isPrimary
+            )
         }
     }
+
+    private class BeanProperty(
+        val kind: Kind,
+        val binds: Array<KClass<*>>,
+        val isPrimary: Boolean
+    )
 }

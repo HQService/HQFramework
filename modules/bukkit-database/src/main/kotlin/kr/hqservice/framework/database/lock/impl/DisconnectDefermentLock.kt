@@ -7,7 +7,7 @@ import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.coroutine.extension.coroutineContext
 import kr.hqservice.framework.database.lock.DefermentLock
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.entity.Player
 import org.koin.core.annotation.Named
 import java.util.*
@@ -15,9 +15,10 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 @Named("disconnect")
-@HQSingleton(binds = [DefermentLock::class])
+@Singleton(binds = [DefermentLock::class])
 @Component
-class DisconnectDefermentLock(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO), DefermentLock {
+class DisconnectDefermentLock(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO),
+    DefermentLock {
     private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
         logger.log(Level.SEVERE, throwable) {
             "DisconnectDefermentCoroutine 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +

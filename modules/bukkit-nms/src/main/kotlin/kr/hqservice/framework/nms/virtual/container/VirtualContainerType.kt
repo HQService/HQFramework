@@ -37,7 +37,7 @@ enum class VirtualContainerType(
         private val alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray()
 
         fun getType(type: InventoryType, size: Int): VirtualContainerType? {
-            if(type == InventoryType.CHEST) return VirtualContainerType.valueOf("GENERIC_9X${size / 9}")
+            if (type == InventoryType.CHEST) return VirtualContainerType.valueOf("GENERIC_9X${size / 9}")
             return values().firstOrNull {
                 it.inventoryTypeNames.contains(type.toString())
             }

@@ -13,7 +13,8 @@ class CommandNodeComponentHandler(
     private val registry: CommandRegistry,
 ) : HQComponentHandler<HQCommandNode> {
     override fun setup(element: HQCommandNode) {
-        val parentCommand = element::class.findAnnotation<ParentCommand>() ?: throw IllegalStateException("Command nodes must have parent tree command(s)")
+        val parentCommand = element::class.findAnnotation<ParentCommand>()
+            ?: throw IllegalStateException("Command nodes must have parent tree command(s)")
 
         parentCommand.binds.forEach { parentTree ->
             registry.addNode(parentTree, element)

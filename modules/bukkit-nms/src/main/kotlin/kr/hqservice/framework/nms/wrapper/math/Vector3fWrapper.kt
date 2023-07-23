@@ -2,8 +2,8 @@ package kr.hqservice.framework.nms.wrapper.math
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import kotlin.reflect.KClass
 
 class Vector3fWrapper(

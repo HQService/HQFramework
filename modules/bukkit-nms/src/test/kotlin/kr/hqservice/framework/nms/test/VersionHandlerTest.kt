@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.test
 import kr.hqservice.framework.global.core.extension.print
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import java.util.Locale
+import java.util.*
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class VersionHandlerTest {

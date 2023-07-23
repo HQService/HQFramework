@@ -4,10 +4,12 @@ plugins {
 }
 
 dependencies {
+    apiModule("global", "yaml")
+
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
-    api(libs.koin.annotations)
+    implementation(libs.koin.annotations)
 
     testImplementation(libs.koin.core)
     testImplementation(libs.koin.annotations)

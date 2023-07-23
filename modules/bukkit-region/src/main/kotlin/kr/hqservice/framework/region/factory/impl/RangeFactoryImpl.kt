@@ -2,7 +2,7 @@ package kr.hqservice.framework.region.factory.impl
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.region.factory.RangeFactory
 import kr.hqservice.framework.region.location.BlockLocation
 import kr.hqservice.framework.region.location.impl.BlockLocationImpl
@@ -13,7 +13,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Component
-@HQSingleton(binds = [RangeFactory::class])
+@Singleton(binds = [RangeFactory::class])
 class RangeFactoryImpl : RangeFactory, HQService {
     private fun min(position1: BlockLocation, position2: BlockLocation): BlockLocation {
         return BlockLocationImpl(
@@ -37,7 +37,7 @@ class RangeFactoryImpl : RangeFactory, HQService {
         if (position1.getWorld() != position2.getWorld())
             throw IllegalArgumentException("Other world locations cannot create ranges.")
 
-        if(position1 == position2) return PointRange(position1)
+        if (position1 == position2) return PointRange(position1)
 
         val minPosition = min(position1, position2)
         val maxPosition = max(position1, position2)
@@ -46,18 +46,20 @@ class RangeFactoryImpl : RangeFactory, HQService {
         val matchedY = minPosition.getY() == maxPosition.getY()
         val matchedZ = minPosition.getZ() == maxPosition.getZ()
 
-        return when ((if(matchedX) 1 else 0) + (if(matchedY) 1 else 0) + (if(matchedZ) 1 else 0)) {
+        return when ((if (matchedX) 1 else 0) + (if (matchedY) 1 else 0) + (if (matchedZ) 1 else 0)) {
             3 -> PointRange(minPosition)
             2 -> when {
                 !matchedX -> LineRange(minPosition, maxPosition, LineAxis.HORIZONTAL_Z)
                 !matchedZ -> LineRange(minPosition, maxPosition, LineAxis.HORIZONTAL_X)
                 else -> LineRange(minPosition, maxPosition, LineAxis.VERTICAL)
             }
+
             1 -> when {
                 matchedX -> PlaneRange(minPosition, maxPosition, PlaneAxis.VERTICAL_X)
                 matchedZ -> PlaneRange(minPosition, maxPosition, PlaneAxis.VERTICAL_Z)
                 else -> PlaneRange(minPosition, maxPosition, PlaneAxis.HORIZONTAL)
             }
+
             else -> DimensionRange(minPosition, maxPosition)
         }
     }

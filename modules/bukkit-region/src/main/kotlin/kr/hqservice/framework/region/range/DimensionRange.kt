@@ -22,15 +22,29 @@ class DimensionRange(
         return when (targetAxis) {
             PlaneAxis.HORIZONTAL -> {
                 val y = getDot(minPosition.getY(), getCenter().getY(), maxPosition.getY(), offsetValue, offset)
-                PlaneRange(BlockLocationImpl(world, minPosition.getX(), y, minPosition.getZ()), BlockLocationImpl(world, maxPosition.getX(), y, maxPosition.getZ()), targetAxis)
+                PlaneRange(
+                    BlockLocationImpl(world, minPosition.getX(), y, minPosition.getZ()),
+                    BlockLocationImpl(world, maxPosition.getX(), y, maxPosition.getZ()),
+                    targetAxis
+                )
             }
+
             PlaneAxis.VERTICAL_X -> {
                 val x = getDot(minPosition.getX(), getCenter().getX(), maxPosition.getX(), offsetValue, offset)
-                PlaneRange(BlockLocationImpl(world, x, minPosition.getY(), minPosition.getZ()), BlockLocationImpl(world, x, maxPosition.getY(), maxPosition.getZ()), targetAxis)
+                PlaneRange(
+                    BlockLocationImpl(world, x, minPosition.getY(), minPosition.getZ()),
+                    BlockLocationImpl(world, x, maxPosition.getY(), maxPosition.getZ()),
+                    targetAxis
+                )
             }
+
             PlaneAxis.VERTICAL_Z -> {
                 val z = getDot(minPosition.getZ(), getCenter().getZ(), maxPosition.getZ(), offsetValue, offset)
-                PlaneRange(BlockLocationImpl(world, minPosition.getX(), minPosition.getY(), z), BlockLocationImpl(world, maxPosition.getX(), maxPosition.getY(), z), targetAxis)
+                PlaneRange(
+                    BlockLocationImpl(world, minPosition.getX(), minPosition.getY(), z),
+                    BlockLocationImpl(world, maxPosition.getX(), maxPosition.getY(), z),
+                    targetAxis
+                )
             }
         }
     }

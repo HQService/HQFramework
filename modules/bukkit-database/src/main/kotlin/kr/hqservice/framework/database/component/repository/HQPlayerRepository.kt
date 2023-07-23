@@ -8,7 +8,7 @@ abstract class HQPlayerRepository<V>(
     dataMap: MutableMap<UUID, V> = ConcurrentHashMap<UUID, V>()
 ) : HQRepository, MutableMap<UUID, V> by dataMap {
     internal suspend fun onLoad(player: Player) {
-        val value = getDataSource().query {
+        val value = dataSource.query {
             load(player)
         }
         this[player.uniqueId] = value
@@ -16,7 +16,7 @@ abstract class HQPlayerRepository<V>(
 
     internal suspend fun onSave(player: Player) {
         val value = this[player.uniqueId] ?: return
-        getDataSource().query {
+        dataSource.query {
             save(player, value)
         }
     }

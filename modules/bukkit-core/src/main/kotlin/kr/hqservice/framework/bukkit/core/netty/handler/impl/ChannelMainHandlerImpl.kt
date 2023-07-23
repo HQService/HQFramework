@@ -1,9 +1,9 @@
 package kr.hqservice.framework.bukkit.core.netty.handler.impl
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.bukkit.core.netty.event.NettyClientConnectedEvent
 import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
+import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.PacketSender
@@ -18,7 +18,7 @@ import org.bukkit.plugin.Plugin
 import org.koin.core.annotation.Named
 
 @Component
-@HQSingleton(binds = [ChannelMainHandler::class, PacketSender::class])
+@Singleton(binds = [ChannelMainHandler::class, PacketSender::class])
 class ChannelMainHandlerImpl(
     @Named("hqframework") private val plugin: Plugin
 ) : ChannelMainHandler {
@@ -27,9 +27,11 @@ class ChannelMainHandlerImpl(
     override fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
         channel.handler.connectionState = ConnectionState.CONNECTED
         this.proxyChannel = channel.handler.channel
-        plugin.server.scheduler.runTask(plugin, Runnable { plugin.server.pluginManager.callEvent(
-            NettyClientConnectedEvent(channel)
-        ) })
+        plugin.server.scheduler.runTask(plugin, Runnable {
+            plugin.server.pluginManager.callEvent(
+                NettyClientConnectedEvent(channel)
+            )
+        })
     }
 
     override fun sendPacketToProxy(packet: Packet) {
@@ -49,7 +51,7 @@ class ChannelMainHandlerImpl(
     }
 
     override fun disconnect() {
-        if(proxyChannel?.channel?.isOpen == true && proxyChannel?.channel?.isActive == true) {
+        if (proxyChannel?.channel?.isOpen == true && proxyChannel?.channel?.isActive == true) {
             proxyChannel?.channel?.disconnect()
             proxyChannel = null
         }

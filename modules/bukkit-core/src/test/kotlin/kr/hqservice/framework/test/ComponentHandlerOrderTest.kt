@@ -19,6 +19,7 @@ import kotlin.reflect.KClass
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class ComponentHandlerOrderTest {
     private lateinit var plugin: HQFrameworkBukkitMock
+
     companion object {
         private val setupOrderResult: MutableList<KClass<out HQComponentHandler<*>>> = mutableListOf()
     }

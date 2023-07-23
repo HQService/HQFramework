@@ -29,5 +29,6 @@ fun ItemStack.setNmsItemStack(nmsItemStack: NmsItemStackWrapper) {
     itemMeta = itemService.unwrap(nmsItemStack).itemMeta
 }
 
-val ItemStack.localizedName: String get() =
-    itemService.wrap(this).getItem().getLocalizedName()?: type.name.lowercase()
+val ItemStack.localizedName: String
+    get() =
+        itemService.wrap(this).getItem().getLocalizedName() ?: type.name.lowercase()

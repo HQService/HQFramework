@@ -1,3 +1,4 @@
 package kr.hqservice.framework.global.core.component
 
-interface HQService : HQComponent
+@Deprecated("1.0.1 에 제거 예정")
+interface HQService

@@ -27,9 +27,9 @@ sealed class Range(
     }
 
     private fun contains(point: Point): Boolean {
-        return point.x in minPosition.getX() .. maxPosition.getX() &&
-                point.y in minPosition.getY() .. maxPosition.getY() &&
-                point.z in minPosition.getZ() .. maxPosition.getZ()
+        return point.x in minPosition.getX()..maxPosition.getX() &&
+                point.y in minPosition.getY()..maxPosition.getY() &&
+                point.z in minPosition.getZ()..maxPosition.getZ()
     }
 
     fun collidesWith(range: Range): Boolean {
@@ -47,7 +47,7 @@ sealed class Range(
     }
 
     protected fun getDot(min: Int, center: Int, max: Int, offsetValue: Int, offset: Offset? = null): Int {
-        val result = if(offset != null) when(offset) {
+        val result = if (offset != null) when (offset) {
             Offset.CENTER -> center
             Offset.MAX -> max
             Offset.MIN -> min

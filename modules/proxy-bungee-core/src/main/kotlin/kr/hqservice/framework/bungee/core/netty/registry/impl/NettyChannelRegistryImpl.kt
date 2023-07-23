@@ -6,7 +6,7 @@ import kr.hqservice.framework.bungee.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.impl.NettyChannelImpl
@@ -21,7 +21,7 @@ import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import net.md_5.bungee.api.ProxyServer
 
 @Component
-@HQSingleton(binds = [NettyChannelRegistry::class])
+@Singleton(binds = [NettyChannelRegistry::class])
 class NettyChannelRegistryImpl(
     private val config: HQYamlConfiguration
 ) : NettyChannelRegistry, HQSimpleComponent {
@@ -45,7 +45,14 @@ class NettyChannelRegistryImpl(
 
         val connectedChannels = mutableListOf<NettyChannel>()
         connectedChannels.add(channelVO)
-        nameChannelContainer.forEach { (channelName, wrap) -> connectedChannels.add(NettyChannelImpl(wrap.port, channelName)) }
+        nameChannelContainer.forEach { (channelName, wrap) ->
+            connectedChannels.add(
+                NettyChannelImpl(
+                    wrap.port,
+                    channelName
+                )
+            )
+        }
         portChannelContainer.values.forEach { it.sendPacket(connectedPacket) }
 
         portChannelContainer[port] = wrapper
@@ -54,13 +61,19 @@ class NettyChannelRegistryImpl(
         val handlerBoss = wrapper.channel.pipeline().get(BossHandler::class.java)
         handlerBoss.setDisconnectionHandler(this::onChannelInactive)
         handlerBoss.setPacketPreprocessHandler { packet, wrap ->
-            ProxyServer.getInstance().pluginManager.callEvent(NettyPacketReceivedEvent(packet, wrap)) }
+            ProxyServer.getInstance().pluginManager.callEvent(NettyPacketReceivedEvent(packet, wrap))
+        }
 
         Thread {
             val players = mutableListOf<NettyPlayer>()
             ProxyServer.getInstance().players.forEach {
                 try {
-                    players.add(NettyPlayerImpl(it.name, it.uniqueId, connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port }))
+                    players.add(
+                        NettyPlayerImpl(
+                            it.name,
+                            it.uniqueId,
+                            connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port })
+                    )
                 } catch (_: Exception) {
                     it.disconnect("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
                 }
@@ -69,7 +82,7 @@ class NettyChannelRegistryImpl(
         }.start()
     }
 
-    override fun loopChannels(block: (ChannelWrapper)->Unit) {
+    override fun loopChannels(block: (ChannelWrapper) -> Unit) {
         portChannelContainer.values.forEach(block)
     }
 

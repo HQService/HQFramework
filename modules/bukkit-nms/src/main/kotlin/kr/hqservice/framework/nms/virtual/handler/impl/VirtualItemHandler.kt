@@ -21,7 +21,7 @@ class VirtualItemHandler(
     }
 
     override fun checkCondition(message: Any): Boolean {
-        return if(message::class.simpleName == "PacketPlayOutWindowItems") {
+        return if (message::class.simpleName == "PacketPlayOutWindowItems") {
             val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
             containerId == targetContainer
         } else false
@@ -32,7 +32,7 @@ class VirtualItemHandler(
     }
 
     override fun unregisterCondition(message: Any): Boolean {
-        return if(message::class.simpleName == "PacketPlayOutOpenWindow") {
+        return if (message::class.simpleName == "PacketPlayOutOpenWindow") {
             val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
             containerId != targetContainer
         } else false
@@ -40,7 +40,7 @@ class VirtualItemHandler(
 
     override fun handle(message: Any) {
         val clazz = message::class
-        when(clazz.simpleName!!) {
+        when (clazz.simpleName!!) {
             /*"PacketPlayOutSetSlot" -> {
                 val slot = reflectionWrapper.getField(clazz, "e").callAccess<Int>(message)
                 val nmsItemStack = reflectionWrapper.getField(clazz, "f").callAccess<Any>(message)
@@ -57,8 +57,9 @@ class VirtualItemHandler(
                 list.forEachIndexed { index, any ->
                     val wrapper = itemStackService.getWrapper(any)
                     val bukkitItemStack = wrapper.getBukkitItemStack()
-                    if(filter(index, bukkitItemStack)) {
-                        list[index] = bukkitItemStack.apply{ item(index, bukkitItemStack) }.getNmsItemStack().getUnwrappedInstance()
+                    if (filter(index, bukkitItemStack)) {
+                        list[index] = bukkitItemStack.apply { item(index, bukkitItemStack) }.getNmsItemStack()
+                            .getUnwrappedInstance()
                     }
                 }
             }

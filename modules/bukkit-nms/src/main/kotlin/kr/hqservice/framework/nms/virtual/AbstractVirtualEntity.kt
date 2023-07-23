@@ -1,17 +1,12 @@
 package kr.hqservice.framework.nms.virtual
 
 import kr.hqservice.framework.bukkit.core.extension.colorize
-import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.getNmsItemStack
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
-import kr.hqservice.framework.nms.virtual.factory.VirtualViewFactory
-import kr.hqservice.framework.nms.virtual.factory.impl.SingleVirtualFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Location
-import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
@@ -28,12 +23,13 @@ abstract class AbstractVirtualEntity(
     private var itemContainer: List<Any>? = null
     abstract fun getEntity(): Any
     private fun entityInitialize() {
-        if(name.isNotEmpty()) {
+        if (name.isNotEmpty()) {
             setName(name.colorize())
             setNameVisible(true)
         } else setNameVisible(false)
         initialize()
     }
+
     protected abstract fun initialize()
 
     private fun getEntityId(): Int {
@@ -45,7 +41,7 @@ abstract class AbstractVirtualEntity(
     }
 
     fun setLocation(location: Location) {
-        if(location == this.location) return
+        if (location == this.location) return
         try {
             virtualEntityClasses.setLocation(location, getEntity())
             this.location = location
@@ -82,63 +78,69 @@ abstract class AbstractVirtualEntity(
 
     fun setEquipmentItems(items: List<Pair<EquipmentSlot, ItemStack>>) {
         itemContainer = items.map {
-            val slot = virtualEntityClasses.getEnumItemSlot(if(it.first == EquipmentSlot.HAND) "mainhand" else it.first.name)
+            val slot =
+                virtualEntityClasses.getEnumItemSlot(if (it.first == EquipmentSlot.HAND) "mainhand" else it.first.name)
             virtualEntityClasses.createBukkitPair(
                 slot,
                 it.second.getNmsItemStack().getUnwrappedInstance()
             )
         }
-        if(!(state mask VirtualEntityState.UPDATE_ITEM))
+        if (!(state mask VirtualEntityState.UPDATE_ITEM))
             state = state switch VirtualEntityState.UPDATE_ITEM
         switchMetaMask()
     }
 
     fun destroy() {
-        if(!(state mask VirtualEntityState.DESTROY))
+        if (!(state mask VirtualEntityState.DESTROY))
             state = state switch VirtualEntityState.DESTROY
     }
 
     private fun switchLocationMask() {
-        if(!(state mask VirtualEntityState.RELOCATE))
+        if (!(state mask VirtualEntityState.RELOCATE))
             state = state switch VirtualEntityState.RELOCATE
     }
 
     protected fun switchMetaMask() {
-        if(!(state mask VirtualEntityState.UPDATE_META_DATA))
+        if (!(state mask VirtualEntityState.UPDATE_META_DATA))
             state = state switch VirtualEntityState.UPDATE_META_DATA
     }
 
     final override fun createVirtualMessage(): VirtualMessage? {
-        if(state mask VirtualEntityState.UNHANDLED) return null
+        if (state mask VirtualEntityState.UNHANDLED) return null
 
         val packets = mutableListOf<Any>()
-        if(state mask VirtualEntityState.DESTROY) {
+        if (state mask VirtualEntityState.DESTROY) {
             state = state switch VirtualEntityState.UNHANDLED
             return VirtualMessageImpl(virtualEntityClasses.entityDestroyPacket.newInstance(arrayOf(getEntityId()).toIntArray()))
         }
 
-        if(state mask VirtualEntityState.CREAT) {
+        if (state mask VirtualEntityState.CREAT) {
             entityInitialize()
             state = state switch VirtualEntityState.CREAT
             packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(getEntity()))
         }
 
-        if(state mask VirtualEntityState.UPDATE_ITEM) {
+        if (state mask VirtualEntityState.UPDATE_ITEM) {
             state = state switch VirtualEntityState.UPDATE_ITEM
-            packets.add(virtualEntityClasses.entityEquipmentPacket.newInstance(getEntityId(), itemContainer?: emptyList<Any>()))
+            packets.add(
+                virtualEntityClasses.entityEquipmentPacket.newInstance(
+                    getEntityId(),
+                    itemContainer ?: emptyList<Any>()
+                )
+            )
         }
 
-        if(state mask VirtualEntityState.RELOCATE) {
+        if (state mask VirtualEntityState.RELOCATE) {
             state = state switch VirtualEntityState.RELOCATE
             packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(getEntity()))
         }
 
-        if(state mask VirtualEntityState.UPDATE_META_DATA) {
+        if (state mask VirtualEntityState.UPDATE_META_DATA) {
             state = state switch VirtualEntityState.UPDATE_META_DATA
             packets.add(virtualEntityClasses.createMetaDataPacket(getEntity()))
         }
-        return if(packets.isEmpty()) null
-        else if(packets.size == 1) VirtualMessageImpl(packets.first())
+        return if (packets.isEmpty()) null
+        else if (packets.size == 1) VirtualMessageImpl(packets.first())
         else VirtualListMessage(packets)
     }
 }

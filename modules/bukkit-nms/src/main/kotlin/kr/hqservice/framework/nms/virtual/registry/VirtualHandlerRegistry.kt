@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.virtual.registry
 
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
-import java.util.UUID
+import java.util.*
 
 interface VirtualHandlerRegistry : HQSimpleComponent {
     fun register(uniqueId: UUID, handler: VirtualHandler)

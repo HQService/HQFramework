@@ -5,7 +5,7 @@ import kr.hqservice.framework.netty.channel.ChannelWrapper
 interface NettyChannelRegistry {
     fun registerActiveChannel(port: Int, wrapper: ChannelWrapper)
 
-    fun loopChannels(block: (ChannelWrapper)->Unit)
+    fun loopChannels(block: (ChannelWrapper) -> Unit)
 
     fun getChannelNameByPort(port: Int): String
 

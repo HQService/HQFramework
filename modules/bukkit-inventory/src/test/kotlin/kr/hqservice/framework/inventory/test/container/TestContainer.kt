@@ -5,8 +5,8 @@ import org.bukkit.inventory.Inventory
 
 class TestContainer(
     title: String,
-    private val settingBlock: HQContainer.()-> Unit
-): HQContainer(9, title) {
+    private val settingBlock: HQContainer.() -> Unit
+) : HQContainer(9, title) {
 
     override fun initialize(inventory: Inventory) {
         settingBlock.invoke(this)

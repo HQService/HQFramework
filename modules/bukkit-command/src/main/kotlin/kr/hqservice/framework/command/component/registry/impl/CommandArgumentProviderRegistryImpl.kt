@@ -2,13 +2,13 @@ package kr.hqservice.framework.command.component.registry.impl
 
 import kr.hqservice.framework.command.component.CommandArgumentProvider
 import kr.hqservice.framework.command.component.registry.CommandArgumentProviderRegistry
-import org.koin.core.annotation.Single
+import kr.hqservice.framework.global.core.component.Bean
 import kotlin.reflect.KClassifier
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 
-@Single(binds = [CommandArgumentProviderRegistry::class])
+@Bean
 class CommandArgumentProviderRegistryImpl : CommandArgumentProviderRegistry {
     private val arguments: MutableMap<KClassifier, CommandArgumentProvider<*>> = mutableMapOf()
 
@@ -21,7 +21,8 @@ class CommandArgumentProviderRegistryImpl : CommandArgumentProviderRegistry {
     }
 
     override fun getProvider(classifier: KClassifier): CommandArgumentProvider<*> {
-        return arguments[classifier] ?: throw IllegalArgumentException("argument provider with classifier $classifier not found.")
+        return arguments[classifier]
+            ?: throw IllegalArgumentException("argument provider with classifier $classifier not found.")
     }
 
     private fun getArgumentProviderType(argumentProvider: CommandArgumentProvider<*>): KClassifier {

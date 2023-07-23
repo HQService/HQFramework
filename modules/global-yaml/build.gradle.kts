@@ -4,7 +4,6 @@ plugins {
 }
 
 dependencies {
-    apiModule("global", "core")
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.configurate.yaml)

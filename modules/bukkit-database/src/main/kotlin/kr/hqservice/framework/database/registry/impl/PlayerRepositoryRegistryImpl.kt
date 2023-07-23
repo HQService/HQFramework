@@ -3,10 +3,10 @@ package kr.hqservice.framework.database.registry.impl
 import kr.hqservice.framework.database.component.repository.HQPlayerRepository
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 
 @Component
-@HQSingleton(binds = [PlayerRepositoryRegistry::class])
+@Singleton(binds = [PlayerRepositoryRegistry::class])
 class PlayerRepositoryRegistryImpl : PlayerRepositoryRegistry {
     private val repositories: MutableList<HQPlayerRepository<*>> = mutableListOf()
 

@@ -15,7 +15,7 @@ class VirtualViewFactory(
     private var filter: (Int, ItemStack) -> Boolean = { _, _ -> true }
     private var item: (Int, ItemStack) -> Unit = { _, _ -> }
 
-    fun condition(filter : (slot: Int, original: ItemStack) -> Boolean) {
+    fun condition(filter: (slot: Int, original: ItemStack) -> Boolean) {
         this.filter = filter
     }
 
@@ -23,7 +23,7 @@ class VirtualViewFactory(
         this.item = itemStackScope
     }
 
-    internal fun create() : VirtualHandler {
+    internal fun create(): VirtualHandler {
         return VirtualItemHandler(itemStackService, reflectionWrapper, containerId, filter, item)
     }
 }

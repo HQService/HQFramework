@@ -12,7 +12,7 @@ import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.inventory.InventoryView
 
 @Component
-class HQContainerHandler: HQListener {
+class HQContainerHandler : HQListener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun inventoryClick(event: InventoryClickEvent) {
@@ -22,7 +22,7 @@ class HQContainerHandler: HQListener {
             getButton(event.rawSlot)?.also { button ->
                 event.isCancelled = true
                 button.click(ButtonClickEvent(this, button, event))
-            }?: onClick(event)
+            } ?: onClick(event)
         }
     }
 
@@ -41,8 +41,8 @@ class HQContainerHandler: HQListener {
     }
 
     private fun getContainer(inventoryView: InventoryView): HQContainer? {
-        val holder = inventoryView.topInventory.holder?: return null
-        return if(holder is HQContainer) holder else null
+        val holder = inventoryView.topInventory.holder ?: return null
+        return if (holder is HQContainer) holder else null
     }
 
 }

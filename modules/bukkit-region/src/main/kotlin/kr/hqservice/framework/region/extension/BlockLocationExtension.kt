@@ -21,9 +21,9 @@ fun Location.asBlockLocation(): BlockLocation {
 fun BlockLocation.toList(endPosition: BlockLocation): List<BlockLocation> {
     val mutableList = mutableListOf<BlockLocation>()
     val world = getWorld()
-    for(x in getX() .. endPosition.getX())
-        for(y in getY() .. endPosition.getY())
-            for(z in getZ() .. endPosition.getZ())
+    for (x in getX()..endPosition.getX())
+        for (y in getY()..endPosition.getY())
+            for (z in getZ()..endPosition.getZ())
                 mutableList.add(BlockLocationImpl(world, x, y, z))
     return mutableList
 }

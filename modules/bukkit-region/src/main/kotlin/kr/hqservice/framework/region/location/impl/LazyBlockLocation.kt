@@ -14,7 +14,7 @@ data class LazyBlockLocation(
     constructor(worldName: String, x: Int, y: Int, z: Int) : this(worldName, Point(x, y, z))
 
     override fun getWorld(): World {
-        return Bukkit.getWorld(worldName)?: throw NullPointerException("$worldName 월드를 찾을 수 없습니다.")
+        return Bukkit.getWorld(worldName) ?: throw NullPointerException("$worldName 월드를 찾을 수 없습니다.")
     }
 
     override fun getX(): Int {

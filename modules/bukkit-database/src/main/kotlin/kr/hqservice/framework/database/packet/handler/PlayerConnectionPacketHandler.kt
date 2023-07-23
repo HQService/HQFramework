@@ -79,13 +79,15 @@ class PlayerConnectionPacketHandler(
         }
         when (packet.state) {
             PlayerConnectionState.PRE_SWITCH_CHANNEL -> {
-                val player = server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
+                val player =
+                    server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
                 val nextChannel = packet.sourceChannel ?: return // 열리지 않은 서버
                 databaseCoroutineScope.launch {
                     saveAndClear(player).join()
                     packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                 }
             }
+
             PlayerConnectionState.DISCONNECT -> {
                 val lock = disconnectDefermentLock.findLock(packet.player.getUniqueId())
                 if (lock == null) {
@@ -100,6 +102,7 @@ class PlayerConnectionPacketHandler(
             else -> {}
         }
     }
+
     @EventHandler
     fun onPlayerProxyQuit(event: PlayerQuitEvent) {
         if (!nettyService.isEnable()) {

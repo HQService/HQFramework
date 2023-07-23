@@ -40,9 +40,9 @@ abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
 
     private fun loadConfig() {
         val stream = getResourceAsStream("config.yml") ?: return
-        if(!dataFolder.exists()) dataFolder.mkdirs()
+        if (!dataFolder.exists()) dataFolder.mkdirs()
         val file = File(dataFolder, "config.yml")
-        if(!file.exists()) file.bufferedWriter().use {  writer ->
+        if (!file.exists()) file.bufferedWriter().use { writer ->
             stream.reader().readLines().forEach {
                 writer.appendLine(it)
             }

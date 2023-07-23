@@ -3,8 +3,8 @@ package kr.hqservice.framework.nms.wrapper.item
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
+import kr.hqservice.framework.nms.wrapper.getFunction
 import org.bukkit.inventory.ItemStack
 
 class NmsItemStackWrapper(
@@ -17,7 +17,8 @@ class NmsItemStackWrapper(
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
     private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
-    private val getTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "getTag",
+    private val getTagFunction = reflectionWrapper.getFunction(
+        nmsItemStackClass, "getTag",
         Version.V_15.handle("o"),
         Version.V_17.handle("s"),
         Version.V_19.handle("u"),
@@ -32,14 +33,14 @@ class NmsItemStackWrapper(
     }
 
     fun tag(tagScope: NmsNBTTagCompoundWrapper.() -> Unit = {}): NmsNBTTagCompoundWrapper {
-        val tag = getTagOrNull()?: createNewTag()
+        val tag = getTagOrNull() ?: createNewTag()
         tag.tagScope()
         setTag(tag)
         return tag
     }
 
     fun getTag(): NmsNBTTagCompoundWrapper {
-        return getTagFunction.call(nmsItemStack)?.run(tagService::wrap)?: throw NullPointerException("nbt-tag is null")
+        return getTagFunction.call(nmsItemStack)?.run(tagService::wrap) ?: throw NullPointerException("nbt-tag is null")
     }
 
     fun getTagOrNull(): NmsNBTTagCompoundWrapper? {

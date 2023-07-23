@@ -20,7 +20,7 @@ class NettyModule(
     private val nettyEnabled: Boolean = config.getBoolean("netty.enabled")
 
     override fun onEnable() {
-        if(nettyEnabled) {
+        if (nettyEnabled) {
             bootstrap.initializing()
             ProxyServer.getInstance().pluginManager.registerListener(plugin, PlayerConnectionListener(channelContainer))
         }

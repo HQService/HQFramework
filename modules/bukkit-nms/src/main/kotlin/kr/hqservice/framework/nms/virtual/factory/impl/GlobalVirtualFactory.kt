@@ -2,10 +2,10 @@ package kr.hqservice.framework.nms.virtual.factory.impl
 
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.entity.inner.VirtualCamera
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
+import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
@@ -13,7 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta
 class GlobalVirtualFactory(
     private val receivers: List<Player>,
     private val reflectionWrapper: NmsReflectionWrapper,
-): VirtualFactory {
+) : VirtualFactory {
     @Deprecated("use inventory()")
     override suspend fun setItem(
         slot: Int,
@@ -21,7 +21,8 @@ class GlobalVirtualFactory(
         itemEditBlock: ItemMeta.() -> Unit
     ) {
         receivers.forEach {
-            reflectionWrapper.sendPacket(it, VirtualItem(it, slot, itemStack, itemEditBlock)) }
+            reflectionWrapper.sendPacket(it, VirtualItem(it, slot, itemStack, itemEditBlock))
+        }
     }
 
     override fun getViewers(): List<Player> {

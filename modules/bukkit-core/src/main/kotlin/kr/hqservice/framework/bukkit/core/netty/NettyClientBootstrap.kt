@@ -25,37 +25,43 @@ class NettyClientBootstrap(
 
     fun initializing() {
         val future = HQNettyBootstrap(logger, config).initClient(bootup)
-        if(bootup) {
+        if (bootup) {
             Direction.OUTBOUND.registerPacket(BroadcastPacket::class)
             Direction.OUTBOUND.registerPacket(MessagePacket::class)
         }
         bootup = false
         future.whenCompleteAsync { channel, throwable ->
-            if(throwable != null) {
+            if (throwable != null) {
                 logger.severe("failed to bootup successfully.")
                 //throwable.printStackTrace()
                 try {
                     TimeUnit.SECONDS.sleep(3)
                     initializing()
-                } catch (e: InterruptedException) { e.printStackTrace() }
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
             }
 
             val handlerBoss = channel.pipeline().get(BossHandler::class.java)
             handlerBoss.setDisconnectionHandler {
-                if(!plugin.isEnabled) return@setDisconnectionHandler
+                if (!plugin.isEnabled) return@setDisconnectionHandler
                 it.setEnabled(false)
                 plugin.server.scheduler.runTask(plugin, Runnable {
-                    plugin.server.pluginManager.callEvent(NettyClientDisconnectedEvent(it)) })
+                    plugin.server.pluginManager.callEvent(NettyClientDisconnectedEvent(it))
+                })
                 try {
                     TimeUnit.SECONDS.sleep(3)
                     initializing()
-                } catch (e: InterruptedException) { e.printStackTrace() }
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
             }
 
             handlerBoss.setPacketPreprocessHandler { packet, wrapper ->
                 plugin.server.pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
                 plugin.server.scheduler.runTask(plugin, Runnable {
-                    plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet)) })
+                    plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
+                })
             }
 
             logger.info("netty-client initialization success!")

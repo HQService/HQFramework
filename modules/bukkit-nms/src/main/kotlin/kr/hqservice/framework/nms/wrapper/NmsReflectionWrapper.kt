@@ -44,22 +44,57 @@ fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, vararg hand
     return getFunction(clazz, FunctionType(name), *handlers)
 }
 
-fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getFunction(
+    clazz: KClass<*>,
+    name: String,
+    returnType: KClass<*>,
+    vararg handlers: VersionHandler
+): KCallable<*> {
     return getFunction(clazz, FunctionType(name, returnType.createType()), *handlers)
 }
 
-fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
-    return getFunction(clazz, FunctionType(name, null , params), *handlers)
+fun NmsReflectionWrapper.getFunction(
+    clazz: KClass<*>,
+    name: String,
+    params: List<KClass<*>>,
+    vararg handlers: VersionHandler
+): KCallable<*> {
+    return getFunction(clazz, FunctionType(name, null, params), *handlers)
 }
 
-fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
+fun NmsReflectionWrapper.getFunction(
+    clazz: KClass<*>,
+    name: String,
+    returnType: KClass<*>,
+    params: List<KClass<*>>,
+    vararg handlers: VersionHandler
+): KCallable<*> {
     return getFunction(clazz, FunctionType(name, returnType.createType(), params), *handlers)
 }
 
-fun NmsReflectionWrapper.getStaticFunction(clazz: KClass<*>, name: String, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
-    return getStaticFunction(clazz, FunctionType(name, null, params, true), *handlers.map { it.static() }.toTypedArray())
+fun NmsReflectionWrapper.getStaticFunction(
+    clazz: KClass<*>,
+    name: String,
+    params: List<KClass<*>>,
+    vararg handlers: VersionHandler
+): KCallable<*> {
+    return getStaticFunction(
+        clazz,
+        FunctionType(name, null, params, true),
+        *handlers.map { it.static() }.toTypedArray()
+    )
 }
 
-fun NmsReflectionWrapper.getStaticFunction(clazz: KClass<*>, name: String, returnType: KClass<*>, params: List<KClass<*>>, vararg handlers: VersionHandler): KCallable<*> {
-    return getStaticFunction(clazz, FunctionType(name, returnType.createType(), params, true), *handlers.map { it.static() }.toTypedArray())
+fun NmsReflectionWrapper.getStaticFunction(
+    clazz: KClass<*>,
+    name: String,
+    returnType: KClass<*>,
+    params: List<KClass<*>>,
+    vararg handlers: VersionHandler
+): KCallable<*> {
+    return getStaticFunction(
+        clazz,
+        FunctionType(name, returnType.createType(), params, true),
+        *handlers.map { it.static() }.toTypedArray()
+    )
 }

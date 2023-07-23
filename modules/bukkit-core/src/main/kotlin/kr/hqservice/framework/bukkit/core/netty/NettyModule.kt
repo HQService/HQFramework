@@ -1,10 +1,10 @@
 package kr.hqservice.framework.bukkit.core.netty
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.bukkit.core.netty.service.impl.HQNettyServiceImpl
+import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
@@ -29,10 +29,11 @@ class NettyModule(
         //nettyEnabled = config.getBoolean("netty.enabled")
 
         channelHandler.apply {
-            Direction.INBOUND.addListener(HandShakePacket::class, this) }
+            Direction.INBOUND.addListener(HandShakePacket::class, this)
+        }
 
         Direction.INBOUND.addListener(ShutdownPacket::class) { packet, channel ->
-            if(packet.shutdownTarget) {
+            if (packet.shutdownTarget) {
                 channel.setEnabled(false)
                 nettyService.enabled = false
                 logger.info("requested shutdown.")
@@ -43,7 +44,7 @@ class NettyModule(
             }
         }
 
-        if(nettyEnabled) NettyClientBootstrap(plugin, logger, config).initializing()
+        if (nettyEnabled) NettyClientBootstrap(plugin, logger, config).initializing()
     }
 
     override fun onDisable() {

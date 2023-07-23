@@ -90,5 +90,9 @@ interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
      *
      * @return 자동완성을 추천할 문자열들
      */
-    suspend fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String? = null): List<String>
+    suspend fun getTabComplete(
+        context: CommandContext,
+        location: Location?,
+        argumentLabel: String? = null
+    ): List<String>
 }

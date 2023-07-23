@@ -5,7 +5,7 @@ import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.Visibility
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.implementation.MethodCall
-import java.util.LinkedList
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
@@ -37,13 +37,14 @@ enum class Direction {
             .load(packetClass.java.classLoader, ClassLoadingStrategy.Default.WRAPPER)
             .loaded
 
-        val primaryConstructor = packetClass.primaryConstructor?: throw IllegalArgumentException("'${packetClass.simpleName}' packet has not primary constructor")
+        val primaryConstructor = packetClass.primaryConstructor
+            ?: throw IllegalArgumentException("'${packetClass.simpleName}' packet has not primary constructor")
 
         packetMap[packetClass.qualifiedName!!] = PacketWrapper(packetClass, codecClass, primaryConstructor)
     }
 
-    fun <T : Packet> addListener(packetClass: KClass<T>, packetHandler: (packet: T, channel: ChannelWrapper)-> Unit) {
-        val handler = object: PacketHandler<T> {
+    fun <T : Packet> addListener(packetClass: KClass<T>, packetHandler: (packet: T, channel: ChannelWrapper) -> Unit) {
+        val handler = object : PacketHandler<T> {
             override fun onPacketReceive(packet: T, channel: ChannelWrapper) {
                 packetHandler(packet, channel)
             }
@@ -57,7 +58,8 @@ enum class Direction {
 
     @Suppress("unchecked_cast")
     fun <T : Packet> getPacketByClass(clazz: KClass<T>): PacketWrapper<T> {
-        return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>?: throw IllegalArgumentException("not found packet")
+        return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>
+            ?: throw IllegalArgumentException("not found packet")
     }
 
     @Suppress("unchecked_cast")
@@ -67,7 +69,7 @@ enum class Direction {
 
     @Suppress("unchecked_cast")
     fun <T : Packet> onPacketReceived(packet: T, channel: ChannelWrapper): Boolean {
-        val handlers = this.handlers[packet::class.qualifiedName!!]?: return false
+        val handlers = this.handlers[packet::class.qualifiedName!!] ?: return false
         for (listener in handlers) {
             listener as PacketHandler<T>
             listener.onPacketReceive(packet, channel)

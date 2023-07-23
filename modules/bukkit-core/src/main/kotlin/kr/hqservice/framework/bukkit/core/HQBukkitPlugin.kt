@@ -1,7 +1,7 @@
 package kr.hqservice.framework.bukkit.core
 
+import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.HQPlugin
-import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.plugin.java.JavaPluginLoader
@@ -13,9 +13,15 @@ import java.util.logging.Logger
 
 abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     constructor() : super()
-    internal constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+    internal constructor(
+        loader: JavaPluginLoader,
+        description: PluginDescriptionFile,
+        dataFolder: File,
+        file: File
+    ) : super(loader, description, dataFolder, file)
 
-    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+    protected open val componentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
+
     open val group = "HQPlugin"
 
     final override fun onLoad() {
@@ -56,8 +62,8 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent {
     private fun loadConfigIfExist() {
         val stream = getResource("config.yml") ?: return
         val file = File(dataFolder, "config.yml")
-        if(!dataFolder.exists()) dataFolder.mkdirs()
-        if(!file.exists()) file.bufferedWriter().use {  writer ->
+        if (!dataFolder.exists()) dataFolder.mkdirs()
+        if (!file.exists()) file.bufferedWriter().use { writer ->
             stream.reader().readLines().forEach {
                 writer.appendLine(it)
             }

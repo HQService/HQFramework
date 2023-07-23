@@ -2,21 +2,20 @@ package kr.hqservice.framework.bukkit.core.netty.api
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQService
-import kr.hqservice.framework.global.core.component.HQSingleton
-import kr.hqservice.framework.netty.api.NettyServer
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
-import kr.hqservice.framework.netty.api.PacketSender
+import kr.hqservice.framework.netty.api.NettyServer
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.container.ChannelContainer
-import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.Direction
+import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.PacketHandler
 import java.util.*
 import kotlin.reflect.KClass
 
 @Component
-@HQSingleton(binds = [NettyServer::class])
+@Singleton(binds = [NettyServer::class])
 class BukkitNettyServer(
     private val container: ChannelContainer
 ) : NettyServer, HQService {

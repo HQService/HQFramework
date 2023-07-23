@@ -10,7 +10,8 @@ abstract class MySQLDataSource(
 ) : HQDataSource() {
     override fun getConfig(): HikariConfig {
         return buildHikariConfig {
-            this.jdbcUrl = "jdbc:mysql://${databaseHost.host}:${databaseHost.port}/${databaseHost.database}?autoReconnect=true&allowMultiQueries=true"
+            this.jdbcUrl =
+                "jdbc:mysql://${databaseHost.host}:${databaseHost.port}/${databaseHost.database}?autoReconnect=true&allowMultiQueries=true"
             this.driverClassName = "com.mysql.cj.jdbc.Driver"
             this.username = databaseHost.user
             this.password = databaseHost.password

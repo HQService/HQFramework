@@ -9,11 +9,11 @@ private val specialColors = arrayOf("&l", "&n", "&m", "&o", "&k", "§l", "§n", 
 private val patterns = listOf(Gradient, Solid)
 
 internal fun String.withoutColor(specialOnly: Boolean = false): String {
-    return if(!specialOnly) ChatColor.stripColor(this)
+    return if (!specialOnly) ChatColor.stripColor(this)
     else {
         var result = this
-        for(color in specialColors)
-            if(result.contains(color)) result = result.replace(color, "")
+        for (color in specialColors)
+            if (result.contains(color)) result = result.replace(color, "")
         return result
     }
 }
@@ -24,12 +24,12 @@ internal fun String.applyColors(colors: List<ChatColor>): String {
     val chars = split("")
     var outIndex = 0
     var index = 0
-    while(index++ < length) {
+    while (index++ < length) {
         val char = chars[index]
-        if(char != "&" && char != "§")
+        if (char != "&" && char != "§")
             stringBuilder.append(colors[outIndex++]).append(specialColors).append(char)
-        else if(index + 1 < chars.size) {
-            if(chars[index + 1] == "r") specialColors.setLength(0)
+        else if (index + 1 < chars.size) {
+            if (chars[index + 1] == "r") specialColors.setLength(0)
             else {
                 specialColors.append(char)
                 specialColors.append(chars[index + 1])

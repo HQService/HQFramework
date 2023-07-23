@@ -14,8 +14,10 @@ class LineRange(
         val dot: Int = when (axis) {
             LineAxis.HORIZONTAL_Z ->
                 getDot(minPosition.getX(), getCenter().getX(), maxPosition.getX(), offset)
+
             LineAxis.HORIZONTAL_X ->
                 getDot(minPosition.getZ(), getCenter().getZ(), maxPosition.getZ(), offset)
+
             LineAxis.VERTICAL ->
                 getDot(minPosition.getY(), getCenter().getY(), maxPosition.getY(), offset)
         }
@@ -26,8 +28,10 @@ class LineRange(
         val dot: Int = when (axis) {
             LineAxis.HORIZONTAL_Z ->
                 getDot(minPosition.getX(), getCenter().getX(), maxPosition.getX(), -1, offset)
+
             LineAxis.HORIZONTAL_X ->
                 getDot(minPosition.getZ(), getCenter().getZ(), maxPosition.getZ(), -1, offset)
+
             LineAxis.VERTICAL ->
                 getDot(minPosition.getY(), getCenter().getY(), maxPosition.getY(), -1, offset)
         }

@@ -46,7 +46,7 @@ abstract class HQCommandTree(
     fun sendUsageMessages(target: CommandSender, where: Array<String>, pluginName: String) {
         val label = where.joinToString(" ")
         val components = getTextComponents(target, "", "/$label ")
-        if(components.isNotEmpty()) {
+        if (components.isNotEmpty()) {
             val component = TextComponent("/$label")
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/$label ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
@@ -63,14 +63,18 @@ abstract class HQCommandTree(
         } else target.sendMessage("§fUnknown command. Type \"/help\" for help.")
     }
 
-    private fun getTextComponents(sender: CommandSender, padding: String = "", pointer: String = ""): List<TextComponent> {
+    private fun getTextComponents(
+        sender: CommandSender,
+        padding: String = "",
+        pointer: String = ""
+    ): List<TextComponent> {
         val result = mutableListOf<TextComponent>()
         val filteredExecutors = commandExecutors.values.filter {
             sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission)))
         }
-        for((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
+        for ((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
             val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()
-            val prefix = if(lastNode) " §7┗━§f" else " §7┣━§f"
+            val prefix = if (lastNode) " §7┗━§f" else " §7┣━§f"
             val parameters =
                 executor.function.valueParameters.toMutableList().apply { removeFirst() }.joinToString("") {
                     val argumentLabel = it.findAnnotation<ArgumentLabel>()?.label ?: it.name!!
@@ -80,19 +84,24 @@ abstract class HQCommandTree(
                         "<${argumentLabel}> "
                     }
                 }
-            val component = TextComponent((padding + prefix + executor.label + " " + parameters + "&7" +  executor.description).colorize())
+            val component =
+                TextComponent((padding + prefix + executor.label + " " + parameters + "&7" + executor.description).colorize())
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${executor.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
 
             result.add(component)
         }
-        for((i, child) in commandTrees.values.sortedBy { it.priority }.withIndex()) {
+        for ((i, child) in commandTrees.values.sortedBy { it.priority }.withIndex()) {
             val lastTree = i + 1 == commandTrees.size
-            val component = TextComponent(padding + (if(lastTree) " §7┗━§f" else " §7┣━§f") + child.label)
+            val component = TextComponent(padding + (if (lastTree) " §7┗━§f" else " §7┣━§f") + child.label)
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${child.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
-            val childComponents = child.getTextComponents(sender, "$padding${if(lastTree) " " else "§7 ┃§f"}   ", pointer + child.label + " ")
-            if(childComponents.isNotEmpty()) {
+            val childComponents = child.getTextComponents(
+                sender,
+                "$padding${if (lastTree) " " else "§7 ┃§f"}   ",
+                pointer + child.label + " "
+            )
+            if (childComponents.isNotEmpty()) {
                 result.add(component)
                 result.addAll(childComponents)
             }

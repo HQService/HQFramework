@@ -1,6 +1,6 @@
 package kr.hqservice.framework.global.core.extension
 
-fun <T : Collection<String>> T.toHumanReadable() : String {
+fun <T : Collection<String>> T.toHumanReadable(): String {
     var strBuilder: String? = null
     this.forEach forEach@{ string ->
         if (strBuilder == null) {

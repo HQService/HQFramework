@@ -6,7 +6,7 @@ import kotlinx.coroutines.launch
 import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.HQSingleton
+import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.Server
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
@@ -20,7 +20,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Component
-@HQSingleton(binds = [PlayerSkullRepository::class])
+@Singleton(binds = [PlayerSkullRepository::class])
 class PlayerSkullRepository(
     private val server: Server,
     @Named("url-reader") private val urlReaderCoroutineScope: HQCoroutineScope
@@ -29,15 +29,21 @@ class PlayerSkullRepository(
     private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()
     private val gson = Gson()
 
-    fun setOwnerPlayer(targetUniqueId: UUID, inventory: Inventory, slot: Int, targetedItemStack: ItemStack, metaScope: (ItemMeta) -> Unit) {
-        val itemStack = inventory.getItem(slot)?: return
-        if(skinTagMap.containsKey(targetUniqueId)) {
-            if(!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack))
+    fun setOwnerPlayer(
+        targetUniqueId: UUID,
+        inventory: Inventory,
+        slot: Int,
+        targetedItemStack: ItemStack,
+        metaScope: (ItemMeta) -> Unit
+    ) {
+        val itemStack = inventory.getItem(slot) ?: return
+        if (skinTagMap.containsKey(targetUniqueId)) {
+            if (!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack))
                 server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!).apply {
                     itemMeta = itemMeta?.also(metaScope)
                 }
         } else {
-            if(lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
+            if (lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
             else {
                 val queue = ConcurrentLinkedQueue<ItemStack>()
                 lambdaQueueMap[targetUniqueId] = queue
@@ -57,14 +63,15 @@ class PlayerSkullRepository(
                     val tag = "{SkullOwner:{Id:\"$hashAsId\", Properties:{textures:[{Value:\"$value\"}]}}}"
                     skinTagMap[targetUniqueId] = tag
                     lambdaQueueMap.remove(targetUniqueId)
-                    while(queue.isNotEmpty()) {
+                    while (queue.isNotEmpty()) {
                         try {
                             val element = queue.poll()
-                            if(!element.type.isAir && targetedItemStack.isSimilar(element))
+                            if (!element.type.isAir && targetedItemStack.isSimilar(element))
                                 server.unsafe.modifyItemStack(element, tag).apply {
                                     itemMeta = itemMeta?.also(metaScope)
                                 }
-                        } catch (_: Exception) {}
+                        } catch (_: Exception) {
+                        }
                     }
                 }
             }
@@ -75,7 +82,8 @@ class PlayerSkullRepository(
         val builder = StringBuilder()
         val url = URL(stringUrl)
         BufferedReader(InputStreamReader(url.openStream(), StandardCharsets.UTF_8)).use { br ->
-            br.lines().forEach(builder::append) }
+            br.lines().forEach(builder::append)
+        }
         return builder.toString()
     }
 }
