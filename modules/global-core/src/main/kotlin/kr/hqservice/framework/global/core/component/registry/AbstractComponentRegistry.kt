@@ -5,6 +5,7 @@ import kr.hqservice.framework.global.core.component.error.*
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
+import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.annotation.Named
@@ -209,13 +210,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         return componentInstances.getComponent(key)
     }
 
-    private object Color {
-        const val ANSI_RESET = "\u001B[0m"
-        const val ANSI_RED = "\u001B[31m"
-        const val ANSI_GREEN = "\u001B[32m"
-        const val ANSI_CYAN = "\u001B[36m"
-    }
-
     private fun printFriendlyException(classes: List<KClass<*>>) {
         classes.forEach { kClass ->
             val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
@@ -223,15 +217,15 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             val parameterDisplays = parameters.mapIndexed { index, kParameter ->
                 val simpleName = kParameter.type.jvmErasure.simpleName
                 val qualifier = getQualifier(kParameter)?.value
-                val color = if (injected[index] != null) Color.ANSI_GREEN else Color.ANSI_RED
+                val color = if (injected[index] != null) AnsiColor.GREEN else AnsiColor.RED
                 if (qualifier != null) {
-                    "${color}${simpleName}(q: ${qualifier})${Color.ANSI_RESET}"
+                    "${color}${simpleName}(q: ${qualifier})${AnsiColor.RESET}"
                 } else {
-                    "${color}${simpleName}${Color.ANSI_RESET}"
+                    "${color}${simpleName}${AnsiColor.RESET}"
                 }
             }
 
-            println("${kClass.java.packageName}.${Color.ANSI_CYAN}${kClass.simpleName}${Color.ANSI_RESET}: [${parameterDisplays.joinToString()}]")
+            println("${kClass.java.packageName}.${AnsiColor.CYAN}${kClass.simpleName}${AnsiColor.RESET}: [${parameterDisplays.joinToString()}]")
         }
     }
 
