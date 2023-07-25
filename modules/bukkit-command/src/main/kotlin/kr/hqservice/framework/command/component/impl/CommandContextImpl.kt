@@ -20,7 +20,7 @@ class CommandContextImpl(
 
     private val argumentsByType: Multimap<KClassifier, String> = ArrayListMultimap.create<KClassifier, String>().apply {
         parameterMap.values.forEach { kParameter ->
-            this.put(kParameter.type.classifier, getContextKey(kParameter))
+            this.put(kParameter.type.classifier, arguments[getContextKey(kParameter)])
         }
     }
 
