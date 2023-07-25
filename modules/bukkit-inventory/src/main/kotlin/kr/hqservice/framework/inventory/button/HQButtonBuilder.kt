@@ -114,9 +114,7 @@ class HQButtonBuilder(
             meta.setDisplayName(displayName.colorize())
             meta.lore = lore.map { it.colorize() }
             meta.addItemFlags(*itemFlags.toTypedArray())
-            if (meta.hasCustomModelData()) {
-                meta.setCustomModelData(customModelData)
-            }
+            meta.setCustomModelData(customModelData)
             meta.itemMetaEditScope()
         }
         if (owningPlayer != null && itemStack.type != Material.PLAYER_HEAD) {
