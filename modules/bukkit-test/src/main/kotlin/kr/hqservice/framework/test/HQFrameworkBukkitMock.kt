@@ -65,7 +65,7 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
         file: File
     ) : super(loader, description, dataFolder, file)
 
-    public override val componentRegistry: ComponentRegistry =
+    public override val componentRegistry: BukkitComponentRegistry =
         spyk(BukkitComponentRegistry(this), recordPrivateCalls = true)
 
     override fun onPreEnable() {

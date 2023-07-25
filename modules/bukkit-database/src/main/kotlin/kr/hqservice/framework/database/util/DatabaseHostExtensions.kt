@@ -13,14 +13,14 @@ fun HQYamlConfigurationSection.findDatabaseHost(sectionKey: String = "database")
     return DatabaseHost(host, port, user, password, database)
 }
 
-fun HQYamlConfigurationSection.getDatabaseHost(sectionKey: String = "database"): DatabaseHost {
+fun HQYamlConfigurationSection.getDatabaseHost(sectionKey: String = "database.mysql"): DatabaseHost {
     return findDatabaseHost(sectionKey) ?: throw NullPointerException("database config 가 존재하지 않습니다.")
+}
+
+fun HQYamlConfigurationSection.getDatabasePath(sectionKey: String = "database.sqlite"): String {
+    return getString("$sectionKey.path")
 }
 
 fun HQYamlConfigurationSection.getDatabaseType(sectionKey: String = "database"): String {
     return getString("$sectionKey.type")
-}
-
-fun HQYamlConfigurationSection.getDatabasePath(sectionKey: String = "database"): String {
-    return getString("$sectionKey.path")
 }
