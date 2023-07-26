@@ -5,15 +5,14 @@ import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.coroutine.extension.BukkitMain
 import kr.hqservice.framework.view.coroutine.LifecycleOwner
 import kr.hqservice.framework.view.element.ButtonElement
-import kr.hqservice.framework.view.element.TitleElement
 import kr.hqservice.framework.view.event.ButtonRenderEvent
+import kr.hqservice.framework.view.scope.CloseScope
+import kr.hqservice.framework.view.scope.CreateScope
+import kr.hqservice.framework.view.scope.RenderScope
 import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
-import org.bukkit.inventory.ItemStack
-import java.util.UUID
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 abstract class HQView(
@@ -28,7 +27,7 @@ abstract class HQView(
     internal val viewers: MutableList<UUID> = mutableListOf()
 
     override val coroutineContext: CoroutineContext
-        get() = CoroutineName("HQViewCoroutine") + job + Dispatchers.BukkitMain
+        get() = CoroutineName("HQViewCoroutine") + job + Dispatchers.Default
 
     protected abstract suspend fun CreateScope.onCreate()
     protected open suspend fun RenderScope.onRender(viewer: Player) {}
@@ -73,35 +72,5 @@ abstract class HQView(
             lifecycleOwner.dispose()
         }
         job.cancel()
-    }
-}
-
-class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle by inventoryLifecycle, ButtonPlaceable()
-
-class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Player) :
-    InventoryLifecycle by inventoryLifecycle,
-    ButtonPlaceable() {
-    fun title(title: String, titleScope: TitleElement.() -> Unit = {}) {
-        titleScope(TitleElement(player, title, this).apply { setTitle() })
-    }
-}
-
-class CloseScope
-
-interface InventoryLifecycle : InventoryHolder, LifecycleOwner {
-    fun registerButton(slot: Int, buttonElement: ButtonElement)
-}
-
-abstract class ButtonPlaceable : InventoryLifecycle {
-    fun button(vararg slots: Int, buttonScope: ButtonElement.() -> Unit) {
-        slots.forEach { slot ->
-            val button = ButtonElement(this, slot)
-            buttonScope(button)
-            registerButton(slot, button)
-        }
-    }
-
-    fun button(intRange: IntRange, buttonScope: ButtonElement.() -> Unit) {
-        this.button(slots = intRange.toList().toTypedArray().toIntArray(), buttonScope)
     }
 }
