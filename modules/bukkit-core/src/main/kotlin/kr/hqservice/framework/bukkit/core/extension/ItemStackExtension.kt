@@ -19,6 +19,10 @@ inline fun <reified T : ItemMeta> ItemStack.meta(
     itemMeta = (itemMeta as? T)?.apply(block)
 }
 
+fun item(material: Material, amount: Int = 1): ItemStack {
+    return ItemStack(material, amount)
+}
+
 fun ItemStack.displayName(displayName: String?): ItemStack = meta<ItemMeta> {
     this.setDisplayName(displayName)
 }
@@ -26,6 +30,8 @@ fun ItemStack.displayName(displayName: String?): ItemStack = meta<ItemMeta> {
 fun ItemStack.lore(lore: List<String>): ItemStack = meta<ItemMeta> {
     this.lore = lore
 }
+
+fun ItemStack.type(material: Material): ItemStack = apply { this.type = material }
 
 fun ItemStack.addLore(lore: String): ItemStack = meta<ItemMeta> {
     this.lore = this.lore?.apply { add(lore) } ?: listOf(lore)

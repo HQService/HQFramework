@@ -34,6 +34,10 @@ abstract class HQView(
     protected open suspend fun RenderScope.onRender(viewer: Player) {}
     protected open suspend fun CloseScope.onClose(viewer: Player) {}
 
+    override fun registerButton(slot: Int, buttonElement: ButtonElement) {
+        buttons[slot] = buttonElement
+    }
+
     internal suspend fun open(vararg viewer: Player) = coroutineScope {
         viewer.map { player ->
             viewers.add(player.uniqueId)
@@ -72,11 +76,11 @@ abstract class HQView(
     }
 }
 
-class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle by inventoryLifecycle, ButtonPlaceable
+class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle by inventoryLifecycle, ButtonPlaceable()
 
 class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Player) :
     InventoryLifecycle by inventoryLifecycle,
-    ButtonPlaceable {
+    ButtonPlaceable() {
     fun title(title: String, titleScope: TitleElement.() -> Unit = {}) {
         titleScope(TitleElement(player, title, this).apply { setTitle() })
     }
@@ -84,17 +88,16 @@ class RenderScope(inventoryLifecycle: InventoryLifecycle, private val player: Pl
 
 class CloseScope
 
-interface InventoryLifecycle : InventoryHolder, LifecycleOwner
+interface InventoryLifecycle : InventoryHolder, LifecycleOwner {
+    fun registerButton(slot: Int, buttonElement: ButtonElement)
+}
 
-interface ButtonPlaceable : InventoryLifecycle {
-    fun button(itemStack: ItemStack, slot: Int, buttonScope: ButtonElement.() -> Unit = {}) {
-        val clonedItemStack = itemStack.clone()
-        val button = ButtonElement(clonedItemStack, this)
-        buttonScope(button)
-        this.inventory.setItem(slot, clonedItemStack)
-    }
-
-    fun button(material: Material, slot: Int, buttonScope: ButtonElement.() -> Unit = {}) {
-        button(ItemStack(material), slot, buttonScope)
+abstract class ButtonPlaceable : InventoryLifecycle {
+    fun button(vararg slots: Int, buttonScope: ButtonElement.() -> Unit = {}) {
+        slots.forEach { slot ->
+            val button = ButtonElement(this, slot)
+            buttonScope(button)
+            registerButton(slot, button)
+        }
     }
 }

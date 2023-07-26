@@ -3,10 +3,10 @@ package kr.hqservice.framework.view.handler
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.view.CloseScope
 import kr.hqservice.framework.view.HQView
 import kr.hqservice.framework.view.event.ButtonInteractEvent
 import kr.hqservice.framework.view.navigator.Navigator
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -38,7 +38,10 @@ class HQViewHandler(private val navigator: Navigator) : HQListener {
                 navigator.goPrevious(player)
             }
             for(viewerId in view.viewers) {
+                println("viewer: $viewerId")
+                // TODO: 여기안됨
                 if (navigator.openedViews(viewerId).filterIsInstance(this::class.java).isNotEmpty()) {
+                    println("dispose!")
                     view.dispose()
                     break
                 }

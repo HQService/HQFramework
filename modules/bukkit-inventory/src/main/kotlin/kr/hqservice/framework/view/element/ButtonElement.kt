@@ -1,21 +1,32 @@
 package kr.hqservice.framework.view.element
 
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.view.coroutine.LifecycleOwner
+import kr.hqservice.framework.view.InventoryLifecycle
 import kr.hqservice.framework.view.event.ButtonInteractEvent
 import kr.hqservice.framework.view.event.ButtonRenderEvent
 import kr.hqservice.framework.view.state.State
 import kr.hqservice.framework.view.state.SubscribableState
+import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
-class ButtonElement(private val itemStack: ItemStack, private val lifecycleOwner: LifecycleOwner) : ViewElement {
+class ButtonElement(
+    private val lifecycleOwner: InventoryLifecycle,
+    private val index: Int,
+) : ViewElement {
     private var onClick: (ButtonInteractEvent) -> Unit = {}
     private var onRender: (ButtonRenderEvent) -> Unit = {}
-    private var itemStackBuilder: ItemStack.() -> Unit = {}
+    private var itemStackBuilder: () -> ItemStack? = { null }
 
-    fun item(itemStackBuilderScope: ItemStack.() -> Unit) {
+    fun item(itemStackBuilderScope: () -> ItemStack?) {
         itemStackBuilder = itemStackBuilderScope
-        itemStackBuilderScope(this.itemStack)
+    }
+
+    fun item(material: Material, itemStackMetaScope: ItemStack.() -> Unit = {}) {
+        itemStackBuilder = { ItemStack(material).apply(itemStackMetaScope) }
+    }
+
+    fun item(itemStack: ItemStack, itemStackMetaScope: ItemStack.() -> Unit = {}) {
+        itemStackBuilder = { itemStack.apply(itemStackMetaScope) }
     }
 
     fun onClick(onClick: (event: ButtonInteractEvent) -> Unit) {
@@ -39,7 +50,7 @@ class ButtonElement(private val itemStack: ItemStack, private val lifecycleOwner
             lifecycleOwner.launch {
                 state as SubscribableState
                 state.getStateFlow().collect {
-                    itemStackBuilder(this@ButtonElement.itemStack)
+                    lifecycleOwner.inventory.setItem(index, itemStackBuilder.invoke())
                 }
             }
         }
