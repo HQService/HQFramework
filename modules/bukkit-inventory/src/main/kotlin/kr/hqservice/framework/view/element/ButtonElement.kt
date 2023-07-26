@@ -15,18 +15,26 @@ class ButtonElement(
 ) : ViewElement {
     private var onClick: (ButtonInteractEvent) -> Unit = {}
     private var onRender: (ButtonRenderEvent) -> Unit = {}
-    private var itemStackBuilder: () -> ItemStack? = { null }
+    private var itemStackBuilder: (Int) -> ItemStack? = { null }
 
-    fun item(itemStackBuilderScope: () -> ItemStack?) {
+    fun item(itemStackBuilderScope: (index: Int) -> ItemStack?) {
         itemStackBuilder = itemStackBuilderScope
     }
 
-    fun item(material: Material, itemStackMetaScope: ItemStack.() -> Unit = {}) {
-        itemStackBuilder = { ItemStack(material).apply(itemStackMetaScope) }
+    fun item(material: Material, itemStackMetaScope: ItemStack.(index: Int) -> Unit = {}) {
+        itemStackBuilder = {
+            ItemStack(material).apply {
+                itemStackMetaScope(this, index)
+            }
+        }
     }
 
-    fun item(itemStack: ItemStack, itemStackMetaScope: ItemStack.() -> Unit = {}) {
-        itemStackBuilder = { itemStack.apply(itemStackMetaScope) }
+    fun item(itemStack: ItemStack, itemStackMetaScope: ItemStack.(index: Int) -> Unit = {}) {
+        itemStackBuilder = {
+            itemStack.apply {
+                itemStackMetaScope(this, index)
+            }
+        }
     }
 
     fun onClick(onClick: (event: ButtonInteractEvent) -> Unit) {
@@ -50,7 +58,7 @@ class ButtonElement(
             lifecycleOwner.launch {
                 state as SubscribableState
                 state.getStateFlow().collect {
-                    lifecycleOwner.inventory.setItem(index, itemStackBuilder.invoke())
+                    lifecycleOwner.inventory.setItem(index, itemStackBuilder.invoke(index))
                 }
             }
         }
