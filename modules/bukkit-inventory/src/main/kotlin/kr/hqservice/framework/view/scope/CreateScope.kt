@@ -1,19 +1,27 @@
 package kr.hqservice.framework.view.scope
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.view.InventoryLifecycle
 import kr.hqservice.framework.view.element.ButtonElement
 import kr.hqservice.framework.view.state.SubscribableState
 
 class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle by inventoryLifecycle {
-    suspend fun button(vararg slots: Int, buttonScope: suspend ButtonElement.() -> Unit) {
+    internal val buttonJobs: MutableList<Job> = mutableListOf()
+
+    fun button(vararg slots: Int, buttonScope: ButtonElement.() -> Unit) {
         slots.forEach { slot ->
-            val button = ButtonElement(this, slot)
+            val button = ButtonElement(this@CreateScope, slot)
             registerButton(slot, button)
             buttonScope(button)
-            this.inventory.setItem(button.index, button.itemStackBuilder.invoke(button.index))
+            val buttonJob = launch {
+                val buttonItemStack = button.itemStackBuilder.invoke(button.index)
+                this@CreateScope.inventory.setItem(button.index, buttonItemStack)
+            }
+            buttonJobs.add(buttonJob)
             button.subscribedStates.forEach { state ->
                 launch {
+                    buttonJob.join()
                     state as SubscribableState
                     state.getStateFlow().collect {
                         this@CreateScope.inventory.setItem(button.index, button.itemStackBuilder.invoke(button.index))
@@ -23,7 +31,7 @@ class CreateScope(inventoryLifecycle: InventoryLifecycle) : InventoryLifecycle b
         }
     }
 
-    suspend fun button(intRange: IntRange, buttonScope: suspend ButtonElement.() -> Unit) {
+    fun button(intRange: IntRange, buttonScope: ButtonElement.() -> Unit) {
         this.button(slots = intRange.toList().toTypedArray().toIntArray(), buttonScope)
     }
 }

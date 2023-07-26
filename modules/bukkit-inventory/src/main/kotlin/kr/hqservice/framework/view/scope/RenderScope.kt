@@ -11,7 +11,7 @@ class RenderScope(
     inventoryLifecycle: InventoryLifecycle,
     private val player: Player
 ) : InventoryLifecycle by inventoryLifecycle {
-    suspend fun title(title: String, titleScope: suspend TitleElement.() -> Unit = {}) {
+    fun title(title: String, titleScope: TitleElement.() -> Unit = {}) {
         val titleElement = TitleElement(player, title)
         titleScope(titleElement)
         titleElement.subscribedStates.map { state ->

@@ -29,9 +29,9 @@ abstract class HQView(
     override val coroutineContext: CoroutineContext
         get() = CoroutineName("HQViewCoroutine") + job + Dispatchers.Default
 
-    protected abstract suspend fun CreateScope.onCreate()
-    protected open suspend fun RenderScope.onRender(viewer: Player) {}
-    protected open suspend fun CloseScope.onClose(viewer: Player) {}
+    protected abstract fun CreateScope.onCreate()
+    protected open fun RenderScope.onRender(viewer: Player) {}
+    protected open fun CloseScope.onClose(viewer: Player) {}
 
     override fun registerButton(slot: Int, buttonElement: ButtonElement) {
         buttons[slot] = buttonElement
@@ -41,7 +41,9 @@ abstract class HQView(
         viewer.map { player ->
             viewers.add(player.uniqueId)
             this.launch {
-                CreateScope(this@HQView).onCreate()
+                val createScope = CreateScope(this@HQView)
+                createScope.onCreate()
+                createScope.buttonJobs.joinAll()
                 withContext(Dispatchers.BukkitMain) {
                     player.openInventory(inventory)
                 }
