@@ -93,11 +93,15 @@ interface InventoryLifecycle : InventoryHolder, LifecycleOwner {
 }
 
 abstract class ButtonPlaceable : InventoryLifecycle {
-    fun button(vararg slots: Int, buttonScope: ButtonElement.() -> Unit = {}) {
+    fun button(vararg slots: Int, buttonScope: ButtonElement.() -> Unit) {
         slots.forEach { slot ->
             val button = ButtonElement(this, slot)
             buttonScope(button)
             registerButton(slot, button)
         }
+    }
+
+    fun button(intRange: IntRange, buttonScope: ButtonElement.() -> Unit) {
+        this.button(slots = intRange.toList().toTypedArray().toIntArray(), buttonScope)
     }
 }
