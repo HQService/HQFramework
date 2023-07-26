@@ -3,6 +3,7 @@ package kr.hqservice.framework.view.handler
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.view.HQView
 import kr.hqservice.framework.view.event.ButtonInteractEvent
 import kr.hqservice.framework.view.navigator.Navigator
@@ -37,14 +38,15 @@ class HQViewHandler(private val navigator: Navigator) : HQListener {
             view.launch {
                 navigator.goPrevious(player)
             }
+            var viewQuited = 0
             for(viewerId in view.viewers) {
-                println("viewer: $viewerId")
-                // TODO: 여기안됨
-                if (navigator.openedViews(viewerId).filterIsInstance(this::class.java).isNotEmpty()) {
-                    println("dispose!")
-                    view.dispose()
-                    break
+                if (navigator.openedViews(viewerId).filterIsInstance(this::class.java).isEmpty()) {
+                    viewQuited++
                 }
+            }
+            if (viewQuited == view.viewers.size) {
+                view.dispose()
+                println("disposed")
             }
         }
     }
