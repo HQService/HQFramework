@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.component.HQListener
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
+import kr.hqservice.framework.coroutine.extension.BukkitMain
 import kr.hqservice.framework.database.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.lock.DefermentLock
 import kr.hqservice.framework.database.lock.impl.DisconnectDefermentLock
@@ -25,7 +26,6 @@ import java.util.*
 @Component
 class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
-    @Named("main") private val mainCoroutineScope: CoroutineScope,
     @Named("database") private val databaseCoroutineScope: CoroutineScope,
     @Named("switch") private val switchDefermentLock: DefermentLock,
     @Named("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
@@ -53,7 +53,7 @@ class PlayerConnectionPacketHandler(
         } else {
             databaseCoroutineScope.launch {
                 switchDefermentLock.tryLock(playerId) {
-                    mainCoroutineScope.launch {
+                    launch(Dispatchers.BukkitMain){
                         server.getPlayer(it)?.kickPlayer("데이터 로드 시점을 받아오지 못하였습니다.")
                         cancel()
                     }
@@ -142,7 +142,7 @@ class PlayerConnectionPacketHandler(
                 switchDefermentLock.unlock(event.player.uniqueId)
             } else {
                 switchDefermentLock.tryLock(event.player) whenTimedOut@{ player ->
-                    mainCoroutineScope.launch {
+                    launch(Dispatchers.BukkitMain) {
                         player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                         cancelled = true
                     }.join()

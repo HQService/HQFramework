@@ -11,7 +11,9 @@ abstract class HQPlayerRepository<V>(
         val value = dataSource.query {
             load(player)
         }
-        this[player.uniqueId] = value
+        if (player.isOnline) {
+            this[player.uniqueId] = value
+        }
     }
 
     internal suspend fun onSave(player: Player) {
