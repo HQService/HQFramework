@@ -1,7 +1,7 @@
 package kr.hqservice.framework.yaml.config.impl
 
 import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
-import ninja.leaping.configurate.ConfigurationNode
+import org.spongepowered.configurate.ConfigurationNode
 
 open class HQYamlConfigurationSectionImpl(
     private val root: ConfigurationNode
@@ -10,7 +10,7 @@ open class HQYamlConfigurationSectionImpl(
         val nodeKeys = fullPath.split('.')
         var pointer = root
         for (element in nodeKeys)
-            pointer = pointer.getNode(element)
+            pointer = pointer.node(element)//getNode(element)
         return pointer
     }
 
@@ -20,7 +20,7 @@ open class HQYamlConfigurationSectionImpl(
 
     override fun getSection(key: String): HQYamlConfigurationSection? {
         val node = findNode(key)
-        return if (node.isVirtual) null else HQYamlConfigurationSectionImpl(node)
+        return if (node.virtual()) null else HQYamlConfigurationSectionImpl(node)
     }
 
     override fun getString(key: String): String {
@@ -28,22 +28,19 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getKeys(): List<String> {
-        return root.childrenMap.keys.map {
+        return root.childrenMap().keys.map {
             it.toString()
         }
     }
 
     override fun getStringList(key: String): List<String> {
         return if (!findNode(key).isList) emptyList()
-        else findNode(key).getList { it.toString() }
+        else findNode(key).getList(String::class.java) ?: emptyList()
     }
 
     override fun getIntegerList(key: String): List<Int> {
         return if (!findNode(key).isList) emptyList()
-        else findNode(key).getList {
-            if (it is String) it.toInt()
-            else it as Int
-        }
+        else findNode(key).getList(Int::class.java) ?: emptyList()
     }
 
     override fun getBoolean(key: String): Boolean {
@@ -63,6 +60,6 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun set(key: String, value: Any?) {
-        findNode(key).value = value
+        findNode(key).set(value)
     }
 }

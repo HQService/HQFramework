@@ -2,27 +2,29 @@ package kr.hqservice.framework.yaml.config.impl
 
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.config.HQYamlConfigurationSection
-import ninja.leaping.configurate.yaml.YAMLConfigurationLoader
-import org.yaml.snakeyaml.DumperOptions
+import org.spongepowered.configurate.yaml.NodeStyle
+import org.spongepowered.configurate.yaml.YamlConfigurationLoader
 import java.io.File
 
 class HQYamlConfigurationImpl : HQYamlConfiguration {
     private var cachedFile: File? = null
-    private var loader: YAMLConfigurationLoader? = null
+    private var loader: YamlConfigurationLoader? = null
     private var rootSection: HQYamlConfigurationSectionImpl? = null
 
     override fun load(file: File) {
-        loader = YAMLConfigurationLoader.builder().setFile(file).build()
+        loader = YamlConfigurationLoader.builder().file(file).build()
         rootSection = HQYamlConfigurationSectionImpl(loader!!.load())
         if (cachedFile == null) cachedFile = file
     }
 
     override fun save(file: File) {
         val rootSection = rootSection ?: return
-        YAMLConfigurationLoader
+        YamlConfigurationLoader
             .builder()
-            .setFlowStyle(DumperOptions.FlowStyle.BLOCK)
-            .setFile(file).build().save(rootSection.getRoot())
+            .nodeStyle(NodeStyle.BLOCK)
+            .file(file)
+            .build()
+            .save(rootSection.getRoot())
     }
 
     override fun reload() {

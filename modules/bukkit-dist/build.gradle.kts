@@ -24,6 +24,7 @@ bukkitResourceGenerator {
         libs.netty,
         libs.guava,
         libs.snakeyaml,
+        libs.configurate.core,
         libs.configurate.yaml,
         libs.byte.buddy.core,
         libs.byte.buddy.agent

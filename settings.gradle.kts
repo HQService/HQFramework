@@ -67,7 +67,8 @@ dependencyResolutionManagement {
             library("netty", "io.netty:netty-all:${getProperty("nettyVersion")}")
             library("guava", "com.google.guava:guava:${getProperty("guavaVersion")}")
             library("snakeyaml", "org.yaml:snakeyaml:${getProperty("snakeYamlVersion")}")
-            library("configurate-yaml", "ninja.leaping.configurate:configurate-yaml:${getProperty("configurateYamlVersion")}")
+            library("configurate-core", "org.spongepowered:configurate-core:${getProperty("configurateYamlVersion")}")
+            library("configurate-yaml", "org.spongepowered:configurate-yaml:${getProperty("configurateYamlVersion")}")
             library("byte-buddy-core", "net.bytebuddy:byte-buddy:${getProperty("byteBuddyVersion")}")
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
         }
