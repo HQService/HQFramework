@@ -304,9 +304,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             try {
                 factory?.get(defaultContext)
             } catch (exception: InstanceCreationException) {
-                throw ComponentCreationException()
+                throw ComponentCreationException(exception)
             } catch (exception: IllegalStateException) {
-                throw ComponentCreationException()
+                throw ComponentCreationException(exception)
             }
         }.toList()
     }

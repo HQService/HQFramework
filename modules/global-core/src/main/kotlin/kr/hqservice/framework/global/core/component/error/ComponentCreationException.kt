@@ -1,3 +1,3 @@
 package kr.hqservice.framework.global.core.component.error
 
-class ComponentCreationException : Exception()
+class ComponentCreationException(cause: Throwable) : Exception(cause)
