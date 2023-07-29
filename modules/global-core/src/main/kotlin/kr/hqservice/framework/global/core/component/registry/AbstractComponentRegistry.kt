@@ -49,6 +49,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     final override fun setup() {
         val componentClasses = mutableListOf<Class<*>>()
         val beanClasses = mutableListOf<Class<*>>()
+        val configurationClasses = mutableListOf<Class<*>>()
         val qualifierProviderClasses = mutableListOf<Class<*>>()
         val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
         for (clazz in getAllComponentsToScan()) {
@@ -62,6 +63,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 qualifierProviderClasses.add(clazz)
             } else if (annotations.filterIsInstance<Bean>().isNotEmpty()) {
                 beanClasses.add(clazz)
+            } else if (annotations.filterIsInstance<Configuration>().isNotEmpty()) {
+                configurationClasses.add(clazz)
             }
         }
         val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(
@@ -69,12 +72,13 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         ).apply {
             addAll(qualifierProviderClasses.map { it.kotlin })
             addAll(beanClasses.map { it.kotlin })
+            addAll(configurationClasses.map { it.kotlin })
         }
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var componentExceptionCatchingStack = 0
         var previousComponentQueueSize = componentClassesQueue.size
-        while (componentClassesQueue.isNotEmpty()) {
+        queue@ while (componentClassesQueue.isNotEmpty()) {
             val component = componentClassesQueue.poll()
 
             fun back() {
@@ -91,15 +95,36 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
             val instance = try {
                 if (component.hasAnnotation<Bean>()) {
-                    tryCreateBeanModule(component) {
-                        callByInjectedParameters(component.constructors.first(), getProvidedInstances())
+                    tryCreateBeanModule(component, component) {
+                        callByInjectedParameters(component.constructors.first())
                     }
                     continue
+                } else if (component.hasAnnotation<Configuration>()) {
+                    val instance = callByInjectedParameters(component.constructors.first())
+                    if (instance == null) {
+                        back()
+                        continue@queue
+                    }
+                    val methods = component.declaredFunctions
+                    val definitions: MutableMap<KClass<*>, Pair<KAnnotatedElement, Any>> = mutableMapOf()
+                    for (kFunction in methods) {
+                        val injected = injectParameters(kFunction)
+                        if (injected.any { it == null }) {
+                            back()
+                            continue@queue
+                        }
+                        val called = kFunction.call(instance, *injected.toTypedArray()) ?: throw IllegalStateException("null 은 bean 으로 선언될 수 없습니다.")
+                        definitions[kFunction.returnType.jvmErasure] = kFunction to called
+                    }
+                    definitions.forEach { (klass, pair) ->
+                        tryCreateBeanModule(pair.first, klass) { pair.second }
+                    }
                 }
+
                 if (component.constructors.size > 1) {
                     throw ConstructorConflictException(component)
                 }
-                callByInjectedParameters(component.constructors.first(), getProvidedInstances())
+                callByInjectedParameters(component.constructors.first())
             } catch (exception: QualifierNotFoundException) {
                 back()
                 continue
@@ -113,7 +138,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 continue
             } else {
                 try {
-                    tryCreateBeanModule(component) { instance }
+                    tryCreateBeanModule(component, component) { instance }
                 } catch (exception: QualifierNotFoundException) {
                     back()
                     continue
@@ -140,10 +165,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentHandlers[depended] == null
             }
             if (depends.isEmpty() || any.isEmpty()) {
-                val componentHandler = callByInjectedParameters(
-                    componentHandlerClass.constructors.first(),
-                    getProvidedInstances()
-                )
+                val componentHandler = callByInjectedParameters(componentHandlerClass.constructors.first())
 
                 if (componentHandler == null) {
                     componentHandlersQueue.offer(componentHandlerClass)
@@ -213,7 +235,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private fun printFriendlyException(classes: List<KClass<*>>) {
         classes.forEach { kClass ->
             val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
-            val injected = injectParameters(kClass.primaryConstructor!!, getProvidedInstances())
+            val injected = injectParameters(kClass.primaryConstructor!!)
             val parameterDisplays = parameters.mapIndexed { index, kParameter ->
                 val simpleName = kParameter.type.jvmErasure.simpleName
                 val qualifier = getQualifier(kParameter)?.value
@@ -241,9 +263,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * @return 만약에 파라미터에 맞는 값을 찾을 수 없을 경우, null 을 리턴합니다.
      */
-    private fun <T : Any> callByInjectedParameters(
+    private fun <T> callByInjectedParameters(
         kFunction: KFunction<T>,
-        providedInstanceMap: Map<KClass<*>, *>? = null,
+        providedInstanceMap: Map<KClass<*>, *>? = getProvidedInstances()
     ): T? {
         val injectedParameters = injectParameters(kFunction, providedInstanceMap)
         if (injectedParameters.any { it == null }) {
@@ -280,7 +302,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         kFunction: KFunction<*>,
         providedInstanceMap: Map<KClass<*>, *>? = null,
     ): List<Any?> {
-        return kFunction.parameters.mapIndexed { index, parameter ->
+        return kFunction.valueParameters.mapIndexed { index, parameter ->
             val parameterKClass = parameter.type.classifier as KClass<*>
 
             if (providedInstanceMap != null) {
@@ -316,17 +338,21 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * 모듈을 생성합니다. 만약 아무런 타입의 Bean 도 아닐 경우, 생성되지 않습니다.
      */
-    private fun <T> tryCreateBeanModule(klass: KClass<*>, instance: Definition<T>) {
-        val scopeQualifier = getScopeQualifier(klass)
-        val qualifier = getQualifier(klass)
-        val property = getBeanProperties(klass)
+    private fun <T> tryCreateBeanModule(
+        annotatedElement: KAnnotatedElement,
+        primaryBind: KClass<*>,
+        instance: Definition<T>
+    ) {
+        val scopeQualifier = getScopeQualifier(annotatedElement)
+        val qualifier = getQualifier(annotatedElement)
+        val property = getBeanProperties(annotatedElement)
         val secondaryTypes: List<KClass<*>> = property.binds.ifEmpty {
-            klass.allSuperclasses.toList()
+            primaryBind.allSuperclasses.toList()
         }
 
         val module = when (property.kind) {
             Kind.Factory -> createFactoryBeanModule(
-                klass,
+                primaryBind,
                 instance,
                 scopeQualifier,
                 qualifier,
@@ -334,14 +360,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             )
 
             Kind.Singleton -> createSingletonBeanModule(
-                klass,
+                primaryBind,
                 instance,
                 scopeQualifier,
                 qualifier,
                 secondaryTypes
             )
 
-            Kind.Scoped -> return
+            Kind.Scoped -> throw UnsupportedOperationException()
         }
         getKoin().loadModules(listOf(module), allowOverride = !property.isPrimary)
     }
@@ -425,21 +451,17 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * 빈의 종류와 Bind 타입들을 구합니다.
      */
-    private fun getBeanProperties(klass: KClass<*>): BeanProperty {
-        val factory = klass.findAnnotation<Factory>()
-        val single = klass.findAnnotation<Singleton>()
+    private fun getBeanProperties(kAnnotatedElement: KAnnotatedElement): BeanProperty {
+        val factory = kAnnotatedElement.findAnnotation<Factory>()
+        val single = kAnnotatedElement.findAnnotation<Singleton>()
         if (factory != null && single != null) {
             throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
         }
-        val isPrimary = klass.findAnnotation<Primary>() != null
+        val isPrimary = kAnnotatedElement.findAnnotation<Primary>() != null
         return when (true) {
             (factory != null) -> BeanProperty(Kind.Factory, factory.binds.toList(), isPrimary)
             (single != null) -> BeanProperty(Kind.Singleton, single.binds.toList(), isPrimary)
-            else -> BeanProperty(
-                Kind.Singleton,
-                klass.allSuperclasses.toList(),
-                isPrimary
-            )
+            else -> BeanProperty(Kind.Singleton, emptyList(), isPrimary)
         }
     }
 
