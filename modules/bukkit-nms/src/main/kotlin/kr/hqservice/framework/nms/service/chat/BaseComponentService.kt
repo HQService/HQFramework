@@ -1,18 +1,16 @@
 package kr.hqservice.framework.nms.service.chat
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Qualifier
+import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
-import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
 
-@Component
-@Named("base-component")
-@Singleton(binds = [NmsService::class])
+@Qualifier("base-component")
+@Service
 class BaseComponentService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<String, BaseComponentWrapper> {

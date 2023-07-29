@@ -1,7 +1,5 @@
 package kr.hqservice.framework.bukkit.core.netty.service
 
-import kr.hqservice.framework.global.core.component.HQService
-
-interface HQNettyService : HQService {
+interface HQNettyService {
     fun isEnable(): Boolean
 }

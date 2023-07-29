@@ -1,20 +1,18 @@
 package kr.hqservice.framework.nms.service.world
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Qualifier
+import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.World
-import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-@Component
-@Named("world")
-@Singleton(binds = [NmsService::class])
+@Qualifier("world")
+@Service
 class WorldService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<World, WorldWrapper> {

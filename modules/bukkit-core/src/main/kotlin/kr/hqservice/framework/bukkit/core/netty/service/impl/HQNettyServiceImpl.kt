@@ -1,11 +1,9 @@
 package kr.hqservice.framework.bukkit.core.netty.service.impl
 
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Service
 
-@Component
-@Singleton(binds = [HQNettyService::class])
+@Service
 class HQNettyServiceImpl : HQNettyService {
     internal var enabled = false
 

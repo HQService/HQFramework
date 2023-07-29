@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.service.item
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Qualifier
+import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.service.NmsService
@@ -9,12 +9,10 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
-import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
 
-@Component
-@Named("item")
-@Singleton(binds = [NmsService::class])
+@Qualifier("item")
+@Service
 class NmsItemService(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry,
