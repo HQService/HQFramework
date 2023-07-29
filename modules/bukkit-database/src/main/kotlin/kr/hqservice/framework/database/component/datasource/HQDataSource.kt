@@ -29,8 +29,11 @@ abstract class HQDataSource : HQComponent, CoroutineScope {
 
     abstract fun getConfig(): HikariConfig
 
+    open fun onTeardown() {}
+
     fun teardown() {
         TransactionManager.closeAndUnregister(databaseLazy.value)
         hikariDataSourceLazy.value.close()
+        onTeardown()
     }
 }

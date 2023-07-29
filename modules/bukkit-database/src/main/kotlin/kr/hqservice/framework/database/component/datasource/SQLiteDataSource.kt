@@ -2,7 +2,6 @@ package kr.hqservice.framework.database.component.datasource
 
 import com.zaxxer.hikari.HikariConfig
 import kr.hqservice.framework.database.util.buildHikariConfig
-import org.bukkit.plugin.Plugin
 import java.io.File
 import java.io.IOException
 

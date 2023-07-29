@@ -37,6 +37,10 @@ class PluginDataSourceFactory(
             return dataSources[dataSourceKey]!!
         }
 
+        fun logTeardown() {
+            plugin.logger.info("${AnsiColor.GREEN}$dataSourceId DataSource 가 성공적으로 닫혔습니다.${AnsiColor.RESET}")
+        }
+
         val dataSource = when (dataSourceId) {
             "mysql" -> {
                 val host = if (configSection == null) {
@@ -44,7 +48,11 @@ class PluginDataSourceFactory(
                 } else {
                     plugin.getHQConfig().getDatabaseHost(configSection)
                 }
-                object : MySQLDataSource(host, poolName), CoroutineScope by coroutineScope {}
+                object : MySQLDataSource(host, poolName), CoroutineScope by coroutineScope {
+                    override fun onTeardown() {
+                        logTeardown()
+                    }
+                }
             }
 
             "sqlite" -> {
@@ -53,7 +61,11 @@ class PluginDataSourceFactory(
                 } else {
                     plugin.getHQConfig().getDatabasePath(configSection)
                 }
-                object : SQLiteDataSource(getSQLitePath(plugin, dbPath), poolName), CoroutineScope by coroutineScope {}
+                object : SQLiteDataSource(getSQLitePath(plugin, dbPath), poolName), CoroutineScope by coroutineScope {
+                    override fun onTeardown() {
+                        logTeardown()
+                    }
+                }
             }
 
             else -> {
