@@ -80,6 +80,9 @@ includeAll("modules")
 
 fun includeAll(modulesDir: String) {
     file("${rootProject.projectDir.path}/${modulesDir.replace(":", "/")}/").listFiles()?.forEach { modulePath ->
+        if (modulePath.name == ".DS_Store") {
+            return@forEach
+        }
         include("${modulesDir.replace("/", ":")}:${modulePath.name}")
     }
 }
