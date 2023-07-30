@@ -71,6 +71,7 @@ dependencyResolutionManagement {
             library("configurate-yaml", "org.spongepowered:configurate-yaml:${getProperty("configurateYamlVersion")}")
             library("byte-buddy-core", "net.bytebuddy:byte-buddy:${getProperty("byteBuddyVersion")}")
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
+            library("quartz", "org.quartz-scheduler:quartz:${getProperty("quartzVersion")}")
         }
     }
 }
