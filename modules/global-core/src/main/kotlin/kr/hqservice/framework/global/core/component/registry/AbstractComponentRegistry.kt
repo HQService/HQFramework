@@ -105,7 +105,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                         back()
                         continue@queue
                     }
-                    val methods = component.declaredFunctions
+                    val methods = component.declaredFunctions.filter {
+                        BeanProperty.findBeanProperty(it) != null
+                    }
                     val definitions: MutableMap<KClass<*>, Pair<KAnnotatedElement, Any>> = mutableMapOf()
                     for (kFunction in methods) {
                         val injected = injectParameters(kFunction)
@@ -345,7 +347,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     ) {
         val scopeQualifier = getScopeQualifier(annotatedElement)
         val qualifier = getQualifier(annotatedElement)
-        val property = getBeanProperties(annotatedElement)
+        val property = BeanProperty.getBeanProperty(annotatedElement)
         val secondaryTypes: List<KClass<*>> = property.binds.ifEmpty {
             primaryBind.allSuperclasses.toList()
         }
@@ -448,26 +450,38 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
-    /**
-     * 빈의 종류와 Bind 타입들을 구합니다.
-     */
-    private fun getBeanProperties(kAnnotatedElement: KAnnotatedElement): BeanProperty {
-        val factory = kAnnotatedElement.findAnnotation<Factory>()
-        val single = kAnnotatedElement.findAnnotation<Singleton>()
-        if (factory != null && single != null) {
-            throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
-        }
-        val isPrimary = kAnnotatedElement.findAnnotation<Primary>() != null
-        return when (true) {
-            (factory != null) -> BeanProperty(Kind.Factory, factory.binds.toList(), isPrimary)
-            (single != null) -> BeanProperty(Kind.Singleton, single.binds.toList(), isPrimary)
-            else -> BeanProperty(Kind.Singleton, emptyList(), isPrimary)
-        }
-    }
-
     private class BeanProperty(
         val kind: Kind,
         val binds: List<KClass<*>>,
         val isPrimary: Boolean
-    )
+    ) {
+        companion object {
+            fun isPrimary(kAnnotatedElement: KAnnotatedElement): Boolean {
+                return kAnnotatedElement.findAnnotation<Primary>() != null
+            }
+            /**
+             * 빈의 종류와 Bind 타입들을 구합니다. Kind 를 못찾을 경우, Singleton 기본 프로퍼티를 반환합니다.
+             */
+            fun getBeanProperty(kAnnotatedElement: KAnnotatedElement): BeanProperty {
+                return findBeanProperty(kAnnotatedElement) ?: BeanProperty(Kind.Singleton, emptyList(), isPrimary(kAnnotatedElement))
+            }
+
+            /**
+             * 빈의 종류와 Bind 타입들을 구합니다. Kind 를 못찾을 경우, null 을 반환합니다.
+             */
+            fun findBeanProperty(kAnnotatedElement: KAnnotatedElement): BeanProperty? {
+                val factory = kAnnotatedElement.findAnnotation<Factory>()
+                val single = kAnnotatedElement.findAnnotation<Singleton>()
+                if (factory != null && single != null) {
+                    throw IllegalArgumentException("Factory 와 Single(ton) 은 공존할 수 없습니다.")
+                }
+                val isPrimary = isPrimary(kAnnotatedElement)
+                return when (true) {
+                    (factory != null) -> BeanProperty(Kind.Factory, factory.binds.toList(), isPrimary)
+                    (single != null) -> BeanProperty(Kind.Singleton, single.binds.toList(), isPrimary)
+                    else -> null
+                }
+            }
+        }
+    }
 }
