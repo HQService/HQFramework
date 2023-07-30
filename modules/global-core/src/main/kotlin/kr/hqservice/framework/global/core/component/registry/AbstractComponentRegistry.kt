@@ -130,9 +130,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             } catch (exception: QualifierNotFoundException) {
                 back()
                 continue
-            } catch (exception: ComponentCreationException) {
-                back()
-                continue
             }
 
             if (instance == null) {
@@ -328,9 +325,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             try {
                 factory?.get(defaultContext)
             } catch (exception: InstanceCreationException) {
-                throw ComponentCreationException(exception)
+                null
             } catch (exception: IllegalStateException) {
-                throw ComponentCreationException(exception)
+                null
             }
         }.toList()
     }
