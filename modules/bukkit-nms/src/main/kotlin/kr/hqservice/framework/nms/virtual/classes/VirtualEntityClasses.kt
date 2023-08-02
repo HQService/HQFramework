@@ -62,7 +62,8 @@ class VirtualEntityClasses(
         Version.V_17.handleFunction("ad"),
         Version.V_19.handleFunction("ai"),
         Version.V_19_3.handleFunction("al"),
-        Version.V_19_4.handleFunction("aj")
+        Version.V_19_4.handleFunction("aj"),
+        Version.V_20_FORGE.handleFunction("m_20088_")
     )
     private val nonDefaultValueFunction = if (listMetadata) {
         dataWatcherClass.java.getMethod("c")
@@ -73,11 +74,13 @@ class VirtualEntityClasses(
         Version.V_17.handleFunction("Z"),
         Version.V_19.handleFunction("ae"),
         Version.V_19_3.handleFunction("ah"),
-        Version.V_19_4.handleFunction("af")
+        Version.V_19_4.handleFunction("af"),
+        Version.V_20_FORGE.handleFunction("m_19879_")
     )
     private val setCustomNameFunction =
         reflectionWrapper.getFunction(entityClass, "setCustomName", listOf(componentWrapper.getTargetClass()),
-            Version.V_19.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) })
+            Version.V_19.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) },
+            Version.V_20_FORGE.handleFunction("m_6593_") { setParameterClasses(componentWrapper.getTargetClass()) })
 
     private val setLocationFunction = reflectionWrapper.getFunction(entityClass,
         "setLocation",
@@ -90,20 +93,35 @@ class VirtualEntityClasses(
                 Float::class,
                 Float::class
             )
+        },
+        Version.V_20_FORGE.handleFunction("m_19890_") {
+            setParameterClasses(
+                Double::class,
+                Double::class,
+                Double::class,
+                Float::class,
+                Float::class
+            )
         })
 
     private val setCustomNameVisibleFunction =
         reflectionWrapper.getFunction(entityClass, "setCustomNameVisible", listOf(Boolean::class),
-            Version.V_15.handleFunction("n") { setParameterClasses(Boolean::class) })
+            Version.V_15.handleFunction("n") { setParameterClasses(Boolean::class) },
+            Version.V_20_FORGE.handleFunction("m_20340_") { setParameterClasses(Boolean::class) })
 
     private val setInvisibleFunction =
         reflectionWrapper.getFunction(entityClass, "setInvisible", listOf(Boolean::class),
-            Version.V_15.handleFunction("j") { setParameterClasses(Boolean::class) })
+            Version.V_15.handleFunction("j") { setParameterClasses(Boolean::class) },
+            Version.V_20_FORGE.handleFunction("m_6842_") { setParameterClasses(Boolean::class) })
 
     private val enumItemSlotClass = reflectionWrapper.getNmsClass("EnumItemSlot", Version.V_15.handle("world.entity"))
     private val enumItemSlotValueOfFunction =
         reflectionWrapper.getStaticFunction(enumItemSlotClass, "valueOf", listOf(String::class),
             Version.V_15.handleFunction("a") {
+                setParameterClasses(String::class)
+                static()
+            },
+            Version.V_20_FORGE.handleFunction("m_20747_") {
                 setParameterClasses(String::class)
                 static()
             })

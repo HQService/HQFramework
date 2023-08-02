@@ -22,8 +22,15 @@ class BaseComponentService(
         "IChatBaseComponent\$ChatSerializer",
         Version.V_15.handle("network.chat")
     )
+
     private val serializeFunction =
-        reflectionWrapper.getFunction(componentSerializerClass, FunctionType("a", null, listOf(String::class), true))
+        reflectionWrapper.getFunction(componentSerializerClass,
+            FunctionType("a", null, listOf(String::class), true),
+            Version.V_20_FORGE.handleFunction("m_130701_") {
+                setParameterClasses(String::class)
+                static()
+            }
+        )
 
     override fun wrap(target: String): BaseComponentWrapper {
         return BaseComponentWrapper(target,

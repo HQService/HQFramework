@@ -21,15 +21,24 @@ enum class Version {
     V_19,
     V_19_1,
     V_19_3,
-    V_19_4;
+    V_19_4,
+    V_20,
 
-    fun support(version: Version, minor: Int = 0): Boolean {
+    // forge
+    V_20_FORGE;
+
+    fun support(version: Version, minor: Int = 0, forgeSupport: Boolean = false): Boolean {
         return if (minor != 0) try {
-            support(Version.valueOf("${version.name}_$minor"))
+            support(Version.valueOf("${version.name}_$minor"), forgeSupport = forgeSupport)
         } catch (_: Exception) {
-            support(version)
+            support(version, forgeSupport = forgeSupport)
         } else {
-            ordinal <= version.ordinal
+            val ver = if (forgeSupport) try {
+                Version.valueOf(version.name + "_FORGE")
+            } catch (_: Exception) {
+                version
+            } else version
+            ordinal <= ver.ordinal
         }
     }
 

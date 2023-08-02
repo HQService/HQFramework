@@ -40,7 +40,7 @@ open class HQYamlConfigurationSectionImpl(
 
     override fun getIntegerList(key: String): List<Int> {
         return if (!findNode(key).isList) emptyList()
-        else findNode(key).getList(Int::class.java) ?: emptyList()
+        else findNode(key).getList(Int::class.javaObjectType) ?: emptyList()
     }
 
     override fun getBoolean(key: String): Boolean {

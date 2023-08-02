@@ -11,6 +11,7 @@ import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
@@ -25,9 +26,12 @@ import kotlin.reflect.jvm.jvmErasure
 @Singleton(binds = [NmsReflectionWrapper::class])
 class NmsReflectionWrapperImpl(
     server: Server,
+    config: HQYamlConfiguration
 ) : NmsReflectionWrapper, HQSimpleComponent {
     private val classMap = mutableMapOf<String, KClass<*>>()
     private val callableMap = mutableMapOf<String, KCallable<*>>()
+
+    private val forgeSupport = config.getBoolean("forge-support")
 
     private val versionClassName: String = server.javaClass.`package`.name.split(".")[3]
     private val versionName: String = server.bukkitVersion.split("-")[0]
@@ -74,7 +78,7 @@ class NmsReflectionWrapperImpl(
         var name = className
         return classMap.computeIfAbsent(className) {
             getNmsClass(handlers.sortedByDescending { it.getVersion().ordinal }
-                .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
+                .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.apply {
                     name = if (isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
                 ?: name)
@@ -157,7 +161,7 @@ class NmsReflectionWrapperImpl(
 
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
         val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: fieldName
+            .firstOrNull { it.getVersion().support(version, minorVersion,forgeSupport) }?.getName() ?: fieldName
         return clazz.memberProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -169,7 +173,7 @@ class NmsReflectionWrapperImpl(
         vararg handlers: VersionHandler
     ): KCallable<*> {
         val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
+            .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.getName() ?: staticFieldName
         return clazz.staticProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -184,15 +188,15 @@ class NmsReflectionWrapperImpl(
         val key = "${clazz.simpleName}#" + functionType.getName()
         return if (callableMap.contains(key)) callableMap[key]!!
         else {
-            val type = handlers.filter { it.getVersion().support(version, minorVersion) }
+            val type = handlers.filter { it.getVersion().support(version, minorVersion, forgeSupport) }
                 .run {
                     if (isEmpty()) null
                     else maxBy { it.getVersion().ordinal }
                 } ?: CallableVersionHandler(version, functionType)
             try {
-                functions.single { callable -> type.isMatched(clazz, callable) }
+                functions.first { callable -> type.isMatched(clazz, callable) }
             } catch (e: Exception) {
-                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 업습니다.\n원본 메서드 ${functionType.getName()}")
+                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 업습니다.\n", e)
             }
         }
     }

@@ -7,7 +7,7 @@ internal inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R
     return if (!isAccessible) {
         isAccessible = true
         val result = call(*instance) as R
-        isAccessible = false
+        //isAccessible = false
         result
     } else call(*instance) as R
 }
