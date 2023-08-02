@@ -22,7 +22,8 @@ class NmsItemService(
     private val getItemFunction = reflectionWrapper.getFunction(
         nmsItemStackClass, "getItem",
         Version.V_15.handle("b"),
-        Version.V_17.handle("c")
+        Version.V_17.handle("c"),
+        Version.V_20.handle("d")
     )
 
     override fun wrap(target: NmsItemStackWrapper): NmsItemWrapper {

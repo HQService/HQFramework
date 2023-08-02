@@ -15,7 +15,8 @@ class NmsItemWrapper(
     reflectionWrapper: NmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry
 ) : NmsWrapper {
-    private val getDescriptionIdFunction = reflectionWrapper.getFunction(nmsItemClass, "j", listOf(nmsItemStackClass))
+    private val getDescriptionIdFunction = reflectionWrapper
+        .getFunction(nmsItemClass, "j", listOf(nmsItemStackClass))
 
     fun getDescriptionName(): String {
         return getDescriptionIdFunction.call(nmsItem, nmsItemStackWrapper.getUnwrappedInstance()) as? String
@@ -30,5 +31,4 @@ class NmsItemWrapper(
     override fun getUnwrappedInstance(): Any {
         return nmsItem
     }
-
 }
