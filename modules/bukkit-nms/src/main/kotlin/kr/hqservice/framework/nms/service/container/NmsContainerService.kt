@@ -23,7 +23,8 @@ class NmsContainerService(
         Version.V_17.handle("bV"),
         Version.V_18.handle("bW"),
         Version.V_19.handle("bU"),
-        Version.V_19_4.handle("bP")
+        Version.V_19_4.handle("bP"),
+        Version.V_20.handle("bR")
     )
 
     override fun wrap(target: Player): ContainerWrapper {
