@@ -15,6 +15,7 @@ class ContainerWrapperImpl(
         containerClass, "windowId",
         Version.V_17.handle("j")
     )
+
     private val stateIdField = reflectionWrapper.getField(
         containerClass, "q",
         Version.V_19.handle("q"),

@@ -1,13 +1,15 @@
 package kr.hqservice.framework.nms.extension
 
 import kotlin.reflect.KCallable
-import kotlin.reflect.jvm.isAccessible
+import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.javaField
 
 internal inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R {
-    return if (!isAccessible) {
-        isAccessible = true
-        val result = call(*instance) as R
-        //isAccessible = false
+    val javaField = (this as KProperty).javaField!!
+    return if (!javaField.canAccess(instance.first())) {
+        javaField.isAccessible = true
+        val result = javaField.get(instance.first()) as R
+        javaField.isAccessible = false
         result
     } else call(*instance) as R
 }

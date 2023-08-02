@@ -1,17 +1,19 @@
 package kr.hqservice.framework.nms.virtual.registry.impl
 
+import io.netty.util.internal.ConcurrentSet
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 @Singleton(binds = [VirtualHandlerRegistry::class])
 class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
-    private val handlers = mutableMapOf<UUID, MutableList<VirtualHandler>>()
+    private val handlers = ConcurrentHashMap<UUID, ConcurrentSet<VirtualHandler>>()
     override fun register(uniqueId: UUID, handler: VirtualHandler) {
-        handlers.computeIfAbsent(uniqueId) { mutableListOf() }
+        handlers.computeIfAbsent(uniqueId) { ConcurrentSet() }
             .add(handler)
     }
 
@@ -23,7 +25,7 @@ class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
         handlers.remove(uniqueId)
     }
 
-    override fun getHandlers(uniqueId: UUID): List<VirtualHandler> {
-        return handlers[uniqueId] ?: emptyList()
+    override fun getHandlers(uniqueId: UUID): Set<VirtualHandler> {
+        return handlers[uniqueId] ?: emptySet()
     }
 }

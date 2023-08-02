@@ -11,5 +11,5 @@ interface VirtualHandlerRegistry : HQSimpleComponent {
 
     fun cleanup(uniqueId: UUID)
 
-    fun getHandlers(uniqueId: UUID): List<VirtualHandler>
+    fun getHandlers(uniqueId: UUID): Set<VirtualHandler>
 }
