@@ -2,7 +2,7 @@ package kr.hqservice.framework.coroutine.component
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.coroutine.PluginCoroutineContextElement
+import kr.hqservice.framework.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.global.core.component.HQComponent
 import kotlin.coroutines.CoroutineContext
 

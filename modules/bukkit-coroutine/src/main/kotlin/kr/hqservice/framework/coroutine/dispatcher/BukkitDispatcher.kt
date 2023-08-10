@@ -1,16 +1,16 @@
 package kr.hqservice.framework.coroutine.dispatcher
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.coroutine.PluginCoroutineContextElement
+import kr.hqservice.framework.coroutine.element.PluginCoroutineContextElement
 import org.bukkit.Bukkit
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-object BukkitMainDispatcher : MainCoroutineDispatcher(), Delay {
+class BukkitDispatcher(private val isAsync: Boolean) : MainCoroutineDispatcher(), Delay {
     override val immediate: MainCoroutineDispatcher
-        get() = BukkitMainDispatcherImmediate
+        get() = BukkitMainDispatcherImmediate()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val plugin = getPluginByCoroutineContext(context)
@@ -26,7 +26,11 @@ object BukkitMainDispatcher : MainCoroutineDispatcher(), Delay {
                 }
             }
         }
-        val task = runnable.runTaskLater(plugin, timeMillis / 50)
+        val task = if (isAsync) {
+            runnable.runTaskLaterAsynchronously(plugin, timeMillis / 50)
+        } else {
+            runnable.runTaskLater(plugin, timeMillis / 50)
+        }
         continuation.invokeOnCancellation { task.cancel() }
     }
 
@@ -34,25 +38,21 @@ object BukkitMainDispatcher : MainCoroutineDispatcher(), Delay {
         val plugin = coroutineContext[PluginCoroutineContextElement]?.plugin
         return plugin ?: Bukkit.getPluginManager().getPlugin("HQFramework")!!
     }
-}
 
-/**
- * 디스패칭이 필요하지 않을 때를 구별합니다.
- */
-@InternalCoroutinesApi
-object BukkitMainDispatcherImmediate : MainCoroutineDispatcher(), Delay {
-    override val immediate: MainCoroutineDispatcher
-        get() = this
+    private inner class BukkitMainDispatcherImmediate : MainCoroutineDispatcher(), Delay {
+        override val immediate: MainCoroutineDispatcher
+            get() = this
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean {
-        return !Bukkit.isPrimaryThread()
-    }
+        override fun isDispatchNeeded(context: CoroutineContext): Boolean {
+            return !Bukkit.isPrimaryThread()
+        }
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-        BukkitMainDispatcher.dispatch(context, block)
-    }
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+            this@BukkitDispatcher.dispatch(context, block)
+        }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        BukkitMainDispatcher.scheduleResumeAfterDelay(timeMillis, continuation)
+        override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+            this@BukkitDispatcher.scheduleResumeAfterDelay(timeMillis, continuation)
+        }
     }
 }
