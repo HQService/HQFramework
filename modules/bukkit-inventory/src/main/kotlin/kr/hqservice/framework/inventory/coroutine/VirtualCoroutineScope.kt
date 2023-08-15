@@ -5,15 +5,15 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.job
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
-import org.koin.core.annotation.Named
 import org.koin.core.component.getScopeName
 import java.util.logging.Level
 import java.util.logging.Logger
 
-@Named("url-reader")
+@Qualifier("url-reader")
 @Singleton(binds = [HQCoroutineScope::class])
 @Component
 class URLReaderCoroutineScope(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO) {

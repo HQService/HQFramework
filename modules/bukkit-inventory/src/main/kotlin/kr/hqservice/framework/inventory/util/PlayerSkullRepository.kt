@@ -3,15 +3,15 @@ package kr.hqservice.framework.inventory.util
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.Server
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
-import org.koin.core.annotation.Named
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 @Singleton(binds = [PlayerSkullRepository::class])
 class PlayerSkullRepository(
     private val server: Server,
-    @Named("url-reader") private val urlReaderCoroutineScope: HQCoroutineScope
+    @Qualifier("url-reader") private val urlReaderCoroutineScope: HQCoroutineScope
 ) : HQSimpleComponent {
     private val skinTagMap = mutableMapOf<UUID, String>()
     private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()

@@ -2,7 +2,7 @@ package kr.hqservice.framework.view
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.extension.colorize
-import kr.hqservice.framework.coroutine.extension.BukkitMain
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.view.coroutine.LifecycleOwner
 import kr.hqservice.framework.view.element.ButtonElement
 import kr.hqservice.framework.view.event.ButtonRenderEvent

@@ -3,7 +3,7 @@ package kr.hqservice.framework.database.test
 import be.seeseemelk.mockbukkit.MockBukkit
 import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
+import kr.hqservice.framework.bukkit.core.coroutine.component.handler.CoroutineScopeComponentHandler
 import kr.hqservice.framework.global.core.component.registry.MutableNamedProvider
 import kr.hqservice.framework.global.core.component.registry.QualifierProvider
 import kr.hqservice.framework.global.core.extension.print

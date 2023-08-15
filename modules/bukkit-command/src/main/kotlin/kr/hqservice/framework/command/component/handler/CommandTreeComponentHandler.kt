@@ -6,12 +6,10 @@ import kr.hqservice.framework.command.component.ParentCommand
 import kr.hqservice.framework.command.component.registry.CommandRegistry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
-import kr.hqservice.framework.global.core.component.handler.impl.KoinModuleComponentHandler
 import kotlin.reflect.full.findAnnotation
 
-@ComponentHandler(depends = [KoinModuleComponentHandler::class])
-class CommandTreeComponentHandler(private val registry: CommandRegistry) :
-    HQComponentHandler<HQCommandTree> {
+@ComponentHandler
+class CommandTreeComponentHandler(private val registry: CommandRegistry) : HQComponentHandler<HQCommandTree> {
     override fun setup(element: HQCommandTree) {
         if (element is HQCommandRoot) {
             return

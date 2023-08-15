@@ -2,7 +2,7 @@ package kr.hqservice.framework.nms.extension
 
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.factory.VirtualViewFactory

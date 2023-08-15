@@ -5,10 +5,9 @@ import kr.hqservice.framework.command.component.ParentCommand
 import kr.hqservice.framework.command.component.registry.CommandRegistry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
-import kr.hqservice.framework.global.core.component.handler.impl.KoinModuleComponentHandler
 import kotlin.reflect.full.findAnnotation
 
-@ComponentHandler(depends = [KoinModuleComponentHandler::class])
+@ComponentHandler
 class CommandNodeComponentHandler(
     private val registry: CommandRegistry,
 ) : HQComponentHandler<HQCommandNode> {

@@ -2,7 +2,9 @@ package kr.hqservice.framework.global.core.component.registry
 
 import kr.hqservice.framework.global.core.component.*
 import kr.hqservice.framework.global.core.component.error.*
+import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
+import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.global.core.util.AnsiColor
@@ -36,10 +38,12 @@ import kotlin.reflect.jvm.jvmErasure
 abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private companion object {
         val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+        val annotationHandlers: MutableMap<KClass<HQAnnotationHandler<*>>, HQAnnotationHandler<*>> = mutableMapOf()
         val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
     }
 
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
+    private val annotationProcessNeededInstancesMap: MutableMap<KClass<out Annotation>, Any> = mutableMapOf()
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
 
@@ -52,10 +56,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val configurationClasses = mutableListOf<Class<*>>()
         val qualifierProviderClasses = mutableListOf<Class<*>>()
         val unsortedComponentHandlers: MutableMap<KClass<*>, KClass<HQComponentHandler<*>>> = mutableMapOf()
+        val unsortedAnnotationHandlers: MutableMap<KClass<*>, KClass<HQAnnotationHandler<*>>> = mutableMapOf()
         for (clazz in getAllComponentsToScan()) {
             val annotations = clazz.annotations
             if (annotations.filterIsInstance<ComponentHandler>().isNotEmpty()) {
-                val componentHandlerType = getComponentHandlerType(clazz.kotlin)
+                val componentHandlerType = getComponentHandlerTypeParameter(clazz.kotlin)
                 unsortedComponentHandlers[componentHandlerType] = clazz.kotlin as KClass<HQComponentHandler<*>>
             } else if (annotations.filterIsInstance<Component>().isNotEmpty()) {
                 componentClasses.add(clazz)
@@ -65,8 +70,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 beanClasses.add(clazz)
             } else if (annotations.filterIsInstance<Configuration>().isNotEmpty()) {
                 configurationClasses.add(clazz)
+            } else if (annotations.any { it.annotationClass.hasAnnotation<Scannable>() }) {
+                componentClasses.add(clazz)
+            } else if (annotations.filterIsInstance<AnnotationHandler>().isNotEmpty()) {
+                val annotationHandlerType = getAnnotationHandlerTypeParameter(clazz.kotlin)
+                unsortedAnnotationHandlers[annotationHandlerType] = clazz.kotlin as KClass<HQAnnotationHandler<*>>
             }
         }
+
         val componentClassesQueue: ConcurrentLinkedQueue<KClass<*>> = ConcurrentLinkedQueue(
             componentClasses.map { it.kotlin }
         ).apply {
@@ -88,7 +99,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 }
                 if (componentExceptionCatchingStack == componentClassesQueue.size) {
                     printFriendlyException(componentClassesQueue.toList())
-                    throw NoBeanDefinitionsFoundException(listOf())
+                    throw NoBeanDefinitionsFoundException()
                 }
                 previousComponentQueueSize = componentClassesQueue.size
             }
@@ -115,7 +126,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                             back()
                             continue@queue
                         }
-                        val called = kFunction.call(instance, *injected.toTypedArray()) ?: throw IllegalStateException("null 은 bean 으로 선언될 수 없습니다.")
+                        val called = kFunction.call(instance, *injected.toTypedArray())
+                            ?: throw IllegalStateException("null 은 bean 으로 선언될 수 없습니다.")
                         definitions[kFunction.returnType.jvmErasure] = kFunction to called
                     }
                     definitions.forEach { (klass, pair) ->
@@ -142,20 +154,65 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     back()
                     continue
                 }
+
                 if (instance is HQComponent) {
                     componentInstances.addSafely(instance)
                 } else if (instance is MutableNamedProvider) {
                     val key = component.annotations.filterIsInstance<QualifierProvider>().first().key
                     qualifierProviders[key] = instance
+                } else if (component.annotations.any { it.annotationClass.hasAnnotation<Scannable>() }) {
+                    component
+                        .annotations
+                        .filter { it.annotationClass.hasAnnotation<Scannable>() }
+                        .forEach { annotation ->
+                            annotationProcessNeededInstancesMap[annotation.annotationClass] = instance
+                        }
                 }
 
                 componentExceptionCatchingStack = 0
             }
         }
+
+
+        val annotationHandlersQueue: ConcurrentLinkedQueue<KClass<HQAnnotationHandler<*>>> =
+            ConcurrentLinkedQueue(unsortedAnnotationHandlers.values.toMutableList() + annotationHandlers.keys)
+        var previousHandlerQueueSize = annotationHandlersQueue.size
+        var handlerExceptionCatchingStack = 0
+
+        fun <T : Any> checkDefinitionNeedThrow(handlersQueue: ConcurrentLinkedQueue<KClass<T>>) {
+            if (previousHandlerQueueSize == handlersQueue.size) {
+                handlerExceptionCatchingStack++
+            }
+            if (handlerExceptionCatchingStack == handlersQueue.size) {
+                printFriendlyException(handlersQueue.map { it::class })
+                throw NoBeanDefinitionsFoundException()
+            }
+            previousHandlerQueueSize = handlersQueue.size
+        }
+
+        fun resetThrowStack() {
+            handlerExceptionCatchingStack = 0
+        }
+
+        while (annotationHandlersQueue.isNotEmpty()) {
+            val annotationHandlerClass = annotationHandlersQueue.poll()
+            val annotationHandler = callByInjectedParameters(annotationHandlerClass.constructors.first())
+            if (annotationHandler == null) {
+                annotationHandlersQueue.offer(annotationHandlerClass)
+                checkDefinitionNeedThrow(annotationHandlersQueue)
+            } else {
+                processAnnotationProcessNeedInstances(annotationHandler) { any, annotation ->
+                    setup(any, annotation)
+                }
+                annotationHandlers[annotationHandlerClass] = annotationHandler
+                resetThrowStack()
+            }
+        }
+
         val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> =
             ConcurrentLinkedQueue(unsortedComponentHandlers.values.toMutableList() + componentHandlers.keys)
-        var handlerExceptionCatchingStack = 0
-        var previousHandlerQueueSize = componentHandlersQueue.size
+        previousComponentQueueSize = componentHandlersQueue.size
+        resetThrowStack()
 
         while (componentHandlersQueue.isNotEmpty()) {
             val componentHandlerClass = componentHandlersQueue.poll()
@@ -168,20 +225,13 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
                 if (componentHandler == null) {
                     componentHandlersQueue.offer(componentHandlerClass)
-                    if (previousHandlerQueueSize == componentHandlersQueue.size) {
-                        handlerExceptionCatchingStack++
-                    }
-                    if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
-                        printFriendlyException(componentHandlersQueue.toList().map { it::class })
-                        throw NoBeanDefinitionsFoundException(listOf())
-                    }
-                    previousHandlerQueueSize = componentHandlersQueue.size
+                    checkDefinitionNeedThrow(componentHandlersQueue)
                 } else {
                     processComponents(componentHandler) { component ->
                         setup(component)
                     }
                     componentHandlers[componentHandlerClass] = componentHandler
-                    handlerExceptionCatchingStack = 0
+                    resetThrowStack()
                 }
             } else {
                 val illegalDepends = depends.filter {
@@ -192,18 +242,18 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 }
 
                 componentHandlersQueue.offer(componentHandlerClass)
-                if (previousHandlerQueueSize == componentHandlersQueue.size) {
-                    handlerExceptionCatchingStack++
-                }
-                if (handlerExceptionCatchingStack == componentHandlersQueue.size) {
-                    throw ComponentCircularException(componentHandlersQueue.toList().map { it::class })
-                }
-                previousHandlerQueueSize = componentHandlersQueue.size
+                checkDefinitionNeedThrow(componentHandlersQueue)
             }
         }
     }
 
     final override fun teardown() {
+        val reversedAnnotationHandlers = annotationHandlers.toList().reversed().toMap()
+        reversedAnnotationHandlers.forEach { (_, annotationHandler) ->
+            processAnnotationProcessNeedInstances(annotationHandler) { any, annotation ->
+                teardown(any, annotation)
+            }
+        }
         val reversedComponentHandlers = componentHandlers.toList().reversed().toMap()
         reversedComponentHandlers.forEach { (_, componentHandler) ->
             processComponents(componentHandler) { component ->
@@ -216,14 +266,23 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         componentHandler: HQComponentHandler<*>,
         action: HQComponentHandler<HQComponent>.(HQComponent) -> Unit
     ) {
-        val handlerClass = componentHandler::class
-        val handlerType = getComponentHandlerType(handlerClass)
-        componentInstances.forEach { (componentClass, component) ->
-            if (componentClass.allSuperclasses.contains(handlerType)) {
-                @Suppress("UNCHECKED_CAST")
-                componentHandler as HQComponentHandler<HQComponent>
-                componentHandler.action(component)
-            }
+        val handlerType = getComponentHandlerTypeParameter(componentHandler::class)
+        componentInstances.filter { it.key.allSuperclasses.contains(handlerType) }.forEach { (_, component) ->
+            @Suppress("UNCHECKED_CAST")
+            componentHandler as HQComponentHandler<HQComponent>
+            componentHandler.action(component)
+        }
+    }
+
+    private fun processAnnotationProcessNeedInstances(
+        annotationHandler: HQAnnotationHandler<*>,
+        action: HQAnnotationHandler<Annotation>.(Any, Annotation) -> Unit
+    ) {
+        val handlerType = getAnnotationHandlerTypeParameter(annotationHandler::class)
+        annotationProcessNeededInstancesMap.filter { it.key == handlerType }.forEach { (annotation, any) ->
+            @Suppress("UNCHECKED_CAST")
+            annotationHandler as HQAnnotationHandler<Annotation>
+            annotationHandler.action(any, any::class.findAnnotations(annotation).single())
         }
     }
 
@@ -250,13 +309,22 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
     }
 
-    private fun getComponentHandlerType(componentHandlerClass: KClass<*>): KClass<*> {
+    private fun getComponentHandlerTypeParameter(componentHandlerClass: KClass<*>): KClass<*> {
         return componentHandlerClass
             .supertypes
             .first { it.isSubtypeOf(HQComponentHandler::class.starProjectedType) }
             .arguments
             .first()
-            .type?.jvmErasure ?: throw NullPointerException("ComponentHandlers must have one type parameter.")
+            .type!!.jvmErasure
+    }
+
+    private fun getAnnotationHandlerTypeParameter(annotationHandlerClass: KClass<*>): KClass<*> {
+        return annotationHandlerClass
+            .supertypes
+            .first { it.isSubtypeOf(HQAnnotationHandler::class.starProjectedType) }
+            .arguments
+            .first()
+            .type!!.jvmErasure
     }
 
     /**
@@ -456,11 +524,16 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             fun isPrimary(kAnnotatedElement: KAnnotatedElement): Boolean {
                 return kAnnotatedElement.findAnnotation<Primary>() != null
             }
+
             /**
              * 빈의 종류와 Bind 타입들을 구합니다. Kind 를 못찾을 경우, Singleton 기본 프로퍼티를 반환합니다.
              */
             fun getBeanProperty(kAnnotatedElement: KAnnotatedElement): BeanProperty {
-                return findBeanProperty(kAnnotatedElement) ?: BeanProperty(Kind.Singleton, emptyList(), isPrimary(kAnnotatedElement))
+                return findBeanProperty(kAnnotatedElement) ?: BeanProperty(
+                    Kind.Singleton,
+                    emptyList(),
+                    isPrimary(kAnnotatedElement)
+                )
             }
 
             /**

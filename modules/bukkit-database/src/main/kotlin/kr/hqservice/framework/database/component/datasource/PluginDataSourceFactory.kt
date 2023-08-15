@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
 import kr.hqservice.framework.bukkit.core.extension.getHQConfig
-import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.database.util.getDatabaseHost
 import kr.hqservice.framework.database.util.getDatabasePath
 import kr.hqservice.framework.database.util.getDatabaseType

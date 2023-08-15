@@ -6,7 +6,6 @@ plugins {
 dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
-    apiModule("bukkit", "coroutine")
     apiModule("bukkit", "nms")
     apiModule("global", "netty")
     compileOnly(libs.spigot.api)

@@ -9,12 +9,11 @@ import kr.hqservice.framework.command.component.*
 import kr.hqservice.framework.command.component.impl.CommandContextImpl
 import kr.hqservice.framework.command.component.registry.CommandArgumentProviderRegistry
 import kr.hqservice.framework.command.component.registry.CommandRegistry
-import kr.hqservice.framework.coroutine.bukkitDelay
-import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
+import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
+import kr.hqservice.framework.bukkit.core.coroutine.component.handler.CoroutineScopeComponentHandler
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
-import kr.hqservice.framework.global.core.component.handler.impl.KoinModuleComponentHandler
 import org.bukkit.Location
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
@@ -36,7 +35,6 @@ import kotlin.reflect.jvm.jvmErasure
 
 @ComponentHandler(
     depends = [
-        KoinModuleComponentHandler::class,
         CommandNodeComponentHandler::class,
         CommandTreeComponentHandler::class,
         CommandArgumentProviderComponentHandler::class,

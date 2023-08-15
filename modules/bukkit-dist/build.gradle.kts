@@ -41,7 +41,6 @@ dependencies {
     runtimeOnlyModule("global", "yaml")
     runtimeOnlyModule("bukkit", "inventory")
     runtimeOnlyModule("bukkit", "region")
-    runtimeOnlyModule("bukkit", "coroutine")
     runtimeOnlyModule("bukkit", "database")
     runtimeOnlyModule("bukkit", "nms")
 }

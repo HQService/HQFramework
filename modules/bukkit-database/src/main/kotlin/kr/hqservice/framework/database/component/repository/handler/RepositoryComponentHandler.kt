@@ -2,7 +2,7 @@ package kr.hqservice.framework.database.component.repository.handler
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
+import kr.hqservice.framework.bukkit.core.coroutine.component.handler.CoroutineScopeComponentHandler
 import kr.hqservice.framework.database.component.datasource.handler.DataSourceComponentHandler
 import kr.hqservice.framework.database.component.repository.HQRepository
 import kr.hqservice.framework.database.component.repository.Table

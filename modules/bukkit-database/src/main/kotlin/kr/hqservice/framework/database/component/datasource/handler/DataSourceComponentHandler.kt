@@ -1,6 +1,6 @@
 package kr.hqservice.framework.database.component.datasource.handler
 
-import kr.hqservice.framework.coroutine.component.handler.CoroutineScopeComponentHandler
+import kr.hqservice.framework.bukkit.core.coroutine.component.handler.CoroutineScopeComponentHandler
 import kr.hqservice.framework.database.component.datasource.HQDataSource
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler

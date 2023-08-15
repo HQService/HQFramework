@@ -2,6 +2,7 @@ package kr.hqservice.framework.nms.virtual.classes
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
@@ -11,13 +12,12 @@ import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.getStaticFunction
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
-import org.koin.core.annotation.Named
 
 @Component
 @Singleton(binds = [VirtualEntityClasses::class])
 class VirtualEntityClasses(
     reflectionWrapper: NmsReflectionWrapper,
-    @Named("base-component") private val componentWrapper: NmsService<String, BaseComponentWrapper>,
+    @Qualifier("base-component") private val componentWrapper: NmsService<String, BaseComponentWrapper>,
 ) : HQSimpleComponent {
     private val entityClass = reflectionWrapper.getNmsClass(
         "EntityLiving",

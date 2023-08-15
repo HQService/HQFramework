@@ -3,7 +3,7 @@ package kr.hqservice.framework.view.navigator.impl
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.coroutine.bukkitDelay
+import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.view.HQView

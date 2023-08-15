@@ -14,12 +14,7 @@ import java.io.File
 
 abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
     constructor() : super()
-    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(
-        loader,
-        description,
-        dataFolder,
-        file
-    )
+    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
     final override fun onPreLoad() {
         startKoin()

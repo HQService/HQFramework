@@ -1,7 +1,7 @@
 package kr.hqservice.framework.database.test.datasource
 
 import kotlinx.coroutines.CoroutineScope
-import kr.hqservice.framework.coroutine.component.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.database.DatabaseHost
 import kr.hqservice.framework.database.component.datasource.HQDataSource
 import kr.hqservice.framework.database.component.datasource.MySQLDataSource
