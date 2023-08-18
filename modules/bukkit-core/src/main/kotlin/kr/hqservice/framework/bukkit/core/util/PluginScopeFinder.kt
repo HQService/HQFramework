@@ -10,10 +10,14 @@ object PluginScopeFinder {
             .pluginManager
             .plugins
             .filterIsInstance<HQBukkitPlugin>()
-            .singleOrNull { hqBukkitPlugin ->
+            .single { hqBukkitPlugin ->
                 val targetPackage = kClass.java.packageName
                 val pluginPackage = hqBukkitPlugin::class.java.packageName
                 targetPackage == pluginPackage || targetPackage.startsWith("$pluginPackage.")
             }
+    }
+
+    fun get(kClass: KClass<*>): HQBukkitPlugin {
+        return find(kClass) ?: throw NullPointerException("cannot find plugin of KClass ${kClass.simpleName} located.")
     }
 }

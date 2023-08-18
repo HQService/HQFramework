@@ -7,9 +7,9 @@ import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.database.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.lock.DefermentLock
-import kr.hqservice.framework.database.lock.impl.DisconnectDefermentLock
 import kr.hqservice.framework.database.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
+import kr.hqservice.framework.database.repository.HQPlayerRepository
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.netty.api.PacketSender
@@ -21,25 +21,42 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.PluginManager
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 
 @Component
 class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
-    @Qualifier("database") private val databaseCoroutineScope: CoroutineScope,
-    @Qualifier("switch") private val switchDefermentLock: DefermentLock,
-    @Qualifier("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
+    private val coroutineScope: CoroutineScope,
     private val server: Server,
     private val pluginManager: PluginManager,
     private val packetSender: PacketSender,
     private val nettyService: HQNettyService,
+    @Qualifier("switch") private val switchDefermentLock: DefermentLock,
+    @Qualifier("disconnect") private val disconnectDefermentLock: DefermentLock,
 ) : HQListener {
+    private suspend fun <T : Any> onLoad(player: Player, repository: HQPlayerRepository<T>) {
+        val value = newSuspendedTransaction(coroutineScope.coroutineContext) {
+            repository.load(player)
+        }
+        if (player.isOnline) {
+            repository[player.uniqueId] = value
+        }
+    }
+
+    private suspend fun <T : Any> onSave(player: Player, repository: HQPlayerRepository<T>) {
+        val value = repository[player.uniqueId] ?: return
+        newSuspendedTransaction(coroutineScope.coroutineContext) {
+            repository.save(player, value)
+        }
+    }
+
     private fun saveAndClear(player: Player): Job {
-        return databaseCoroutineScope.launch {
-            val saveJobs = playerRepositoryRegistry.getAll().map {
+        return coroutineScope.launch(Dispatchers.IO) {
+            val saveJobs = playerRepositoryRegistry.getAll().map { repository ->
                 launch {
-                    it.onSave(player)
-                    it.remove(player.uniqueId)
+                    onSave(player, repository)
+                    repository.remove(player.uniqueId)
                 }
             }
             saveJobs.joinAll()
@@ -51,7 +68,7 @@ class PlayerConnectionPacketHandler(
         if (lock != null) {
             switchDefermentLock.unlock(playerId)
         } else {
-            databaseCoroutineScope.launch {
+            coroutineScope.launch(Dispatchers.IO) {
                 switchDefermentLock.tryLock(playerId) {
                     launch(Dispatchers.BukkitMain){
                         server.getPlayer(it)?.kickPlayer("데이터 로드 시점을 받아오지 못하였습니다.")
@@ -82,7 +99,7 @@ class PlayerConnectionPacketHandler(
                 val player =
                     server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
                 val nextChannel = packet.sourceChannel ?: return // 열리지 않은 서버
-                databaseCoroutineScope.launch {
+                coroutineScope.launch(Dispatchers.IO) {
                     saveAndClear(player).join()
                     packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                 }
@@ -91,7 +108,7 @@ class PlayerConnectionPacketHandler(
             PlayerConnectionState.DISCONNECT -> {
                 val lock = disconnectDefermentLock.findLock(packet.player.getUniqueId())
                 if (lock == null) {
-                    databaseCoroutineScope.launch {
+                    coroutineScope.launch(Dispatchers.IO) {
                         disconnectDefermentLock.tryLock(packet.player.getUniqueId(), 1000L) {}
                     }
                 } else {
@@ -108,7 +125,7 @@ class PlayerConnectionPacketHandler(
         if (!nettyService.isEnable()) {
             return
         }
-        databaseCoroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             val lock = disconnectDefermentLock.findLock(event.player.uniqueId)
             if (lock != null) {
                 saveAndClear(event.player)
@@ -152,9 +169,9 @@ class PlayerConnectionPacketHandler(
         if (cancelled) {
             return@blocking
         }
-        val loadJobs = playerRepositoryRegistry.getAll().map {
-            databaseCoroutineScope.launch {
-                it.onLoad(event.player)
+        val loadJobs = playerRepositoryRegistry.getAll().map { repository ->
+            coroutineScope.launch(Dispatchers.IO) {
+                onLoad(event.player, repository)
             }
         }
         loadJobs.joinAll()

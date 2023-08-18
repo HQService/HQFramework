@@ -3,6 +3,22 @@ netty:
   host: 127.0.0.1
   port: 11286
 
-forge-support: false
+log:
+  error:
+    path: "hq-errors/"
 
+database:
+  type: sqlite
+
+  sqlite:
+    path: "hq-database/sqlite.db"
+
+  mysql:
+    host: localhost
+    port: 3306
+    user: root
+    password: password
+    database: hq
+
+forge-support: false
 error-log-limit: 5

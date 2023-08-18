@@ -3,19 +3,14 @@ package kr.hqservice.framework.command
 import kr.hqservice.framework.bukkit.HQFrameworkBukkitPlugin
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.colorize
-import kr.hqservice.framework.command.component.CommandExecutor
-import kr.hqservice.framework.command.component.HQCommandNode
-import kr.hqservice.framework.command.component.ParentCommand
-import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Server
 import org.bukkit.command.CommandSender
 
-@Component
-@ParentCommand(binds = [HQFrameworkCommand::class])
+@Command(parent = HQFrameworkCommand::class)
 class PluginListCommand(
     private val bukkitPlugin: HQBukkitPlugin,
     private val server: Server
-) : HQCommandNode {
+) {
     @CommandExecutor(
         label = "plugins",
         description = "HQPlugin 을 의존하는 플러그인들을 출력합니다.",

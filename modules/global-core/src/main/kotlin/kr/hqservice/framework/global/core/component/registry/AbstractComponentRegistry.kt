@@ -1,5 +1,7 @@
 package kr.hqservice.framework.global.core.component.registry
 
+import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.Multimap
 import kr.hqservice.framework.global.core.component.*
 import kr.hqservice.framework.global.core.component.error.*
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
@@ -43,7 +45,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     }
 
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
-    private val annotationProcessNeededInstancesMap: MutableMap<KClass<out Annotation>, Any> = mutableMapOf()
+    private val annotationProcessNeededInstancesMap: Multimap<KClass<out Annotation>, Any> = ArrayListMultimap.create()
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
 
@@ -117,7 +119,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                         continue@queue
                     }
                     val methods = component.declaredFunctions.filter {
-                        BeanProperty.findBeanProperty(it) != null
+                        BeanProperty.findBeanProperty(it) != null || it.hasAnnotation<Bean>()
                     }
                     val definitions: MutableMap<KClass<*>, Pair<KAnnotatedElement, Any>> = mutableMapOf()
                     for (kFunction in methods) {
@@ -165,7 +167,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                         .annotations
                         .filter { it.annotationClass.hasAnnotation<Scannable>() }
                         .forEach { annotation ->
-                            annotationProcessNeededInstancesMap[annotation.annotationClass] = instance
+                            annotationProcessNeededInstancesMap.put(annotation.annotationClass, instance)
                         }
                 }
 
@@ -173,9 +175,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             }
         }
 
-
         val annotationHandlersQueue: ConcurrentLinkedQueue<KClass<HQAnnotationHandler<*>>> =
             ConcurrentLinkedQueue(unsortedAnnotationHandlers.values.toMutableList() + annotationHandlers.keys)
+
         var previousHandlerQueueSize = annotationHandlersQueue.size
         var handlerExceptionCatchingStack = 0
 
@@ -279,12 +281,18 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         action: HQAnnotationHandler<Annotation>.(Any, Annotation) -> Unit
     ) {
         val handlerType = getAnnotationHandlerTypeParameter(annotationHandler::class)
-        annotationProcessNeededInstancesMap.filter { it.key == handlerType }.forEach { (annotation, any) ->
-            @Suppress("UNCHECKED_CAST")
-            annotationHandler as HQAnnotationHandler<Annotation>
-            annotationHandler.action(any, any::class.findAnnotations(annotation).single())
-        }
+        annotationProcessNeededInstancesMap
+            .run {
+                this.entries().filter { it.key == handlerType }
+            }.forEach {
+                val annotation = it.key
+                val any = it.value
+                @Suppress("UNCHECKED_CAST")
+                annotationHandler as HQAnnotationHandler<Annotation>
+                annotationHandler.action(any, any::class.findAnnotations(annotation).single())
+            }
     }
+
 
     override fun <T : HQComponent> getComponent(key: KClass<T>): T {
         return componentInstances.getComponent(key)

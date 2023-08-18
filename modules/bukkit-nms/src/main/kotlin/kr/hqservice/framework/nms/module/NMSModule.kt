@@ -1,7 +1,7 @@
 package kr.hqservice.framework.nms.module
 
 import kotlinx.coroutines.cancel
-import kr.hqservice.framework.bukkit.core.coroutine.component.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.global.core.component.Qualifier
