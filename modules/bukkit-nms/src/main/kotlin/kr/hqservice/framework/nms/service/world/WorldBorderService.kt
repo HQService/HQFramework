@@ -25,7 +25,7 @@ class WorldBorderService(
         val worldBorderInst = worldBorderConstructor.call()
         val worldWrapper = worldService.wrap(target)
         worldField.set(worldBorderInst, worldWrapper.getUnwrappedInstance())
-        return WorldBorderWrapper(worldBorderInst, reflectionWrapper, worldBorderClass)
+        return WorldBorderWrapper(worldBorderInst)
     }
 
     override fun unwrap(wrapper: WorldBorderWrapper): World {
