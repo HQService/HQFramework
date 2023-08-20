@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database.repository
+package kr.hqservice.framework.database.repository.player
 
 import kr.hqservice.framework.global.core.component.HQComponent
 import org.bukkit.entity.Player

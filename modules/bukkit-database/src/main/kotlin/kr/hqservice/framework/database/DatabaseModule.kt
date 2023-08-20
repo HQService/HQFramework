@@ -1,6 +1,6 @@
 package kr.hqservice.framework.database
 
-import kr.hqservice.framework.database.packet.PlayerDataSavedPacket
+import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.global.core.component.Module
 import kr.hqservice.framework.netty.api.NettyServer

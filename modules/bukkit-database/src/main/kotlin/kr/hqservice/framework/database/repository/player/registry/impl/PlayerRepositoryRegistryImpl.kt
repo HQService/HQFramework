@@ -1,7 +1,7 @@
-package kr.hqservice.framework.database.registry.impl
+package kr.hqservice.framework.database.repository.player.registry.impl
 
-import kr.hqservice.framework.database.repository.PlayerRepository
-import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
+import kr.hqservice.framework.database.repository.player.PlayerRepository
+import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
 

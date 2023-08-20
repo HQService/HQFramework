@@ -1,7 +1,7 @@
-package kr.hqservice.framework.database.repository.handler
+package kr.hqservice.framework.database.repository.player.handler
 
-import kr.hqservice.framework.database.repository.PlayerRepository
-import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
+import kr.hqservice.framework.database.repository.player.PlayerRepository
+import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 

@@ -1,6 +1,6 @@
-package kr.hqservice.framework.database.handler
+package kr.hqservice.framework.database.component.handler
 
-import kr.hqservice.framework.database.Table
+import kr.hqservice.framework.database.component.Table
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
 import kr.hqservice.framework.global.core.util.AnsiColor

@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database.packet
+package kr.hqservice.framework.database.repository.player.packet
 
 import io.netty.buffer.ByteBuf
 import kr.hqservice.framework.netty.api.NettyPlayer

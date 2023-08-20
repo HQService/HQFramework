@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database.event
+package kr.hqservice.framework.database.repository.player.event
 
 import org.bukkit.entity.Player
 import org.bukkit.event.Event

@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database
+package kr.hqservice.framework.database.component
 
 import kr.hqservice.framework.global.core.component.Scannable
 
