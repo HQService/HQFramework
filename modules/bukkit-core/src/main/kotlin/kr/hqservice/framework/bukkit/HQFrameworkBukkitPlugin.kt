@@ -4,6 +4,7 @@ import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
 import kr.hqservice.framework.bukkit.core.component.registry.InstanceFactoryRegistry
 import kr.hqservice.framework.global.core.HQPlugin
+import net.bytebuddy.agent.ByteBuddyAgent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
@@ -14,14 +15,10 @@ import java.io.File
 
 abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
     constructor() : super()
-    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(
-        loader,
-        description,
-        dataFolder,
-        file
-    )
+    constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
     final override fun onPreLoad() {
+        ByteBuddyAgent.install()
         startKoin()
     }
 

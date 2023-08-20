@@ -9,6 +9,7 @@ dependencies {
     apiModule("global", "yaml")
     apiModule("proxy", "core")
     compileOnly(libs.bungeecord.api)
+    compileOnly(libs.byte.buddy.agent)
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     api(libs.koin.annotations)

@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bukkit.core.component.registry
 
+import kotlinx.coroutines.CoroutineScope
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
 import kr.hqservice.framework.bukkit.core.component.PluginDepend
@@ -54,6 +55,7 @@ class BukkitComponentRegistry(
             put(HQBukkitPlugin::class, plugin)
             put(Logger::class, plugin.logger)
             put(ConfigurationSection::class, plugin.config)
+            put(CoroutineScope::class, plugin)
             put(HQYamlConfiguration::class, getConfiguration())
         }
     }

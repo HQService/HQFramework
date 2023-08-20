@@ -2,8 +2,8 @@ package kr.hqservice.framework.command.providers
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.colorize
-import kr.hqservice.framework.command.component.CommandContext
-import kr.hqservice.framework.command.component.HQCommandArgumentProvider
+import kr.hqservice.framework.command.CommandContext
+import kr.hqservice.framework.command.HQCommandArgumentProvider
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
 import org.bukkit.Server

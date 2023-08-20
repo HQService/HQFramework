@@ -1,8 +1,6 @@
 package kr.hqservice.framework.region.factory.impl
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQService
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.region.factory.RangeFactory
 import kr.hqservice.framework.region.location.BlockLocation
 import kr.hqservice.framework.region.location.impl.BlockLocationImpl
@@ -12,9 +10,8 @@ import kr.hqservice.framework.region.range.enums.PlaneAxis
 import kotlin.math.max
 import kotlin.math.min
 
-@Component
-@Singleton(binds = [RangeFactory::class])
-class RangeFactoryImpl : RangeFactory, HQService {
+@Bean
+class RangeFactoryImpl : RangeFactory {
     private fun min(position1: BlockLocation, position2: BlockLocation): BlockLocation {
         return BlockLocationImpl(
             position1.getWorld(),

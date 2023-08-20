@@ -10,15 +10,14 @@ import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
 import org.bukkit.inventory.ItemStack
-import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
 
 @Qualifier("itemStack")
 @Service
 class NmsItemStackService(
     private val reflectionWrapper: NmsReflectionWrapper,
-    @Named("tag") private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
-    @Named("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
+    @Qualifier("tag") private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
+    @Qualifier("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
 ) : NmsService<ItemStack, NmsItemStackWrapper> {
     private val craftItemStackClass = reflectionWrapper.getCraftBukkitClass("inventory.CraftItemStack")
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))

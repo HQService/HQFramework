@@ -12,13 +12,12 @@ import kr.hqservice.framework.nms.wrapper.math.Vector3fWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.Location
 import org.bukkit.World
-import org.koin.core.annotation.Named
 import kotlin.reflect.KClass
 
 @Service
 class NmsArmorStandService(
     private val reflectionWrapper: NmsReflectionWrapper,
-    @Named("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
+    @Qualifier("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
     @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>,
 ) : NmsEntityService<NmsArmorStandWrapper> {
     private val armorStandClass = reflectionWrapper.getNmsClass(

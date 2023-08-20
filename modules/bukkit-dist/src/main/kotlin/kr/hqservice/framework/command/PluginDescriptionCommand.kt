@@ -1,23 +1,15 @@
 package kr.hqservice.framework.command
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
-import kr.hqservice.framework.command.component.CommandExecutor
-import kr.hqservice.framework.command.component.HQCommandNode
-import kr.hqservice.framework.command.component.ParentCommand
-import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.extension.toHumanReadable
 import org.bukkit.command.CommandSender
-import kotlin.coroutines.CoroutineContext
 
-@Component
-@ParentCommand(binds = [HQFrameworkCommand.Plugin.Description::class])
-class PluginDescriptionCommand : HQCommandNode, CoroutineScope {
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.IO
-
+@Command(
+    parent = HQFrameworkCommand::class,
+    label = "plugin"
+)
+class PluginDescriptionCommand  {
     @CommandExecutor(
         label = "version",
         description = "해당 HQPlugin 의 버전을 확인합니다.",

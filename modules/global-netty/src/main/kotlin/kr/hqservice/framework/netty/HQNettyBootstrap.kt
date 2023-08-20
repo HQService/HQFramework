@@ -20,8 +20,6 @@ class HQNettyBootstrap(
     private val group = NioEventLoopGroup(0, ThreadFactoryBuilder().setNameFormat("HQ IO Thread #%1\$d").build())
 
     private fun init() {
-        ByteBuddyAgent.install()
-
         Direction.INBOUND.registerPacket(HandShakePacket::class)
         Direction.OUTBOUND.registerPacket(HandShakePacket::class)
         Direction.INBOUND.registerPacket(PingPongPacket::class)
