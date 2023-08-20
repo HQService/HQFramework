@@ -28,6 +28,9 @@ import java.util.*
 class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
     private val coroutineScope: CoroutineScope,
+    @Qualifier("database") private val databaseCoroutineScope: CoroutineScope,
+    @Qualifier("switch") private val switchDefermentLock: DefermentLock,
+    @Qualifier("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
     private val server: Server,
     private val pluginManager: PluginManager,
     private val packetSender: PacketSender,

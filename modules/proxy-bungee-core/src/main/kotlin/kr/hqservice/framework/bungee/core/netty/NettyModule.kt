@@ -7,11 +7,9 @@ import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.plugin.Plugin
-import java.util.logging.Logger
 
 @Component
 class NettyModule(
-    logger: Logger,
     config: HQYamlConfiguration,
     private val plugin: Plugin,
     private val bootstrap: NettyServerBootstrap,

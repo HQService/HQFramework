@@ -19,6 +19,8 @@ class NmsArmorStandService(
     private val reflectionWrapper: NmsReflectionWrapper,
     @Qualifier("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
     @Qualifier("world") private val worldService: NmsService<World, WorldWrapper>,
+    @Named("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
+    @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>,
 ) : NmsEntityService<NmsArmorStandWrapper> {
     private val armorStandClass = reflectionWrapper.getNmsClass(
         "EntityArmorStand",
