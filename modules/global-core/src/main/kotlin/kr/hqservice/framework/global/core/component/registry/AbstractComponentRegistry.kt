@@ -140,7 +140,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 if (component.constructors.size > 1) {
                     throw ConstructorConflictException(component)
                 }
-                callByInjectedParameters(component.constructors.first())
+                if (component.objectInstance == null) {
+                    callByInjectedParameters(component.constructors.first())
+                } else {
+                    component.objectInstance!!
+                }
             } catch (exception: QualifierNotFoundException) {
                 back()
                 continue
