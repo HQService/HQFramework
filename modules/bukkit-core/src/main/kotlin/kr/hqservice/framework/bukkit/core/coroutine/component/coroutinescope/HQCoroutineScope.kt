@@ -6,19 +6,17 @@ import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineConte
 import kr.hqservice.framework.global.core.component.HQComponent
 import kotlin.coroutines.CoroutineContext
 
-abstract class HQCoroutineScope(plugin: HQBukkitPlugin, private val dispatcher: CoroutineDispatcher) : CoroutineScope,
-    HQComponent {
+abstract class HQCoroutineScope(private val plugin: HQBukkitPlugin, private val dispatcher: CoroutineDispatcher) : CoroutineScope, HQComponent {
     private val supervisorJob = SupervisorJob()
-    private val pluginCoroutineContextElement = PluginCoroutineContextElement(plugin)
 
     final override val coroutineContext: CoroutineContext
-        get() = supervisorJob + dispatcher + pluginCoroutineContextElement + getExceptionHandler() + getCoroutineName()
+        get() = supervisorJob + dispatcher + plugin.coroutineContext[PluginCoroutineContextElement.Key]!! + plugin.coroutineContext[CoroutineExceptionHandler.Key]!! + getCoroutineName()
 
     fun getSupervisor(): Job {
         return supervisorJob
     }
 
-    protected abstract fun getExceptionHandler(): CoroutineExceptionHandler
-
-    protected abstract fun getCoroutineName(): CoroutineName
+    open fun getCoroutineName(): CoroutineName {
+        return CoroutineName("UnnamedHQCoroutineScope")
+    }
 }

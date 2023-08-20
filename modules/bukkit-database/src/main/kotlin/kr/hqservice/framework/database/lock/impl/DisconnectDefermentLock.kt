@@ -11,26 +11,12 @@ import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.entity.Player
 import java.util.*
-import java.util.logging.Level
-import java.util.logging.Logger
 
 @Qualifier("disconnect")
 @Singleton(binds = [DefermentLock::class])
 @Component
-class DisconnectDefermentLock(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO),
-    DefermentLock {
-    private val exceptionHandler = CoroutineExceptionHandler { context, throwable ->
-        logger.log(Level.SEVERE, throwable) {
-            "DisconnectDefermentCoroutine 에서 오류 ${throwable::class.simpleName} 이(가) 발생하였습니다. \n" +
-                    "job: ${context.job} \n" +
-                    "stackTrace 를 출력합니다. \n"
-        }
-    }
+class DisconnectDefermentLock(plugin: HQBukkitPlugin) : HQCoroutineScope(plugin, Dispatchers.IO), DefermentLock {
     private val coroutineName = CoroutineName("DisconnectDefermentCoroutine")
-
-    override fun getExceptionHandler(): CoroutineExceptionHandler {
-        return exceptionHandler
-    }
 
     override fun getCoroutineName(): CoroutineName {
         return coroutineName

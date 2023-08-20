@@ -17,11 +17,11 @@ class DatabaseExceptionHandler(private val logger: Logger) {
         logger.severe("cause: ${exception.cause}")
         logger.severe("contexts:")
         exception.contexts.forEach {
-            logger.severe(it.toString())
+            logger.severe("  - $it")
         }
         logger.severe("causedByQueries:")
         exception.causedByQueries().forEach {
-            logger.severe(it)
+            logger.severe("  - $it")
         }
     }
 }
