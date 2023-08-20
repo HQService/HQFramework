@@ -36,7 +36,6 @@ dependencies {
 
     implementationModule("bukkit", "core")
     implementationModule("bukkit", "command")
-    implementationModule("bukkit", "database")
     runtimeOnlyModule("global", "core")
     runtimeOnlyModule("global", "netty")
     runtimeOnlyModule("global", "yaml")
