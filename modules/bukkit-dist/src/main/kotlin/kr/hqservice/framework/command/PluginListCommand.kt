@@ -8,7 +8,6 @@ import org.bukkit.command.CommandSender
 
 @Command(parent = HQFrameworkCommand::class)
 class PluginListCommand(
-    private val bukkitPlugin: HQBukkitPlugin,
     private val server: Server
 ) {
     @CommandExecutor(

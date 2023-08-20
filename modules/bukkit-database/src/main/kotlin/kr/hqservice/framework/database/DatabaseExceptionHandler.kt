@@ -1,12 +1,13 @@
 package kr.hqservice.framework.database
 
+import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.AdviceType
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.CoroutineScopeAdvice
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.ExceptionHandler
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.MustBeStored
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import java.util.logging.Logger
 
-@CoroutineScopeAdvice
+@CoroutineScopeAdvice(AdviceType.GLOBAL)
 class DatabaseExceptionHandler(private val logger: Logger) {
     @MustBeStored
     @ExceptionHandler

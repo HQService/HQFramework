@@ -1,16 +1,16 @@
 package kr.hqservice.framework.database.packet.handler
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.bukkit.core.component.HQListener
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
+import kr.hqservice.framework.bukkit.core.listener.Listener
+import kr.hqservice.framework.bukkit.core.listener.Subscribe
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
-import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.database.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.lock.DefermentLock
 import kr.hqservice.framework.database.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.database.repository.PlayerRepository
-import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionPacket
@@ -18,26 +18,22 @@ import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
 import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
 import org.bukkit.Server
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.PluginManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 
-@Component
+@Listener
 class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
     private val coroutineScope: CoroutineScope,
-    @Qualifier("database") private val databaseCoroutineScope: CoroutineScope,
     @Qualifier("switch") private val switchDefermentLock: DefermentLock,
-    @Qualifier("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
+    @Qualifier("disconnect") private val disconnectDefermentLock: DefermentLock,
     private val server: Server,
     private val pluginManager: PluginManager,
     private val packetSender: PacketSender,
     private val nettyService: HQNettyService,
-    @Qualifier("switch") private val switchDefermentLock: DefermentLock,
-    @Qualifier("disconnect") private val disconnectDefermentLock: DefermentLock,
-) : HQListener {
+)  {
     private suspend fun <T : Any> onLoad(player: Player, repository: PlayerRepository<T>) {
         val value = newSuspendedTransaction(coroutineScope.coroutineContext) {
             repository.load(player)
@@ -83,7 +79,7 @@ class PlayerConnectionPacketHandler(
     }
 
     // proxied server
-    @EventHandler
+    @Subscribe
     fun onPacketReceive(event: AsyncNettyPacketReceivedEvent) {
         val packet = event.packet
         if (packet !is PlayerConnectionPacket) {
@@ -123,7 +119,7 @@ class PlayerConnectionPacketHandler(
         }
     }
 
-    @EventHandler
+    @Subscribe
     fun onPlayerProxyQuit(event: PlayerQuitEvent) {
         if (!nettyService.isEnable()) {
             return
@@ -145,7 +141,7 @@ class PlayerConnectionPacketHandler(
     }
 
     // non proxied server
-    @EventHandler
+    @Subscribe
     fun onPlayerQuit(event: PlayerQuitEvent) {
         if (nettyService.isEnable()) {
             return
@@ -153,7 +149,7 @@ class PlayerConnectionPacketHandler(
         saveAndClear(event.player)
     }
 
-    @EventHandler
+    @Subscribe
     fun onLoad(event: PlayerDataPreLoadEvent): Unit = runBlocking blocking@{
         var cancelled = false
         if (nettyService.isEnable()) {
@@ -181,7 +177,7 @@ class PlayerConnectionPacketHandler(
         pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
     }
 
-    @EventHandler
+    @Subscribe
     fun unlockWhenSaved(event: AsyncNettyPacketReceivedEvent) {
         val packet = event.packet
         if (packet is PlayerDataSavedPacket) {
