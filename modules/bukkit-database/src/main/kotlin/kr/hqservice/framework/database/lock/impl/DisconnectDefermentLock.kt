@@ -7,6 +7,7 @@ import kr.hqservice.framework.coroutine.component.HQCoroutineScope
 import kr.hqservice.framework.coroutine.extension.coroutineContext
 import kr.hqservice.framework.database.lock.DefermentLock
 import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.entity.Player
 import org.koin.core.annotation.Named
@@ -14,7 +15,7 @@ import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 
-@Named("disconnect")
+@Qualifier("disconnect")
 @Singleton(binds = [DefermentLock::class])
 @Component
 class DisconnectDefermentLock(plugin: HQBukkitPlugin, logger: Logger) : HQCoroutineScope(plugin, Dispatchers.IO),

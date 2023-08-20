@@ -2,11 +2,9 @@ package kr.hqservice.framework.bukkit.core.netty.handler.impl
 
 import kr.hqservice.framework.bukkit.core.netty.event.NettyClientConnectedEvent
 import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
-import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
@@ -15,12 +13,10 @@ import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import org.bukkit.plugin.Plugin
-import org.koin.core.annotation.Named
 
-@Component
-@Singleton(binds = [ChannelMainHandler::class, PacketSender::class])
+@Bean
 class ChannelMainHandlerImpl(
-    @Named("hqframework") private val plugin: Plugin
+    private val plugin: Plugin
 ) : ChannelMainHandler {
     private var proxyChannel: ChannelWrapper? = null
 

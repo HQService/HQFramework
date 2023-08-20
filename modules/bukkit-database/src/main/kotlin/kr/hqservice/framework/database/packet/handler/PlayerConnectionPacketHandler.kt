@@ -11,6 +11,7 @@ import kr.hqservice.framework.database.lock.impl.DisconnectDefermentLock
 import kr.hqservice.framework.database.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionPacket
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
@@ -20,15 +21,14 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.PluginManager
-import org.koin.core.annotation.Named
 import java.util.*
 
 @Component
 class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
-    @Named("database") private val databaseCoroutineScope: CoroutineScope,
-    @Named("switch") private val switchDefermentLock: DefermentLock,
-    @Named("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
+    @Qualifier("database") private val databaseCoroutineScope: CoroutineScope,
+    @Qualifier("switch") private val switchDefermentLock: DefermentLock,
+    @Qualifier("disconnect") private val disconnectDefermentLock: DisconnectDefermentLock,
     private val server: Server,
     private val pluginManager: PluginManager,
     private val packetSender: PacketSender,

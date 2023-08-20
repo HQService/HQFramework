@@ -37,7 +37,7 @@ publishing {
 
             pom {
                 name.set(extra["projectName"]?.toString())
-                url.set(extra["proejctUrl"]?.toString())
+                url.set(extra["projectUrl"]?.toString())
             }
         }
     }
