@@ -49,7 +49,7 @@ class GlobalVirtualFactory(
         reflectionWrapper.sendPacket(receivers, virtualEntity)
     }
 
-    override suspend fun setWorldBorder(virtualWorldBorder: VirtualWorldBorder) {
+    override suspend fun updateWorldBorder(virtualWorldBorder: VirtualWorldBorder) {
         reflectionWrapper.sendPacket(receivers, virtualWorldBorder)
     }
 }

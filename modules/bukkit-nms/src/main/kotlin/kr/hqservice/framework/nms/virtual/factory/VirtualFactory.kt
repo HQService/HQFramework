@@ -22,5 +22,5 @@ interface VirtualFactory {
 
     suspend fun updateEntity(virtualEntity: AbstractVirtualEntity)
 
-    suspend fun setWorldBorder(virtualWorldBorder: VirtualWorldBorder)
+    suspend fun updateWorldBorder(virtualWorldBorder: VirtualWorldBorder)
 }
