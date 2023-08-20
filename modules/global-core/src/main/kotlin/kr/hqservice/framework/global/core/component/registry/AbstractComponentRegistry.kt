@@ -3,7 +3,10 @@ package kr.hqservice.framework.global.core.component.registry
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import kr.hqservice.framework.global.core.component.*
-import kr.hqservice.framework.global.core.component.error.*
+import kr.hqservice.framework.global.core.component.error.ConstructorConflictException
+import kr.hqservice.framework.global.core.component.error.IllegalDependException
+import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
+import kr.hqservice.framework.global.core.component.error.QualifierNotFoundException
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
@@ -337,6 +340,11 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             .arguments
             .first()
             .type!!.jvmErasure
+            .also {
+                if (!it.hasAnnotation<Scannable>()) {
+                    throw IllegalStateException("Annotation Scannable not found (${it.simpleName})")
+                }
+            }
     }
 
     /**

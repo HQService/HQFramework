@@ -3,6 +3,7 @@ package kr.hqservice.framework.database.handler
 import kr.hqservice.framework.database.Table
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
+import kr.hqservice.framework.global.core.util.AnsiColor
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.exists
@@ -25,8 +26,10 @@ class TableAnnotationHandler(
             try {
                 if (instance.exists()) {
                     SchemaUtils.addMissingColumnsStatements(instance, withLogs = false)
+                    logger.info("${AnsiColor.CYAN}Table ${instance.tableName} found from database ${database.vendor.uppercase()}.${AnsiColor.RESET}")
                 } else {
                     SchemaUtils.create(instance)
+                    logger.info("${AnsiColor.CYAN}Table ${instance.tableName} created.${AnsiColor.RESET}")
                 }
             } catch (exception: SQLSyntaxErrorException) {
                 logger.info("${instance.tableName} table may initialized not properly due to Mariadb internal issues.")
