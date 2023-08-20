@@ -13,7 +13,7 @@ import kotlin.reflect.KClass
 @Qualifier("nms.world.border")
 @Service
 class WorldBorderService(
-    private val reflectionWrapper: NmsReflectionWrapper,
+    reflectionWrapper: NmsReflectionWrapper,
     @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>
 ) : NmsService<World, WorldBorderWrapper> {
     private val worldBorderClass = reflectionWrapper.getNmsClass("WorldBorder",
