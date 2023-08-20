@@ -17,7 +17,6 @@ class PacketHandler(
     private val uniqueId = player.uniqueId
     private var first = false
 
-    @Suppress("unchecked_cast")
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
         if (!first) {
             first = true

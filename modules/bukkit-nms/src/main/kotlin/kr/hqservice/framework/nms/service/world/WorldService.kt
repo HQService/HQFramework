@@ -11,7 +11,7 @@ import org.bukkit.World
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-@Qualifier("world")
+@Qualifier("nms.world")
 @Service
 class WorldService(
     reflectionWrapper: NmsReflectionWrapper

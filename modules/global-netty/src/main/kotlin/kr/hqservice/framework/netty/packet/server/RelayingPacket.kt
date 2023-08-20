@@ -22,6 +22,7 @@ class RelayingPacket(
     }
 
     override fun read(buf: ByteBuf) {
+        packet = null
         targetServer = buf.readString()
         val relayAble = ByteArray(buf.readableBytes())
         buf.readBytes(relayAble)
