@@ -1,12 +1,12 @@
 package kr.hqservice.framework.database.registry
 
-import kr.hqservice.framework.database.repository.HQPlayerRepository
+import kr.hqservice.framework.database.repository.PlayerRepository
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 
 interface PlayerRepositoryRegistry : HQSimpleComponent {
-    fun register(repository: HQPlayerRepository<*>)
+    fun register(repository: PlayerRepository<*>)
 
-    fun unregister(repository: HQPlayerRepository<*>)
+    fun unregister(repository: PlayerRepository<*>)
 
-    fun getAll(): Collection<HQPlayerRepository<*>>
+    fun getAll(): Collection<PlayerRepository<*>>
 }

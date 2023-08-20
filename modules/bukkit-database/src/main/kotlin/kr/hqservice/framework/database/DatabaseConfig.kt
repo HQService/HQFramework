@@ -1,4 +1,4 @@
-package kr.hqservice.framework.database.config
+package kr.hqservice.framework.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource

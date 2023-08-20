@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class HQPlayerRepository<V : Any>(
+abstract class PlayerRepository<V : Any>(
     dataMap: MutableMap<UUID, V> = ConcurrentHashMap<UUID, V>(),
 ) : MutableMap<UUID, V> by dataMap, HQComponent {
     abstract suspend fun load(player: Player): V

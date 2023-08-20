@@ -1,6 +1,6 @@
 package kr.hqservice.framework.database.registry.impl
 
-import kr.hqservice.framework.database.repository.HQPlayerRepository
+import kr.hqservice.framework.database.repository.PlayerRepository
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
@@ -8,17 +8,17 @@ import kr.hqservice.framework.global.core.component.Singleton
 @Component
 @Singleton(binds = [PlayerRepositoryRegistry::class])
 class PlayerRepositoryRegistryImpl : PlayerRepositoryRegistry {
-    private val repositories: MutableList<HQPlayerRepository<*>> = mutableListOf()
+    private val repositories: MutableList<PlayerRepository<*>> = mutableListOf()
 
-    override fun register(repository: HQPlayerRepository<*>) {
+    override fun register(repository: PlayerRepository<*>) {
         repositories.add(repository)
     }
 
-    override fun unregister(repository: HQPlayerRepository<*>) {
+    override fun unregister(repository: PlayerRepository<*>) {
         repositories.remove(repository)
     }
 
-    override fun getAll(): Collection<HQPlayerRepository<*>> {
+    override fun getAll(): Collection<PlayerRepository<*>> {
         return repositories
     }
 }

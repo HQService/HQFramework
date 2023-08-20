@@ -9,7 +9,7 @@ import kr.hqservice.framework.database.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.lock.DefermentLock
 import kr.hqservice.framework.database.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.registry.PlayerRepositoryRegistry
-import kr.hqservice.framework.database.repository.HQPlayerRepository
+import kr.hqservice.framework.database.repository.PlayerRepository
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.netty.api.PacketSender
@@ -35,7 +35,7 @@ class PlayerConnectionPacketHandler(
     @Qualifier("switch") private val switchDefermentLock: DefermentLock,
     @Qualifier("disconnect") private val disconnectDefermentLock: DefermentLock,
 ) : HQListener {
-    private suspend fun <T : Any> onLoad(player: Player, repository: HQPlayerRepository<T>) {
+    private suspend fun <T : Any> onLoad(player: Player, repository: PlayerRepository<T>) {
         val value = newSuspendedTransaction(coroutineScope.coroutineContext) {
             repository.load(player)
         }
@@ -44,7 +44,7 @@ class PlayerConnectionPacketHandler(
         }
     }
 
-    private suspend fun <T : Any> onSave(player: Player, repository: HQPlayerRepository<T>) {
+    private suspend fun <T : Any> onSave(player: Player, repository: PlayerRepository<T>) {
         val value = repository[player.uniqueId] ?: return
         newSuspendedTransaction(coroutineScope.coroutineContext) {
             repository.save(player, value)
