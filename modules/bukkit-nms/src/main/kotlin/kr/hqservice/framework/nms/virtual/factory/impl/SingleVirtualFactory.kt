@@ -6,7 +6,7 @@ import kr.hqservice.framework.nms.virtual.entity.inner.VirtualCamera
 import kr.hqservice.framework.nms.virtual.factory.VirtualContainerFactory
 import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
-import kr.hqservice.framework.nms.virtual.world.VirtualWorldBoarder
+import kr.hqservice.framework.nms.virtual.world.VirtualWorldBorder
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.entity.Player
@@ -46,7 +46,7 @@ class SingleVirtualFactory(
         reflectionWrapper.sendPacket(receiver, virtualEntity)
     }
 
-    override suspend fun setWorldBoarder(virtualWorldBoarder: VirtualWorldBoarder) {
-        reflectionWrapper.sendPacket(receiver, virtualWorldBoarder)
+    override suspend fun setWorldBorder(virtualWorldBorder: VirtualWorldBorder) {
+        reflectionWrapper.sendPacket(receiver, virtualWorldBorder)
     }
 }

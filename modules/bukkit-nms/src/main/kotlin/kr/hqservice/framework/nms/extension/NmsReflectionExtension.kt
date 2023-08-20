@@ -13,3 +13,12 @@ internal inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R
         result
     } else call(*instance) as R
 }
+
+internal inline fun <reified R> KCallable<*>.setAccess(instance: Any, value: R) {
+    val javaField = (this as KProperty).javaField!!
+    if (!javaField.canAccess(instance)) {
+        javaField.isAccessible = true
+        javaField.set(instance, value)
+        javaField.isAccessible = false
+    } else javaField.set(instance, value)
+}
