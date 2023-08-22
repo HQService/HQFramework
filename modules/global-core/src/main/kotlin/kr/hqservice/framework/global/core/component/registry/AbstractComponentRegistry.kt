@@ -124,19 +124,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     val methods = component.declaredFunctions.filter {
                         BeanProperty.findBeanProperty(it) != null || it.hasAnnotation<Bean>()
                     }
-                    val definitions: MutableMap<KClass<*>, Pair<KAnnotatedElement, Any>> = mutableMapOf()
-                    for (kFunction in methods) {
-                        val injected = injectParameters(kFunction)
-                        if (injected.any { it == null }) {
-                            back()
-                            continue@queue
+                    val definitions = methods.associateBy { it.returnType.jvmErasure }
+                    definitions.forEach { (definitionClass, kFunction) ->
+                        tryCreateBeanModule(kFunction, definitionClass) {
+                            val injected = injectParameters(kFunction)
+                            kFunction.call(instance, *injected.toTypedArray())
                         }
-                        val called = kFunction.call(instance, *injected.toTypedArray())
-                            ?: throw IllegalStateException("null 은 bean 으로 선언될 수 없습니다.")
-                        definitions[kFunction.returnType.jvmErasure] = kFunction to called
-                    }
-                    definitions.forEach { (klass, pair) ->
-                        tryCreateBeanModule(pair.first, klass) { pair.second }
                     }
                 }
 
