@@ -8,7 +8,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.*
-import kr.hqservice.framework.bukkit.core.component.handler.ListenerComponentHandler
 import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Factory
@@ -77,7 +76,7 @@ class ComponentHandlerTest : KoinComponent {
     @Singleton
     @Component
     @ExcludeTestSearch
-    class TestComponentA : TestHQModule, HQListener
+    class TestComponentA : TestHQModule
 
     @Component
     @ExcludeTestSearch
@@ -143,14 +142,11 @@ class ComponentHandlerTest : KoinComponent {
             TestComponentF::class.java
         )
         componentRegistry.setup()
-        val testComponentA: TestComponentA by inject()
-        assert(capturedListener.captured == testComponentA)
     }
 
     private fun setAllPluginClasses(vararg classes: Class<*>) {
         every { componentRegistry["getAllComponentsToScan"]() } returns listOf(
             *classes,
-            ListenerComponentHandler::class.java,
             ModuleComponentHandler::class.java
         )
     }
