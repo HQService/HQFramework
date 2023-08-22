@@ -1,40 +1,35 @@
 package kr.hqservice.framework.scheduler.test
 
+import be.seeseemelk.mockbukkit.MockBukkit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kr.hqservice.framework.bukkit.scheduler.SchedulerConfig
-import kr.hqservice.framework.database.DatabaseHost
-import kr.hqservice.framework.database.component.datasource.HQDataSource
-import kr.hqservice.framework.database.component.datasource.MySQLDataSource
+import kr.hqservice.framework.database.datasource.MySQLDataSource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.koin.core.context.loadKoinModules
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.quartz.*
 import org.quartz.impl.matchers.GroupMatcher
 import java.util.*
+import javax.sql.DataSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SchedulerTest {
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
-
-    private val testDataSource =
-        object : MySQLDataSource(DatabaseHost("localhost", 3306, "root", "rootpassword", "local")),
-            CoroutineScope by coroutineScope {}
-
+class SchedulerModule {
+    private val testDataSource = MySQLDataSource("hqservice.kr", 3306, "hq", "test", "testpassword@")
     lateinit var schedulerFactory: SchedulerFactory
 
     @BeforeEach
     fun setup() {
+        MockBukkit.mock()
         startKoin {
             val defaultModule = module {
-                single<HQDataSource>(named("hqframework.scheduler.datasource")) { testDataSource }
+                single<DataSource> { testDataSource }
             }
             loadKoinModules(defaultModule)
         }
@@ -49,6 +44,7 @@ class SchedulerTest {
     @AfterEach
     fun teardown() {
         stopKoin()
+        MockBukkit.unmock()
     }
 
     @Test

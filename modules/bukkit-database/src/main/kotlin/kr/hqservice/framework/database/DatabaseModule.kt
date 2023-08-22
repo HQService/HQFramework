@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import kr.hqservice.framework.bukkit.core.component.module.Module
 import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
+import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.netty.api.NettyServer
 import org.jetbrains.exposed.sql.Database
@@ -13,6 +14,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 class DatabaseModule(
     private val nettyServer: NettyServer,
     private val database: Database,
+    private val databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
     private val dataSource: HikariDataSource
 ) {
     @Setup
@@ -24,10 +26,9 @@ class DatabaseModule(
     @Teardown
     fun closeDatabase() {
         TransactionManager.closeAndUnregister(database)
-    }
-
-    @Teardown
-    fun closeDataSource() {
+        databaseShutdownHookRegistry.getHooks().forEach {
+            it.shutdown(dataSource)
+        }
         dataSource.close()
     }
 }

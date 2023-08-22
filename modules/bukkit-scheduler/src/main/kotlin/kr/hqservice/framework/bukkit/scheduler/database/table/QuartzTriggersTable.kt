@@ -1,6 +1,7 @@
 package kr.hqservice.framework.bukkit.scheduler.database.table
 
 import kr.hqservice.framework.database.component.HQTable
+import org.jetbrains.exposed.sql.ReferenceOption
 import org.jetbrains.exposed.sql.Table
 
 @HQTable(withLogs = false)
@@ -8,11 +9,11 @@ object QuartzTriggersTable : Table("hqframework_quartz_TRIGGERS") {
     override val primaryKey: PrimaryKey
         get() = PrimaryKey(schedName, triggerName, triggerGroup)
 
-    val schedName = reference("SCHED_NAME", QuartzJobDetailsTable.schedName)
+    val schedName = reference("SCHED_NAME", QuartzJobDetailsTable.schedName, ReferenceOption.CASCADE)
     val triggerName = varchar("TRIGGER_NAME", 200).index()
     val triggerGroup = varchar("TRIGGER_GROUP", 200).index()
-    val jobName = reference("JOB_NAME", QuartzJobDetailsTable.jobName)
-    val jobGroup = reference("JOB_GROUP", QuartzJobDetailsTable.jobGroup)
+    val jobName = reference("JOB_NAME", QuartzJobDetailsTable.jobName, ReferenceOption.CASCADE)
+    val jobGroup = reference("JOB_GROUP", QuartzJobDetailsTable.jobGroup, ReferenceOption.CASCADE)
     val description = varchar("DESCRIPTION", 250).nullable()
     val nextFireTime = long("NEXT_FIRE_TIME").nullable()
     val prevFireTime = long("PREV_FIRE_TIME").nullable()

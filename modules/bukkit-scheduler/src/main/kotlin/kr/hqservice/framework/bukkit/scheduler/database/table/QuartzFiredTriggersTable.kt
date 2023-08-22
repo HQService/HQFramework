@@ -13,7 +13,7 @@ object QuartzFiredTriggersTable : Table("hqframework_quartz_FIRED_TRIGGERS") {
     val triggerName = varchar("TRIGGER_NAME", 200)
     val triggerGroup = varchar("TRIGGER_GROUP", 200)
     val instanceName = varchar("INSTANCE_NAME", 200)
-    val firedTime = long("FIRE_TIME")
+    val firedTime = long("FIRED_TIME")
     val schedTime = long("SCHED_TIME")
     val priority = integer("PRIORITY")
     val state = varchar("STATE", 16)

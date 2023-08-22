@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+    compileOnly(libs.spigot.api)
     apiModule("bukkit", "core")
     apiModule("bukkit", "database")
     implementation(libs.byte.buddy.core)
