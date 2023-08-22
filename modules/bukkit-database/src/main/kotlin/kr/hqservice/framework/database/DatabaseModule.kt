@@ -1,24 +1,33 @@
 package kr.hqservice.framework.database
 
+import com.zaxxer.hikari.HikariDataSource
+import kr.hqservice.framework.bukkit.core.component.module.Module
+import kr.hqservice.framework.bukkit.core.component.module.Setup
+import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
-import kr.hqservice.framework.global.core.component.HQModule
-import kr.hqservice.framework.global.core.component.Module
 import kr.hqservice.framework.netty.api.NettyServer
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 
 @Module
 class DatabaseModule(
     private val nettyServer: NettyServer,
-) : HQModule {
-    override fun onEnable() {
+    private val database: Database,
+    private val dataSource: HikariDataSource
+) {
+    @Setup
+    fun registerPackets() {
         nettyServer.registerInnerPacket(PlayerDataSavedPacket::class) { packet, _ -> }
         nettyServer.registerOuterPacket(PlayerDataSavedPacket::class)
     }
 
-    override fun onDisable() {
-        val database = TransactionManager.defaultDatabase
-        if (database != null) {
-            TransactionManager.closeAndUnregister(database)
-        }
+    @Teardown
+    fun closeDatabase() {
+        TransactionManager.closeAndUnregister(database)
+    }
+
+    @Teardown
+    fun closeDataSource() {
+        dataSource.close()
     }
 }

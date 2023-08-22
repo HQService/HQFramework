@@ -1,7 +1,7 @@
-package kr.hqservice.framework.bukkit.core.component.handler
+package kr.hqservice.framework.bukkit.core.component.registry.handler
 
-import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
-import kr.hqservice.framework.bukkit.core.component.registry.InstanceFactoryRegistry
+import kr.hqservice.framework.bukkit.core.component.registry.HQInstanceFactory
+import kr.hqservice.framework.bukkit.core.component.registry.registry.InstanceFactoryRegistry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 
