@@ -126,9 +126,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     }
                     val definitions = methods.associateBy { it.returnType.jvmErasure }
                     definitions.forEach { (definitionClass, kFunction) ->
-                        tryCreateBeanModule(kFunction, definitionClass) {
-                            val injected = injectParameters(kFunction)
-                            kFunction.call(instance, *injected.toTypedArray())
+                        try {
+                            tryCreateBeanModule(kFunction, definitionClass) {
+                                val injected = injectParameters(kFunction)
+                                kFunction.call(instance, *injected.toTypedArray())
+                            }
+                        } catch (exception: Throwable) {
+                            exception.printStackTrace()
+                            throw exception
                         }
                     }
                 }
