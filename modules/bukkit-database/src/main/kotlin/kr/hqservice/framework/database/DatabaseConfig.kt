@@ -2,6 +2,8 @@ package kr.hqservice.framework.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kr.hqservice.framework.database.datasource.MySQLDataSource
+import kr.hqservice.framework.database.datasource.SQLiteDataSource
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Singleton
@@ -46,28 +48,7 @@ class DatabaseConfig(
         val user = config.getString("database.mysql.user")
         val password = config.getString("database.mysql.password")
         val database = config.getString("database.mysql.database")
-
-        val hikariConfig = HikariConfig().apply {
-            this.jdbcUrl = "jdbc:mysql://${host}:${port}/${database}?autoReconnect=true&allowMultiQueries=true"
-            this.driverClassName = "com.mysql.cj.jdbc.Driver"
-            this.username = user
-            this.password = password
-            this.connectionTestQuery = "SELECT 1"
-            this.poolName = "hqframework"
-            addDataSourceProperty("cachePrepStmts", "true")
-            addDataSourceProperty("prepStmtCacheSize", "250")
-            addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
-            addDataSourceProperty("useServerPrepStmts", "true")
-            addDataSourceProperty("useLocalSessionState", "true")
-            addDataSourceProperty("rewriteBatchedStatements", "true")
-            addDataSourceProperty("cacheResultSetMetadata", "true")
-            addDataSourceProperty("cacheServerConfiguration", "true")
-            addDataSourceProperty("elideSetAutoCommits", "true")
-            addDataSourceProperty("maintainTimeStats", "false")
-            addDataSourceProperty("characterEncoding", "utf8")
-            addDataSourceProperty("useUnicode", "true")
-        }
-        return HikariDataSource(hikariConfig)
+        return MySQLDataSource(host, port, database, user, password)
     }
 
     private fun buildSQLiteDataSource(): HikariDataSource {
@@ -82,11 +63,6 @@ class DatabaseConfig(
         } catch (e: IOException) {
             throw IOException("SQLite DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databasePath} 경로에 파일을 생성하여주세요.", e)
         }
-        val hikariConfig = HikariConfig().apply {
-            this.jdbcUrl = "jdbc:sqlite:$databaseFile"
-            this.connectionTestQuery = "SELECT 1"
-            this.poolName = "hqframework"
-        }
-        return HikariDataSource(hikariConfig)
+        return SQLiteDataSource(databasePath)
     }
 }
