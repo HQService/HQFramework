@@ -128,7 +128,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     definitions.forEach { (definitionClass, kFunction) ->
                         try {
                             tryCreateBeanModule(kFunction, definitionClass) {
-                                val injected = injectParameters(kFunction)
+                                val injected = injectParameters(kFunction, getProvidedInstances())
                                 kFunction.call(instance, *injected.toTypedArray())
                             }
                         } catch (exception: Throwable) {
