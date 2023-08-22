@@ -4,11 +4,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kr.hqservice.framework.bukkit.scheduler.config.SchedulerConfig
+import kr.hqservice.framework.bukkit.scheduler.SchedulerConfig
 import kr.hqservice.framework.database.DatabaseHost
 import kr.hqservice.framework.database.component.datasource.HQDataSource
 import kr.hqservice.framework.database.component.datasource.MySQLDataSource
-import kr.hqservice.framework.global.core.extension.print
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

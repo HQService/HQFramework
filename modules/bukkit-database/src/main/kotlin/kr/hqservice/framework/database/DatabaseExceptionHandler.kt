@@ -4,6 +4,7 @@ import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.A
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.CoroutineScopeAdvice
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.ExceptionHandler
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.MustBeStored
+import kr.hqservice.framework.database.exception.DataSourceClosedException
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import java.util.logging.Logger
 
@@ -23,5 +24,12 @@ class DatabaseExceptionHandler(private val logger: Logger) {
         exception.causedByQueries().forEach {
             logger.severe("  - $it")
         }
+    }
+
+    @MustBeStored
+    @ExceptionHandler
+    fun handleDataSourceClosedException(exception: DataSourceClosedException) {
+        logger.severe(exception.message)
+        logger.severe("DataSource: ${exception.dataSource::class.simpleName}")
     }
 }

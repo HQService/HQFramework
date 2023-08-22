@@ -1,8 +1,10 @@
 package kr.hqservice.framework.bukkit.scheduler.database.table
 
+import kr.hqservice.framework.database.component.HQTable
 import org.jetbrains.exposed.sql.Table
 
-object QuartzFiredTriggersTable : Table("hqframework_QRTZ_FIRED_TRIGGERS") {
+@HQTable(withLogs = false)
+object QuartzFiredTriggersTable : Table("hqframework_quartz_FIRED_TRIGGERS") {
     override val primaryKey: PrimaryKey
         get() = PrimaryKey(schedName, entryId)
 

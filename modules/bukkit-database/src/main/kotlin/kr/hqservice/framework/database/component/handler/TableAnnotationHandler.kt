@@ -26,10 +26,12 @@ class TableAnnotationHandler(
             try {
                 if (instance.exists()) {
                     SchemaUtils.addMissingColumnsStatements(instance, withLogs = false)
-                    logger.info("${AnsiColor.CYAN}Table ${instance.tableName} found from database ${database.vendor.uppercase()}.${AnsiColor.RESET}")
                 } else {
-                    SchemaUtils.create(instance)
-                    logger.info("${AnsiColor.CYAN}Table ${instance.tableName} created.${AnsiColor.RESET}")
+                    SchemaUtils.create(instance).also {
+                        if (annotation.withLogs) {
+                            logger.info("${AnsiColor.CYAN}Table ${instance.tableName} created.${AnsiColor.RESET}")
+                        }
+                    }
                 }
             } catch (exception: SQLSyntaxErrorException) {
                 logger.info("${instance.tableName} table may initialized not properly due to Mariadb internal issues.")
