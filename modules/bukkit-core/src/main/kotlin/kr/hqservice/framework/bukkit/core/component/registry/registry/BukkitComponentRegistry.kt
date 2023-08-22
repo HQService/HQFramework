@@ -1,9 +1,9 @@
-package kr.hqservice.framework.bukkit.core.component.registry
+package kr.hqservice.framework.bukkit.core.component.registry.registry
 
 import kotlinx.coroutines.CoroutineScope
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.bukkit.core.component.HQInstanceFactory
-import kr.hqservice.framework.bukkit.core.component.PluginDepend
+import kr.hqservice.framework.bukkit.core.component.registry.HQInstanceFactory
+import kr.hqservice.framework.bukkit.core.component.registry.PluginDepend
 import kr.hqservice.framework.bukkit.core.extension.getHQConfig
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration

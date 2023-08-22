@@ -1,7 +1,7 @@
 package kr.hqservice.framework.bukkit.core
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
+import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.AttachableExceptionHandler
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.ExceptionHandlerRegistry
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.HandleResult

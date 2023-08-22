@@ -7,14 +7,12 @@ import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.bukkit.core.component.*
-import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
+import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Factory
 import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
-import kr.hqservice.framework.global.core.component.handler.impl.ModuleComponentHandler
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.extension.print
 import org.bukkit.event.Listener
@@ -146,8 +144,7 @@ class ComponentHandlerTest : KoinComponent {
 
     private fun setAllPluginClasses(vararg classes: Class<*>) {
         every { componentRegistry["getAllComponentsToScan"]() } returns listOf(
-            *classes,
-            ModuleComponentHandler::class.java
+            *classes
         )
     }
 }

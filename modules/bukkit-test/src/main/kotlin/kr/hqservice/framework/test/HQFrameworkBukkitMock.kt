@@ -5,8 +5,7 @@ import io.mockk.every
 import io.mockk.spyk
 import kr.hqservice.framework.bukkit.HQFrameworkBukkitPlugin
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
-import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
+import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
