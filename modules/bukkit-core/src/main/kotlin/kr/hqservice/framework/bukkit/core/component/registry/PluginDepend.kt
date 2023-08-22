@@ -1,4 +1,4 @@
-package kr.hqservice.framework.bukkit.core.component
+package kr.hqservice.framework.bukkit.core.component.registry
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)

@@ -1,4 +1,4 @@
-package kr.hqservice.framework.bukkit.core.component
+package kr.hqservice.framework.bukkit.core.component.registry
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.HQComponent

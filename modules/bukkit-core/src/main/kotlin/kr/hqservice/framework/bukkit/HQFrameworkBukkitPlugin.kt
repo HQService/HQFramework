@@ -1,8 +1,8 @@
 package kr.hqservice.framework.bukkit
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.bukkit.core.component.registry.BukkitComponentRegistry
-import kr.hqservice.framework.bukkit.core.component.registry.InstanceFactoryRegistry
+import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
+import kr.hqservice.framework.bukkit.core.component.registry.registry.InstanceFactoryRegistry
 import kr.hqservice.framework.global.core.HQPlugin
 import net.bytebuddy.agent.ByteBuddyAgent
 import org.bukkit.plugin.Plugin
