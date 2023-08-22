@@ -30,16 +30,16 @@ class VirtualWorldBorder(
         isAccessible = true
     }
 
-    private val xField = reflectionWrapper.getField(service.getTargetClass(), "h",
-        Version.V_19.handle("i"))
-    private val zField = reflectionWrapper.getField(service.getTargetClass(), "i",
-        Version.V_19.handle("j"))
     private val sizeField = reflectionWrapper.getField(service.getTargetClass(), "l",
         Version.V_19.handle("l"))
-    private var centerPacket: Any? = null
+    private var packetQueue = mutableMapOf<Int, Any>()
 
     fun setCenter(x: Double, z: Double) {
-        centerPacket = WorldBorderCenter(x, z).createPacket()
+        packetQueue[1] = WorldBorderCenter(x, z).createPacket()
+    }
+
+    fun setWarningDistance(distance: Int) {
+        packetQueue[2] = WorldBorderWarningBlocks(distance).createPacket()
     }
 
     fun setSize(size: Double) {
@@ -52,9 +52,9 @@ class VirtualWorldBorder(
     override fun createVirtualMessage(): VirtualMessage {
         val constructor = packetClass.java.getConstructor(service.getTargetClass().java)
         val packetInst = constructor.newInstance(borderWrapper.getUnwrappedInstance())
-        return if (centerPacket != null) {
-            val result = VirtualListMessage(listOf(packetInst, centerPacket!!))
-            centerPacket = null
+        return if (packetQueue.isNotEmpty()) {
+            val result = VirtualListMessage(listOf(packetInst) + packetQueue.values)
+            packetQueue.clear()
             result
         } else VirtualMessageImpl(packetInst)
     }
@@ -66,11 +66,31 @@ class VirtualWorldBorder(
         private val packetClass =
             reflectionWrapper.getNmsClass("ClientboundSetBorderCenterPacket", Version.V_15.handle("network.protocol.game"))
         private val constructor = packetClass.java.getConstructor(service.getTargetClass().java)
+        private val xField = reflectionWrapper.getField(service.getTargetClass(), "h",
+            Version.V_19.handle("i"))
+        private val zField = reflectionWrapper.getField(service.getTargetClass(), "i",
+            Version.V_19.handle("j"))
 
         fun createPacket(): Any {
             xField.setAccess(borderWrapper.getUnwrappedInstance(), x)
             zField.setAccess(borderWrapper.getUnwrappedInstance(), z)
             return constructor.newInstance(borderWrapper.getUnwrappedInstance())
         }
+    }
+
+    //ClientboundSetBorderWarningDistancePacket
+    private inner class WorldBorderWarningBlocks(
+        private val blocks: Int
+    ) {
+        private val packetClass =
+            reflectionWrapper.getNmsClass("ClientboundSetBorderWarningDistancePacket", Version.V_15.handle("network.protocol.game"))
+        private val constructor = packetClass.java.getConstructor(service.getTargetClass().java)
+        private val hField = reflectionWrapper.getField(service.getTargetClass(), "h")
+
+        fun createPacket(): Any {
+            hField.setAccess(borderWrapper.getUnwrappedInstance(), blocks)
+            return constructor.newInstance(borderWrapper.getUnwrappedInstance())
+        }
+
     }
 }
