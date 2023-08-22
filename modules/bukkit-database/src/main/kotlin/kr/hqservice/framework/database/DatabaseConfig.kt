@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
+import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.jetbrains.exposed.sql.Database
@@ -18,9 +19,18 @@ class DatabaseConfig(
     private val logger: Logger
 ) {
     @Bean
-    fun provideDatabase(): Database {
+    fun provideDatabase(dataSource: DataSource): Database {
+        return Database.connect(dataSource).also {
+            val type = config.getString("database.type")
+            logger.info("${AnsiColor.CYAN}${type.uppercase()} Database initialized.${AnsiColor.RESET}")
+        }
+    }
+
+    @Singleton(binds = [HikariDataSource::class, DataSource::class])
+    @Bean
+    fun provideDataSource(): HikariDataSource {
         val type = config.getString("database.type")
-        val dataSource = when(type.lowercase()) {
+        return when(type.lowercase()) {
             "mysql" -> buildMySQLDataSource()
             "sqlite" -> buildSQLiteDataSource()
             else -> {
@@ -28,10 +38,9 @@ class DatabaseConfig(
                 buildSQLiteDataSource()
             }
         }
-        return Database.connect(dataSource)
     }
 
-    private fun buildMySQLDataSource(): DataSource {
+    private fun buildMySQLDataSource(): HikariDataSource {
         val host = config.getString("database.mysql.host")
         val port = config.getInt("database.mysql.port")
         val user = config.getString("database.mysql.user")
@@ -58,12 +67,10 @@ class DatabaseConfig(
             addDataSourceProperty("characterEncoding", "utf8")
             addDataSourceProperty("useUnicode", "true")
         }
-        return HikariDataSource(hikariConfig).also {
-            logger.info("${AnsiColor.CYAN}MySQL DataSource initialized.${AnsiColor.CYAN}")
-        }
+        return HikariDataSource(hikariConfig)
     }
 
-    private fun buildSQLiteDataSource(): DataSource {
+    private fun buildSQLiteDataSource(): HikariDataSource {
         val databasePath = config.getString("database.sqlite.path")
         val databaseFolder = File(databasePath.split("/").toMutableList().apply { removeLast() }.joinToString("/"))
         if (!databaseFolder.exists()) {
@@ -80,8 +87,6 @@ class DatabaseConfig(
             this.connectionTestQuery = "SELECT 1"
             this.poolName = "hqframework"
         }
-        return HikariDataSource(hikariConfig).also {
-            logger.info("${AnsiColor.CYAN}SQLite DataSource initialized.${AnsiColor.CYAN}")
-        }
+        return HikariDataSource(hikariConfig)
     }
 }
