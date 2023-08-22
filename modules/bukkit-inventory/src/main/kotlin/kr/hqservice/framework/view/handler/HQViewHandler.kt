@@ -1,23 +1,20 @@
 package kr.hqservice.framework.view.handler
 
 import kotlinx.coroutines.launch
-import kr.hqservice.framework.bukkit.core.component.HQListener
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.extension.print
+import kr.hqservice.framework.bukkit.core.listener.HandleOrder
+import kr.hqservice.framework.bukkit.core.listener.Listener
+import kr.hqservice.framework.bukkit.core.listener.Subscribe
 import kr.hqservice.framework.view.HQView
 import kr.hqservice.framework.view.event.ButtonInteractEvent
 import kr.hqservice.framework.view.navigator.Navigator
-import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.InventoryView
 
-@Component
-class HQViewHandler(private val navigator: Navigator) : HQListener {
-    @EventHandler(priority = EventPriority.LOWEST)
+@Listener
+class HQViewHandler(private val navigator: Navigator) {
+    @Subscribe(handleOrder = HandleOrder.FIRST)
     fun inventoryClick(event: InventoryClickEvent) {
         getView(event.view)?.apply {
             event.isCancelled = this.cancel
@@ -29,7 +26,7 @@ class HQViewHandler(private val navigator: Navigator) : HQListener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @Subscribe(handleOrder = HandleOrder.FIRST)
     fun inventoryClose(event: InventoryCloseEvent) {
         val view = getView(event.view)
         val player = event.player

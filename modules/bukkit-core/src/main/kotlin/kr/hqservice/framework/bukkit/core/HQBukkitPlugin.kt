@@ -18,12 +18,9 @@ import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
 import java.io.File
 import java.io.PrintWriter
-import java.lang.StringBuilder
 import java.nio.file.Files
 import java.time.LocalDateTime
-import java.util.*
 import java.util.logging.Logger
-import kotlin.Comparator
 import kotlin.coroutines.CoroutineContext
 
 abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
@@ -136,7 +133,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
                     while (this@timer.isActive) {
                         index++
                         logger.info("${AnsiColor.CYAN}Enabling${".".repeat(index)}${AnsiColor.RESET}")
-                        delay(500)
+                        delay(1000)
                     }
                 }
                 onPreEnable()
