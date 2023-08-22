@@ -37,8 +37,12 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
         return rootSection?.getSection(key)
     }
 
-    override fun getString(key: String): String {
-        return rootSection?.getString(key) ?: ""
+    override fun getString(key: String, default: String): String {
+        return rootSection?.getString(key) ?: default
+    }
+
+    override fun findString(key: String): String? {
+        return rootSection?.findString(key)
     }
 
     override fun getKeys(): List<String> {
@@ -53,20 +57,36 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
         return rootSection?.getIntegerList(key) ?: emptyList()
     }
 
-    override fun getBoolean(key: String): Boolean {
-        return rootSection?.getBoolean(key) ?: false
+    override fun getBoolean(key: String, default: Boolean): Boolean {
+        return rootSection?.getBoolean(key) ?: default
     }
 
-    override fun getInt(key: String): Int {
-        return rootSection?.getInt(key) ?: 0
+    override fun findBoolean(key: String): Boolean? {
+        return rootSection?.findBoolean(key)
     }
 
-    override fun getDouble(key: String): Double {
-        return rootSection?.getDouble(key) ?: .0
+    override fun getInt(key: String, default: Int): Int {
+        return rootSection?.getInt(key) ?: default
     }
 
-    override fun getLong(key: String): Long {
-        return rootSection?.getLong(key) ?: 0
+    override fun findInt(key: String): Int? {
+        return rootSection?.findInt(key)
+    }
+
+    override fun getDouble(key: String, default: Double): Double {
+        return rootSection?.getDouble(key) ?: default
+    }
+
+    override fun findDouble(key: String): Double? {
+        return rootSection?.findDouble(key)
+    }
+
+    override fun getLong(key: String, default: Long): Long {
+        return rootSection?.getLong(key) ?: default
+    }
+
+    override fun findLong(key: String): Long? {
+        return rootSection?.findLong(key)
     }
 
     override fun set(key: String, value: Any?) {
