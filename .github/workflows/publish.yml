@@ -1,9 +1,5 @@
 name: Publish to Sonatype Repository
 
-env:
-  nexusUsername: admin
-  nexusPassword: ${{ secrets.NEXUS_PASSWORD }}
-
 on:
   push:
     branches: [ "main" ]
@@ -12,6 +8,10 @@ permissions:
   contents: read
 
 jobs:
+
+  env:
+    nexusUsername: admin
+    nexusPassword: ${{ secrets.NEXUS_PASSWORD }}
   build:
 
     runs-on: ubuntu-latest
