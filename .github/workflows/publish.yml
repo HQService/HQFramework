@@ -7,13 +7,12 @@ on:
 permissions:
   contents: read
 
+env:
+  nexusUsername: admin
+  nexusPassword: ${{ secrets.NEXUS_PASSWORD }}
+
 jobs:
-
-  env:
-    nexusUsername: admin
-    nexusPassword: ${{ secrets.NEXUS_PASSWORD }}
   build:
-
     runs-on: ubuntu-latest
 
     steps:
