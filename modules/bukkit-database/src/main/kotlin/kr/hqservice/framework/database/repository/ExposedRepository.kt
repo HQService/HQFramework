@@ -12,7 +12,7 @@ interface ExposedRepository<ID : Comparable<ID>, E : Entity<ID>> {
 
     fun deleteById(id: ID)
 
-    fun existsById(id: ID)
+    fun existsById(id: ID): Boolean
 
     fun findAll(): SizedIterable<E>
 
