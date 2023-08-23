@@ -48,6 +48,10 @@ publishing {
                     this.username = getProperty("nexusUsername")
                     this.password = getProperty("nexusPassword")
                 }
+                if (System.getProperty("nexusUsername") != null && extra.has("nexusPassword")) {
+                    this.username = System.getProperty("nexusUsername")
+                    this.password = System.getProperty("nexusPassword")
+                }
             }
         }
     }
