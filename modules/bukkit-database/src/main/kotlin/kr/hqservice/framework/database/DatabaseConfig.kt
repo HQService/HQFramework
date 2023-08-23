@@ -1,6 +1,5 @@
 package kr.hqservice.framework.database
 
-import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import kr.hqservice.framework.database.datasource.SQLiteDataSource

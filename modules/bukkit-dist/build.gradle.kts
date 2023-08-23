@@ -27,7 +27,8 @@ bukkitResourceGenerator {
         libs.configurate.core,
         libs.configurate.yaml,
         libs.byte.buddy.core,
-        libs.byte.buddy.agent
+        libs.byte.buddy.agent,
+        libs.quartz
     )
 }
 
@@ -43,4 +44,5 @@ dependencies {
     runtimeOnlyModule("bukkit", "region")
     runtimeOnlyModule("bukkit", "database")
     runtimeOnlyModule("bukkit", "nms")
+    runtimeOnlyModule("bukkit", "scheduler")
 }
