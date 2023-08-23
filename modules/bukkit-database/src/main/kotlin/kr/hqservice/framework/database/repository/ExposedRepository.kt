@@ -6,7 +6,7 @@ import org.jetbrains.exposed.sql.SizedIterable
 interface ExposedRepository<ID : Comparable<ID>, E : Entity<ID>> {
     fun count(): Long
 
-    fun save(entity: E.() -> Unit): E
+    fun new(entity: E.() -> Unit): E
 
     fun delete(entity: E)
 
