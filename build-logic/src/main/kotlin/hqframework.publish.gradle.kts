@@ -1,5 +1,3 @@
-import gradle.kotlin.dsl.accessors._db863da26cb404e0ebee710166f16934.sourceSets
-
 plugins {
     `maven-publish`
 }
@@ -16,7 +14,7 @@ dependencies {
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
-    from(sourceSets["main"].allSource)
+    from((project.extensions.getByName("sourceSets") as SourceSetContainer)["main"].allSource)
     archiveClassifier.set("sources")
 
     dependsOn("${project.path}:kspKotlin")
