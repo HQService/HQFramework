@@ -413,6 +413,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             } catch (exception: InstanceCreationException) {
                 exception.printStackTrace()
                 null
+            } catch (exception: IllegalStateException) {
+                exception.printStackTrace()
+                null
             }
         }.toList()
     }
