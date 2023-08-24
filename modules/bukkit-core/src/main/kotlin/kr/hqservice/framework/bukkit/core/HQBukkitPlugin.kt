@@ -84,7 +84,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             throwable.printStackTrace(printWriter)
             printWriter.println()
         }
-        val limit = config.getInt("error-log-limit", 100)
+        val limit = getErrorLimit()
         if (limit > 0) {
             try {
                 Files.list(folder.toPath()).use { errorPaths ->
@@ -106,8 +106,12 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         }
     }
 
+    private fun getErrorLimit(): Int {
+        return server.pluginManager.getPlugin("HQFramework")!!.config.getInt("log.error.store-limit", 1000)
+    }
+
     private fun getErrorFolder(): File {
-        return File(config.getString("log.error.path", "hq-errors/")!!)
+        return File(server.pluginManager.getPlugin("HQFramework")!!.config.getString("log.error.path", "hq-errors/")!!)
     }
 
     override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {

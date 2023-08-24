@@ -5,6 +5,7 @@ netty:
 
 log:
   error:
+    store-limit: 1000
     path: "hq-errors/"
 
 database:
@@ -36,4 +37,3 @@ scheduler:
     cluster-checkin-interval: 2000
 
 forge-support: false
-error-log-limit: 5

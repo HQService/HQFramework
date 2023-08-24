@@ -34,7 +34,7 @@ class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScope
                 get() = exceptionHandler.priority
 
             override fun handle(throwable: Throwable): HandleResult {
-                val exceptionClass = function.valueParameters.singleOrNull { it.type.jvmErasure.isSubclassOf(Exception::class) }
+                val exceptionClass = function.valueParameters.firstOrNull { it.type.jvmErasure.isSubclassOf(Exception::class) }
                     ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
                 if (throwable::class.starProjectedType == exceptionClass.type) {
                     function.call(obj, throwable)
