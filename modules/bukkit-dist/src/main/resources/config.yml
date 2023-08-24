@@ -27,8 +27,9 @@ scheduler:
     thread-priority: 5
 
   job-store:
-    # cluster 환경이 아닐 경우, false 로 설정 해도 됩니다.
-    is-clustered: true
+    # cluster 환경일 경우, true 로 설정해주세요.
+    # SQLite DataSource 일때는 클러스터 환경에서 동작될 수 없기 때문에, false 로 설정되어야 합니다.
+    is-clustered: false
     # JobDataMaps 가 저장될 때 blob 으로 저장되지 않고, key-value 쌍으로 직렬화되어 저장됩니다.
     use-properties: true
     # https://stackoverflow.com/questions/1933676/quartz-java-resuming-a-job-executes-it-many-times
