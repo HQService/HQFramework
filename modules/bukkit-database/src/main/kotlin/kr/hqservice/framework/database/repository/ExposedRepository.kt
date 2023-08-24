@@ -4,17 +4,17 @@ import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.sql.SizedIterable
 
 interface ExposedRepository<ID : Comparable<ID>, E : Entity<ID>> {
-    fun count(): Long
+    suspend fun count(): Long
 
-    fun new(entity: E.() -> Unit): E
+    suspend fun new(entity: E.() -> Unit): E
 
-    fun delete(entity: E)
+    suspend fun delete(entity: E)
 
-    fun deleteById(id: ID)
+    suspend fun deleteById(id: ID)
 
-    fun existsById(id: ID): Boolean
+    suspend fun existsById(id: ID): Boolean
 
-    fun findAll(): SizedIterable<E>
+    suspend fun findAll(): SizedIterable<E>
 
-    fun findById(id: ID): E?
+    suspend fun findById(id: ID): E?
 }
