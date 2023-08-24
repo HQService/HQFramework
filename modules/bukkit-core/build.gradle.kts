@@ -12,7 +12,6 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     implementation(libs.byte.buddy.agent)
-    implementation(libs.byte.buddy.core)
     implementation(libs.koin.annotations)
     api(libs.kotlinx.serialization.json)
     implementation(libs.netty)

@@ -7,6 +7,7 @@ import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.*
+import kotlin.reflect.jvm.jvmErasure
 
 @AnnotationHandler
 class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScopeAdvice> {
@@ -33,8 +34,8 @@ class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScope
                 get() = exceptionHandler.priority
 
             override fun handle(throwable: Throwable): HandleResult {
-                val exceptionClass = function.valueParameters.singleOrNull { it.type.isSubtypeOf(Exception::class.starProjectedType) }
-                    ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다.")
+                val exceptionClass = function.valueParameters.singleOrNull { it.type.jvmErasure.isSubclassOf(Exception::class) }
+                    ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
                 if (throwable::class.starProjectedType == exceptionClass.type) {
                     function.call(obj, throwable)
                     if (function.hasAnnotation<MustBeStored>()) {

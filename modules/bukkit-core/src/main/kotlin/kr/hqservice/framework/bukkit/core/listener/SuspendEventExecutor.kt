@@ -3,7 +3,6 @@ package kr.hqservice.framework.bukkit.core.listener
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
@@ -20,10 +19,11 @@ import kotlin.reflect.full.callSuspend
  */
 class SuspendEventExecutor(
     private val eventClass: KClass<*>,
+    private val listenerInstance: Any,
     private val method: KFunction<*>,
     private val plugin: HQBukkitPlugin
 ) : EventExecutor {
-    override fun execute(listener: Listener, event: Event) {
+    override fun execute(empty: Listener, event: Event) {
         if (eventClass.isInstance(event)) {
             val dispatcher = if (event.isAsynchronous) {
                 Dispatchers.BukkitAsync
@@ -34,9 +34,9 @@ class SuspendEventExecutor(
             plugin.launch(dispatcher, CoroutineStart.UNDISPATCHED) {
                 try {
                     if (method.isSuspend) {
-                        method.callSuspend(listener, event)
+                        method.callSuspend(listenerInstance, event)
                     } else {
-                        method.call(listener, event)
+                        method.call(listenerInstance, event)
                     }
                 } catch (exception: InvocationTargetException) {
                     val cause = exception.cause ?: exception

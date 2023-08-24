@@ -33,7 +33,7 @@ class PlayerConnectionPacketHandler(
     private val pluginManager: PluginManager,
     private val packetSender: PacketSender,
     private val nettyService: HQNettyService,
-)  {
+) {
     private suspend fun <T : Any> onLoad(player: Player, repository: PlayerRepository<T>) {
         val value = newSuspendedTransaction(coroutineScope.coroutineContext) {
             repository.load(player)
