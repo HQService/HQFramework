@@ -31,9 +31,9 @@ class DatabaseConfig(
     @Bean
     fun provideDataSource(): HikariDataSource {
         val type = config.getString("database.type")
-        return when(type.lowercase()) {
-            "mysql" -> buildMySQLDataSource()
-            "sqlite" -> buildSQLiteDataSource()
+        return when(type.uppercase()) {
+            "MYSQL" -> buildMySQLDataSource()
+            "SQLITE" -> buildSQLiteDataSource()
             else -> {
                 logger.severe("$type datasource is not supported. using default SQLite datasource.")
                 buildSQLiteDataSource()

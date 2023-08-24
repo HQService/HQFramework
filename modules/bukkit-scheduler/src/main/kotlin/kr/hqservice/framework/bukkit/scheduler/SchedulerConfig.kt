@@ -80,8 +80,8 @@ class SchedulerConfig(
             dbRetryInterval = 15000
             instanceId = getSchedulerInstanceId()
             isThreadsInheritInitializersClassLoadContext = true
-            setUseProperties(config.getBoolean(("scheduler.job-store.use-properties"), true).toString())
-            setIsClustered(true)
+            setUseProperties(config.getBoolean("scheduler.job-store.use-properties", true).toString())
+            setIsClustered(config.getBoolean("scheduler.job-store.is-clustered", true))
         }
     }
 
