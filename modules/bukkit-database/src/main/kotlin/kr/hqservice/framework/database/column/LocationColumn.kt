@@ -5,16 +5,12 @@ import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Table
 import kotlin.reflect.KProperty
 
-fun Entity<*>.location(column: Column<String>): ExposedPropertyDelegate<Location> = LocationExposedPropertyDelegate(column)
+fun Table.location(name: String): Column<String> = varchar(name, 128)
 
-@JvmName("locationNullable")
-fun Entity<*>.location(column: Column<String?>): ExposedPropertyDelegate<Location?> = LocationExposedPropertyDelegateNullable(column)
-
-private class LocationExposedPropertyDelegate(
-    val column: Column<String>,
-) : ExposedPropertyDelegate<Location> {
+fun Entity<*>.location(column: Column<String>): ExposedPropertyDelegate<Location> = object : ExposedPropertyDelegate<Location> {
     override operator fun <ID : Comparable<ID>> getValue(
         entity: Entity<ID>,
         desc: KProperty<*>,
@@ -42,9 +38,8 @@ private class LocationExposedPropertyDelegate(
     }
 }
 
-private class LocationExposedPropertyDelegateNullable(
-    val column: Column<String?>,
-) : ExposedPropertyDelegate<Location?> {
+@JvmName("locationNullable")
+fun Entity<*>.location(column: Column<String?>): ExposedPropertyDelegate<Location?> = object : ExposedPropertyDelegate<Location?> {
     override operator fun <ID : Comparable<ID>> getValue(
         entity: Entity<ID>,
         desc: KProperty<*>,
