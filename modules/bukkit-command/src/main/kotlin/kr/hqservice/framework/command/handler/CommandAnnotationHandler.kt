@@ -129,6 +129,9 @@ class CommandAnnotationHandler(
     ) : BukkitCommand(label) {
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
+            if (hqCommandRoot.hideSuggestion || (!sender.isOp && (!hqCommandRoot.isOp && (hqCommandRoot.permission.isNotEmpty() && !sender.hasPermission(hqCommandRoot.permission))))) {
+                return true
+            }
             if (args.isEmpty()) {
                 hqCommandRoot.sendUsageMessages(sender, arrayOf(commandLabel), plugin.name)
                 return true
@@ -295,6 +298,9 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
+            if (hqCommandRoot.hideSuggestion || (!sender.isOp && (!hqCommandRoot.isOp && (hqCommandRoot.permission.isNotEmpty() && !sender.hasPermission(hqCommandRoot.permission))))) {
+                return emptyList()
+            }
             if (args.first().length == 0) {
                 return hqCommandRoot.getSuggestions(sender).filter { it.startsWith(args.last()) }
             }

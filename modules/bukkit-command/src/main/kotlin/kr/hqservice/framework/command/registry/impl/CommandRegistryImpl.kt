@@ -19,15 +19,23 @@ class CommandRegistryImpl : CommandRegistry {
     private val commandExecutorsByParentKey: Multimap<KClass<*>, RegisteredCommandExecutor> = ArrayListMultimap.create()
 
     override fun registerRoot(declaredAt: KClass<*>): RegisteredCommandRoot {
-        val label = declaredAt.findAnnotation<Command>()!!.label
-        return RegisteredCommandRoot(declaredAt, label).also { registeredCommandRoot ->
-            commandRoots[label] = registeredCommandRoot
+        val annotation = declaredAt.findAnnotation<Command>()!!
+        return RegisteredCommandRoot(declaredAt, annotation.label, annotation.permission, annotation.isOp, annotation.hideSuggestion).also { registeredCommandRoot ->
+            commandRoots[annotation.label] = registeredCommandRoot
         }
     }
 
     override fun registerTree(parent: KClass<*>, treeClass: KClass<*>): RegisteredCommandTree {
-        val treeAnnotation = treeClass.findAnnotation<Command>() ?: throw IllegalArgumentException("CommandTree annotation of ${treeClass.simpleName} is null")
-        return RegisteredCommandTree(treeClass, treeAnnotation.label, treeAnnotation.priority).also { registeredCommandTree ->
+        val treeAnnotation = treeClass.findAnnotation<Command>()
+            ?: throw IllegalArgumentException("CommandTree annotation of ${treeClass.simpleName} is null")
+        return RegisteredCommandTree(
+            treeClass,
+            treeAnnotation.label,
+            treeAnnotation.priority,
+            treeAnnotation.permission,
+            treeAnnotation.isOp,
+            treeAnnotation.hideSuggestion
+        ).also { registeredCommandTree ->
             commandTreesByParentKey.put(parent, registeredCommandTree)
             commandTrees[treeClass] = registeredCommandTree
         }

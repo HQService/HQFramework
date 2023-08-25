@@ -9,5 +9,8 @@ import kotlin.reflect.KClass
 annotation class Command(
     val parent: KClass<*> = Any::class,
     val label: String = "",
-    val priority: Int = 999
+    val priority: Int = 999,
+    val permission: String = "",
+    val isOp: Boolean = false,
+    val hideSuggestion: Boolean = false,
 )

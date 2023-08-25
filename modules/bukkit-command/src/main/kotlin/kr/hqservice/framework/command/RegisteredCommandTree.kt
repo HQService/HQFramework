@@ -14,7 +14,10 @@ import kotlin.reflect.full.valueParameters
 open class RegisteredCommandTree(
     val declaredAt: KClass<*>,
     override val label: String,
-    override val priority: Int = 0
+    override val priority: Int,
+    val permission: String,
+    val isOp: Boolean,
+    val hideSuggestion: Boolean
 ) : HQCommand, CommandSuggestible {
     private val commandExecutors: MutableMap<String, RegisteredCommandExecutor> = mutableMapOf()
     private val commandTrees: MutableMap<String, RegisteredCommandTree> = mutableMapOf()
@@ -33,7 +36,9 @@ open class RegisteredCommandTree(
 
     internal fun getSuggestions(sender: CommandSender): List<String> {
         return mutableListOf<CommandSuggestible>().apply {
-            addAll(commandTrees.values)
+            addAll(commandTrees.values.filter {
+                !it.hideSuggestion && (sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission))))
+            })
             addAll(commandExecutors.values.filter {
                 !it.hideSuggestion && (sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission))))
             })
