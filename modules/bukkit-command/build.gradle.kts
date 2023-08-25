@@ -13,7 +13,6 @@ dependencies {
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)
     testImplementation(libs.koin.core)
-    testImplementation(libs.koin.annotations)
     testImplementation(libs.mockK)
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.kotlinx.coroutines.test)

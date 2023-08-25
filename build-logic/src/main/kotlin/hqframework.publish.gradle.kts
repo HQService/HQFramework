@@ -9,15 +9,9 @@ file(rootProject.gradle.rootProject.projectDir.path + "/credentials.gradle.kts")
     }
 }
 
-dependencies {
-    "ksp"("io.insert-koin:koin-ksp-compiler:${getProperty("koinAnnotationsVersion")}")
-}
-
 val sourcesJar by tasks.registering(Jar::class) {
     from((project.extensions.getByName("sourceSets") as SourceSetContainer)["main"].allSource)
     archiveClassifier.set("sources")
-
-    dependsOn("${project.path}:kspKotlin")
 }
 
 publishing {

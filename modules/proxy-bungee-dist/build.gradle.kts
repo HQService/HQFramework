@@ -13,7 +13,6 @@ bungeeResourceGenerator {
         libs.kotlinx.coroutines.core,
         libs.kotlinx.serialization.json,
         libs.koin.core,
-        libs.koin.annotations,
         libs.exposed.core,
         libs.exposed.dao,
         libs.exposed.java.time,

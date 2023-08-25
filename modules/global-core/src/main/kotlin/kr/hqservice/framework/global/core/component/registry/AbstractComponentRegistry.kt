@@ -15,8 +15,6 @@ import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.annotation.KoinInternalApi
-import org.koin.core.annotation.Named
-import org.koin.core.annotation.Scope
 import org.koin.core.component.KoinComponent
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Definition
@@ -30,7 +28,6 @@ import org.koin.core.instance.SingleInstanceFactory
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.StringQualifier
-import org.koin.core.qualifier.TypeQualifier
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
@@ -398,7 +395,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             }
 
             val qualifier = getQualifier(parameter)
-            val scopeQualifier = getScopeQualifier(kFunction)
+            val scopeQualifier = getScopeQualifier()
             val indexKey = indexKey(parameterKClass, qualifier, scopeQualifier)
 
             val proxy = injectProxy(parameter, qualifier, scopeQualifier)
@@ -432,7 +429,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         primaryBind: KClass<*>,
         instance: Definition<T>
     ) {
-        val scopeQualifier = getScopeQualifier(annotatedElement)
+        val scopeQualifier = getScopeQualifier()
         val qualifier = getQualifier(annotatedElement)
         val property = BeanProperty.getBeanProperty(annotatedElement)
         val secondaryTypes: List<KClass<*>> = property.binds.ifEmpty {
@@ -503,24 +500,15 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     /**
      * 스코프 Qualifier 를 구합니다.
      */
-    private fun getScopeQualifier(element: KAnnotatedElement): Qualifier {
-        val scopeAnnotation = element.findAnnotation<Scope>()
-        return if (scopeAnnotation?.value != null) {
-            TypeQualifier(scopeAnnotation.value)
-        } else if (scopeAnnotation?.name != null) {
-            StringQualifier(scopeAnnotation.name)
-        } else {
-            getKoin().scopeRegistry.rootScope.scopeQualifier
-        }
+    private fun getScopeQualifier(): Qualifier {
+        return getKoin().scopeRegistry.rootScope.scopeQualifier
     }
 
     /**
      * Qualifier 를 구합니다.
      */
     private fun getQualifier(element: KAnnotatedElement): Qualifier? {
-        return if (element.hasAnnotation<Named>()) {
-            StringQualifier(element.findAnnotation<Named>()!!.value)
-        } else if (element.hasAnnotation<MutableNamed>()) {
+        return if (element.hasAnnotation<MutableNamed>()) {
             val key = element.findAnnotation<MutableNamed>()!!.key
             val qualifierProvider = qualifierProviders[key] ?: throw QualifierNotFoundException()
             val provided = qualifierProvider.provideQualifier()

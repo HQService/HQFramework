@@ -11,7 +11,6 @@ dependencies {
     api(libs.exposed.core)
     api(libs.netty)
     api(libs.koin.core)
-    api(libs.koin.annotations)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)

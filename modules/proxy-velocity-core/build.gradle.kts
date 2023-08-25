@@ -11,6 +11,5 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.serialization.json)
     api(libs.koin.core)
-    api(libs.koin.annotations)
     api(libs.netty)
 }

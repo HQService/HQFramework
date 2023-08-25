@@ -1,26 +1,24 @@
 package kr.hqservice.framework.bungee
 
+import kr.hqservice.framework.global.core.component.Bean
+import kr.hqservice.framework.global.core.component.Configuration
 import net.md_5.bungee.api.ProxyServer
 import net.md_5.bungee.api.plugin.PluginManager
-import org.koin.core.annotation.ComponentScan
-import org.koin.core.annotation.Module
-import org.koin.core.annotation.Single
 import java.util.logging.Logger
 
-@ComponentScan
-@Module
+@Configuration
 class HQFrameworkBungeeModule {
-    @Single
+    @Bean
     fun provideProxyServer(): ProxyServer {
         return ProxyServer.getInstance()
     }
 
-    @Single
+    @Bean
     fun providePluginManager(): PluginManager {
         return ProxyServer.getInstance().pluginManager
     }
 
-    @Single
+    @Bean
     fun provideLogger(): Logger {
         return ProxyServer.getInstance().logger
     }

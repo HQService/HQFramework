@@ -9,7 +9,6 @@ dependencies {
     api(libs.netty)
 
     testImplementation(libs.koin.core)
-    testImplementation(libs.koin.annotations)
     testImplementation(libs.mockK)
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.kotlinx.coroutines.test)

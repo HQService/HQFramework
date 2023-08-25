@@ -10,10 +10,8 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     api(libs.guava)
-    implementation(libs.koin.annotations)
 
     testImplementation(libs.koin.core)
-    testImplementation(libs.koin.annotations)
     testImplementation(libs.mockK)
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -12,6 +12,5 @@ dependencies {
     compileOnly(libs.byte.buddy.agent)
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
-    api(libs.koin.annotations)
     api(libs.netty)
 }

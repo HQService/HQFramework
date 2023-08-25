@@ -16,7 +16,6 @@ dependencies {
     api(libs.exposed.java.time)
     api(libs.hikaricp)
     api(libs.koin.core)
-    api(libs.koin.annotations)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mysql.connector)
