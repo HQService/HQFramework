@@ -19,7 +19,7 @@ class TableAnnotationHandler(
 ) : HQAnnotationHandler<Table>, KoinComponent {
     override fun setup(instance: Any, annotation: Table) {
         if (instance !is org.jetbrains.exposed.sql.Table) {
-            throw IllegalStateException("@Table annotations are for Exposed tables.")
+            throw IllegalStateException("@Table annotation is for Exposed tables. class: ${instance::class.simpleName}")
         }
 
         transaction(database) {
