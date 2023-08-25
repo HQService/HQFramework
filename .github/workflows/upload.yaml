@@ -1,0 +1,41 @@
+name: Upload to GitHub releases
+
+on:
+  push:
+    branches: [ 'main' ]
+
+jobs:
+  upload:
+    runs-on: [ ubuntu-latest ]
+
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Retrieve the repository
+        uses: actions/checkout@v3
+
+      - name: Set outputs
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Prepare JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+      - name: Make Jar
+        run: gradle shadowJar
+        
+      - name: Release Tag
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.event.repository.name }}_${{ steps.vars.outputs.sha_short }}
+          name: ${{ github.event.repository.name }}_${{ steps.vars.outputs.sha_short }}
+          body: "${{ steps.vars.outputs.sha_short }}"
+          commit: ${{ github.sha }}
+          artifacts: 'build_outputs/*.jar'
