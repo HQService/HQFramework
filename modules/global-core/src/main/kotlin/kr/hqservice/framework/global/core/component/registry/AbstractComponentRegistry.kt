@@ -411,8 +411,6 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 exception.printStackTrace()
                 null
             } catch (exception: IllegalStateException) {
-                exception.printStackTrace()
-                println("cause: ")
                 exception.cause?.printStackTrace()
                 null
             }
