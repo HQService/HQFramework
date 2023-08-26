@@ -308,7 +308,7 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
-            if (!hqCommandRoot.validateSuggestion(sender)) {
+            if (!hqCommandRoot.validateSuggestion(sender, true)) {
                 return emptyList()
             }
             if (args.first().length == 0) {
@@ -324,7 +324,7 @@ class CommandAnnotationHandler(
             val executor = tree?.findExecutor(treeKeyAfter)
             if (tree != null) {
                 if (executor != null && treeKey.size + 1 != args.size) {
-                    if (!executor.validateSuggestion(sender)) {
+                    if (!executor.validateSuggestion(sender, true)) {
                         return emptyList()
                     }
                     if (treeKey.size + (executor.function.valueParameters.size - 1) + 1 < args.size) {

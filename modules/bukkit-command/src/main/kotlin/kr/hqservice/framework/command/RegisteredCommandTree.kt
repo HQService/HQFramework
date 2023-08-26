@@ -16,7 +16,8 @@ open class RegisteredCommandTree(
     override val label: String,
     override val priority: Int,
     override val permission: String,
-    override val isOp: Boolean
+    override val isOp: Boolean,
+    override val hideSuggestion: Boolean
 ) : HQCommand, CommandSuggestible {
     private val commandExecutors: MutableMap<String, RegisteredCommandExecutor> = mutableMapOf()
     private val commandTrees: MutableMap<String, RegisteredCommandTree> = mutableMapOf()
@@ -36,10 +37,10 @@ open class RegisteredCommandTree(
     internal fun getSuggestions(sender: CommandSender): List<String> {
         return mutableListOf<CommandSuggestible>().apply {
             addAll(commandTrees.values.filter {
-                it.validateSuggestion(sender)
+                it.validateSuggestion(sender, true)
             })
             addAll(commandExecutors.values.filter {
-                it.validateSuggestion(sender)
+                it.validateSuggestion(sender, true)
             })
         }.sortedBy {
             it.priority
@@ -75,7 +76,7 @@ open class RegisteredCommandTree(
     ): List<TextComponent> {
         val result = mutableListOf<TextComponent>()
         val filteredExecutors = commandExecutors.values.filter {
-            it.validateSuggestion(sender)
+            it.validateSuggestion(sender, true)
         }
         for ((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
             val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()

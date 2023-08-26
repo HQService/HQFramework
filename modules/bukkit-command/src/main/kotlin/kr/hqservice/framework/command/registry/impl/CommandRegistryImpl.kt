@@ -20,7 +20,7 @@ class CommandRegistryImpl : CommandRegistry {
 
     override fun registerRoot(declaredAt: KClass<*>): RegisteredCommandRoot {
         val annotation = declaredAt.findAnnotation<Command>()!!
-        return RegisteredCommandRoot(declaredAt, annotation.label, annotation.permission, annotation.isOp).also { registeredCommandRoot ->
+        return RegisteredCommandRoot(declaredAt, annotation.label, annotation.permission, annotation.isOp, annotation.hideSuggestion).also { registeredCommandRoot ->
             commandRoots[annotation.label] = registeredCommandRoot
         }
     }
@@ -33,7 +33,8 @@ class CommandRegistryImpl : CommandRegistry {
             treeAnnotation.label,
             treeAnnotation.priority,
             treeAnnotation.permission,
-            treeAnnotation.isOp
+            treeAnnotation.isOp,
+            treeAnnotation.hideSuggestion
         ).also { registeredCommandTree ->
             commandTreesByParentKey.put(parent, registeredCommandTree)
             commandTrees[treeClass] = registeredCommandTree
