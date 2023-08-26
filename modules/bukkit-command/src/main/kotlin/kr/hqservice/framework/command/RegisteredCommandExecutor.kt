@@ -7,9 +7,9 @@ import kotlin.reflect.full.valueParameters
 data class RegisteredCommandExecutor(
     override val label: String,
     val description: String? = null,
-    val permission: String = "",
-    val isOp: Boolean = false,
-    val hideSuggestion: Boolean = false,
+    override val permission: String = "",
+    override val isOp: Boolean = false,
+    override val hideSuggestion: Boolean = false,
     override val priority: Int = 0,
     val executorInstance: Any,
     val function: KFunction<Unit>

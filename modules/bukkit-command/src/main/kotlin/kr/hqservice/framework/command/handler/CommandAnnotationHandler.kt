@@ -136,14 +136,11 @@ class CommandAnnotationHandler(
 
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
-            if (!sender.isOp) {
-                if (hqCommandRoot.isOp || (hqCommandRoot.permission != "" && !sender.hasPermission(hqCommandRoot.permission))) {
+            if (args.isEmpty()) {
+                if (!hqCommandRoot.validatePermission(sender)) {
                     sendPermissionDeclinedMessage(sender)
                     return true
                 }
-            }
-
-            if (args.isEmpty()) {
                 hqCommandRoot.sendUsageMessages(sender, arrayOf(commandLabel), plugin.name)
                 return true
             }
@@ -309,15 +306,6 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
-            if (hqCommandRoot.hideSuggestion) {
-                return emptyList()
-            }
-            if (!sender.isOp) {
-                if (hqCommandRoot.isOp || (hqCommandRoot.permission != "" && !sender.hasPermission(hqCommandRoot.permission))) {
-                    return emptyList()
-                }
-            }
-
             if (args.first().length == 0) {
                 return hqCommandRoot.getSuggestions(sender).filter { it.startsWith(args.last()) }
             }

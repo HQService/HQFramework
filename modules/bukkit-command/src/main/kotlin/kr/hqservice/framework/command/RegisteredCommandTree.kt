@@ -15,9 +15,9 @@ open class RegisteredCommandTree(
     val declaredAt: KClass<*>,
     override val label: String,
     override val priority: Int,
-    val permission: String,
-    val isOp: Boolean,
-    val hideSuggestion: Boolean
+    override val permission: String,
+    override val isOp: Boolean,
+    override val hideSuggestion: Boolean
 ) : HQCommand, CommandSuggestible {
     private val commandExecutors: MutableMap<String, RegisteredCommandExecutor> = mutableMapOf()
     private val commandTrees: MutableMap<String, RegisteredCommandTree> = mutableMapOf()
@@ -37,10 +37,10 @@ open class RegisteredCommandTree(
     internal fun getSuggestions(sender: CommandSender): List<String> {
         return mutableListOf<CommandSuggestible>().apply {
             addAll(commandTrees.values.filter {
-                !it.hideSuggestion && (sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission))))
+                it.validatePermission(sender)
             })
             addAll(commandExecutors.values.filter {
-                !it.hideSuggestion && (sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission))))
+                it.validatePermission(sender)
             })
         }.sortedBy {
             it.priority
@@ -76,7 +76,7 @@ open class RegisteredCommandTree(
     ): List<TextComponent> {
         val result = mutableListOf<TextComponent>()
         val filteredExecutors = commandExecutors.values.filter {
-            sender.isOp || (!it.isOp && (it.permission.isEmpty() || sender.hasPermission(it.permission)))
+            it.validatePermission(sender)
         }
         for ((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
             val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()
