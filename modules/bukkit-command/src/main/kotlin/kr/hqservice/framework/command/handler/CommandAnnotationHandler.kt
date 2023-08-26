@@ -298,9 +298,12 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
-            if (hqCommandRoot.hideSuggestion || (!sender.isOp && (!hqCommandRoot.isOp && (hqCommandRoot.permission.isNotEmpty() && !sender.hasPermission(hqCommandRoot.permission))))) {
-                return emptyList()
+            if (!hqCommandRoot.hideSuggestion && !sender.isOp) {
+                if (hqCommandRoot.isOp || (hqCommandRoot.permission.isNotEmpty() && !sender.hasPermission(hqCommandRoot.permission))) {
+                    return emptyList()
+                }
             }
+
             if (args.first().length == 0) {
                 return hqCommandRoot.getSuggestions(sender).filter { it.startsWith(args.last()) }
             }
