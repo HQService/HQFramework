@@ -37,10 +37,10 @@ open class RegisteredCommandTree(
     internal fun getSuggestions(sender: CommandSender): List<String> {
         return mutableListOf<CommandSuggestible>().apply {
             addAll(commandTrees.values.filter {
-                it.validatePermission(sender)
+                it.hasPermission(sender)
             })
             addAll(commandExecutors.values.filter {
-                it.validatePermission(sender)
+                it.hasPermission(sender)
             })
         }.sortedBy {
             it.priority
@@ -76,7 +76,7 @@ open class RegisteredCommandTree(
     ): List<TextComponent> {
         val result = mutableListOf<TextComponent>()
         val filteredExecutors = commandExecutors.values.filter {
-            it.validatePermission(sender)
+            it.hasPermission(sender)
         }
         for ((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
             val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()
