@@ -134,7 +134,7 @@ class CommandAnnotationHandler(
 
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
-            if (!hqCommandRoot.hasPermission(sender)) {
+            if (!hqCommandRoot.validateSuggestion(sender)) {
                 sendPermissionDeclinedMessage(sender)
                 return true
             }
@@ -156,7 +156,7 @@ class CommandAnnotationHandler(
                 approximateTree.sendUsageMessages(sender, arrayOf(commandLabel, *treeKey), plugin.name)
                 return true
             }
-            if (!executor.hasPermission(sender)) {
+            if (!executor.validateSuggestion(sender)) {
                 sendPermissionDeclinedMessage(sender)
                 return true
             }
@@ -308,7 +308,7 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
-            if (!hqCommandRoot.hasPermission(sender)) {
+            if (!hqCommandRoot.validateSuggestion(sender)) {
                 return emptyList()
             }
             if (args.first().length == 0) {
@@ -324,7 +324,7 @@ class CommandAnnotationHandler(
             val executor = tree?.findExecutor(treeKeyAfter)
             if (tree != null) {
                 if (executor != null && treeKey.size + 1 != args.size) {
-                    if (!executor.hasPermission(sender)) {
+                    if (!executor.validateSuggestion(sender)) {
                         return emptyList()
                     }
                     if (treeKey.size + (executor.function.valueParameters.size - 1) + 1 < args.size) {
