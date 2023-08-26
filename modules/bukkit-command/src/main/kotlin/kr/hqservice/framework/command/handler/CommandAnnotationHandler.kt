@@ -127,11 +127,22 @@ class CommandAnnotationHandler(
         private val hqCommandRoot: RegisteredCommandRoot,
         private val registry: CommandArgumentProviderRegistry
     ) : BukkitCommand(label) {
+        override fun getPermission(): String {
+            if (hqCommandRoot.permission == "" && hqCommandRoot.isOp) {
+                return "op"
+            }
+            return hqCommandRoot.permission
+        }
+
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
-            if (hqCommandRoot.hideSuggestion || (!sender.isOp && (!hqCommandRoot.isOp && (hqCommandRoot.permission.isNotEmpty() && !sender.hasPermission(hqCommandRoot.permission))))) {
-                return true
+            if (!sender.isOp) {
+                if (hqCommandRoot.isOp || (hqCommandRoot.permission != "" && !sender.hasPermission(hqCommandRoot.permission))) {
+                    sendPermissionDeclinedMessage(sender)
+                    return true
+                }
             }
+
             if (args.isEmpty()) {
                 hqCommandRoot.sendUsageMessages(sender, arrayOf(commandLabel), plugin.name)
                 return true
@@ -298,8 +309,11 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
-            if (!hqCommandRoot.hideSuggestion && !sender.isOp) {
-                if (hqCommandRoot.isOp || (hqCommandRoot.permission.isNotEmpty() && !sender.hasPermission(hqCommandRoot.permission))) {
+            if (hqCommandRoot.hideSuggestion) {
+                return emptyList()
+            }
+            if (!sender.isOp) {
+                if (hqCommandRoot.isOp || (hqCommandRoot.permission != "" && !sender.hasPermission(hqCommandRoot.permission))) {
                     return emptyList()
                 }
             }
