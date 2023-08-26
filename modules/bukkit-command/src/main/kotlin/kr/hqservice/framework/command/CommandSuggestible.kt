@@ -20,6 +20,7 @@ interface CommandSuggestible {
         if (permission != "" && !sender.hasPermission(permission)) {
             return false
         }
+        if (hideSuggestion) {
             return false
         }
         return true
