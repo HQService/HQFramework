@@ -9,16 +9,18 @@ interface CommandSuggestible {
     val isOp: Boolean
     val hideSuggestion: Boolean
 
-    fun validatePermission(sender: CommandSender): Boolean {
-        if (this.hideSuggestion) {
+    // validateSuggestion
+    fun validateSuggestion(sender: CommandSender, isHide: Boolean = false): Boolean {
+        if (isHide && hideSuggestion) {
             return false
         }
-        if (sender.isOp) {
+        if (sender.isOp || sender.hasPermission(permission)) {
             return true
-        } else if (this.isOp) {
+        }
+        if (!sender.isOp && isOp) {
             return false
         }
-        if (this.permission != "" && !sender.hasPermission(this.permission)) {
+        if (permission != "" && !sender.hasPermission(permission)) {
             return false
         }
         return true

@@ -127,20 +127,18 @@ class CommandAnnotationHandler(
         private val hqCommandRoot: RegisteredCommandRoot,
         private val registry: CommandArgumentProviderRegistry
     ) : BukkitCommand(label) {
+
         override fun getPermission(): String {
-            if (hqCommandRoot.permission == "" && hqCommandRoot.isOp) {
-                return "op"
-            }
-            return hqCommandRoot.permission
+            return if (hqCommandRoot.isOp) "op" else hqCommandRoot.permission
         }
 
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
+            if (!hqCommandRoot.validateSuggestion(sender)) {
+                sendPermissionDeclinedMessage(sender)
+                return true
+            }
             if (args.isEmpty()) {
-                if (!hqCommandRoot.validatePermission(sender)) {
-                    sendPermissionDeclinedMessage(sender)
-                    return true
-                }
                 hqCommandRoot.sendUsageMessages(sender, arrayOf(commandLabel), plugin.name)
                 return true
             }
@@ -156,6 +154,10 @@ class CommandAnnotationHandler(
             if (executor == null) {
                 val approximateTree = hqCommandRoot.findTreeApproximate(treeKey)
                 approximateTree.sendUsageMessages(sender, arrayOf(commandLabel, *treeKey), plugin.name)
+                return true
+            }
+            if (!executor.validateSuggestion(sender)) {
+                sendPermissionDeclinedMessage(sender)
                 return true
             }
 
@@ -192,7 +194,6 @@ class CommandAnnotationHandler(
                         arguments.add(null)
                         return@forEach
                     }
-
                     val parameterMap = executor.function.valueParameters
                         .toMutableList()
                         .apply { removeFirst() }
@@ -212,12 +213,11 @@ class CommandAnnotationHandler(
                             withContext(coroutineContext) withContext@{
                                 val result = argumentProvider.getResult(commandContext, argumentForResult)
                                 if (!result || argumentForResult == null) {
-                                    val failureMessage =
-                                        argumentProvider.getFailureMessage(
-                                            commandContext,
-                                            argumentForResult,
-                                            argumentLabel
-                                        )
+                                    val failureMessage = argumentProvider.getFailureMessage(
+                                        commandContext,
+                                        argumentForResult,
+                                        argumentLabel
+                                    )
                                     if (failureMessage != null) {
                                         senderInstance.sendColorizedMessage("&c$failureMessage")
                                     }
@@ -238,12 +238,11 @@ class CommandAnnotationHandler(
                             plugin.launch(Dispatchers.BukkitMain) mainLaunch@{
                                 val result = argumentProvider.getResult(commandContext, argumentForResult)
                                 if (!result || argumentForResult == null) {
-                                    val failureMessage =
-                                        argumentProvider.getFailureMessage(
-                                            commandContext,
-                                            argumentForResult,
-                                            argumentLabel
-                                        )
+                                    val failureMessage = argumentProvider.getFailureMessage(
+                                        commandContext,
+                                        argumentForResult,
+                                        argumentLabel
+                                    )
                                     if (failureMessage != null) {
                                         senderInstance.sendColorizedMessage("&c$failureMessage")
                                     }
@@ -266,10 +265,13 @@ class CommandAnnotationHandler(
                     return@commandLaunch
                 }
 
+                /* 혹시 모름 남겨둬야함
                 if (executor.permission != "" && sender.hasPermission(executor.permission) && sender !is ConsoleCommandSender && sender.isOp.not()) {
+                    sender.sendMessage("33333333")
                     sendPermissionDeclinedMessage(sender)
                     return@commandLaunch
                 }
+                */
 
                 val function = executor.function
                 if (function.isSuspend) {
@@ -306,6 +308,9 @@ class CommandAnnotationHandler(
             args: Array<String>,
             location: Location?
         ): List<String> {
+            if (!hqCommandRoot.validateSuggestion(sender, true)) {
+                return emptyList()
+            }
             if (args.first().length == 0) {
                 return hqCommandRoot.getSuggestions(sender).filter { it.startsWith(args.last()) }
             }
@@ -319,6 +324,9 @@ class CommandAnnotationHandler(
             val executor = tree?.findExecutor(treeKeyAfter)
             if (tree != null) {
                 if (executor != null && treeKey.size + 1 != args.size) {
+                    if (!executor.validateSuggestion(sender, true)) {
+                        return emptyList()
+                    }
                     if (treeKey.size + (executor.function.valueParameters.size - 1) + 1 < args.size) {
                         return emptyList()
                     }
