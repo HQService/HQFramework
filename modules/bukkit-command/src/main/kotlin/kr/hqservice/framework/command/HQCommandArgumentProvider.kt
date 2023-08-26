@@ -49,6 +49,9 @@ interface HQCommandArgumentProvider<T> : CommandArgumentProvider<T> {
     fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String? = null): List<String>
 }
 
+/**
+ * IO Dispatcher 에서 작동됩니다.
+ */
 interface HQSuspendCommandArgumentProvider<T> : CommandArgumentProvider<T> {
     /**
      * 명령어의 결과를 반환합니다.

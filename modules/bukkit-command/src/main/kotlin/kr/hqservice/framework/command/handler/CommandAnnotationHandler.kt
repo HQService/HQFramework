@@ -1,13 +1,15 @@
 package kr.hqservice.framework.command.handler
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.command.*
-import kr.hqservice.framework.command.CommandContextImpl
 import kr.hqservice.framework.command.registry.CommandArgumentProviderRegistry
 import kr.hqservice.framework.command.registry.CommandRegistry
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
@@ -205,12 +207,7 @@ class CommandAnnotationHandler(
                     when (val argumentProvider = getArgumentProvider(parameter)) {
                         is HQSuspendCommandArgumentProvider -> {
                             var isFailed = false
-                            val coroutineContext = if (argumentProvider is CoroutineScope) {
-                                argumentProvider.coroutineContext
-                            } else {
-                                plugin.coroutineContext
-                            }
-                            withContext(coroutineContext) withContext@{
+                            withContext(Dispatchers.IO) withContext@{
                                 val result = argumentProvider.getResult(commandContext, argumentForResult)
                                 if (!result || argumentForResult == null) {
                                     val failureMessage = argumentProvider.getFailureMessage(
@@ -235,7 +232,7 @@ class CommandAnnotationHandler(
 
                         is HQCommandArgumentProvider -> {
                             var isFailed = false
-                            plugin.launch(Dispatchers.BukkitMain) mainLaunch@{
+                            withContext(Dispatchers.BukkitMain) mainLaunch@{
                                 val result = argumentProvider.getResult(commandContext, argumentForResult)
                                 if (!result || argumentForResult == null) {
                                     val failureMessage = argumentProvider.getFailureMessage(
@@ -251,7 +248,7 @@ class CommandAnnotationHandler(
                                 }
                                 val casted = argumentProvider.cast(commandContext, argumentForResult)
                                 arguments.add(casted)
-                            }.join()
+                            }
 
                             if (isFailed) {
                                 return@commandLaunch
@@ -265,33 +262,15 @@ class CommandAnnotationHandler(
                     return@commandLaunch
                 }
 
-                /* 혹시 모름 남겨둬야함
-                if (executor.permission != "" && sender.hasPermission(executor.permission) && sender !is ConsoleCommandSender && sender.isOp.not()) {
-                    sender.sendMessage("33333333")
-                    sendPermissionDeclinedMessage(sender)
-                    return@commandLaunch
-                }
-                */
-
                 val function = executor.function
                 if (function.isSuspend) {
-                    if (executor.executorInstance is CoroutineScope) {
-                        withContext(executor.executorInstance.coroutineContext) {
-                            executor.function.callSuspend(
-                                executor.executorInstance,
-                                senderInstance,
-                                *arguments.toTypedArray()
-                            )
-                        }
-                    } else executor.function.callSuspend(
+                    executor.function.callSuspend(
                         executor.executorInstance,
                         senderInstance,
                         *arguments.toTypedArray()
                     )
                 } else {
-                    plugin.launch(Dispatchers.BukkitMain) {
-                        executor.function.call(executor.executorInstance, senderInstance, *arguments.toTypedArray())
-                    }
+                    executor.function.call(executor.executorInstance, senderInstance, *arguments.toTypedArray())
                 }
             }
             return true
