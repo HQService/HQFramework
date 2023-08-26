@@ -35,7 +35,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.vars.outputs.sha_short }}
-          name: ${{ github.event.repository.name }}
+          # name: ${{ github.event.repository.name }}
           body: "${{ steps.vars.outputs.sha_short }}"
           commit: ${{ github.sha }}
           artifacts: 'build_outputs/*.jar'
+          generateReleaseNotes: true
