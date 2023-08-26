@@ -16,8 +16,7 @@ open class RegisteredCommandTree(
     override val label: String,
     override val priority: Int,
     override val permission: String,
-    override val isOp: Boolean,
-    override val hideSuggestion: Boolean
+    override val isOp: Boolean
 ) : HQCommand, CommandSuggestible {
     private val commandExecutors: MutableMap<String, RegisteredCommandExecutor> = mutableMapOf()
     private val commandTrees: MutableMap<String, RegisteredCommandTree> = mutableMapOf()

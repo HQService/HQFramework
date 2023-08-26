@@ -11,6 +11,5 @@ annotation class Command(
     val label: String = "",
     val priority: Int = 999,
     val permission: String = "",
-    val isOp: Boolean = false,
-    val hideSuggestion: Boolean = false,
+    val isOp: Boolean = false
 )

@@ -9,7 +9,6 @@ data class RegisteredCommandExecutor(
     val description: String? = null,
     override val permission: String = "",
     override val isOp: Boolean = false,
-    override val hideSuggestion: Boolean = false,
     override val priority: Int = 0,
     val executorInstance: Any,
     val function: KFunction<Unit>
@@ -19,7 +18,6 @@ data class RegisteredCommandExecutor(
         annotation.description,
         annotation.permission,
         annotation.isOp,
-        annotation.hideSuggestion,
         annotation.priority,
         executorInstance,
         function

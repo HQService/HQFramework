@@ -6,6 +6,5 @@ class RegisteredCommandRoot(
     declaredAt: KClass<*>,
     label: String,
     permission: String,
-    isOp: Boolean,
-    hideSuggestion: Boolean
-) : RegisteredCommandTree(declaredAt, label, 0, permission, isOp, hideSuggestion)
+    isOp: Boolean
+) : RegisteredCommandTree(declaredAt, label, 0, permission, isOp)
