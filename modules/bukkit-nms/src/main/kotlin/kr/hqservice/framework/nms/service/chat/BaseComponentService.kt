@@ -32,11 +32,21 @@ class BaseComponentService(
             }
         )
 
+    private val serializeFromJsonFunction =
+        reflectionWrapper.getFunction(componentSerializerClass,
+            FunctionType("b", null, listOf(String::class), true))
+
     override fun wrap(target: String): BaseComponentWrapper {
         return BaseComponentWrapper(target,
             serializeFunction.call(target)
                 ?: throw UnsupportedOperationException("cannot called ChatSerializer#Serialize(String) function")
         )
+    }
+
+    fun wrapFromJson(json: String): BaseComponentWrapper {
+        return BaseComponentWrapper(json,
+            serializeFromJsonFunction.call(json)
+                ?: throw UnsupportedOperationException("cannot called ChatSerializer#fromJson(String) function"))
     }
 
     override fun unwrap(wrapper: BaseComponentWrapper): String {
