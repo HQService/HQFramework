@@ -7,6 +7,7 @@ dependencies {
     apiModule("global", "core")
     api(libs.kotlinx.coroutines.core)
     api(libs.netty)
+    api(libs.koin.core)
 
     testImplementation(libs.koin.core)
     testImplementation(libs.mockK)

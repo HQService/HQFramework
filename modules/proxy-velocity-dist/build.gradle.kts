@@ -12,7 +12,7 @@ dependencies {
     kapt(libs.velocity.api)
     relocatedRuntimeScope("kr.hqservice.framework.shadow") {
         implementation(libs.kotlinx.coroutines.core)
-        implementation(libs.koin.core)
+        api(libs.koin.core)
         implementation(libs.netty)
         implementation(libs.kotlinx.serialization.json)
     }

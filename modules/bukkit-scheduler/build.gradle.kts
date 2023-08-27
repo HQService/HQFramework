@@ -8,8 +8,6 @@ dependencies {
     apiModule("bukkit", "core")
     apiModule("bukkit", "database")
     apiModule("bukkit", "command")
-    implementation(libs.byte.buddy.core)
-    implementation(libs.byte.buddy.agent)
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.netty)
