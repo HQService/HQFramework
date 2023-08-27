@@ -4,6 +4,8 @@ import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.quartz.simpl.SimpleThreadPool
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Bean
 class HQFrameworkThreadPool(
@@ -18,5 +20,9 @@ class HQFrameworkThreadPool(
         isThreadsInheritGroupOfInitializingThread = true
         Thread.currentThread().contextClassLoader = plugin.getPluginClassLoader()
         super.initialize()
+    }
+
+    override fun getLog(): Logger {
+        return LoggerFactory.getLogger("HQFrameworkThreadPool")
     }
 }

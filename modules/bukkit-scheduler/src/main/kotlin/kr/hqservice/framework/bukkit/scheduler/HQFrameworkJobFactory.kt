@@ -10,6 +10,7 @@ import org.quartz.JobDataMap
 import org.quartz.Scheduler
 import org.quartz.simpl.PropertySettingJobFactory
 import org.quartz.spi.TriggerFiredBundle
+import org.slf4j.LoggerFactory
 import java.util.logging.Logger
 import kotlin.reflect.full.primaryConstructor
 
@@ -39,5 +40,9 @@ class HQFrameworkJobFactory(
         jobDataMap.putAll(bundle.trigger.jobDataMap)
         setBeanProps(job, jobDataMap)
         return job
+    }
+
+    override fun getLog(): org.slf4j.Logger {
+        return LoggerFactory.getLogger("HQFrameworkJobFactory")
     }
 }
