@@ -8,8 +8,7 @@ import org.quartz.utils.ConnectionProvider
 import org.quartz.utils.DBConnectionManager
 
 @Bean
-class PersistenceJobStore(
-    connectionProvider: ConnectionProvider,
+class HQFrameworkJobStore(
     config: HQYamlConfiguration,
     server: Server
 ) : JobStoreTX() {

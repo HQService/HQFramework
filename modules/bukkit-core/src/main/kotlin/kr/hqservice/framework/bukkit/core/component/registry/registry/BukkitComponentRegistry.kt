@@ -49,15 +49,7 @@ class BukkitComponentRegistry(
     }
 
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
-        return mutableMapOf<KClass<*>, Any>().apply {
-            put(Plugin::class, plugin)
-            put(plugin::class, plugin)
-            put(HQBukkitPlugin::class, plugin)
-            put(Logger::class, plugin.logger)
-            put(ConfigurationSection::class, plugin.config)
-            put(CoroutineScope::class, plugin)
-            put(HQYamlConfiguration::class, getConfiguration())
-        }
+        return BukkitPluginScopedInstanceProvider.provideInstance(plugin)
     }
 
     override fun injectProxy(

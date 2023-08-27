@@ -3,6 +3,7 @@ package kr.hqservice.framework.global.core.component.registry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQComponent
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 
 /**
  * ComponentRegistry 의 Component 의존성 주입에 대하여:
@@ -42,6 +43,8 @@ interface ComponentRegistry {
     fun setup()
 
     fun teardown()
+
+    fun injectParameters(kFunction: KFunction<*>, providedInstanceMap: Map<KClass<*>, *>? = null): List<Any?>
 
     fun <T : HQComponent> getComponent(key: KClass<T>): T
 }

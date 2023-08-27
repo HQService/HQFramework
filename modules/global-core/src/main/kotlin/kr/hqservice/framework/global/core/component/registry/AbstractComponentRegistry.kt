@@ -347,9 +347,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
      */
     private fun <T> callByInjectedParameters(
         kFunction: KFunction<T>,
-        providedInstanceMap: Map<KClass<*>, *>? = getProvidedInstances()
+        providedInstanceMap: Map<KClass<*>, *> = getProvidedInstances()
     ): T? {
-        val injectedParameters = injectParameters(kFunction, providedInstanceMap)
+        val injectedParameters = injectParameters(kFunction, providedInstanceMap ?: getProvidedInstances())
         if (injectedParameters.any { it == null }) {
             return null
         }
@@ -380,18 +380,17 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         return null
     }
 
-    private fun injectParameters(
+    override fun injectParameters(
         kFunction: KFunction<*>,
-        providedInstanceMap: Map<KClass<*>, *>? = null,
+        providedInstanceMap: Map<KClass<*>, *>?,
     ): List<Any?> {
+
         return kFunction.valueParameters.mapIndexed { index, parameter ->
             val parameterKClass = parameter.type.classifier as KClass<*>
 
-            if (providedInstanceMap != null) {
-                val providedInstance = providedInstanceMap.filter { parameterKClass == it.key }.values.firstOrNull()
-                if (providedInstance != null) {
-                    return@mapIndexed providedInstance
-                }
+            val providedInstance = getProvidedInstances().filter { parameterKClass == it.key }.values.firstOrNull()
+            if (providedInstance != null) {
+                return@mapIndexed providedInstance
             }
 
             val qualifier = getQualifier(parameter)

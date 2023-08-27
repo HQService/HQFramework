@@ -30,14 +30,16 @@ class SchedulerConfig(
 
     @Bean
     fun provideScheduler(
-        threadPool: SchedulerThreadPool,
-        jobStore: PersistenceJobStore,
+        threadPool: HQFrameworkThreadPool,
+        jobStore: HQFrameworkJobStore,
+        jobFactory: HQFrameworkJobFactory,
         databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
         server: Server
     ): Scheduler {
         if (hikariDataSource.isClosed) {
             throw DataSourceClosedException(hikariDataSource)
         }
+
         DirectSchedulerFactory
             .getInstance()
             .createScheduler(
@@ -49,6 +51,7 @@ class SchedulerConfig(
             )
 
         return DirectSchedulerFactory.getInstance().getScheduler(SCHEDULER_NAME).also { scheduler ->
+            scheduler.setJobFactory(jobFactory)
             databaseShutdownHookRegistry.addHook {
                 plugin.logger.info("${AnsiColor.CYAN}Shutting down Scheduler...${AnsiColor.RESET}")
                 scheduler.shutdown(true)

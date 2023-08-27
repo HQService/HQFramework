@@ -6,7 +6,7 @@ import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.quartz.simpl.SimpleThreadPool
 
 @Bean
-class SchedulerThreadPool(
+class HQFrameworkThreadPool(
     plugin: HQBukkitPlugin,
     config: HQYamlConfiguration
 ) : SimpleThreadPool(
