@@ -78,7 +78,6 @@ class VirtualWorldBorder(
         }
     }
 
-    //ClientboundSetBorderWarningDistancePacket
     private inner class WorldBorderWarningBlocks(
         private val blocks: Int
     ) {

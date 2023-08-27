@@ -34,7 +34,7 @@ class BaseComponentService(
 
     override fun wrap(target: String): BaseComponentWrapper {
         return BaseComponentWrapper(target,
-            serializeFunction.call("{\"text\": \"§f$target\"}")
+            serializeFunction.call(target)
                 ?: throw UnsupportedOperationException("cannot called ChatSerializer#Serialize(String) function")
         )
     }
