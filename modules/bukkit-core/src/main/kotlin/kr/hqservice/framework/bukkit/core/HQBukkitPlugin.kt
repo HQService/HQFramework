@@ -10,6 +10,8 @@ import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.format
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.util.AnsiColor
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import kr.hqservice.framework.yaml.extension.yaml
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.plugin.java.JavaPluginLoader
@@ -33,6 +35,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     ) : super(loader, description, dataFolder, file)
 
     protected open val componentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
+    private val config = File(dataFolder, "config.yml").yaml()
 
     internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
         private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
@@ -123,6 +126,14 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         get() = CoroutineName("${this.name}CoroutineScope") + Dispatchers.BukkitMain + coroutineExceptionHandler + supervisorJob + pluginCoroutineContextElement
 
     open val group = "HQPlugin"
+
+    fun getHQConfig(): HQYamlConfiguration {
+        return config
+    }
+
+    fun reloadHQConfig() {
+        config.reload()
+    }
 
     final override fun onLoad() {
         onPreLoad()
