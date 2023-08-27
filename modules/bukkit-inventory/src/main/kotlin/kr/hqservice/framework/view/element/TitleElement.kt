@@ -18,6 +18,7 @@ class TitleElement(
         }
     }
 
+    @JvmName("componentTitle")
     fun title(titleBuilderScope: suspend () -> BaseComponent) {
         titleBuilder = titleBuilderScope
     }
