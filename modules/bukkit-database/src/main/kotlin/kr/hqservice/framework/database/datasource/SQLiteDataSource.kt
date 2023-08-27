@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource
 class SQLiteDataSource(
     databasePath: String
 ) : HikariDataSource(HikariConfig().apply {
+    this.driverClassName = "org.sqlite.JDBC"
     this.jdbcUrl = "jdbc:sqlite:$databasePath"
     this.connectionTestQuery = "SELECT 1"
     this.poolName = "hqframework"

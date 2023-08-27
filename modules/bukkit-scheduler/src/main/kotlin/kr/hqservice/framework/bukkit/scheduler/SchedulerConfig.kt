@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
+import kr.hqservice.framework.bukkit.scheduler.database.HQFrameworkJobStore
 import kr.hqservice.framework.database.exception.DataSourceClosedException
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
 import kr.hqservice.framework.global.core.component.Bean

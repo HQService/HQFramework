@@ -7,11 +7,11 @@ import java.sql.Connection
 import javax.sql.DataSource
 
 @Bean
-class HQFrameworkConnectionProvider(
-    private val hikariDataSource: DataSource
+class HQFrameworkPoolingConnectionProvider(
+    private val hqDataSource: DataSource
 ) : PoolingConnectionProvider, KoinComponent {
     override fun getConnection(): Connection {
-       return hikariDataSource.connection
+       return hqDataSource.connection
     }
 
     override fun shutdown() {}
@@ -19,6 +19,6 @@ class HQFrameworkConnectionProvider(
     override fun initialize() {}
 
     override fun getDataSource(): DataSource {
-        return hikariDataSource
+        return hqDataSource
     }
 }
