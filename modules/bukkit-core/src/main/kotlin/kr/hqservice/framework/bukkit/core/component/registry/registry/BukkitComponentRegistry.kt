@@ -1,17 +1,12 @@
 package kr.hqservice.framework.bukkit.core.component.registry.registry
 
-import kotlinx.coroutines.CoroutineScope
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.registry.HQInstanceFactory
 import kr.hqservice.framework.bukkit.core.component.registry.PluginDepend
-import kr.hqservice.framework.bukkit.core.extension.getHQConfig
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
-import org.bukkit.configuration.ConfigurationSection
-import org.bukkit.plugin.Plugin
 import org.koin.core.qualifier.Qualifier
 import java.util.jar.JarFile
-import java.util.logging.Logger
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.isSubtypeOf
