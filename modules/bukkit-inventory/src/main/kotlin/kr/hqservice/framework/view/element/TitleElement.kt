@@ -1,6 +1,8 @@
 package kr.hqservice.framework.view.element
 
 import kr.hqservice.framework.view.state.State
+import net.md_5.bungee.api.chat.BaseComponent
+import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.entity.Player
 
 class TitleElement(
@@ -8,9 +10,15 @@ class TitleElement(
     private val title: String
 ) : ViewElement {
     internal var subscribedStates: MutableList<State<*>> = mutableListOf()
-    internal var titleBuilder: suspend () -> String = { title }
+    internal var titleBuilder: suspend () -> BaseComponent = { TextComponent(title) }
 
     fun title(titleBuilderScope: suspend () -> String) {
+        titleBuilder = {
+            TextComponent(titleBuilderScope.invoke())
+        }
+    }
+
+    fun title(titleBuilderScope: suspend () -> BaseComponent) {
         titleBuilder = titleBuilderScope
     }
 
