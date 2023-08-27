@@ -7,6 +7,7 @@ import org.bukkit.Server
 import org.quartz.impl.jdbcjobstore.JobStoreTX
 import org.quartz.utils.ConnectionProvider
 import org.quartz.utils.DBConnectionManager
+import org.slf4j.LoggerFactory
 import java.util.logging.Logger
 
 /**
@@ -26,6 +27,9 @@ class HQFrameworkJobStore(
         const val TABLE_PREFIX = "hqframework_quartz_"
     }
 
+    override fun getLog(): org.slf4j.Logger {
+        return LoggerFactory.getLogger("HQFrameworkJobStore")
+    }
     init {
         if (config.getString("database.type").uppercase() == "SQLITE") {
             driverDelegateClass = SQLiteDriverDelegate::class.qualifiedName
