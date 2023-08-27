@@ -26,6 +26,10 @@ class BaseComponentService(
     private val serializeFunction =
         reflectionWrapper.getFunction(componentSerializerClass,
             FunctionType("a", null, listOf(String::class), true),
+            Version.V_19.handleFunction("b") {
+                setParameterClasses(String::class)
+                static()
+            },
             Version.V_20_FORGE.handleFunction("m_130701_") {
                 setParameterClasses(String::class)
                 static()
