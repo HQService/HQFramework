@@ -7,6 +7,7 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
+import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
@@ -148,6 +149,18 @@ class NmsReflectionWrapperImpl(
                     if (connection != null) virtual.send { packet ->
                         sendPacket.call(connection, packet)
                     }
+                }
+            }
+        }
+    }
+
+    override suspend fun sendPacket(players: List<Player>, virtualEntity: AbstractVirtualEntity, switchState: Boolean) {
+        virtualEntity.createVirtualMessage(switchState)?.also { virtual ->
+            players.forEach { player ->
+                val handle = getHandle.call(player)
+                val connection = connection.call(handle)
+                if (connection != null) virtual.send { packet ->
+                    sendPacket.call(connection, packet)
                 }
             }
         }

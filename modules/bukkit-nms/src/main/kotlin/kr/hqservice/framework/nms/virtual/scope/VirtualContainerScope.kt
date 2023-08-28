@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.virtual.factory
+package kr.hqservice.framework.nms.virtual.scope
 
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.nms.virtual.Virtual
@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.koin.core.component.KoinComponent
 
-class VirtualContainerFactory(
+class VirtualContainerScope(
     private val receiver: Player,
 ) : KoinComponent {
     //private val setSlotItems = mutableMapOf<Int, VirtualItem>()

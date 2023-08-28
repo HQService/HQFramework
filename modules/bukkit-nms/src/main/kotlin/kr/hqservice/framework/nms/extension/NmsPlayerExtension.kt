@@ -4,10 +4,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.virtual.factory.VirtualFactory
-import kr.hqservice.framework.nms.virtual.factory.VirtualViewFactory
-import kr.hqservice.framework.nms.virtual.factory.impl.GlobalVirtualFactory
-import kr.hqservice.framework.nms.virtual.factory.impl.SingleVirtualFactory
+import kr.hqservice.framework.nms.virtual.scope.VirtualViewScope
+import kr.hqservice.framework.nms.virtual.scope.impl.GlobalVirtualScope
+import kr.hqservice.framework.nms.virtual.scope.impl.SingleVirtualScope
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
@@ -24,35 +23,38 @@ private val containerService: NmsService<Player, ContainerWrapper> by getKoin().
 private val handlerRegistry: VirtualHandlerRegistry by getKoin().inject()
 private val scope: HQCoroutineScope by getKoin().inject(named("virtual"))
 
-suspend fun Player.virtualScope(factoryScope: suspend VirtualFactory.() -> Unit) {
-    val factory: VirtualFactory = SingleVirtualFactory(this, reflectionWrapper, itemStackService)
-    factory.factoryScope()
-}
-
-fun Player.virtual(distance: Double = .0, factoryScope: suspend VirtualFactory.() -> Unit): Job {
-    val factory: VirtualFactory = if (distance > .0) {
+fun Player.virtual(distance: Double, virtualScope: suspend GlobalVirtualScope.() -> Unit): Job {
+    val factory = if (distance > .0) {
         val receivers =
             location.world?.getNearbyEntities(location, distance, distance, distance)?.filterIsInstance<Player>()
                 ?.filter { it.isOnline } ?: emptyList()
-        GlobalVirtualFactory(receivers, reflectionWrapper)
-    } else SingleVirtualFactory(this, reflectionWrapper, itemStackService)
+        GlobalVirtualScope(receivers, reflectionWrapper)
+    } else throw IllegalArgumentException("distance 는 0 이하일 수 없습니다.")
     return scope.launch {
-        factory.factoryScope()
+        factory.virtualScope()
     }
 }
 
-fun Location.virtual(distance: Double, factoryScope: suspend VirtualFactory.() -> Unit): Job {
+fun Player.virtual(virtualScope: suspend SingleVirtualScope.() -> Unit): Job {
+    val factory = SingleVirtualScope(this, reflectionWrapper)
+    return scope.launch {
+        factory.virtualScope()
+    }
+}
+
+fun Location.virtual(distance: Double, virtualScope: suspend GlobalVirtualScope.() -> Unit): Job {
+    if (distance <= .0) throw IllegalArgumentException("distance 는 0 이하일 수 없습니다.")
     val receivers =
         world?.getNearbyEntities(this, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }
             ?: emptyList()
-    val factory = GlobalVirtualFactory(receivers, reflectionWrapper)
+    val factory = GlobalVirtualScope(receivers, reflectionWrapper)
     return scope.launch {
-        factory.factoryScope()
+        factory.virtualScope()
     }
 }
 
-fun Player.virtualView(viewFactoryScope: VirtualViewFactory.() -> Unit) {
-    val scope = VirtualViewFactory(itemStackService, reflectionWrapper, containerService.wrap(this).getContainerId())
-    scope.viewFactoryScope()
+fun Player.virtualView(virtualScope: VirtualViewScope.() -> Unit) {
+    val scope = VirtualViewScope(itemStackService, reflectionWrapper, containerService.wrap(this).getContainerId())
+    scope.virtualScope()
     handlerRegistry.register(uniqueId, scope.create())
 }
