@@ -15,6 +15,6 @@ class MessageArgumentExceptionHandler : CommandArgumentExceptionHandler<Argument
         context: CommandContext,
         argument: String?
     ) {
-        sender.sendColorizedMessage(exception.message)
+        sender.sendColorizedMessage("&c${exception.message}")
     }
 }
