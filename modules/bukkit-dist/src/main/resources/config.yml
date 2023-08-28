@@ -6,7 +6,8 @@ netty:
 log:
   error:
     store-limit: 1000
-    path: "hq-errors/"
+    store-path: "hq-errors/"
+    print-stack-traces-when-unhandled: false
 
 database:
   type: sqlite

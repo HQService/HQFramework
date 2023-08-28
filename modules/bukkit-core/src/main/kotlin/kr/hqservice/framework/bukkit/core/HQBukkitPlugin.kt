@@ -75,6 +75,9 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             severe("exception: ${throwable::class.simpleName}")
             severe("cause: ${throwable.cause}")
             severe("message: ${throwable.message}")
+            if (isOptionPrintStackTrancesWhenUnhandledEnabled()) {
+                throwable.printStackTrace()
+            }
         }
     }
 
@@ -114,7 +117,11 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     }
 
     private fun getErrorFolder(): File {
-        return File(server.pluginManager.getPlugin("HQFramework")!!.config.getString("log.error.path", "hq-errors/")!!)
+        return File(server.pluginManager.getPlugin("HQFramework")!!.config.getString("log.error.store-path", "hq-errors/")!!)
+    }
+
+    private fun isOptionPrintStackTrancesWhenUnhandledEnabled(): Boolean {
+        return server.pluginManager.getPlugin("HQFramework")!!.config.getBoolean("log.error.print-stack-traces-when-unhandled", false)
     }
 
     override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
