@@ -15,8 +15,6 @@ class CommandArgumentExceptionHandlerComponentHandler(
     private val registry: CommandArgumentExceptionHandlerRegistry
 ) : HQComponentHandler<CommandArgumentExceptionHandler<*, *>> {
     override fun setup(element: CommandArgumentExceptionHandler<*, *>) {
-        element::class.simpleName.print("simpleName: ")
-        println("th")
         val throwable = element::class.supertypes
             .first { it.isSubtypeOf(CommandArgumentExceptionHandler::class.starProjectedType) }
             .arguments
