@@ -1,35 +1,29 @@
 package kr.hqservice.framework.command.argument.provider
 
+import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
+import kr.hqservice.framework.command.CommandArgumentProvider
 import kr.hqservice.framework.command.CommandContext
-import kr.hqservice.framework.command.HQCommandArgumentProvider
-import kr.hqservice.framework.command.argument.ChestRow
+import kr.hqservice.framework.command.argument.exception.ArgumentFeedback
 import kr.hqservice.framework.global.core.component.Component
+import kr.hqservice.framework.global.core.component.Qualifier
 import org.bukkit.Location
 
+@Qualifier("chestRow")
 @Component
-class ChestRowCommandArgumentProvider : HQCommandArgumentProvider<ChestRow> {
-    override fun getResult(context: CommandContext, string: String?): Boolean {
-        if (string == null) {
-            return false
+class ChestRowCommandArgumentProvider : CommandArgumentProvider<Int> {
+    override suspend fun cast(context: CommandContext, argument: String?): Int {
+        argument ?: throw ArgumentFeedback.RequireArgument
+        val int = argument.toIntOrNull() ?: throw ArgumentFeedback.NotNumber
+        if (int < 1 || int > 6) {
+            throw ArgumentFeedback.Message("&c1과 6 사이의 수를 입력해 주세요.")
         }
-        val int = string.toIntOrNull() ?: return false
-        return !(int < 1 || int > 6)
+
+        return int
     }
 
-    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String? {
-        return "1~6 사이의 수를 입력해주세요."
-    }
-
-    override fun cast(context: CommandContext, string: String): ChestRow {
-        return object : ChestRow {
-            override val row: Int = string.toInt()
-        }
-    }
-
-    override fun getTabComplete(
+    override suspend fun getTabComplete(
         context: CommandContext,
-        location: Location?,
-        argumentLabel: String?
+        location: Location?
     ): List<String> {
         return listOf("1", "2", "3", "4", "5", "6")
     }

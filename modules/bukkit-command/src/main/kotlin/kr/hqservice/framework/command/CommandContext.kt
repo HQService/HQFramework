@@ -6,6 +6,8 @@ import kotlin.reflect.KClassifier
 interface CommandContext {
     fun getCommandSender(): CommandSender
 
+    fun getArgumentLabel(): String
+
     fun findArgument(key: String): String?
 
     fun getArgument(key: String): String

@@ -1,17 +1,15 @@
 package kr.hqservice.framework.command.handler
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
-import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.command.*
+import kr.hqservice.framework.command.registry.CommandArgumentExceptionHandlerRegistry
 import kr.hqservice.framework.command.registry.CommandArgumentProviderRegistry
 import kr.hqservice.framework.command.registry.CommandRegistry
+import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
 import org.bukkit.Location
@@ -35,7 +33,8 @@ import kotlin.reflect.jvm.jvmErasure
 class CommandAnnotationHandler(
     private val pluginManager: PluginManager,
     private val commandRegistry: CommandRegistry,
-    private val argumentProviderRegistry: CommandArgumentProviderRegistry
+    private val argumentProviderRegistry: CommandArgumentProviderRegistry,
+    private val commandArgumentExceptionHandlerRegistry: CommandArgumentExceptionHandlerRegistry
 ) : HQAnnotationHandler<Command> {
     override fun setup(instance: Any, annotation: Command) {
         val plugin = PluginScopeFinder.get(instance::class)
@@ -104,7 +103,10 @@ class CommandAnnotationHandler(
             .first { it.name == "commandMap" }
             .apply { isAccessible = true }
             .get(pluginManager) as CommandMap
-        commandMap.register("hq", HQBukkitCommand(label, plugin, root, argumentProviderRegistry))
+        commandMap.register(
+            "hq",
+            HQBukkitCommand(label, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
+        )
 
         plugin.launch {
             bukkitDelay(1)
@@ -127,7 +129,8 @@ class CommandAnnotationHandler(
         label: String,
         private val plugin: HQBukkitPlugin,
         private val hqCommandRoot: RegisteredCommandRoot,
-        private val registry: CommandArgumentProviderRegistry
+        private val registry: CommandArgumentProviderRegistry,
+        private val exceptionHandlerRegistry: CommandArgumentExceptionHandlerRegistry
     ) : BukkitCommand(label) {
 
         override fun getPermission(): String {
@@ -184,76 +187,47 @@ class CommandAnnotationHandler(
 
             val arguments: MutableList<Any?> = mutableListOf()
             plugin.launch commandLaunch@{
-                executor.function.parameters.forEach forEach@{ parameter ->
-                    val index = parameter.index
-                    val argumentLabel = findArgumentLabel(parameter)
+                executor.function.parameters.forEach forEach@{ kParameter ->
+                    val index = kParameter.index
+                    val argumentLabel = findArgumentLabel(kParameter)
                     val argument: String? = args.getOrNull(index - 2 + (treeKey.size + 1))
                     if (index in 0..1) {
                         return@forEach
                     }
                     // 함수 인자가 nullable 이면 생략한다.
-                    if (parameter.type.isMarkedNullable && argument == null) {
+                    if (kParameter.type.isMarkedNullable && argument == null) {
                         arguments.add(null)
                         return@forEach
                     }
                     val parameterMap = executor.function.valueParameters
                         .toMutableList()
                         .apply { removeFirst() }
-                        .associateBy { kParameter ->
-                            args.getOrNull(kParameter.index - 1 + treeKey.size) ?: ""
+                        .associateBy { kParameter2 ->
+                            args.getOrNull(kParameter2.index - 1 + treeKey.size) ?: ""
                         }
-                    val commandContext = CommandContextImpl(senderInstance, parameterMap)
-                    val argumentForResult = if (argument == argumentLabel) null else argument
-                    when (val argumentProvider = getArgumentProvider(parameter)) {
-                        is HQSuspendCommandArgumentProvider -> {
-                            var isFailed = false
-                            withContext(Dispatchers.IO) withContext@{
-                                val result = argumentProvider.getResult(commandContext, argumentForResult)
-                                if (!result || argumentForResult == null) {
-                                    val failureMessage = argumentProvider.getFailureMessage(
-                                        commandContext,
-                                        argumentForResult,
-                                        argumentLabel
-                                    )
-                                    if (failureMessage != null) {
-                                        senderInstance.sendColorizedMessage("&c$failureMessage")
-                                    }
-                                    isFailed = true
-                                    return@withContext
-                                }
-
-                                val casted = argumentProvider.cast(commandContext, argumentForResult)
-                                arguments.add(casted)
-                            }
-                            if (isFailed) {
-                                return@commandLaunch
+                    val commandContext = CommandContextImpl(senderInstance, argumentLabel ?: kParameter.name!!, parameterMap)
+                    var isFailed = false
+                    withContext(Dispatchers.IO) withContext@{
+                        val argumentProvider = getArgumentProvider(kParameter)
+                        val casted = try {
+                            argumentProvider.cast(commandContext, argument)
+                        } catch (throwable: Throwable) {
+                            val handler = exceptionHandlerRegistry.find(throwable::class, sender::class)
+                            if (handler != null) {
+                                handler.handle(throwable, sender, commandContext, argument)
+                                isFailed = true
+                            } else {
+                                throw throwable
                             }
                         }
-
-                        is HQCommandArgumentProvider -> {
-                            var isFailed = false
-                            withContext(Dispatchers.BukkitMain) mainLaunch@{
-                                val result = argumentProvider.getResult(commandContext, argumentForResult)
-                                if (!result || argumentForResult == null) {
-                                    val failureMessage = argumentProvider.getFailureMessage(
-                                        commandContext,
-                                        argumentForResult,
-                                        argumentLabel
-                                    )
-                                    if (failureMessage != null) {
-                                        senderInstance.sendColorizedMessage("&c$failureMessage")
-                                    }
-                                    isFailed = true
-                                    return@mainLaunch
-                                }
-                                val casted = argumentProvider.cast(commandContext, argumentForResult)
-                                arguments.add(casted)
-                            }
-
-                            if (isFailed) {
-                                return@commandLaunch
-                            }
+                        if (casted == null) {
+                            isFailed = true
+                            return@withContext
                         }
+                        arguments.add(casted)
+                    }
+                    if (isFailed) {
+                        return@commandLaunch
                     }
                 }
 
@@ -264,11 +238,7 @@ class CommandAnnotationHandler(
 
                 val function = executor.function
                 if (function.isSuspend) {
-                    executor.function.callSuspend(
-                        executor.executorInstance,
-                        senderInstance,
-                        *arguments.toTypedArray()
-                    )
+                    executor.function.callSuspend(executor.executorInstance, senderInstance, *arguments.toTypedArray())
                 } else {
                     executor.function.call(executor.executorInstance, senderInstance, *arguments.toTypedArray())
                 }
@@ -319,18 +289,14 @@ class CommandAnnotationHandler(
                         }.mapIndexed { index, argument ->
                             argument to executor.function.valueParameters[index + 1]
                         }.toMap()
-                    val context = CommandContextImpl(sender, parameterMap)
-                    return when (val argumentProvider = getArgumentProvider(kParameter)) {
-                        is HQSuspendCommandArgumentProvider<*> -> runBlocking {
-                            argumentProvider.getTabComplete(context, location, findArgumentLabel(kParameter))
-                        }
-
-                        is HQCommandArgumentProvider<*> -> argumentProvider.getTabComplete(
-                            context,
-                            location,
-                            findArgumentLabel(kParameter)
-                        )
-                    }.filter { it.startsWith(args.last()) }
+                    val context = CommandContextImpl(sender, findArgumentLabel(kParameter) ?: kParameter.name!!, parameterMap)
+                    return runBlocking {
+                        plugin.async(Dispatchers.IO) {
+                            getArgumentProvider(kParameter)
+                                .getTabComplete(context, location)
+                                .filter { it.startsWith(args.last()) }
+                        }.await()
+                    }
                 } else {
                     return tree.getSuggestions(sender).filter { it.startsWith(args.last()) }
                 }
@@ -342,8 +308,6 @@ class CommandAnnotationHandler(
             return if (hqCommandRoot.findTreeExact(arguments) != null) {
                 arguments
             } else {
-                // tree 가 아니네? 그러면 뒤에있는건 노드일까 트리일까? 노드거나 그 노드의 파라미터일 수 있어.
-                // tree 가 나올때까지 소거하자.
                 val mutableArguments = arguments.toMutableList()
                 while (hqCommandRoot.findTreeExact(mutableArguments.toTypedArray()) == null) {
                     mutableArguments.removeLast()
@@ -353,9 +317,9 @@ class CommandAnnotationHandler(
         }
 
         private fun getArgumentProvider(parameter: KParameter): CommandArgumentProvider<*> {
-            val classifier =
-                parameter.type.classifier ?: throw IllegalStateException("parameter type cannot be intersection type")
-            return registry.getProvider(classifier)
+            val classifier = parameter.type.jvmErasure
+            val qualifier = parameter.findAnnotation<Qualifier>()?.value
+            return registry.getProvider(classifier, qualifier)
         }
 
         private fun findArgumentLabel(kAnnotatedElement: KAnnotatedElement): String? {

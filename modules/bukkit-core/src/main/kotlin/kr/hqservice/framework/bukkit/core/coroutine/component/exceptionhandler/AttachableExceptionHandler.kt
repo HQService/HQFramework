@@ -1,7 +1,5 @@
 package kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler
 
-import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.HandleResult
-
 interface AttachableExceptionHandler {
     val priority: Int
 

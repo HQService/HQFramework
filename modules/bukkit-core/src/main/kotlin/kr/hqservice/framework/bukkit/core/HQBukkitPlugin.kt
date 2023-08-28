@@ -57,7 +57,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         exceptionHandlers.forEach forEach@{ handler ->
             when (handler.handle(throwable)) {
                 HandleResult.HANDLED -> return@handler
-                HandleResult.MUST_STORE -> {
+                HandleResult.HANDLED_MUST_STORE -> {
                     storeStackTrace(throwable)
                     return@handler
                 }
