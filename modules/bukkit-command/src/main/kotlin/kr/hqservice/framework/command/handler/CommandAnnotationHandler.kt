@@ -318,7 +318,7 @@ class CommandAnnotationHandler(
 
         private fun getArgumentProvider(parameter: KParameter): CommandArgumentProvider<*> {
             val classifier = parameter.type.jvmErasure
-            val qualifier = classifier.findAnnotation<Qualifier>()?.value
+            val qualifier = parameter.findAnnotation<Qualifier>()?.value
             return registry.getProvider(classifier, qualifier)
         }
 
