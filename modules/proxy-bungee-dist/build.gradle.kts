@@ -1,7 +1,7 @@
 plugins {
     id("hqframework.shared")
-    id("hqframework.bungee-resource-generator")
     id("hqframework.shadow")
+    id("kr.hqservice.resource-generator.bungee")
 }
 
 bungeeResourceGenerator {

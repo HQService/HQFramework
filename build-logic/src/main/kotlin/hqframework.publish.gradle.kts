@@ -37,8 +37,8 @@ publishing {
         maven("https://maven.hqservice.kr/repository/maven-snapshots/") {
             credentials {
                 if (extra.has("nexusUsername") && extra.has("nexusPassword")) {
-                    this.username = getProperty("nexusUsername")
-                    this.password = getProperty("nexusPassword")
+                    this.username = extra["nexusUsername"].toString()
+                    this.password = extra["nexusPassword"].toString()
                 }
                 if (System.getenv("nexusUsername") != null && System.getenv("nexusPassword") != null) {
                     this.username = System.getenv("nexusUsername")

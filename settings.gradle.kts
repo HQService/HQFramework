@@ -12,7 +12,15 @@ pluginManagement {
         kotlin("kapt") version kotlinVersion apply false
         id("com.github.johnrengelman.shadow") version shadowVersion apply false
         id("hqframework.dependency-handler-extensions")
-        id("hqframework.configure-extensions")
+        id("kr.hqservice.resource-generator.bukkit") version "1.0.0" apply false
+        id("kr.hqservice.resource-generator.bungee") version "1.0.0" apply false
+
+    }
+
+    repositories {
+        mavenCentral()
+        maven("https://maven.hqservice.kr/repository/maven-public/")
+        gradlePluginPortal()
     }
 }
 

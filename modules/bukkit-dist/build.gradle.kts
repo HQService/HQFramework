@@ -1,7 +1,7 @@
 plugins {
     id("hqframework.shared")
-    id("hqframework.bukkit-resource-generator")
     id("hqframework.shadow")
+    id("kr.hqservice.resource-generator.bukkit")
 }
 
 bukkitResourceGenerator {
