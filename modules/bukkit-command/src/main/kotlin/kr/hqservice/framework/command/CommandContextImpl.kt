@@ -9,6 +9,7 @@ import kotlin.reflect.full.findAnnotation
 
 internal class CommandContextImpl(
     private val commandSender: CommandSender,
+    private val argumentLabel: String,
     private val parameterMap: Map<String, KParameter>
 ) : CommandContext {
     //                     contextKey, argument
@@ -24,6 +25,10 @@ internal class CommandContextImpl(
 
     private fun getContextKey(kParameter: KParameter): String {
         return kParameter.findAnnotation<ContextKey>()?.key ?: kParameter.name!!
+    }
+
+    override fun getArgumentLabel(): String {
+        return argumentLabel
     }
 
     override fun getCommandSender(): CommandSender {

@@ -1,32 +1,23 @@
 package kr.hqservice.framework.bukkit.scheduler.command
 
+import kr.hqservice.framework.command.CommandArgumentProvider
 import kr.hqservice.framework.command.CommandContext
-import kr.hqservice.framework.command.HQCommandArgumentProvider
+import kr.hqservice.framework.command.argument.exception.ArgumentFeedback
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
 import org.quartz.CronExpression
 
 @Component
-class CronExpressionCommandArgumentProvider : HQCommandArgumentProvider<CronExpression> {
-    override fun getResult(context: CommandContext, string: String?): Boolean {
-        if (string == null) {
-            return false
+class CronExpressionCommandArgumentProvider : CommandArgumentProvider<CronExpression> {
+    override suspend fun cast(context: CommandContext, argument: String?): CronExpression {
+        argument ?: throw ArgumentFeedback.RequireArgument
+        if (!CronExpression.isValidExpression(argument.replace("_", " "))) {
+            throw ArgumentFeedback.Message("&cIllegal cron expression format.")
         }
-        return CronExpression.isValidExpression(string.replace("_", " "))
+        return CronExpression(argument.replace("_", " "))
     }
 
-    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String {
-        if (string == null) {
-            return "&Please write cron expression."
-        }
-        return "&cIllegal cron expression format."
-    }
-
-    override fun cast(context: CommandContext, string: String): CronExpression {
-        return CronExpression(string.replace("_", " "))
-    }
-
-    override fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String?): List<String> {
+    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
         return listOf("CronExpression")
     }
 }

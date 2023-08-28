@@ -1,12 +1,12 @@
 package kr.hqservice.framework.command.registry
 
 import kr.hqservice.framework.command.CommandArgumentProvider
-import kotlin.reflect.KClassifier
+import kotlin.reflect.KClass
 
 interface CommandArgumentProviderRegistry {
-    fun addProvider(provider: CommandArgumentProvider<*>)
+    fun addProvider(provider: CommandArgumentProvider<*>, qualifier: String?)
 
-    fun findProvider(classifier: KClassifier): CommandArgumentProvider<*>?
+    fun findProvider(kClass: KClass<*>, qualifier: String?): CommandArgumentProvider<*>?
 
-    fun getProvider(classifier: KClassifier): CommandArgumentProvider<*>
+    fun getProvider(kClass: KClass<*>, qualifier: String?): CommandArgumentProvider<*>
 }

@@ -1,25 +1,19 @@
 package kr.hqservice.framework.command.argument.provider
 
+import kr.hqservice.framework.command.CommandArgumentProvider
 import kr.hqservice.framework.command.CommandContext
-import kr.hqservice.framework.command.HQCommandArgumentProvider
+import kr.hqservice.framework.command.argument.exception.ArgumentFeedback
 import kr.hqservice.framework.global.core.component.Component
 import org.bukkit.Location
 
 @Component
-class IntCommandArgumentProvider : HQCommandArgumentProvider<Int> {
-    override fun getTabComplete(context: CommandContext, location: Location?, argumentLabel: String?): List<String> {
-        return listOf(argumentLabel ?: "정수")
+class IntCommandArgumentProvider : CommandArgumentProvider<Int> {
+    override suspend fun cast(context: CommandContext, argument: String?): Int {
+        argument ?: throw ArgumentFeedback.RequireArgument
+        return argument.toIntOrNull() ?: throw ArgumentFeedback.NotNumber
     }
 
-    override fun getResult(context: CommandContext, string: String?): Boolean {
-        return string?.toIntOrNull() != null
-    }
-
-    override fun getFailureMessage(context: CommandContext, string: String?, argumentLabel: String?): String {
-        return "${argumentLabel ?: "정수"}을(를) 입력해야 합니다."
-    }
-
-    override fun cast(context: CommandContext, string: String): Int {
-        return string.toInt()
+    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
+        return listOf("정수")
     }
 }

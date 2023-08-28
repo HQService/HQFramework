@@ -5,7 +5,6 @@ import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.*
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
-import kr.hqservice.framework.global.core.extension.print
 import java.lang.Exception
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.*
@@ -43,7 +42,7 @@ class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScope
                 if (throwable::class.starProjectedType == exceptionClass.type) {
                     function.call(obj, throwable)
                     if (function.hasAnnotation<MustBeStored>()) {
-                        return HandleResult.MUST_STORE
+                        return HandleResult.HANDLED_MUST_STORE
                     } else {
                         return HandleResult.HANDLED
                     }
