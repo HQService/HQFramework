@@ -1,9 +1,7 @@
 package kr.hqservice.framework.bungee.core.netty.api
 
 import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQService
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.PacketSender
@@ -12,13 +10,12 @@ import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ProxyServer
 import java.util.logging.Logger
 
-@Component
-@Singleton(binds = [PacketSender::class])
+@Bean
 class ProxyPacketSender(
     private val proxy: ProxyServer,
     private val logger: Logger,
     private val channelContainer: NettyChannelRegistry
-) : PacketSender, HQService {
+) : PacketSender {
     override fun sendPacketToProxy(packet: Packet) {
         throw UnsupportedOperationException("proxy to proxy")
     }

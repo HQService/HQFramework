@@ -1,8 +1,9 @@
 package kr.hqservice.framework.bukkit.core.netty.handler.impl
 
+import kotlinx.coroutines.launch
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.netty.event.NettyClientConnectedEvent
 import kr.hqservice.framework.bukkit.core.netty.handler.ChannelMainHandler
-import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.channel.ChannelWrapper
@@ -12,22 +13,16 @@ import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.pipeline.ConnectionState
-import org.bukkit.plugin.Plugin
 
-@Bean
-class ChannelMainHandlerImpl(
-    private val plugin: Plugin
-) : ChannelMainHandler {
+class LocalChannelMainHandler(private val plugin: HQBukkitPlugin) : ChannelMainHandler {
     private var proxyChannel: ChannelWrapper? = null
 
     override fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
         channel.handler.connectionState = ConnectionState.CONNECTED
         this.proxyChannel = channel.handler.channel
-        plugin.server.scheduler.runTask(plugin, Runnable {
-            plugin.server.pluginManager.callEvent(
-                NettyClientConnectedEvent(channel)
-            )
-        })
+        plugin.launch {
+            plugin.server.pluginManager.callEvent(NettyClientConnectedEvent(channel))
+        }
     }
 
     override fun sendPacketToProxy(packet: Packet) {
@@ -54,18 +49,22 @@ class ChannelMainHandlerImpl(
     }
 
     override fun broadcast(message: String, logging: Boolean) {
-        sendPacketToProxy(BroadcastPacket(message, logging, null))
+        plugin.server.broadcastMessage(message)
     }
 
     override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
-        sendPacketToProxy(BroadcastPacket(message, logging, channel))
+        if (plugin.server.port == channel.getPort() && plugin.server.name == channel.getName()) {
+            plugin.server.broadcastMessage(message)
+        }
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
-        sendPacketToProxy(MessagePacket(message, logging, players))
+        players.forEach { player ->
+            plugin.server.getPlayer(player.getUniqueId())?.sendMessage(message)
+        }
     }
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
-        sendPacketToProxy(MessagePacket(message, logging, listOf(player)))
+        plugin.server.getPlayer(player.getUniqueId())?.sendMessage(message)
     }
 }
