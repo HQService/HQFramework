@@ -14,6 +14,6 @@ class FloatCommandArgumentProvider : CommandArgumentProvider<Float> {
     }
 
     override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf("숫자")
+        return listOf(context.getArgumentLabel())
     }
 }

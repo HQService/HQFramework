@@ -13,6 +13,6 @@ class StringCommandArgumentProvider : CommandArgumentProvider<String> {
     }
 
     override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf("문자열")
+        return listOf(context.getArgumentLabel())
     }
 }

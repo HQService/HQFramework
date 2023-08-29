@@ -9,7 +9,7 @@ import org.bukkit.Location
 @Component
 class LongCommandArgumentProvider : CommandArgumentProvider<Long> {
     override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf("숫자")
+        return listOf(context.getArgumentLabel())
     }
 
     override suspend fun cast(context: CommandContext, argument: String?): Long {

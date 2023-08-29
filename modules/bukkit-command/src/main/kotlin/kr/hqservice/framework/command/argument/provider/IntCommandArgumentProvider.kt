@@ -14,6 +14,6 @@ class IntCommandArgumentProvider : CommandArgumentProvider<Int> {
     }
 
     override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf("정수")
+        return listOf(context.getArgumentLabel())
     }
 }
