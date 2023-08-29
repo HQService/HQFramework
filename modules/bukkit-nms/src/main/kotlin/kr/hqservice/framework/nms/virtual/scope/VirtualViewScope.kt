@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.virtual.factory
+package kr.hqservice.framework.nms.virtual.scope
 
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
@@ -7,7 +7,7 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 
-class VirtualViewFactory(
+class VirtualViewScope(
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>,
     private val reflectionWrapper: NmsReflectionWrapper,
     private val containerId: Int

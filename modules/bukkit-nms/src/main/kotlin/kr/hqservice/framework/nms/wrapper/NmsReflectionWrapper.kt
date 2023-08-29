@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms.wrapper
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
+import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
 import org.bukkit.Server
 import org.bukkit.entity.Player
@@ -38,6 +39,8 @@ interface NmsReflectionWrapper {
     suspend fun sendPacket(player: Player, vararg virtual: Virtual)
 
     suspend fun sendPacket(players: List<Player>, vararg virtual: Virtual)
+
+    suspend fun sendPacket(players: List<Player>, virtualEntity: AbstractVirtualEntity, switchState: Boolean)
 }
 
 fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {

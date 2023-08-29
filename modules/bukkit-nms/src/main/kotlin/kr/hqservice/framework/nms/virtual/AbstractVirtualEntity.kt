@@ -21,6 +21,7 @@ abstract class AbstractVirtualEntity(
 
     private var state: Byte = 0x7
     private var itemContainer: List<Any>? = null
+    private var vaild = false
     abstract fun getEntity(): Any
     private fun entityInitialize() {
         if (name.isNotEmpty()) {
@@ -28,6 +29,7 @@ abstract class AbstractVirtualEntity(
             setNameVisible(true)
         } else setNameVisible(false)
         initialize()
+        vaild = true
     }
 
     protected abstract fun initialize()
@@ -105,23 +107,23 @@ abstract class AbstractVirtualEntity(
             state = state switch VirtualEntityState.UPDATE_META_DATA
     }
 
-    final override fun createVirtualMessage(): VirtualMessage? {
+    internal fun createVirtualMessage(switchState: Boolean): VirtualMessage? {
         if (state mask VirtualEntityState.UNHANDLED) return null
 
         val packets = mutableListOf<Any>()
         if (state mask VirtualEntityState.DESTROY) {
-            state = state switch VirtualEntityState.UNHANDLED
+            if (switchState) state = state switch VirtualEntityState.UNHANDLED
             return VirtualMessageImpl(virtualEntityClasses.entityDestroyPacket.newInstance(arrayOf(getEntityId()).toIntArray()))
         }
 
         if (state mask VirtualEntityState.CREAT) {
-            entityInitialize()
-            state = state switch VirtualEntityState.CREAT
+            if (!vaild) entityInitialize()
+            if (switchState) state = state switch VirtualEntityState.CREAT
             packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(getEntity()))
         }
 
         if (state mask VirtualEntityState.UPDATE_ITEM) {
-            state = state switch VirtualEntityState.UPDATE_ITEM
+            if (switchState) state = state switch VirtualEntityState.UPDATE_ITEM
             packets.add(
                 virtualEntityClasses.entityEquipmentPacket.newInstance(
                     getEntityId(),
@@ -131,16 +133,20 @@ abstract class AbstractVirtualEntity(
         }
 
         if (state mask VirtualEntityState.RELOCATE) {
-            state = state switch VirtualEntityState.RELOCATE
+            if (switchState) state = state switch VirtualEntityState.RELOCATE
             packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(getEntity()))
         }
 
         if (state mask VirtualEntityState.UPDATE_META_DATA) {
-            state = state switch VirtualEntityState.UPDATE_META_DATA
+            if (switchState) state = state switch VirtualEntityState.UPDATE_META_DATA
             packets.add(virtualEntityClasses.createMetaDataPacket(getEntity()))
         }
         return if (packets.isEmpty()) null
         else if (packets.size == 1) VirtualMessageImpl(packets.first())
         else VirtualListMessage(packets)
+    }
+
+    final override fun createVirtualMessage(): VirtualMessage? {
+        return createVirtualMessage(true)
     }
 }
