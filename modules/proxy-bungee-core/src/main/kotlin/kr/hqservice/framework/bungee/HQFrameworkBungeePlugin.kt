@@ -24,7 +24,7 @@ abstract class HQFrameworkBungeePlugin : HQBungeePlugin() {
                 single<HQPlugin>(named("hqframework")) { this@HQFrameworkBungeePlugin }
                 single<HQBungeePlugin>(named("hqframework")) { this@HQFrameworkBungeePlugin }
                 single<HQFrameworkBungeePlugin> { this@HQFrameworkBungeePlugin }
-                single<ComponentRegistry> { BungeeComponentRegistry(it.get()) }
+                factory<ComponentRegistry> { BungeeComponentRegistry(it.get()) }
             }
             modules(module)
         }
