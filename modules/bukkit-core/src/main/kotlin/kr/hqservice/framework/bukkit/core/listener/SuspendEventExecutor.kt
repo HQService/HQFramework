@@ -1,11 +1,10 @@
 package kr.hqservice.framework.bukkit.core.listener
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import org.bukkit.event.Event
 import org.bukkit.event.Listener
 import org.bukkit.plugin.EventExecutor
@@ -24,28 +23,22 @@ class SuspendEventExecutor(
     private val method: KFunction<*>,
     private val plugin: HQBukkitPlugin
 ) : EventExecutor {
+    @OptIn(ExperimentalStdlibApi::class)
     override fun execute(empty: Listener, event: Event) {
         if (eventClass.isInstance(event)) {
-            val dispatcher = if (event.isAsynchronous) {
-                Dispatchers.Unconfined
-            } else {
-                Dispatchers.BukkitMain
-            }
-            if (method.hasAnnotation<Concurrent>()) {
-                plugin.launch(dispatcher, CoroutineStart.UNDISPATCHED) {
-                    executeHandler(event)
-                }
-            } else {
-                runBlocking {
-                    plugin.launch(dispatcher, CoroutineStart.UNDISPATCHED) {
-                        executeHandler(event)
-                    }.join()
+            runBlocking {
+                plugin.launch(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key), CoroutineStart.UNDISPATCHED) {
+                    invokeHandlerMethod(event)
+                }.apply {
+                    if (!method.hasAnnotation<Concurrent>()) {
+                        join()
+                    }
                 }
             }
         }
     }
 
-    private suspend fun executeHandler(event: Event) {
+    private suspend fun invokeHandlerMethod(event: Event) {
         try {
             if (method.isSuspend) {
                 method.callSuspend(listenerInstance, event)
