@@ -1,6 +1,5 @@
 package kr.hqservice.framework.view.element
 
-import kr.hqservice.framework.view.InventoryLifecycle
 import kr.hqservice.framework.view.event.ButtonInteractEvent
 import kr.hqservice.framework.view.event.ButtonRenderEvent
 import kr.hqservice.framework.view.state.State
@@ -8,10 +7,9 @@ import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 class ButtonElement(
-    private val lifecycleOwner: InventoryLifecycle,
-    internal val index: Int,
+    internal val index: Int
 ) : ViewElement {
-    private var onClick: (ButtonInteractEvent) -> Unit = {}
+    private var onClick: suspend (ButtonInteractEvent) -> Unit = {}
     private var onRender: (ButtonRenderEvent) -> Unit = {}
     internal var itemStackBuilder: suspend (Int) -> ItemStack? = { null }
     internal var subscribedStates: MutableList<State<*>> = mutableListOf()
@@ -36,7 +34,7 @@ class ButtonElement(
         }
     }
 
-    fun onClick(onClick: (event: ButtonInteractEvent) -> Unit) {
+    fun onClick(onClick: suspend (event: ButtonInteractEvent) -> Unit) {
         this.onClick = onClick
     }
 
@@ -44,7 +42,7 @@ class ButtonElement(
         this.onRender = onRender
     }
 
-    internal fun invokeOnclick(buttonInteractEvent: ButtonInteractEvent) {
+    internal suspend fun invokeOnclick(buttonInteractEvent: ButtonInteractEvent) {
         onClick.invoke(buttonInteractEvent)
     }
 
