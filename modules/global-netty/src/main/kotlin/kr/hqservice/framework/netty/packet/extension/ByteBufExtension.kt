@@ -48,9 +48,9 @@ fun ByteBuf.writeString(string: String) {
 
 fun ByteBuf.readString(): String {
     val length = readVarInt(5)
-    val bytes = ByteArray(length).decompress()
+    val bytes = ByteArray(length)
     readBytes(bytes)
-    return bytes.toString(Charsets.UTF_8)
+    return bytes.decompress().toString(Charsets.UTF_8)
 }
 
 fun ByteBuf.writeStringArray(array: Array<String>) {

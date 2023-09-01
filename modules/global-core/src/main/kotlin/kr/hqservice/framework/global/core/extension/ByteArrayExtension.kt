@@ -17,7 +17,6 @@ fun ByteArray.decompress(): ByteArray {
     ByteArrayOutputStream().use {
         InflaterOutputStream(it).use { inputStream ->
             inputStream.write(this)
-            inputStream.close()
         }
         return it.toByteArray()
     }
