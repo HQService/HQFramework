@@ -7,6 +7,7 @@ import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Direction
+import kr.hqservice.framework.netty.packet.message.BaseComponentMessagePacket
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
 import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
@@ -39,6 +40,7 @@ class NettyServerBootstrap(
 
         Direction.INBOUND.registerPacket(BroadcastPacket::class)
         Direction.INBOUND.registerPacket(MessagePacket::class)
+        Direction.INBOUND.registerPacket(BaseComponentMessagePacket::class)
         registerDefaultListeners()
     }
 
@@ -85,6 +87,10 @@ class NettyServerBootstrap(
         }
 
         Direction.INBOUND.addListener(MessagePacket::class) { packet, _ ->
+            packetSender.sendMessageToPlayers(packet.receivers, packet.message, packet.logging)
+        }
+
+        Direction.INBOUND.addListener(BaseComponentMessagePacket::class) { packet, _ ->
             packetSender.sendMessageToPlayers(packet.receivers, packet.message, packet.logging)
         }
     }

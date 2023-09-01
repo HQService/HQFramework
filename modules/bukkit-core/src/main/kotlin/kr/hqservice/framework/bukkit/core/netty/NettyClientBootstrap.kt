@@ -5,6 +5,7 @@ import kr.hqservice.framework.bukkit.core.netty.event.NettyClientDisconnectedEve
 import kr.hqservice.framework.bukkit.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.packet.Direction
+import kr.hqservice.framework.netty.packet.message.BaseComponentMessagePacket
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
 import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
@@ -28,6 +29,7 @@ class NettyClientBootstrap(
         if (bootup) {
             Direction.OUTBOUND.registerPacket(BroadcastPacket::class)
             Direction.OUTBOUND.registerPacket(MessagePacket::class)
+            Direction.OUTBOUND.registerPacket(BaseComponentMessagePacket::class)
         }
         bootup = false
         future.whenCompleteAsync { channel, throwable ->

@@ -8,6 +8,7 @@ import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Packet
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ProxyServer
+import net.md_5.bungee.api.chat.BaseComponent
 import java.util.logging.Logger
 
 @Bean
@@ -50,7 +51,16 @@ class ProxyPacketSender(
         if (logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message)}")
     }
 
+    override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
+        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(message) }
+        if (logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message.toPlainText())}")
+    }
+
     override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
+        sendMessageToPlayers(listOf(player), message, logging)
+    }
+
+    override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
         sendMessageToPlayers(listOf(player), message, logging)
     }
 }
