@@ -11,6 +11,8 @@ interface HQYamlConfigurationSection {
 
     fun getIntegerList(key: String): List<Int>
 
+    fun getLongList(key: String): List<Long>
+
     fun getBoolean(key: String, default: Boolean = false): Boolean
 
     fun findBoolean(key: String): Boolean?
