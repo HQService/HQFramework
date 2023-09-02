@@ -1,6 +1,5 @@
 package kr.hqservice.framework.yaml.test
 
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.yaml.extension.yaml
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -25,7 +24,7 @@ class HQYamlTest {
 
         yaml.reload()
         yaml.getSection("netty")?.getKeys()?.forEach {
-            it.print("netty-section-> ")
+            // it.print("netty-section-> ")
         }
         assertEquals(yaml.getString("test"), "hello")
 
@@ -33,4 +32,12 @@ class HQYamlTest {
         temp.delete()
     }
 
+    @Test
+    fun test() {
+        val file = File("src/test/resources/config.yml")
+        val config = file.yaml()
+
+        val list = config.getLongList("long-list")
+        println(list)
+    }
 }

@@ -47,6 +47,11 @@ open class HQYamlConfigurationSectionImpl(
         else findNode(key).getList(Int::class.javaObjectType) ?: emptyList()
     }
 
+    override fun getLongList(key: String): List<Long> {
+        return if (!findNode(key).isList) emptyList()
+        else findNode(key).getList(Long::class.javaObjectType) ?: emptyList()
+    }
+
     override fun getBoolean(key: String, default: Boolean): Boolean {
         return findNode(key).getBoolean(default)
     }

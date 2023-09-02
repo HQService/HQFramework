@@ -57,6 +57,10 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
         return rootSection?.getIntegerList(key) ?: emptyList()
     }
 
+    override fun getLongList(key: String): List<Long> {
+        return rootSection?.getLongList(key) ?: emptyList()
+    }
+
     override fun getBoolean(key: String, default: Boolean): Boolean {
         return rootSection?.getBoolean(key) ?: default
     }

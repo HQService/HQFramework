@@ -33,11 +33,11 @@ class ListenerService {
                     it.isAccessible = true
                 }
             }.groupBy {
-                val firstParameter = it.valueParameters.firstOrNull()
-                if (firstParameter?.type?.isSubtypeOf(Event::class.starProjectedType) == false) {
+                val firstParameter = it.javaMethod!!.parameters.firstOrNull()?.type?.kotlin
+                if (firstParameter?.isSubclassOf(Event::class) == false) {
                     throw ListenerRegistrationFailedException(instance::class, "first parameter of event handler must be event.")
                 }
-                firstParameter!!.type.jvmErasure
+                firstParameter!!
             }.mapValues { (event, kFunctions) ->
                 kFunctions.map { kFunction ->
                     val executor = SuspendEventExecutor(event, instance, kFunction, plugin)

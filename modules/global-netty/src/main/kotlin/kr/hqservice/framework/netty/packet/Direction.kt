@@ -26,7 +26,7 @@ enum class Direction {
 
     fun <T : Packet> registerPacket(packetClass: KClass<T>) {
         if (packetMap.containsKey(packetClass.qualifiedName!!))
-            throw IllegalArgumentException("packet duplicated")
+            throw IllegalArgumentException("packet duplicated ${packetClass.qualifiedName!!}")
 
         val codecClass: Class<*> = ByteBuddy()
             .redefine(packetClass.java)

@@ -1,7 +1,7 @@
 package kr.hqservice.framework.bukkit.core.listener
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
@@ -12,6 +12,7 @@ import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
+import kotlin.reflect.full.hasAnnotation
 
 /**
  * @param eventClass event handler 의 첫번째 인자
@@ -22,22 +23,31 @@ class SuspendEventExecutor(
     private val method: KFunction<*>,
     private val plugin: HQBukkitPlugin
 ) : EventExecutor {
+    @OptIn(ExperimentalStdlibApi::class)
     override fun execute(empty: Listener, event: Event) {
         if (eventClass.isInstance(event)) {
             runBlocking {
-                plugin.launch(Dispatchers.Unconfined, CoroutineStart.UNDISPATCHED) {
-                    try {
-                        if (method.isSuspend) {
-                            method.callSuspend(listenerInstance, event)
-                        } else {
-                            method.call(listenerInstance, event)
-                        }
-                    } catch (exception: InvocationTargetException) {
-                        val cause = exception.cause ?: exception
-                        throw cause
+                plugin.launch(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key), CoroutineStart.UNDISPATCHED) {
+                    invokeHandlerMethod(event)
+                }.apply {
+                    if (!method.hasAnnotation<Concurrent>()) {
+                        join()
                     }
-                }.join()
+                }
             }
+        }
+    }
+
+    private suspend fun invokeHandlerMethod(event: Event) {
+        try {
+            if (method.isSuspend) {
+                method.callSuspend(listenerInstance, event)
+            } else {
+                method.call(listenerInstance, event)
+            }
+        } catch (exception: InvocationTargetException) {
+            val cause = exception.cause ?: exception
+            throw cause
         }
     }
 }
