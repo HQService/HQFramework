@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kr.hqservice.framework.view.state.SubscribableState
 
-class MutableStateFlowState<T : Any> internal constructor(value: T) : SubscribableState<T> {
+class MutableStateFlowState<T> internal constructor(value: T) : SubscribableState<T> {
     private val stateFlow = MutableStateFlow(value)
 
     override fun get(): T {

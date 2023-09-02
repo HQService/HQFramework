@@ -7,7 +7,7 @@ import kr.hqservice.framework.view.state.impl.MutableStateFlowState
 abstract class ViewModel : LifecycleOwner {
     protected val lifecycleJob = Job()
 
-    protected fun <T : Any> state(data: T): State<T> {
+    protected fun <T> state(data: T): State<T> {
         return MutableStateFlowState(data)
     }
 
