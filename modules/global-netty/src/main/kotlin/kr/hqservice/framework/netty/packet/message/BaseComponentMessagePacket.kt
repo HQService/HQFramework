@@ -1,7 +1,6 @@
 package kr.hqservice.framework.netty.packet.message
 
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
 import com.google.gson.JsonParser
 import io.netty.buffer.ByteBuf
 import kr.hqservice.framework.netty.api.NettyPlayer
