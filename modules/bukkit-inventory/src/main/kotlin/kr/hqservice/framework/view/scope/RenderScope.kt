@@ -1,16 +1,16 @@
 package kr.hqservice.framework.view.scope
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.nms.extension.virtual
-import kr.hqservice.framework.view.InventoryLifecycle
 import kr.hqservice.framework.view.element.TitleElement
 import kr.hqservice.framework.view.state.SubscribableState
 import org.bukkit.entity.Player
 
 class RenderScope(
-    inventoryLifecycle: InventoryLifecycle,
+    coroutineScope: CoroutineScope,
     private val player: Player
-) : InventoryLifecycle by inventoryLifecycle {
+) : CoroutineScope by coroutineScope {
     fun title(title: String, titleScope: TitleElement.() -> Unit = {}) {
         val titleElement = TitleElement(player, title)
         titleScope(titleElement)

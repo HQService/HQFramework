@@ -68,7 +68,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentClasses.add(clazz)
             } else if (annotations.filterIsInstance<QualifierProvider>().isNotEmpty()) {
                 qualifierProviderClasses.add(clazz)
-            } else if (annotations.filterIsInstance<Bean>().isNotEmpty()) {
+            } else if (annotations.filterIsInstance<Bean>().isNotEmpty() || annotations.filterIsInstance<Singleton>().isNotEmpty() || annotations.filterIsInstance<Factory>().isNotEmpty()) {
                 beanClasses.add(clazz)
             } else if (annotations.filterIsInstance<Configuration>().isNotEmpty()) {
                 configurationClasses.add(clazz)
@@ -107,7 +107,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             }
 
             val instance = try {
-                if (component.hasAnnotation<Bean>()) {
+                if (component.hasAnnotation<Bean>() || component.hasAnnotation<Singleton>() || component.hasAnnotation<Factory>()) {
                     tryCreateBeanModule(component, component) {
                         callByInjectedParameters(component.constructors.first())
                     }
@@ -119,7 +119,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                         continue@queue
                     }
                     val methods = component.declaredFunctions.filter {
-                        BeanProperty.findBeanProperty(it) != null || it.hasAnnotation<Bean>()
+                        BeanProperty.findBeanProperty(it) != null || it.hasAnnotation<Bean>() || it.hasAnnotation<Singleton>() || it.hasAnnotation<Factory>()
                     }
                     val definitions = methods.associateBy { it.returnType.jvmErasure }
                     definitions.forEach { (definitionClass, kFunction) ->

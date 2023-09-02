@@ -1,13 +1,13 @@
 package kr.hqservice.framework.view.event
 
-import kr.hqservice.framework.view.HQView
+import kr.hqservice.framework.view.View
 import kr.hqservice.framework.view.element.ButtonElement
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 
 data class ButtonInteractEvent(
-    val view: HQView,
+    val view: View,
     val buttonElement: ButtonElement,
     private val event: InventoryClickEvent
 ) {
