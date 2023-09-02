@@ -9,14 +9,9 @@ interface Navigator {
 
     suspend fun goPrevious(player: Player)
 
-    /**
-     * 제일 첫번째 view 로 이동시킵니다.
-     *
-     *
-     */
     suspend fun goFirst(player: Player)
 
-    suspend fun clearViews(player: Player)
+    fun clearViews(player: Player)
 
     fun current(playerId: UUID): View?
 

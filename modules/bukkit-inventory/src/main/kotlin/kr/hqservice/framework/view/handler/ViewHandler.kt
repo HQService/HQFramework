@@ -37,7 +37,7 @@ class ViewHandler(private val navigator: Navigator) {
         val view = getView(event.view)
         val player = event.player as Player
         navigator as NavigatorImpl
-        if (view != null && !navigator.isAllow(player.uniqueId)) {
+        if (view != null && !navigator.isAllowToChangeView(player.uniqueId)) {
             view.invokeOnClose(player)
             val plugin = PluginScopeFinder.get(view::class)
             plugin.launch(Dispatchers.IO) {

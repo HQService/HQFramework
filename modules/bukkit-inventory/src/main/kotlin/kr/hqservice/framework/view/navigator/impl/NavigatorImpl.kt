@@ -39,7 +39,7 @@ internal class NavigatorImpl : Navigator {
         }
     }
 
-    internal fun isAllow(playerId: UUID): Boolean {
+    internal fun isAllowToChangeView(playerId: UUID): Boolean {
         return changeViewAllows.contains(playerId)
     }
 
@@ -76,7 +76,7 @@ internal class NavigatorImpl : Navigator {
         }
     }
 
-    override suspend fun clearViews(player: Player) {
+    override fun clearViews(player: Player) {
         currentView[player.uniqueId]?.clear()
     }
 
