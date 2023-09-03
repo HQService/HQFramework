@@ -19,22 +19,22 @@ inline fun <reified T : ItemMeta> ItemStack.meta(
     itemMeta = (itemMeta as? T)?.apply(block)
 }
 
-fun item(material: Material, amount: Int = 1): ItemStack {
+fun itemStack(material: Material, amount: Int = 1): ItemStack {
     return ItemStack(material, amount)
 }
 
 fun ItemStack.displayName(displayName: String?): ItemStack = meta<ItemMeta> {
-    this.setDisplayName(displayName)
+    this.setDisplayName(displayName?.colorize())
 }
 
 fun ItemStack.lore(lore: List<String>): ItemStack = meta<ItemMeta> {
-    this.lore = lore
+    this.lore = lore.map { it.colorize() }
 }
 
 fun ItemStack.type(material: Material): ItemStack = apply { this.type = material }
 
 fun ItemStack.addLore(lore: String): ItemStack = meta<ItemMeta> {
-    this.lore = this.lore?.apply { add(lore) } ?: listOf(lore)
+    this.lore = this.lore?.apply { add(lore.colorize()) } ?: listOf(lore.colorize())
 }
 
 fun ItemStack.customModelData(data: Int): ItemStack = meta<ItemMeta> {
