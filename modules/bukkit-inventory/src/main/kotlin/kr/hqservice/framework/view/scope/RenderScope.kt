@@ -1,7 +1,9 @@
 package kr.hqservice.framework.view.scope
 
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.nms.extension.virtual
 import kr.hqservice.framework.view.View
 import kr.hqservice.framework.view.element.TitleElement
@@ -11,14 +13,14 @@ import org.bukkit.entity.Player
 
 class RenderScope(
     private val view: View,
-    coroutineScope: CoroutineScope,
+    private val coroutineScope: CoroutineScope,
     private val player: Player
-) : CoroutineScope by coroutineScope {
+) {
     fun title(titleScope: TitleElement.() -> Unit = {}) {
         val titleElement = TitleElement()
         titleScope(titleElement)
         titleElement.subscribedStates.map { state ->
-            val subscribe = launch {
+            val subscribe = coroutineScope.launch(TeardownOptionCoroutineContextElement(true) + CoroutineName("HQFrameworkViewRenderScopeCoroutine")) {
                 state as SubscribableState
                 state.getStateFlow().collect {
                     val titleInvoked = titleElement.titleBuilder.invoke()

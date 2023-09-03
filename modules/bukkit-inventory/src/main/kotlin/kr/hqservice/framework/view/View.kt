@@ -39,7 +39,7 @@ abstract class View(
         coroutineScope {
             viewerIds.addAll(viewer.map { it.uniqueId })
             viewer.forEach { player ->
-                launch(Dispatchers.IO) {
+                launch(Dispatchers.IO + CoroutineName("HQFrameworkViewOpenCoroutine")) {
                     val createScope = CreateScope(this@View, this)
                     createScope.onCreate()
                     createScope.buttonJobs.joinAll()

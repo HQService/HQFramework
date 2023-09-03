@@ -3,6 +3,7 @@ package kr.hqservice.framework.bukkit.core.coroutine.dispatcher
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import org.bukkit.Bukkit
+import org.bukkit.plugin.IllegalPluginAccessException
 import org.bukkit.plugin.Plugin
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.coroutines.CoroutineContext
@@ -14,7 +15,9 @@ class BukkitDispatcher(private val isAsync: Boolean) : MainCoroutineDispatcher()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val plugin = getPluginByCoroutineContext(context)
-        Bukkit.getScheduler().runTask(plugin, block)
+        try {
+            Bukkit.getScheduler().runTask(plugin, block)
+        } catch (_: IllegalPluginAccessException) {}
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
@@ -27,11 +30,15 @@ class BukkitDispatcher(private val isAsync: Boolean) : MainCoroutineDispatcher()
             }
         }
         val task = if (isAsync) {
-            runnable.runTaskLaterAsynchronously(plugin, timeMillis / 50)
+            try {
+                runnable.runTaskLaterAsynchronously(plugin, timeMillis / 50)
+            } catch (_: IllegalPluginAccessException) { null}
         } else {
-            runnable.runTaskLater(plugin, timeMillis / 50)
+            try {
+                runnable.runTaskLater(plugin, timeMillis / 50)
+            } catch (_: IllegalPluginAccessException) { null }
         }
-        continuation.invokeOnCancellation { task.cancel() }
+        continuation.invokeOnCancellation { task?.cancel() }
     }
 
     private fun getPluginByCoroutineContext(coroutineContext: CoroutineContext): Plugin {

@@ -3,7 +3,6 @@ package kr.hqservice.framework.test
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.koin.core.annotation.InjectedParam
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.context.startKoin
@@ -20,7 +19,7 @@ class ParameterizedBeanDefinitionTest : KoinComponent {
         val key: String
     }
 
-    class ExampleClassImpl(@InjectedParam override val key: String) : ExampleClass
+    class ExampleClassImpl(override val key: String) : ExampleClass
 
     @BeforeEach
     fun setup() {

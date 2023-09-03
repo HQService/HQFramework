@@ -6,7 +6,11 @@ import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.A
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.ExceptionHandlerRegistry
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.HandleResult
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
+import kr.hqservice.framework.bukkit.core.coroutine.extension.childrenAll
+import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
 import kr.hqservice.framework.bukkit.core.extension.format
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.util.AnsiColor
@@ -117,11 +121,19 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     }
 
     private fun getErrorFolder(): File {
-        return File(server.pluginManager.getPlugin("HQFramework")!!.config.getString("log.error.store-path", "hq-errors/")!!)
+        return File(
+            server.pluginManager.getPlugin("HQFramework")!!.config.getString(
+                "log.error.store-path",
+                "hq-errors/"
+            )!!
+        )
     }
 
     private fun isOptionPrintStackTrancesWhenUnhandledEnabled(): Boolean {
-        return server.pluginManager.getPlugin("HQFramework")!!.config.getBoolean("log.error.print-stack-traces-when-unhandled", false)
+        return server.pluginManager.getPlugin("HQFramework")!!.config.getBoolean(
+            "log.error.print-stack-traces-when-unhandled",
+            false
+        )
     }
 
     override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
@@ -143,10 +155,11 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         onPostLoad()
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     final override fun onEnable() {
-        runBlocking {
-            launch(Dispatchers.Unconfined){
-                val timerJob = launch(Dispatchers.Default) timer@{
+        runBlocking(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
+            val timerJob =
+                launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
                     var index = 0
                     while (this@timer.isActive) {
                         index++
@@ -154,25 +167,40 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
                         delay(1000)
                     }
                 }
-                onPreEnable()
-                val folder = getErrorFolder()
-                if (!folder.exists()) folder.mkdir()
-                loadConfigIfExist()
-                componentRegistry.setup()
-                onPostEnable()
-                timerJob.cancel()
-                logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
-            }.join()
+            onPreEnable()
+            val folder = getErrorFolder()
+            if (!folder.exists()) folder.mkdir()
+            loadConfigIfExist()
+            componentRegistry.setup()
+            onPostEnable()
+            timerJob.cancel()
+            logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     final override fun onDisable() {
-        runBlocking {
-            launch(Dispatchers.Unconfined) {
+        runBlocking(
+            this@HQBukkitPlugin.coroutineContext.minusKey(CoroutineDispatcher).minusKey(Job) + SupervisorJob()
+        ) {
+            launch(start = CoroutineStart.UNDISPATCHED) {
+                supervisorJob.childrenAll
+                    .filter { job ->
+                        job.coroutineContext[TeardownOptionCoroutineContextElement.Key]?.cancelWhenPluginTeardown == true
+                    }.forEach { job ->
+                        job.cancel()
+                    }
+
+                supervisorJob.childrenAll
+                    .filter { job ->
+                        job.coroutineContext[CoroutineDispatcher.Key] != Dispatchers.BukkitMain && job.coroutineContext[CoroutineDispatcher.Key] != Dispatchers.BukkitAsync
+                    }.filter {
+                        it.job.children.count() == 0
+                    }.toList().joinAll()
+
                 logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
                 onPreDisable()
                 componentRegistry.teardown()
-                supervisorJob.children.toList().joinAll()
                 onPostDisable()
                 logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
             }.join()

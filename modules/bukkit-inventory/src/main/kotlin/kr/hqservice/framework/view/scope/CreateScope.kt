@@ -1,13 +1,12 @@
 package kr.hqservice.framework.view.scope
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.view.View
 import kr.hqservice.framework.view.element.ButtonElement
 import kr.hqservice.framework.view.state.SubscribableState
 
-class CreateScope(private val view: View, coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope {
+class CreateScope(private val view: View, private val coroutineScope: CoroutineScope) {
     internal val buttonJobs: MutableList<Job> = mutableListOf()
 
     fun button(vararg slots: Int, buttonScope: ButtonElement.() -> Unit) {
@@ -15,14 +14,14 @@ class CreateScope(private val view: View, coroutineScope: CoroutineScope) : Coro
             val button = ButtonElement(slot)
             view.registerButton(slot, button)
             buttonScope(button)
-            val buttonJob = launch {
+            val buttonJob = coroutineScope.launch {
                 val buttonItemStack = button.itemStackBuilder.invoke(button.index)
                 view.inventory.setItem(button.index, buttonItemStack)
             }
             buttonJobs.add(buttonJob)
 
             button.subscribedStates.map { state ->
-                launch {
+                coroutineScope.launch(TeardownOptionCoroutineContextElement(true) + CoroutineName("HQFrameworkViewCreateScopeCoroutine")) {
                     buttonJob.join()
                     state as SubscribableState
                     state.getStateFlow().collect {
