@@ -1,8 +1,6 @@
 package kr.hqservice.framework.bungee.core.netty.api
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.HQService
-import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.NettyServer
@@ -16,11 +14,10 @@ import net.md_5.bungee.api.ProxyServer
 import java.util.*
 import kotlin.reflect.KClass
 
-@Component
-@Singleton(binds = [NettyServer::class])
+@Bean
 class ProxyNettyServer(
     private val proxy: ProxyServer
-) : NettyServer, HQService {
+) : NettyServer {
 
     override fun getChannels(): List<NettyChannel> {
         return proxy.servers.map { NettyChannelImpl(it.value.address.port, it.key) }
