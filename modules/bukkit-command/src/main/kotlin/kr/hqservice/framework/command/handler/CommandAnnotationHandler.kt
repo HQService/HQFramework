@@ -3,6 +3,7 @@ package kr.hqservice.framework.command.handler
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.command.*
@@ -186,7 +187,7 @@ class CommandAnnotationHandler(
             }
 
             val arguments: MutableList<Any?> = mutableListOf()
-            plugin.launch commandLaunch@{
+            plugin.launch(Dispatchers.Default) commandLaunch@{
                 executor.function.parameters.forEach forEach@{ kParameter ->
                     val index = kParameter.index
                     val argumentLabel = findArgumentLabel(kParameter)
