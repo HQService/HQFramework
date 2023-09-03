@@ -22,7 +22,6 @@ abstract class View(
 ) : InventoryHolder {
     private var baseInventory = lazy { Bukkit.createInventory(this@View, size, title.colorize()) }
     private val buttons: MutableMap<Int, ButtonElement> = mutableMapOf()
-    internal var coroutineScope: CoroutineScope? = null
     internal val subscribes = mutableListOf<Job>()
     internal val viewerIds = mutableListOf<UUID>()
     val _childLifecycles = mutableListOf<LifecycleOwner>()
@@ -38,17 +37,16 @@ abstract class View(
 
     internal suspend fun open(vararg viewer: Player, afterAction: suspend (player: Player) -> Unit) {
         coroutineScope {
-            coroutineScope = this
             viewerIds.addAll(viewer.map { it.uniqueId })
             viewer.forEach { player ->
-                this.launch(Dispatchers.IO) {
+                launch(Dispatchers.IO) {
                     val createScope = CreateScope(this@View, this)
                     createScope.onCreate()
                     createScope.buttonJobs.joinAll()
                     withContext(Dispatchers.BukkitMain) {
                         player.openInventory(inventory)
                     }
-                    RenderScope(this, player).onRender(player)
+                    RenderScope(this@View, this, player).onRender(player)
                     buttons.values.forEach { buttonElement ->
                         buttonElement.invokeOnRender(ButtonRenderEvent(this@View, buttonElement, player))
                     }

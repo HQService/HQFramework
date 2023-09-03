@@ -3,23 +3,18 @@ package kr.hqservice.framework.view.element
 import kr.hqservice.framework.view.state.State
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.TextComponent
-import org.bukkit.entity.Player
 
-class TitleElement(
-    private val viewer: Player,
-    private val title: String
-) : ViewElement {
+class TitleElement: ViewElement {
     internal var subscribedStates: MutableList<State<*>> = mutableListOf()
-    internal var titleBuilder: suspend () -> BaseComponent = { TextComponent(title) }
+    internal var titleBuilder: suspend () -> BaseComponent? = { null }
 
-    fun title(titleBuilderScope: suspend () -> String) {
+    fun text(titleBuilderScope: suspend () -> String?) {
         titleBuilder = {
-            TextComponent(titleBuilderScope.invoke())
+            titleBuilderScope.invoke()?.let { TextComponent(it) }
         }
     }
 
-    @JvmName("componentTitle")
-    fun title(titleBuilderScope: suspend () -> BaseComponent) {
+    fun component(titleBuilderScope: suspend () -> BaseComponent?) {
         titleBuilder = titleBuilderScope
     }
 
