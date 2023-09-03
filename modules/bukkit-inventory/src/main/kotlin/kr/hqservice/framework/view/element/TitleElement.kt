@@ -1,5 +1,6 @@
 package kr.hqservice.framework.view.element
 
+import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.view.state.State
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.TextComponent
@@ -10,7 +11,7 @@ class TitleElement: ViewElement {
 
     fun text(titleBuilderScope: suspend () -> String?) {
         titleBuilder = {
-            titleBuilderScope.invoke()?.let { TextComponent(it) }
+            titleBuilderScope.invoke()?.let { TextComponent(it.colorize()) }
         }
     }
 
