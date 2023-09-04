@@ -1,11 +1,9 @@
 package kr.hqservice.framework.scheduler.test
 
 import be.seeseemelk.mockbukkit.MockBukkit
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kr.hqservice.framework.bukkit.scheduler.SchedulerConfig
+import kr.hqservice.framework.bukkit.scheduler.HQFrameworkSchedulerConfig
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -15,6 +13,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.quartz.*
+import org.quartz.impl.StdSchedulerFactory
 import org.quartz.impl.matchers.GroupMatcher
 import java.util.*
 import javax.sql.DataSource
@@ -33,7 +32,7 @@ class SchedulerModule {
             }
             loadKoinModules(defaultModule)
         }
-        schedulerFactory = SchedulerConfig(testDataSource).provideSchedulerFactory()
+        schedulerFactory = StdSchedulerFactory()
 
         schedulerFactory.scheduler.getTriggerKeys(GroupMatcher.anyGroup())
             .forEach { triggerKey ->
