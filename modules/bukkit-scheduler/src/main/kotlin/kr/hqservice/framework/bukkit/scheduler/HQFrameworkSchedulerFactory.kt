@@ -10,18 +10,21 @@ import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.util.AnsiColor
 import org.bukkit.Server
 import org.quartz.Scheduler
+import org.quartz.SchedulerException
 import org.quartz.SchedulerFactory
 import org.quartz.core.JobRunShellFactory
-import org.quartz.core.QuartzScheduler
 import org.quartz.core.QuartzSchedulerResources
 import org.quartz.impl.*
 import org.quartz.spi.*
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
+import java.util.logging.Level
 import java.util.logging.Logger
 
 @Bean
 class HQFrameworkSchedulerFactory(
     private val logger: Logger,
-    private val schedulerDetailsSetter: HQFrameworkSchedulerDetailsSetter,
     private val threadPool: ThreadPool,
     private val jobStore: JobStore,
     private val jobFactory: JobFactory,
@@ -38,8 +41,7 @@ class HQFrameworkSchedulerFactory(
 
     private companion object Options {
         const val SCHEDULER_NAME = "HQFrameworkScheduler"
-        const val DB_FAILURE_RETRY_INTERVAL = 15000L
-        const val IDLE_WAIT_TIME = -1L
+
         const val MAKE_SCHEDULER_THREAD_DAEMON = false
         const val MAX_BATCH_SIZE = 1
         const val DEFAULT_BATCH_TIME_WINDOW = 0L
@@ -70,25 +72,23 @@ class HQFrameworkSchedulerFactory(
             rmiRegistryHost = null
             rmiRegistryPort = 0
             jmxExport = false
+            schedulerPluginMap.forEach { (_, plugin) ->
+                addSchedulerPlugin(plugin)
+            }
         }
 
-        schedulerDetailsSetter.setDetails(threadPool, schedulerName, schedulerInstanceId)
-        schedulerPluginMap.forEach { (_, plugin) ->
-            quartzSchedulerResources.addSchedulerPlugin(plugin)
-        }
-        val quartzScheduler = QuartzScheduler(quartzSchedulerResources, IDLE_WAIT_TIME, DB_FAILURE_RETRY_INTERVAL)
-        schedulerDetailsSetter.setDetails(jobStore, schedulerName, schedulerInstanceId)
-        jobStore.initialize(classLoadHelper, quartzScheduler.schedulerSignaler)
-        val scheduler: Scheduler = StdScheduler(quartzScheduler).apply {
-            setJobFactory(jobFactory)
-        }
+        setDetails(threadPool, schedulerName, schedulerInstanceId)
+        val coreScheduler = HQFrameworkSchedulerCore(quartzSchedulerResources, jobFactory, logger)
+        setDetails(jobStore, schedulerName, schedulerInstanceId)
+        jobStore.initialize(classLoadHelper, coreScheduler.schedulerSignaler)
+        val scheduler: Scheduler = StdScheduler(coreScheduler)
         jobRunShellFactory.initialize(scheduler)
-        quartzScheduler.initialize()
+        coreScheduler.initialize()
         schedulerPluginMap.forEach { (key, schedulerPlugin) ->
             schedulerPlugin.initialize(key, scheduler, classLoadHelper)
         }
-        logger.info("${AnsiColor.CYAN}Quartz engine version: ${quartzScheduler.version}")
-        quartzScheduler.addNoGCObject(schedulerRepository)
+        logger.info("${AnsiColor.CYAN}Quartz engine version: ${coreScheduler.version}")
+        coreScheduler.addNoGCObject(schedulerRepository)
         schedulerRepository.bind(scheduler)
         databaseShutdownHookRegistry.addHook {
             plugin.logger.info("${AnsiColor.CYAN}Shutting down Scheduler...${AnsiColor.RESET}")
@@ -115,5 +115,45 @@ class HQFrameworkSchedulerFactory(
 
     override fun getAllSchedulers(): MutableCollection<Scheduler> {
         return schedulerRepository.lookupAll()
+    }
+
+    private fun setDetails(
+        target: Any,
+        schedulerName: String,
+        schedulerId: String
+    ) {
+        setFieldBySetter(target, "setInstanceName", schedulerName)
+        setFieldBySetter(target, "setInstanceId", schedulerId)
+    }
+
+    private fun setFieldBySetter(target: Any, method: String, value: String) {
+        val setter: Method
+        try {
+            setter = target.javaClass.getMethod(method, String::class.java)
+        } catch (e: SecurityException) {
+            logger.log(Level.SEVERE, e) {
+                "A SecurityException occured: ${e.message}"
+            }
+            return
+        } catch (e: NoSuchMethodException) {
+            logger.log(Level.SEVERE, e) {
+                "${target.javaClass.getName()} does not contain public method " + method + "(String)"
+            }
+            return
+        }
+        if (Modifier.isAbstract(setter.modifiers)) {
+            logger.severe((target.javaClass.getName()
+                    + " does not implement " + method
+                    + "(String)")
+            )
+            return
+        }
+        try {
+            setter.invoke(target, value)
+        } catch (ite: InvocationTargetException) {
+            throw SchedulerException(ite.targetException)
+        } catch (e: Exception) {
+            throw SchedulerException(e)
+        }
     }
 }
