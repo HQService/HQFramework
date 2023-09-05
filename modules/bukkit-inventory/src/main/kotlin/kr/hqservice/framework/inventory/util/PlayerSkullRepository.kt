@@ -3,7 +3,9 @@ package kr.hqservice.framework.inventory.util
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.global.core.component.Bean
 import org.bukkit.Server
 import org.bukkit.inventory.Inventory
@@ -44,7 +46,7 @@ class PlayerSkullRepository(
                 val queue = ConcurrentLinkedQueue<ItemStack>()
                 lambdaQueueMap[targetUniqueId] = queue
                 queue.offer(itemStack)
-                coroutineScope.launch {
+                coroutineScope.launch(Dispatchers.BukkitAsync) {
                     val contents =
                         getURLContents("https://sessionserver.mojang.com/session/minecraft/profile/$targetUniqueId")
                     val jsonObject = gson.fromJson(contents, JsonObject::class.java)
