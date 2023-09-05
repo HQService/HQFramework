@@ -7,6 +7,7 @@ import org.quartz.core.QuartzScheduler
 import org.quartz.core.QuartzSchedulerResources
 import org.quartz.spi.JobFactory
 import org.quartz.spi.OperableTrigger
+import org.slf4j.LoggerFactory
 import java.util.logging.Logger
 
 class HQFrameworkSchedulerCore(
@@ -17,6 +18,10 @@ class HQFrameworkSchedulerCore(
     companion object {
         const val IDLE_WAIT_TIME = -1L
         const val DB_FAILURE_RETRY_INTERVAL = 15000L
+    }
+
+    override fun getLog(): org.slf4j.Logger {
+        return LoggerFactory.getLogger("HQFramework")
     }
 
     override fun initialize() {
