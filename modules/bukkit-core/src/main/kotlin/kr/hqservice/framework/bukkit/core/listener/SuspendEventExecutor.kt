@@ -1,9 +1,6 @@
 package kr.hqservice.framework.bukkit.core.listener
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import org.bukkit.event.Event
 import org.bukkit.event.Listener
@@ -27,7 +24,7 @@ class SuspendEventExecutor(
     override fun execute(empty: Listener, event: Event) {
         if (eventClass.isInstance(event)) {
             runBlocking {
-                plugin.launch(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key), CoroutineStart.UNDISPATCHED) {
+                CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(start = CoroutineStart.UNDISPATCHED) {
                     invokeHandlerMethod(event)
                 }.apply {
                     if (!method.hasAnnotation<Concurrent>()) {
