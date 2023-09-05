@@ -1,7 +1,5 @@
 package kr.hqservice.framework.netty.packet.message
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonParser
 import io.netty.buffer.ByteBuf
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.packet.Packet
@@ -9,46 +7,11 @@ import kr.hqservice.framework.netty.packet.extension.readPlayers
 import kr.hqservice.framework.netty.packet.extension.readString
 import kr.hqservice.framework.netty.packet.extension.writePlayers
 import kr.hqservice.framework.netty.packet.extension.writeString
+import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.chat.*
-import net.md_5.bungee.api.chat.hover.content.*
 import net.md_5.bungee.chat.*
-
-private val parser = JsonParser()
-private val gson = GsonBuilder()
-    .registerTypeAdapter(
-        BaseComponent::class.java, ComponentSerializer()
-    ).registerTypeAdapter(
-        TextComponent::class.java, TextComponentSerializer()
-    ).registerTypeAdapter(
-        TranslatableComponent::class.java, TranslatableComponentSerializer()
-    ).registerTypeAdapter(
-        KeybindComponent::class.java, KeybindComponentSerializer()
-    ).registerTypeAdapter(
-        ScoreComponent::class.java, ScoreComponentSerializer()
-    ).registerTypeAdapter(
-        SelectorComponent::class.java, SelectorComponentSerializer()
-    ).registerTypeAdapter(
-        Entity::class.java, EntitySerializer()
-    ).registerTypeAdapter(
-        Text::class.java, TextSerializer()
-    ).registerTypeAdapter(
-        Item::class.java, ItemSerializer()
-    ).registerTypeAdapter(
-        ItemTag::class.java, ItemTag.Serializer()
-    ).setLenient().create()
-
-private fun BaseComponent.toCompress(): String {
-    return gson.toJson(this)
-}
-
-private fun String.toDecompress(): BaseComponent {
-    val jsonElement = parser.parse(this)
-    return if (jsonElement.isJsonArray) {
-        gson.fromJson(jsonElement, Array<BaseComponent>::class.java)
-    } else {
-        arrayOf(gson.fromJson(jsonElement, BaseComponent::class.java))
-    }.first()
-}
+import java.awt.Color
+import java.util.regex.Pattern
 
 class BaseComponentMessagePacket(
     var message: BaseComponent,
@@ -57,17 +20,38 @@ class BaseComponentMessagePacket(
 ) : Packet() {
 
     override fun write(buf: ByteBuf) {
-        // buf.writeString(ComponentSerializer.toString(message))
-        val compress = message.toCompress()
-        buf.writeString(compress)
-        println(compress)
+        val compress = ComponentSerializer.toString(message)
+        val hex = compress.toHex()
+        println("[write] before: $compress")
+        println("[write] after: $hex")
+        buf.writeString(hex)
         buf.writeBoolean(logging)
         buf.writePlayers(receivers)
     }
 
     override fun read(buf: ByteBuf) {
-        message = buf.readString().toDecompress()
+        buf.readString().apply {
+            val parse = ComponentSerializer.parse(this).first()
+            println("[read] before: $this")
+            println("[read] after: $parse")
+            message = parse
+        }
         logging = buf.readBoolean()
         receivers = buf.readPlayers()
+    }
+}
+
+private val pattern = Pattern.compile("§x§[a-zA-Z0-9]+§[a-zA-Z0-9]+§[a-zA-Z0-9]+§[a-zA-Z0-9]+§[a-zA-Z0-9]+§[a-zA-Z0-9]+")
+
+private fun String.toHex(): String {
+    val matcher = pattern.matcher(this)
+
+    return matcher.replaceAll { result ->
+        val group = result.group()
+        /*val hexText = group.replace("§", "").replace("x", "#")
+        println("Hex: $hexText")
+        val javaColor = Color(hexText.toInt(16))
+        val chatColor = ChatColor.of(javaColor)*/
+        group.replace("§", "").replace("x", "#")
     }
 }
