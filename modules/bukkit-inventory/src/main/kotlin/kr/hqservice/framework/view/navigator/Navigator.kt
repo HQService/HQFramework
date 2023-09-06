@@ -13,6 +13,8 @@ interface Navigator {
 
     fun clearViews(player: Player)
 
+    fun clearViewsAndClose(player: Player)
+
     fun current(playerId: UUID): View?
 
     fun openedViews(playerId: UUID): List<View>
