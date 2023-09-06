@@ -18,8 +18,10 @@ class HQContainerHandler {
         getContainer(event.view)?.apply {
             event.isCancelled = isCancelled()
 
+            onEveryClick(event)
             getButton(event.rawSlot)?.also { button ->
                 event.isCancelled = true
+                onButtonClick(event)
                 button.click(ButtonClickEvent(this, button, event))
             } ?: onClick(event)
         }

@@ -23,9 +23,22 @@ open class HQContainer(
 
     protected open fun initialize(inventory: Inventory) {}
 
+    /**
+     * 인벤토리 클릭과 버튼 클릭이 같이 핸들링됩니다.
+     */
+    open fun onEveryClick(event: InventoryClickEvent) {}
+
+    /**
+     * 모든 버튼 클릭이 핸들링됩니다.
+     */
+    open fun onButtonClick(event: InventoryClickEvent) {}
+
     open fun onClick(event: InventoryClickEvent) {}
+
     open fun onDrag(event: InventoryDragEvent) {}
+
     open fun onClose(event: InventoryCloseEvent) {}
+
     open fun onOpen(vararg players: Player) {}
 
     internal fun registerButton(slot: Int, button: HQButtonImpl) {
