@@ -13,6 +13,8 @@ import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.pipeline.ConnectionState
+import net.md_5.bungee.api.chat.BaseComponent
+import net.md_5.bungee.api.chat.TextComponent
 
 class ProxiedChannelMainHandler(
     private val plugin: HQBukkitPlugin
@@ -59,10 +61,18 @@ class ProxiedChannelMainHandler(
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
-        sendPacketToProxy(MessagePacket(message, logging, players))
+        sendPacketToProxy(MessagePacket(TextComponent(message), logging, players))
     }
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
+        sendPacketToProxy(MessagePacket(TextComponent(message), logging, listOf(player)))
+    }
+
+    override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
+        sendPacketToProxy(MessagePacket(message, false, players))
+    }
+
+    override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
         sendPacketToProxy(MessagePacket(message, logging, listOf(player)))
     }
 }

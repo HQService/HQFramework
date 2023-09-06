@@ -15,7 +15,8 @@ class HQChannelInitializer(
     private val server: Boolean = false
 ) : ChannelInitializer<NioSocketChannel>() {
     override fun initChannel(ch: NioSocketChannel) {
-        if (server) ch.config().setOption(ChannelOption.TCP_NODELAY, true)
+        if (server) ch.config()
+            .setOption(ChannelOption.TCP_NODELAY, true)
         ch.pipeline()
             .addLast("encode-filter", LengthFieldPrepender(8))
             .addLast("decode-filter", LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 8, 0, 8))
