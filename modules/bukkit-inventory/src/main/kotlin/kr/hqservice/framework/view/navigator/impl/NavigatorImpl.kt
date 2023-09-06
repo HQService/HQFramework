@@ -80,9 +80,11 @@ internal class NavigatorImpl : Navigator {
         currentView[player.uniqueId]?.clear()
     }
 
-    override fun clearViewsAndClose(player: Player) {
+    override suspend fun clearViewsAndClose(player: Player) {
         clearViews(player)
-        player.closeInventory()
+        withContext(Dispatchers.BukkitMain) {
+            player.closeInventory()
+        }
     }
 
     override fun current(playerId: UUID): View? {
