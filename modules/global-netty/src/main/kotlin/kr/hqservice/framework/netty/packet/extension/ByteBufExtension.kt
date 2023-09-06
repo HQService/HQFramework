@@ -41,7 +41,7 @@ fun ByteBuf.readVarInt(maxBytes: Int): Int {
 fun ByteBuf.writeString(string: String) {
     if (string.length > 32767)
         throw IllegalArgumentException("cannot send string longer than Short.MAX_VALUE (got ${string.length} characters)")
-    val bytes = string.toByteArray(Charsets.UTF_8).compress()
+    val bytes = string.toByteArray(Charsets.UTF_8)
     writeVarInt(bytes.size)
     writeBytes(bytes)
 }
@@ -50,7 +50,7 @@ fun ByteBuf.readString(): String {
     val length = readVarInt(5)
     val bytes = ByteArray(length)
     readBytes(bytes)
-    return bytes.decompress().toString(Charsets.UTF_8)
+    return bytes.toString(Charsets.UTF_8)
 }
 
 fun ByteBuf.writeStringArray(array: Array<String>) {
