@@ -83,6 +83,7 @@ class ProxyPacketSender(
         }
 
         players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(newComponent) }
+        if(logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message.toLegacyText())}")
     }
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
