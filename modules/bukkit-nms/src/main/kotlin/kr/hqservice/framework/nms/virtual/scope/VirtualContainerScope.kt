@@ -14,7 +14,6 @@ import org.koin.core.component.KoinComponent
 class VirtualContainerScope(
     private val receiver: Player,
 ) : KoinComponent {
-    //private val setSlotItems = mutableMapOf<Int, VirtualItem>()
     private val slotItems = mutableListOf<VirtualItem>()
     private var titlePacket: VirtualContainer? = null
 
@@ -23,9 +22,7 @@ class VirtualContainerScope(
         itemStack: ItemStack,
         itemEditBlock: ItemMeta.() -> Unit = {}
     ) {
-        //slotItems.add(VirtualItem(receiver, slot, itemStack, itemEditBlock))
         slotItems.add(VirtualItem(receiver, slot, itemStack, itemEditBlock))
-        //setSlotItems[slot] = VirtualItem(receiver, slot, itemStack, itemEditBlock)
     }
 
     fun setTitle(title: String) {
@@ -40,11 +37,6 @@ class VirtualContainerScope(
         val messages = mutableListOf<Virtual>()
         titlePacket?.apply(messages::add)
         messages.addAll(slotItems)
-        /*receiver.openInventory.topInventory.contents.forEachIndexed { index, itemStack: ItemStack? ->
-            setSlotItems[index]?: itemStack?.run {
-                VirtualItem(receiver, index, this)
-            }?.apply { messages.add(this) }
-        }*/
         return messages.toTypedArray()
     }
 }
