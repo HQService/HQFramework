@@ -34,11 +34,7 @@ class BukkitComponentRegistry(
             return true
         }
         depend.first().plugins.forEach { pluginId ->
-            val plugin = plugin.server.pluginManager.getPlugin(pluginId)
-            if (plugin == null) {
-                this.plugin.logger.info("cannot find depending plugin with id $pluginId, excluding component ${clazz.simpleName}")
-                return false
-            }
+            plugin.server.pluginManager.getPlugin(pluginId) ?: return false
         }
         return true
     }

@@ -29,7 +29,7 @@ abstract class JarBasedComponentRegistry : AbstractComponentRegistry(), KoinComp
                     }
                 } catch (exception: ClassNotFoundException) {
                     exception.printStackTrace()
-                }
+                } catch (_: NoClassDefFoundError) {}
             }
         }
         return classes
