@@ -8,11 +8,10 @@ import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.packet.Packet
-import kr.hqservice.framework.netty.packet.message.BroadcastPacket
-import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.pipeline.ConnectionState
+import net.md_5.bungee.api.chat.BaseComponent
 
 class LocalChannelMainHandler(private val plugin: HQBukkitPlugin) : ChannelMainHandler {
     private var proxyChannel: ChannelWrapper? = null
@@ -66,5 +65,15 @@ class LocalChannelMainHandler(private val plugin: HQBukkitPlugin) : ChannelMainH
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: String, logging: Boolean) {
         plugin.server.getPlayer(player.getUniqueId())?.sendMessage(message)
+    }
+
+    override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
+        players.forEach { player ->
+            plugin.server.getPlayer(player.getUniqueId())?.spigot()?.sendMessage(message)
+        }
+    }
+
+    override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
+        plugin.server.getPlayer(player.getUniqueId())?.spigot()?.sendMessage(message)
     }
 }
