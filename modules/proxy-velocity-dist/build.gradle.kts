@@ -2,6 +2,7 @@ plugins {
     id("hqframework.shared")
     id("hqframework.shadow")
     id("hqframework.runtime-dependency-relocator")
+    kotlin("kapt")
 }
 
 dependencies {

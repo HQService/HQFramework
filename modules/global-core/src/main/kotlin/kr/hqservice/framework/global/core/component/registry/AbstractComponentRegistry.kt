@@ -386,7 +386,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     ): List<Any?> {
 
         return kFunction.valueParameters.mapIndexed { index, parameter ->
-            val parameterKClass = parameter.type.classifier as KClass<*>
+            val parameterKClass = parameter.type.jvmErasure
 
             val providedInstance = getProvidedInstances().filter { parameterKClass == it.key }.values.firstOrNull()
             if (providedInstance != null) {

@@ -1,7 +1,6 @@
 plugins {
     kotlin("jvm")
     kotlin("plugin.serialization")
-    kotlin("kapt")
 }
 
 val projectGroup: String by project

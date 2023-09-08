@@ -23,6 +23,6 @@ class HQFrameworkThreadPool(
     }
 
     override fun getLog(): Logger {
-        return LoggerFactory.getLogger("HQFrameworkThreadPool")
+        return LoggerFactory.getLogger("HQFramework")
     }
 }

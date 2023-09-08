@@ -28,8 +28,9 @@ class HQFrameworkJobStore(
     }
 
     override fun getLog(): org.slf4j.Logger {
-        return LoggerFactory.getLogger("HQFrameworkJobStore")
+        return LoggerFactory.getLogger("HQFramework")
     }
+
     init {
         if (config.getString("database.type").uppercase() == "SQLITE") {
             driverDelegateClass = SQLiteDriverDelegate::class.qualifiedName

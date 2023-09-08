@@ -1,20 +1,19 @@
 package kr.hqservice.framework.view.navigator.impl
 
+import io.netty.util.internal.ConcurrentSet
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.global.core.component.Bean
-import kr.hqservice.framework.global.core.component.HQSingleton
 import kr.hqservice.framework.view.View
 import kr.hqservice.framework.view.navigator.Navigator
 import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-@HQSingleton
 @Bean
 internal class NavigatorImpl : Navigator {
     private val currentView: MutableMap<UUID, Stack<View>> = ConcurrentHashMap<UUID, Stack<View>>()
-    private val changeViewAllows: MutableSet<UUID> = mutableSetOf()
+    private val changeViewAllows: MutableSet<UUID> = ConcurrentSet()
 
     override suspend fun goNext(view: View, vararg playersInput: Player) {
         coroutineScope {
@@ -76,8 +75,13 @@ internal class NavigatorImpl : Navigator {
         }
     }
 
-    override fun clearViews(player: Player) {
+    override suspend fun clearViewsAndClose(player: Player) {
         currentView[player.uniqueId]?.clear()
+        changeViewAllows.add(player.uniqueId)
+        withContext(Dispatchers.BukkitMain) {
+            player.closeInventory()
+            changeViewAllows.remove(player.uniqueId)
+        }
     }
 
     override fun current(playerId: UUID): View? {

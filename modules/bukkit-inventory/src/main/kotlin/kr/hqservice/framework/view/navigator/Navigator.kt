@@ -11,7 +11,7 @@ interface Navigator {
 
     suspend fun goFirst(player: Player)
 
-    fun clearViews(player: Player)
+    suspend fun clearViewsAndClose(player: Player)
 
     fun current(playerId: UUID): View?
 
