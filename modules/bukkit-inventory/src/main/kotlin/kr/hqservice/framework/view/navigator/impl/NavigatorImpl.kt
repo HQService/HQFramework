@@ -9,6 +9,8 @@ import kr.hqservice.framework.view.navigator.Navigator
 import org.bukkit.entity.Player
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 @Bean
 internal class NavigatorImpl : Navigator {
@@ -17,7 +19,6 @@ internal class NavigatorImpl : Navigator {
 
     override suspend fun goNext(view: View, vararg playersInput: Player) {
         coroutineScope {
-            val players = mutableListOf(*playersInput)
             playersInput.mapNotNull { player ->
                 if (changeViewAllows.contains(player.uniqueId)) {
                     return@mapNotNull null
@@ -32,7 +33,13 @@ internal class NavigatorImpl : Navigator {
                     currentView.computeIfAbsent(player.uniqueId) { Stack() }.push(view)
                 }
             }.joinAll()
-            view.open(*players.toTypedArray()) { player ->
+            nonSuspendOpen(coroutineContext, view, *playersInput)
+        }
+    }
+
+    private fun nonSuspendOpen(coroutineContext: CoroutineContext, view: View, vararg players: Player) {
+        CoroutineScope(coroutineContext).launch {
+            view.open(*players) { player ->
                 changeViewAllows.remove(player.uniqueId)
             }
         }
@@ -51,9 +58,7 @@ internal class NavigatorImpl : Navigator {
         viewStack.pop()
         if (viewStack.isNotEmpty()) {
             changeViewAllows.add(player.uniqueId)
-            viewStack.peek().open(player) {
-                changeViewAllows.remove(player.uniqueId)
-            }
+            nonSuspendOpen(coroutineContext, viewStack.peek(), player)
         }
     }
 
@@ -61,17 +66,13 @@ internal class NavigatorImpl : Navigator {
         val currentView = currentView[player.uniqueId] ?: return
         if (currentView.size == 1) {
             changeViewAllows.add(player.uniqueId)
-            currentView.pop().open(player) {
-                changeViewAllows.remove(player.uniqueId)
-            }
+            nonSuspendOpen(coroutineContext, currentView.pop(), player)
         } else if(currentView.size != 0) {
             while (currentView.size > 1) {
                 currentView.pop()
             }
             changeViewAllows.add(player.uniqueId)
-            currentView.first().open(player) {
-                changeViewAllows.remove(player.uniqueId)
-            }
+            nonSuspendOpen(coroutineContext, currentView.first(), player)
         }
     }
 

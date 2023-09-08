@@ -50,7 +50,6 @@ abstract class View(
                     buttons.values.forEach { buttonElement ->
                         buttonElement.invokeOnRender(ButtonRenderEvent(this@View, buttonElement, player))
                     }
-                    bukkitDelay(1)
                     afterAction(player)
                 }
             }
