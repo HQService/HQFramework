@@ -22,6 +22,7 @@ class NmsItemStackWrapper(
         Version.V_15.handle("o"),
         Version.V_17.handle("s"),
         Version.V_19.handle("u"),
+        Version.V_20.handle("v")
     )
 
     private val setTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
