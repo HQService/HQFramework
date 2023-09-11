@@ -17,7 +17,7 @@ class TestBootstrap(
         val ch = EmbeddedChannel()
         ch.pipeline()
             .addLast("encode-filter", LengthFieldPrepender(8))
-            .addLast("decode-filter", LengthFieldBasedFrameDecoder(Int.MAX_VALUE, 0, Int.MAX_VALUE, 0, Int.MAX_VALUE))
+            .addLast("decode-filter", LengthFieldBasedFrameDecoder(Int.MAX_VALUE, 0, 8, 0, 8))
             .addLast("packet-decoder", PacketDecoder())
             .addLast("packet-encoder", PacketEncoder())
             .addLast("handler-boss", BossHandler(ch, logger))
