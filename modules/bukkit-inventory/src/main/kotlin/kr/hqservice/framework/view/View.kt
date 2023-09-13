@@ -32,8 +32,8 @@ abstract class View(
     protected abstract suspend fun CreateScope.onCreate()
     protected open fun RenderScope.onRender(viewer: Player) {}
     protected open fun CloseScope.onClose(viewer: Player) {}
-    protected open fun ClickScope.onClickTop(clicker: Player) {}
-    protected open fun ClickScope.onClickBottom(clicker: Player) {}
+    protected open suspend fun ClickScope.onClickTop(clicker: Player) {}
+    protected open suspend fun ClickScope.onClickBottom(clicker: Player) {}
 
     internal fun registerButton(slot: Int, buttonElement: ButtonElement) {
         buttons[slot] = buttonElement
@@ -72,12 +72,12 @@ abstract class View(
         CloseScope().onClose(player)
     }
 
-    internal fun invokeOnClickTop(event: InventoryClickEvent) {
+    internal suspend fun invokeOnClickTop(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
         ClickScope(event).onClickTop(player)
     }
 
-    internal fun invokeOnClickBottom(event: InventoryClickEvent) {
+    internal suspend fun invokeOnClickBottom(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
         ClickScope(event).onClickBottom(player)
     }
