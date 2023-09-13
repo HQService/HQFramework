@@ -21,7 +21,11 @@ class ViewListener(private val navigator: Navigator) {
     fun inventoryClick(event: InventoryClickEvent) {
         getView(event.view)?.apply {
             event.isCancelled = this.cancel
-            this.invokeOnClick(event)
+            if (event.clickedInventory == event.whoClicked.inventory) {
+                this.invokeOnClickBottom(event)
+            } else if (event.clickedInventory != null && event.clickedInventory != event.whoClicked.inventory){
+                this.invokeOnClickTop(event)
+            }
             val button = getButton(event.rawSlot)
             if (button != null) {
                 event.isCancelled = true
