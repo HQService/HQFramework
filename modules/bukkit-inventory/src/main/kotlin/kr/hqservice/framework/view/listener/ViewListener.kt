@@ -1,9 +1,7 @@
 package kr.hqservice.framework.view.listener
 
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
@@ -19,21 +17,23 @@ import org.bukkit.inventory.InventoryView
 
 @Listener
 class ViewListener(private val navigator: Navigator) {
-    @OptIn(ExperimentalStdlibApi::class)
     @Subscribe(handleOrder = HandleOrder.FIRST)
-    fun inventoryClick(event: InventoryClickEvent) {
-        getView(event.view)?.apply view@{
+    suspend fun inventoryClick(event: InventoryClickEvent) {
+        getView(event.view)?.apply {
             event.isCancelled = this.cancel
-            runBlocking(PluginScopeFinder.get(this::class).coroutineContext.minusKey(CoroutineDispatcher.Key)) {
+            val plugin = PluginScopeFinder.get(this::class)
+            plugin.launch(Dispatchers.Default) {
                 if (event.clickedInventory == event.whoClicked.inventory) {
-                    this@view.invokeOnClickBottom(event)
+                    this@apply.invokeOnClickBottom(event)
                 } else if (event.clickedInventory != null && event.clickedInventory != event.whoClicked.inventory) {
-                    this@view.invokeOnClickTop(event)
+                    this@apply.invokeOnClickTop(event)
                 }
-                val button = getButton(event.rawSlot)
-                if (button != null) {
-                    event.isCancelled = true
-                    button.invokeOnclick(ButtonInteractEvent(this@view, button, event))
+            }.join()
+            val button = getButton(event.rawSlot)
+            if (button != null) {
+                event.isCancelled = true
+                plugin.launch(Dispatchers.Default) {
+                    button.invokeOnclick(ButtonInteractEvent(this@apply, button, event))
                 }
             }
         }
