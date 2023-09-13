@@ -6,11 +6,13 @@ import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.view.element.ButtonElement
 import kr.hqservice.framework.view.event.ButtonRenderEvent
+import kr.hqservice.framework.view.scope.ClickScope
 import kr.hqservice.framework.view.scope.CloseScope
 import kr.hqservice.framework.view.scope.CreateScope
 import kr.hqservice.framework.view.scope.RenderScope
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import java.util.*
@@ -30,6 +32,7 @@ abstract class View(
     protected abstract suspend fun CreateScope.onCreate()
     protected open fun RenderScope.onRender(viewer: Player) {}
     protected open fun CloseScope.onClose(viewer: Player) {}
+    protected open fun ClickScope.onClick(clicker: Player) {}
 
     internal fun registerButton(slot: Int, buttonElement: ButtonElement) {
         buttons[slot] = buttonElement
@@ -66,6 +69,11 @@ abstract class View(
 
     internal fun invokeOnClose(player: Player) {
         CloseScope().onClose(player)
+    }
+
+    internal fun invokeOnClick(event: InventoryClickEvent) {
+        val player = event.whoClicked as? Player ?: return
+        ClickScope(event).onClick(player)
     }
 
     internal fun dispose() {

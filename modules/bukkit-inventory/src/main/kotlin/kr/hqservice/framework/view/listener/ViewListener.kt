@@ -1,4 +1,4 @@
-package kr.hqservice.framework.view.handler
+package kr.hqservice.framework.view.listener
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,11 +16,12 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.InventoryView
 
 @Listener
-class ViewHandler(private val navigator: Navigator) {
+class ViewListener(private val navigator: Navigator) {
     @Subscribe(handleOrder = HandleOrder.FIRST)
     fun inventoryClick(event: InventoryClickEvent) {
         getView(event.view)?.apply {
             event.isCancelled = this.cancel
+            this.invokeOnClick(event)
             val button = getButton(event.rawSlot)
             if (button != null) {
                 event.isCancelled = true
