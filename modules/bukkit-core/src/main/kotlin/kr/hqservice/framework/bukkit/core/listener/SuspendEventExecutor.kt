@@ -24,12 +24,9 @@ class SuspendEventExecutor(
     override fun execute(empty: Listener, event: Event) {
         if (eventClass.isInstance(event)) {
             runBlocking {
-                CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(start = CoroutineStart.UNDISPATCHED) {
+                val dispatcher = coroutineContext[CoroutineDispatcher.Key]!!
+                CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(dispatcher) {
                     invokeHandlerMethod(event)
-                }.apply {
-                    if (!method.hasAnnotation<Concurrent>()) {
-                        join()
-                    }
                 }
             }
         }
