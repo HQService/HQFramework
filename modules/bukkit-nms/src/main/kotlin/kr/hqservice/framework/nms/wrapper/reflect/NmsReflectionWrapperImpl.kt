@@ -54,8 +54,9 @@ class NmsReflectionWrapperImpl(
 
     private val connection by lazy { getField(entityPlayer, "playerConnection",
         Version.V_17.handle("b"),
-        Version.V_20.handle("c"))
-    }
+        Version.V_20.handle("c"),
+        Version.V_20_FORGE.handle("f_8906_")
+    ) }
     
     private val getHandle by lazy { getFunction(craftPlayer, "getHandle") }
     private val sendPacket by lazy {

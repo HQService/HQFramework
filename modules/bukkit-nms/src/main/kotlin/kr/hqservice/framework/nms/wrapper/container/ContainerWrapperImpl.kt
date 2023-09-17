@@ -13,13 +13,15 @@ class ContainerWrapperImpl(
 ) : ContainerWrapper {
     private val windowIdField = reflectionWrapper.getField(
         containerClass, "windowId",
-        Version.V_17.handle("j")
+        Version.V_17.handle("j"),
+        Version.V_20_FORGE.handle("f_38840_")
     )
 
     private val stateIdField = reflectionWrapper.getField(
         containerClass, "q",
         Version.V_19.handle("q"),
-        Version.V_19_1.handle("r")
+        Version.V_19_1.handle("r"),
+        Version.V_20_FORGE.handle("f_182405_")
     )
 
     override fun getContainerId(): Int {

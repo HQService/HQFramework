@@ -23,7 +23,8 @@ class NmsItemService(
         nmsItemStackClass, "getItem",
         Version.V_15.handle("b"),
         Version.V_17.handle("c"),
-        Version.V_20.handle("d")
+        Version.V_20.handle("d"),
+        Version.V_20_FORGE.handle("m_41720_")
     )
 
     override fun wrap(target: NmsItemStackWrapper): NmsItemWrapper {
