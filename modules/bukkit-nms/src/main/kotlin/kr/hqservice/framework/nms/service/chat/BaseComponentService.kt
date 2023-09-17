@@ -23,9 +23,9 @@ class BaseComponentService(
         Version.V_15.handle("network.chat")
     )
 
-    private val serializeFunction =
+    private val serializeFromJsonFunction =
         reflectionWrapper.getFunction(componentSerializerClass,
-            FunctionType("a", null, listOf(String::class), true),
+            FunctionType("b", null, listOf(String::class), true),
             Version.V_19.handleFunction("b") {
                 setParameterClasses(String::class)
                 static()
@@ -33,12 +33,9 @@ class BaseComponentService(
             Version.V_20_FORGE.handleFunction("m_130701_") {
                 setParameterClasses(String::class)
                 static()
-            }
-        )
+            })
 
-    private val serializeFromJsonFunction =
-        reflectionWrapper.getFunction(componentSerializerClass,
-            FunctionType("b", null, listOf(String::class), true))
+    private val serializeFunction = serializeFromJsonFunction
 
     override fun wrap(target: String): BaseComponentWrapper {
         return BaseComponentWrapper(target,
