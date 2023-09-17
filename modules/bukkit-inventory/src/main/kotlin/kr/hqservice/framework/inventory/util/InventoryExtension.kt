@@ -11,7 +11,7 @@ fun Inventory.hasSpace(size: Int = 1): Boolean {
     return this.storageContents.filter { it?.type?.isAir != false }.size >= size
 }
 
-fun PlayerInventory.hasSpace(vararg itemStack: ItemStack, repeat: Int): Boolean {
+fun PlayerInventory.hasSpace(vararg itemStack: ItemStack, repeat: Int = 1): Boolean {
     val inventoryCloned = Bukkit.getServer().createInventory(null, 45).apply {
         val uniqueItem = ItemStack(Material.STONE).apply {
             this.amount = 64
