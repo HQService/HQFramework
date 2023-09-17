@@ -3,6 +3,8 @@ package kr.hqservice.framework.command.handler
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.extension.sendColorizedMessage
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.command.*
@@ -238,9 +240,17 @@ class CommandAnnotationHandler(
 
                 val function = executor.function
                 if (function.isSuspend) {
-                    executor.function.callSuspend(executor.executorInstance, senderInstance, *arguments.toTypedArray())
+                    withContext(Dispatchers.BukkitAsync) {
+                        executor.function.callSuspend(
+                            executor.executorInstance,
+                            senderInstance,
+                            *arguments.toTypedArray()
+                        )
+                    }
                 } else {
-                    executor.function.call(executor.executorInstance, senderInstance, *arguments.toTypedArray())
+                    withContext(Dispatchers.BukkitMain) {
+                        executor.function.call(executor.executorInstance, senderInstance, *arguments.toTypedArray())
+                    }
                 }
             }
             return true
