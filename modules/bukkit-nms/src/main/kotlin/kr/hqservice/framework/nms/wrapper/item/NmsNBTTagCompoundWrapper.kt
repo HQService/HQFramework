@@ -12,29 +12,42 @@ class NmsNBTTagCompoundWrapper(
     private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_15.handle("nbt"))
 
     private val getStringFunction = reflectionWrapper.getFunction(nbtTagClass, "getString", listOf(String::class),
-        Version.V_15.handleFunction("l") { setParameterClasses(String::class) })
+        Version.V_15.handleFunction("l") { setParameterClasses(String::class) },
+        Version.V_20_FORGE.handleFunction("m_128461_") { setParameterClasses(String::class) }
+    )
 
     private val getIntFunction = reflectionWrapper.getFunction(nbtTagClass, "getInt", listOf(String::class),
         Version.V_15.handleFunction("i") { setParameterClasses(String::class) },
-        Version.V_17.handleFunction("h") { setParameterClasses(String::class) })
+        Version.V_17.handleFunction("h") { setParameterClasses(String::class) },
+        Version.V_20_FORGE.handleFunction("m_128451_") { setParameterClasses(String::class) }
+    )
 
     private val setIntFunction = reflectionWrapper.getFunction(nbtTagClass, "setInt", listOf(String::class, Int::class),
-        Version.V_15.handleFunction("a") { setParameterClasses(String::class, Int::class) })
+        Version.V_15.handleFunction("a") { setParameterClasses(String::class, Int::class) },
+        Version.V_20_FORGE.handleFunction("m_128405_") { setParameterClasses(String::class, Int::class) }
+    )
 
     private val setStringFunction =
         reflectionWrapper.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
-            Version.V_15.handleFunction("a") { setParameterClasses(String::class, String::class) })
+            Version.V_15.handleFunction("a") { setParameterClasses(String::class, String::class) },
+            Version.V_20_FORGE.handleFunction("m_128359_") { setParameterClasses(String::class, String::class) }
+        )
 
     private val removeFunction = reflectionWrapper.getFunction(nbtTagClass, "remove", listOf(String::class),
-        Version.V_15.handleFunction("r") { setParameterClasses(String::class) })
+        Version.V_15.handleFunction("r") { setParameterClasses(String::class) },
+        Version.V_20_FORGE.handleFunction("m_128473_") { setParameterClasses(String::class) }
+    )
 
     private val containsFunction = reflectionWrapper.getFunction(nbtTagClass, "contains", listOf(String::class),
-        Version.V_15.handleFunction("e") { setParameterClasses(String::class) })
+        Version.V_15.handleFunction("e") { setParameterClasses(String::class) },
+        Version.V_20_FORGE.handleFunction("m_128441_") { setParameterClasses(String::class) }
+    )
 
     private val isEmptyFunction = reflectionWrapper.getFunction(
         nbtTagClass, "isEmpty",
         Version.V_15.handleFunction("f"),
-        Version.V_19_3.handleFunction("g")
+        Version.V_19_3.handleFunction("g"),
+        Version.V_20_FORGE.handleFunction("m_128456_")
     )
 
     fun getString(key: String, def: String = ""): String {

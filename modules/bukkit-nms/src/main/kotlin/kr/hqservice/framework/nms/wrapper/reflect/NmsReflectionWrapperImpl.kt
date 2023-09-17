@@ -60,9 +60,10 @@ class NmsReflectionWrapperImpl(
     
     private val getHandle by lazy { getFunction(craftPlayer, "getHandle") }
     private val sendPacket by lazy {
-        getFunction(playerConnection, "sendPacket", listOf(packet), Version.V_18.handleFunction("a") {
-            setParameterClasses(packet)
-        })
+        getFunction(playerConnection, "sendPacket", listOf(packet),
+            Version.V_18.handleFunction("a") { setParameterClasses(packet) },
+            Version.V_20_FORGE.handleFunction("m_9829_") { setParameterClasses(packet) }
+        )
     }
 
     private val craftServer = getCraftBukkitClass("CraftServer")

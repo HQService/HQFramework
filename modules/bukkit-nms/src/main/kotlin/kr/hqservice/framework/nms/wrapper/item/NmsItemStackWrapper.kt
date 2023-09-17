@@ -22,11 +22,13 @@ class NmsItemStackWrapper(
         Version.V_15.handle("o"),
         Version.V_17.handle("s"),
         Version.V_19.handle("u"),
-        Version.V_20.handle("v")
+        Version.V_20.handle("v"),
+        Version.V_20_FORGE.handle("m_41783_")
     )
 
     private val setTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
-        Version.V_15.handleFunction("c") { setParameterClasses(nbtTagClass) }
+        Version.V_15.handleFunction("c") { setParameterClasses(nbtTagClass) },
+        Version.V_20_FORGE.handleFunction("m_41751_") { setParameterClasses(nbtTagClass) }
     )
 
     fun hasTag(): Boolean {
