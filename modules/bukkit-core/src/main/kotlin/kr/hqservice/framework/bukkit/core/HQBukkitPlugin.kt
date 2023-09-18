@@ -39,7 +39,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     ) : super(loader, description, dataFolder, file)
 
     protected open val componentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
-    private lateinit var config: HQYamlConfiguration
+    private val config = File(dataFolder, "config.yml").yaml()
 
     internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
         private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
@@ -171,7 +171,6 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             val folder = getErrorFolder()
             if (!folder.exists()) folder.mkdir()
             loadConfigIfExist()
-            config = File(dataFolder, "config.yml").yaml()
             componentRegistry.setup()
             onPostEnable()
             timerJob.cancel()
@@ -229,10 +228,13 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         val stream = getResource("config.yml") ?: return
         val file = File(dataFolder, "config.yml")
         if (!dataFolder.exists()) dataFolder.mkdirs()
-        if (!file.exists()) file.bufferedWriter().use { writer ->
-            stream.reader().readLines().forEach {
-                writer.appendLine(it)
+        if (!file.exists()) {
+            file.bufferedWriter().use { writer ->
+                stream.reader().readLines().forEach {
+                    writer.appendLine(it)
+                }
             }
+            config.reload()
         }
     }
 }
