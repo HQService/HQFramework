@@ -39,7 +39,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     ) : super(loader, description, dataFolder, file)
 
     protected open val componentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
-    private val config = File(dataFolder, "config.yml").yaml()
+    private lateinit var config: HQYamlConfiguration
 
     internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
         private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
@@ -171,6 +171,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             val folder = getErrorFolder()
             if (!folder.exists()) folder.mkdir()
             loadConfigIfExist()
+            config = File(dataFolder, "config.yml").yaml()
             componentRegistry.setup()
             onPostEnable()
             timerJob.cancel()
