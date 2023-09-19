@@ -31,20 +31,25 @@ class NmsArmorStandService(
 
     private val setHeadPoseFunction =
         reflectionWrapper.getFunction(armorStandClass, "setHeadPose", listOf(vector3fService.getTargetClass()),
-            Version.V_15.handleFunction("a") { setParameterClasses(vector3fService.getTargetClass()) })
+            Version.V_15.handleFunction("a") { setParameterClasses(vector3fService.getTargetClass()) },
+            Version.V_20_FORGE.handleFunction("m_31597_") { setParameterClasses(vector3fService.getTargetClass()) }
+        )
 
     private val getHeadPoseFunction = reflectionWrapper.getFunction(
         armorStandClass, "getHeadPose",
         Version.V_15.handleFunction("r"),
         Version.V_17.handleFunction("v"),
         Version.V_19.handleFunction("u"),
-        Version.V_19_4.handleFunction("x")
+        Version.V_19_4.handleFunction("x"),
+        Version.V_20_FORGE.handleFunction("m_31680_")
     )
 
     private val setSmallFunction = reflectionWrapper.getFunction(armorStandClass, "setSmall", listOf(Boolean::class),
         Version.V_15.handleFunction("n") { setParameterClasses(Boolean::class) },
         Version.V_17.handleFunction("a") { setParameterClasses(Boolean::class) },
-        Version.V_19_4.handleFunction("t") { setParameterClasses(Boolean::class) })
+        Version.V_19_4.handleFunction("t") { setParameterClasses(Boolean::class) },
+        Version.V_20_FORGE.handleFunction("m_31603_") { setParameterClasses(Boolean::class) }
+    )
 
     override fun wrap(target: Location): NmsArmorStandWrapper {
         val bukkitWorld = target.world ?: throw NullPointerException("world is null")

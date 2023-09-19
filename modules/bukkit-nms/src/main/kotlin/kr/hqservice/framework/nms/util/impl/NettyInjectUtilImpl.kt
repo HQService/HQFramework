@@ -51,7 +51,10 @@ class NettyInjectUtilImpl(
         listenerField.isAccessible = true
         val listener = listenerField.call(nmsServer)
 
-        val connectionField = reflectionWrapper.getField(serverConnectionListener, "h", Version.V_15.handle("g"))
+        val connectionField = reflectionWrapper.getField(serverConnectionListener, "h",
+            Version.V_15.handle("g"),
+            Version.V_20_FORGE.handle("f_9704_")
+        )
         connectionField.isAccessible = true
 
         val connectionType = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))

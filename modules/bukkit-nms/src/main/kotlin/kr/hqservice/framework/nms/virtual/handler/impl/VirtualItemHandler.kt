@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.virtual.handler.impl
 
+import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.extension.getNmsItemStack
 import kr.hqservice.framework.nms.service.NmsService
@@ -17,13 +18,15 @@ class VirtualItemHandler(
     private var item: (index: Int, itemStack: ItemStack) -> Unit
 ) : VirtualHandler {
     override fun getNmsSimpleNames(): List<String> {
-        return listOf(/*"PacketPlayOutSetSlot", */"PacketPlayOutWindowItems")
+        return listOf(/*"PacketPlayOutSetSlot", */"PacketPlayOutWindowItems", "ClientboundContainerSetContentPacket")
     }
 
     override fun checkCondition(message: Any): Boolean {
-        return if (message::class.simpleName == "PacketPlayOutWindowItems") {
-            val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
-            containerId == targetContainer
+        return if (message::class.simpleName == "PacketPlayOutWindowItems" || message::class.simpleName == "ClientboundContainerSetContentPacket") {
+            val containerId = reflectionWrapper.getField(message::class, "a",
+                Version.V_20_FORGE.handle("f_131942_")
+            ).callAccess<Int>(message)
+            (containerId == targetContainer)
         } else false
     }
 
@@ -32,9 +35,11 @@ class VirtualItemHandler(
     }
 
     override fun unregisterCondition(message: Any): Boolean {
-        return if (message::class.simpleName == "PacketPlayOutOpenWindow") {
-            val containerId = reflectionWrapper.getField(message::class, "a").callAccess<Int>(message)
-            containerId != targetContainer
+        return if (message::class.simpleName == "PacketPlayOutOpenWindow" || message::class.simpleName == "ClientboundOpenScreenPacket") {
+            val containerId = reflectionWrapper.getField(message::class, "a",
+                Version.V_20_FORGE.handle("f_132611_")
+            ).callAccess<Int>(message)
+            (containerId != targetContainer)
         } else false
     }
 
@@ -51,8 +56,8 @@ class VirtualItemHandler(
                     return true
                 }
             }*/
-            "PacketPlayOutWindowItems" -> {
-                val listField = reflectionWrapper.getField(message::class, "c")
+            "PacketPlayOutWindowItems", "ClientboundContainerSetContentPacket" -> {
+                val listField = reflectionWrapper.getField(message::class, "c", Version.V_20_FORGE.handle("f_131943_"))
                 val list = listField.callAccess<MutableList<Any>>(message)
                 list.forEachIndexed { index, any ->
                     val wrapper = itemStackService.getWrapper(any)
