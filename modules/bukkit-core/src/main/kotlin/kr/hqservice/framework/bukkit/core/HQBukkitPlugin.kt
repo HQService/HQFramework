@@ -228,10 +228,13 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         val stream = getResource("config.yml") ?: return
         val file = File(dataFolder, "config.yml")
         if (!dataFolder.exists()) dataFolder.mkdirs()
-        if (!file.exists()) file.bufferedWriter().use { writer ->
-            stream.reader().readLines().forEach {
-                writer.appendLine(it)
+        if (!file.exists()) {
+            file.bufferedWriter().use { writer ->
+                stream.reader().readLines().forEach {
+                    writer.appendLine(it)
+                }
             }
+            config.reload()
         }
     }
 }
