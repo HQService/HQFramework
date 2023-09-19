@@ -10,7 +10,7 @@ object PluginScopeFinder {
             .pluginManager
             .plugins
             .filterIsInstance<HQBukkitPlugin>()
-            .single { hqBukkitPlugin ->
+            .singleOrNull { hqBukkitPlugin ->
                 val targetPackage = kClass.java.packageName
                 val pluginPackage = hqBukkitPlugin::class.java.packageName
                 targetPackage == pluginPackage || targetPackage.startsWith("$pluginPackage.")
