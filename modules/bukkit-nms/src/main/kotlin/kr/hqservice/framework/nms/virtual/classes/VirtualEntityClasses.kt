@@ -154,7 +154,7 @@ class VirtualEntityClasses(
     }
 
     fun setCustomName(name: String, entity: Any) {
-        setCustomNameFunction.call(entity, componentWrapper.wrap(name).getUnwrappedInstance())
+        setCustomNameFunction.call(entity, componentWrapper.wrap("{\"text\":\"$name\"}").getUnwrappedInstance())
     }
 
     fun setCustomNameVisible(visible: Boolean, entity: Any) {

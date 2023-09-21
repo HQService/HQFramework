@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.virtual.handler.impl
 
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.extension.getNmsItemStack
@@ -31,16 +32,25 @@ class VirtualItemHandler(
     }
 
     override fun unregisterType(): HandlerUnregisterType {
-        return HandlerUnregisterType.READ
+        return HandlerUnregisterType.ALL
     }
 
     override fun unregisterCondition(message: Any): Boolean {
-        return if (message::class.simpleName == "PacketPlayOutOpenWindow" || message::class.simpleName == "ClientboundOpenScreenPacket") {
-            val containerId = reflectionWrapper.getField(message::class, "a",
-                Version.V_20_FORGE.handle("f_132611_")
-            ).callAccess<Int>(message)
-            (containerId != targetContainer)
-        } else false
+        return when (message::class.simpleName) {
+            "PacketPlayOutOpenWindow", "ClientboundOpenScreenPacket" -> {
+                val containerId = reflectionWrapper.getField(message::class, "a",
+                    Version.V_20_FORGE.handle("f_132611_")
+                ).callAccess<Int>(message)
+                (containerId != targetContainer)
+            }
+            "PacketPlayOutCloseWindow", "ClientboundContainerClosePacket" -> {
+                val containerId = reflectionWrapper.getField(message::class, "a",
+                    Version.V_20_FORGE.handle("f_131930_")
+                ).callAccess<Int>(message)
+                (containerId == targetContainer)
+            }
+            else -> false
+        }
     }
 
     override fun handle(message: Any) {
@@ -57,6 +67,7 @@ class VirtualItemHandler(
                 }
             }*/
             "PacketPlayOutWindowItems", "ClientboundContainerSetContentPacket" -> {
+                println("handle")
                 val listField = reflectionWrapper.getField(message::class, "c", Version.V_20_FORGE.handle("f_131943_"))
                 val list = listField.callAccess<MutableList<Any>>(message)
                 list.forEachIndexed { index, any ->
