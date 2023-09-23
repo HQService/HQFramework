@@ -35,3 +35,12 @@ class FunctionType(
         else listOf(targetClass, *parameterClasses.toTypedArray())
     }
 }
+
+internal fun List<KClass<*>?>.fix_0(): List<KClass<*>?> {
+    return map {
+        when {
+            it?.simpleName == "Object" -> Any::class
+            else -> it
+        }
+    }
+}

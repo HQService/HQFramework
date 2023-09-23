@@ -67,7 +67,6 @@ class VirtualItemHandler(
                 }
             }*/
             "PacketPlayOutWindowItems", "ClientboundContainerSetContentPacket" -> {
-                println("handle")
                 val listField = reflectionWrapper.getField(message::class, "c", Version.V_20_FORGE.handle("f_131943_"))
                 val list = listField.callAccess<MutableList<Any>>(message)
                 list.forEachIndexed { index, any ->

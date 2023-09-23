@@ -15,6 +15,7 @@ import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
 import org.bukkit.entity.Player
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.functions
@@ -29,8 +30,8 @@ class NmsReflectionWrapperImpl(
     server: Server,
     config: HQYamlConfiguration
 ) : NmsReflectionWrapper, HQSimpleComponent {
-    private val classMap = mutableMapOf<String, KClass<*>>()
-    private val callableMap = mutableMapOf<String, KCallable<*>>()
+    private val classMap = ConcurrentHashMap<String, KClass<*>>()
+    private val callableMap = ConcurrentHashMap<String, KCallable<*>>()
 
     private val forgeSupport = config.getBoolean("forge-support")
 
