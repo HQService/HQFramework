@@ -38,13 +38,27 @@ class ProxyPacketSender(
 
     override fun broadcast(message: String, logging: Boolean) {
         proxy.broadcast(message)
-        if (logging) logger.info("[BROADCAST_ALL] $message")
+        if (logging) logger.info("[BROADCAST] $message")
+    }
+
+    override fun broadcast(message: BaseComponent, logging: Boolean) {
+        val newComponent = legacyToNewComponentStyle(message)
+
+        proxy.broadcast(newComponent)
+        if(logging) logger.info("[BROADCAST] ${ChatColor.stripColor(message.toLegacyText())}")
     }
 
     override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
         val server = proxy.getServerInfo(channel.getName()) ?: return
         server.players.forEach { it.sendMessage(message) }
         if (logging) logger.info("[BROADCAST_${channel.getName().uppercase()}] $message")
+    }
+
+    override fun sendMessageToChannel(channel: NettyChannel, message: BaseComponent, logging: Boolean) {
+        val newComponent = legacyToNewComponentStyle(message)
+
+        proxy.broadcast(newComponent)
+        if(logging) logger.info("[BROADCAST_${channel.getName().uppercase()}] ${ChatColor.stripColor(message.toLegacyText())}")
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean) {
@@ -57,10 +71,21 @@ class ProxyPacketSender(
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
-        val extra = message.extra
+        val newComponent = legacyToNewComponentStyle(message)
+
+        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(newComponent) }
+        if(logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message.toLegacyText())}")
+    }
+
+    override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
+        sendMessageToPlayers(listOf(player), message, logging)
+    }
+
+    private fun legacyToNewComponentStyle(legacyComponent: BaseComponent): BaseComponent {
+        val extra = legacyComponent.extra
         val newComponent = TextComponent()
-        newComponent.hoverEvent = message.hoverEvent
-        newComponent.clickEvent = message.clickEvent
+        newComponent.hoverEvent = legacyComponent.hoverEvent
+        newComponent.clickEvent = legacyComponent.clickEvent
 
         if (extra != null && extra.isNotEmpty()) {
             extra.forEach {
@@ -75,18 +100,13 @@ class ProxyPacketSender(
             }
         } else {
             val child = TextComponent()
-            val legacy = message.toLegacyText()
+            val legacy = legacyComponent.toLegacyText()
             TextComponent.fromLegacyText(legacy).forEach { newText ->
                 child.addExtra(newText)
             }
             newComponent.addExtra(child)
         }
 
-        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(newComponent) }
-        if(logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message.toLegacyText())}")
-    }
-
-    override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
-        sendMessageToPlayers(listOf(player), message, logging)
+        return newComponent
     }
 }

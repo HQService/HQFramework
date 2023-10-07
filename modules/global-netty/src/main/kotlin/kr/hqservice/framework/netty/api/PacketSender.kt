@@ -12,9 +12,15 @@ interface PacketSender {
 
     fun sendPacket(name: String, packet: Packet)
 
+    @Deprecated("1.0.2 에서 삭제 될 예정")
     fun broadcast(message: String, logging: Boolean)
 
+    fun broadcast(message: BaseComponent, logging: Boolean)
+
+    @Deprecated("1.0.2 에서 삭제 될 예정")
     fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean)
+
+    fun sendMessageToChannel(channel: NettyChannel, message: BaseComponent, logging: Boolean)
 
     @Deprecated("1.0.2 에서 삭제 될 예정")
     fun sendMessageToPlayers(players: List<NettyPlayer>, message: String, logging: Boolean)

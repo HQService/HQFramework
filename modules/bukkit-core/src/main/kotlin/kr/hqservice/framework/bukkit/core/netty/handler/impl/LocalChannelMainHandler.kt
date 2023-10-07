@@ -51,9 +51,19 @@ class LocalChannelMainHandler(private val plugin: HQBukkitPlugin) : ChannelMainH
         plugin.server.broadcastMessage(message)
     }
 
+    override fun broadcast(message: BaseComponent, logging: Boolean) {
+        plugin.server.spigot().broadcast(message)
+    }
+
     override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
         if (plugin.server.port == channel.getPort() && plugin.server.name == channel.getName()) {
             plugin.server.broadcastMessage(message)
+        }
+    }
+
+    override fun sendMessageToChannel(channel: NettyChannel, message: BaseComponent, logging: Boolean) {
+        if (plugin.server.port == channel.getPort() && plugin.server.name == channel.getName()) {
+            plugin.server.spigot().broadcast(message)
         }
     }
 

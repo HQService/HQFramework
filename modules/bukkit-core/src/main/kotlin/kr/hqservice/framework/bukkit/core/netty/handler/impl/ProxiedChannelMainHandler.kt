@@ -53,10 +53,18 @@ class ProxiedChannelMainHandler(
     }
 
     override fun broadcast(message: String, logging: Boolean) {
+        sendPacketToProxy(BroadcastPacket(TextComponent(message), logging, null))
+    }
+
+    override fun broadcast(message: BaseComponent, logging: Boolean) {
         sendPacketToProxy(BroadcastPacket(message, logging, null))
     }
 
     override fun sendMessageToChannel(channel: NettyChannel, message: String, logging: Boolean) {
+        sendPacketToProxy(BroadcastPacket(TextComponent(message), logging, channel))
+    }
+
+    override fun sendMessageToChannel(channel: NettyChannel, message: BaseComponent, logging: Boolean) {
         sendPacketToProxy(BroadcastPacket(message, logging, channel))
     }
 
@@ -69,7 +77,7 @@ class ProxiedChannelMainHandler(
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
-        sendPacketToProxy(MessagePacket(message, false, players))
+        sendPacketToProxy(MessagePacket(message, logging, players))
     }
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {

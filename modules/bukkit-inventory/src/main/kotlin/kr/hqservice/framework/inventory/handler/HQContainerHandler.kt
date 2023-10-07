@@ -12,7 +12,6 @@ import org.bukkit.inventory.InventoryView
 
 @Listener
 class HQContainerHandler {
-
     @Subscribe(handleOrder = HandleOrder.FIRST)
     fun inventoryClick(event: InventoryClickEvent) {
         getContainer(event.view)?.apply {
