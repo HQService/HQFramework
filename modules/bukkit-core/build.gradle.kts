@@ -7,7 +7,7 @@ dependencies {
     apiModule("global", "core")
     apiModule("global", "netty")
     apiModule("global", "yaml")
-    compileOnly(libs.spigot.api)
+    api(libs.spigot.api)
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)

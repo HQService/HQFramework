@@ -55,7 +55,16 @@ internal class NavigatorImpl : Navigator {
             player.closeInventory()
             return
         }
-        viewStack.pop()
+
+        try {
+            viewStack.pop()
+        } catch (_: EmptyStackException) {
+            withContext(Dispatchers.BukkitMain) {
+                player.closeInventory()
+            }
+            return
+        }
+
         if (viewStack.isNotEmpty()) {
             changeViewAllows.add(player.uniqueId)
             nonSuspendOpen(coroutineContext, viewStack.peek(), player)

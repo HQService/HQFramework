@@ -35,7 +35,7 @@ dependencies {
     compileOnly(libs.spigot.api)
 
     implementationModule("bukkit", "core")
-    implementationModule("bukkit", "command")
+    runtimeOnlyModule("bukkit", "command")
     runtimeOnlyModule("global", "core")
     runtimeOnlyModule("global", "netty")
     runtimeOnlyModule("global", "yaml")
@@ -44,4 +44,8 @@ dependencies {
     runtimeOnlyModule("bukkit", "database")
     runtimeOnlyModule("bukkit", "nms")
     runtimeOnlyModule("bukkit", "scheduler")
+}
+
+configurations.runtimeClasspath.configure {
+    exclude(libs.spigot.api.get().group, libs.spigot.api.get().name)
 }
