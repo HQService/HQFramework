@@ -13,6 +13,7 @@ import kr.hqservice.framework.bukkit.core.coroutine.extension.childrenAll
 import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
 import kr.hqservice.framework.bukkit.core.extension.format
 import kr.hqservice.framework.global.core.HQPlugin
+import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.extension.yaml
@@ -38,7 +39,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         file: File
     ) : super(loader, description, dataFolder, file)
 
-    protected open val componentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
+    protected open val bukkitComponentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
     private val config = File(dataFolder, "config.yml").yaml()
 
     internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
@@ -171,7 +172,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             val folder = getErrorFolder()
             if (!folder.exists()) folder.mkdir()
             loadConfigIfExist()
-            componentRegistry.setup()
+            bukkitComponentRegistry.setup()
             onPostEnable()
             timerJob.cancel()
             logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
@@ -200,7 +201,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
                 logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
                 onPreDisable()
-                componentRegistry.teardown()
+                bukkitComponentRegistry.teardown()
                 onPostDisable()
                 logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
             }.join()
@@ -222,6 +223,10 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
     final override fun getPluginClassLoader(): ClassLoader {
         return super.getClassLoader()
+    }
+
+    final override fun getComponentRegistry(): ComponentRegistry {
+        return bukkitComponentRegistry
     }
 
     private fun loadConfigIfExist() {

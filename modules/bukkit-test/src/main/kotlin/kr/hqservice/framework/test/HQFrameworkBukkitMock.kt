@@ -64,7 +64,7 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
         file: File
     ) : super(loader, description, dataFolder, file)
 
-    public override val componentRegistry: BukkitComponentRegistry =
+    public override val bukkitComponentRegistry: BukkitComponentRegistry =
         spyk(BukkitComponentRegistry(this), recordPrivateCalls = true)
 
     override fun onPreEnable() {
@@ -72,8 +72,8 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
     }
 
     private fun stubComponentRepository() {
-        every { componentRegistry["getAllComponentsToScan"]() } returns findTargetClasses()
-        every { componentRegistry["getProvidedInstances"]() } returns mutableMapOf<KClass<*>, Any>().apply {
+        every { bukkitComponentRegistry["getAllComponentsToScan"]() } returns findTargetClasses()
+        every { bukkitComponentRegistry["getProvidedInstances"]() } returns mutableMapOf<KClass<*>, Any>().apply {
             put(Plugin::class, this@HQFrameworkBukkitMock)
             put(this::class, this@HQFrameworkBukkitMock)
             put(HQBukkitPlugin::class, this@HQFrameworkBukkitMock)

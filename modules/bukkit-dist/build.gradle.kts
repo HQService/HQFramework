@@ -35,7 +35,7 @@ dependencies {
     compileOnly(libs.spigot.api)
 
     implementationModule("bukkit", "core")
-    runtimeOnlyModule("bukkit", "command")
+    implementationModule("bukkit", "command")
     runtimeOnlyModule("global", "core")
     runtimeOnlyModule("global", "netty")
     runtimeOnlyModule("global", "yaml")

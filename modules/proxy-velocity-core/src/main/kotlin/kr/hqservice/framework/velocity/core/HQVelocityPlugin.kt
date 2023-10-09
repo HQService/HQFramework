@@ -26,7 +26,7 @@ import java.util.jar.JarInputStream
 import java.util.logging.Logger
 
 abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
-    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+    protected open val velocityComponentRegistry: ComponentRegistry by inject { parametersOf(this) }
 
     abstract fun getEventManager(): EventManager
     abstract fun getProxyServer(): ProxyServer
@@ -53,11 +53,15 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
     }
 
     final override fun onEnable() {
-        componentRegistry.setup()
+        velocityComponentRegistry.setup()
     }
 
     final override fun onDisable() {
-        componentRegistry.teardown()
+        velocityComponentRegistry.teardown()
+    }
+
+    final override fun getComponentRegistry(): ComponentRegistry {
+        return velocityComponentRegistry
     }
 
     final override fun getJar(): File {

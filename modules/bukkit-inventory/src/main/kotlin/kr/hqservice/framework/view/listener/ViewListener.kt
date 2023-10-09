@@ -43,7 +43,9 @@ class ViewListener(private val navigator: Navigator) {
     fun inventoryClose(event: InventoryCloseEvent) {
         val view = getView(event.view)
         val player = event.player as Player
-        navigator as NavigatorImpl
+        if (navigator !is NavigatorImpl) {
+            return
+        }
         if (view != null && !navigator.isAllowToChangeView(player.uniqueId)) {
             view.invokeOnClose(player)
             val plugin = PluginScopeFinder.get(view::class)

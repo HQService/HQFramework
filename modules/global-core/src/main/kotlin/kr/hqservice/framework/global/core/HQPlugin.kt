@@ -1,5 +1,6 @@
 package kr.hqservice.framework.global.core
 
+import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import java.io.File
 import java.util.logging.Logger
 
@@ -23,4 +24,6 @@ interface HQPlugin {
     fun getLogger(): Logger
 
     fun getPluginClassLoader(): ClassLoader
+
+    fun getComponentRegistry(): ComponentRegistry
 }

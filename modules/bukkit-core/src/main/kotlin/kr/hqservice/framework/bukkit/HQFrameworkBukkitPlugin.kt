@@ -31,7 +31,7 @@ abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
                 single<HQPlugin>(named("hqframework")) { this@HQFrameworkBukkitPlugin }
                 single<HQBukkitPlugin>(named("hqframework")) { this@HQFrameworkBukkitPlugin }
                 single<HQFrameworkBukkitPlugin> { this@HQFrameworkBukkitPlugin }
-                single { this@HQFrameworkBukkitPlugin.componentRegistry } binds arrayOf(
+                single { this@HQFrameworkBukkitPlugin.bukkitComponentRegistry } binds arrayOf(
                     InstanceFactoryRegistry::class,
                     ComponentRegistry::class
                 )

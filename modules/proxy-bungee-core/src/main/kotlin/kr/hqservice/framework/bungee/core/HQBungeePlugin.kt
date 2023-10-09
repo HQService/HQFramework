@@ -10,7 +10,7 @@ import java.io.File
 import java.util.logging.Logger
 
 abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
-    protected open val componentRegistry: ComponentRegistry by inject { parametersOf(this) }
+    protected open val bungeeComponentRegistry: ComponentRegistry by inject { parametersOf(this) }
 
     final override fun onLoad() {
         onPreLoad()
@@ -20,14 +20,18 @@ abstract class HQBungeePlugin : Plugin(), HQProxyPlugin, KoinComponent {
     final override fun onEnable() {
         onPreEnable()
         loadConfig()
-        componentRegistry.setup()
+        bungeeComponentRegistry.setup()
         onPostEnable()
     }
 
     final override fun onDisable() {
         onPreDisable()
-        componentRegistry.teardown()
+        bungeeComponentRegistry.teardown()
         onPostDisable()
+    }
+
+    final override fun getComponentRegistry(): ComponentRegistry {
+        return bungeeComponentRegistry
     }
 
     final override fun getJar(): File {
