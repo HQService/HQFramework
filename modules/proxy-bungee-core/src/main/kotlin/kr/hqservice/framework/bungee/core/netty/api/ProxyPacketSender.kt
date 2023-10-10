@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bungee.core.netty.api
 
+import kr.hqservice.framework.bungee.core.extension.newTextComponent
 import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
@@ -57,32 +58,7 @@ class ProxyPacketSender(
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
-        val extra = message.extra
-        val newComponent = TextComponent()
-        newComponent.hoverEvent = message.hoverEvent
-        newComponent.clickEvent = message.clickEvent
-
-        if (extra != null && extra.isNotEmpty()) {
-            extra.forEach {
-                val child = TextComponent()
-                val legacy = it.toLegacyText()
-                TextComponent.fromLegacyText(legacy).forEach { newText ->
-                    child.addExtra(newText)
-                }
-                child.hoverEvent = it.hoverEvent
-                child.clickEvent = it.clickEvent
-                newComponent.addExtra(child)
-            }
-        } else {
-            val child = TextComponent()
-            val legacy = message.toLegacyText()
-            TextComponent.fromLegacyText(legacy).forEach { newText ->
-                child.addExtra(newText)
-            }
-            newComponent.addExtra(child)
-        }
-
-        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(newComponent) }
+        players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(message.newTextComponent()) }
         if(logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message.toLegacyText())}")
     }
 
