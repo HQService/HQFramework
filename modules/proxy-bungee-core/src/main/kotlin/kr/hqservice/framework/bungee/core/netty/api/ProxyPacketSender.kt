@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bungee.core.netty.api
 
+import kr.hqservice.framework.bungee.core.extension.legacyToNewComponentStyle
 import kr.hqservice.framework.bungee.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
@@ -42,9 +43,9 @@ class ProxyPacketSender(
     }
 
     override fun broadcast(message: BaseComponent, logging: Boolean) {
-        val newComponent = legacyToNewComponentStyle(message)
+        val newComponent = message.legacyToNewComponentStyle()
 
-        proxy.broadcast(newComponent)
+        proxy.broadcast(message.legacyToNewComponentStyle())
         if(logging) logger.info("[BROADCAST] ${ChatColor.stripColor(message.toLegacyText())}")
     }
 
@@ -55,7 +56,7 @@ class ProxyPacketSender(
     }
 
     override fun sendMessageToChannel(channel: NettyChannel, message: BaseComponent, logging: Boolean) {
-        val newComponent = legacyToNewComponentStyle(message)
+        val newComponent = message.legacyToNewComponentStyle()
 
         proxy.broadcast(newComponent)
         if(logging) logger.info("[BROADCAST_${channel.getName().uppercase()}] ${ChatColor.stripColor(message.toLegacyText())}")
@@ -71,7 +72,7 @@ class ProxyPacketSender(
     }
 
     override fun sendMessageToPlayers(players: List<NettyPlayer>, message: BaseComponent, logging: Boolean) {
-        val newComponent = legacyToNewComponentStyle(message)
+        val newComponent = message.legacyToNewComponentStyle()
 
         players.forEach { proxy.getPlayer(it.getUniqueId())?.sendMessage(newComponent) }
         if(logging) logger.info("[MESSAGE] ${ChatColor.stripColor(message.toLegacyText())}")
@@ -79,34 +80,5 @@ class ProxyPacketSender(
 
     override fun sendMessageToPlayer(player: NettyPlayer, message: BaseComponent, logging: Boolean) {
         sendMessageToPlayers(listOf(player), message, logging)
-    }
-
-    private fun legacyToNewComponentStyle(legacyComponent: BaseComponent): BaseComponent {
-        val extra = legacyComponent.extra
-        val newComponent = TextComponent()
-        newComponent.hoverEvent = legacyComponent.hoverEvent
-        newComponent.clickEvent = legacyComponent.clickEvent
-
-        if (extra != null && extra.isNotEmpty()) {
-            extra.forEach {
-                val child = TextComponent()
-                val legacy = it.toLegacyText()
-                TextComponent.fromLegacyText(legacy).forEach { newText ->
-                    child.addExtra(newText)
-                }
-                child.hoverEvent = it.hoverEvent
-                child.clickEvent = it.clickEvent
-                newComponent.addExtra(child)
-            }
-        } else {
-            val child = TextComponent()
-            val legacy = legacyComponent.toLegacyText()
-            TextComponent.fromLegacyText(legacy).forEach { newText ->
-                child.addExtra(newText)
-            }
-            newComponent.addExtra(child)
-        }
-
-        return newComponent
     }
 }
