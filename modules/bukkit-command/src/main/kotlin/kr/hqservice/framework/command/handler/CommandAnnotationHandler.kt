@@ -35,20 +35,29 @@ import kotlin.reflect.jvm.jvmErasure
 class CommandAnnotationHandler(
     private val pluginManager: PluginManager,
     private val commandRegistry: CommandRegistry,
+    private val tabCompletionHandler: CommandTabCompletionHandler,
     private val argumentProviderRegistry: CommandArgumentProviderRegistry,
     private val commandArgumentExceptionHandlerRegistry: CommandArgumentExceptionHandlerRegistry
 ) : HQAnnotationHandler<Command> {
+    private val paperUse = try {
+        Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent")
+        true
+    } catch (_: ClassNotFoundException) { false }
+
     override fun setup(instance: Any, annotation: Command) {
         val plugin = PluginScopeFinder.get(instance::class)
         if (!hasParent(annotation)) {
             registerRoot(annotation.label, instance::class, plugin)
         }
+
         if (hasLabel(annotation)) {
             registerTree(annotation.parent, instance)
             registerExecutors(instance::class, instance)
         } else {
             registerExecutors(annotation.parent, instance)
         }
+
+        if (paperUse) tabCompletionHandler.initialize(plugin)
     }
 
     private fun hasParent(annotation: Command): Boolean {
@@ -105,14 +114,18 @@ class CommandAnnotationHandler(
             .first { it.name == "commandMap" }
             .apply { isAccessible = true }
             .get(pluginManager) as CommandMap
+        val hqCommand = HQBukkitCommand(label, paperUse, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
         commandMap.register(
             "hq",
-            HQBukkitCommand(label, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
+            hqCommand
         )
 
         plugin.launch {
             bukkitDelay(1)
             setupTree(root)
+            if (paperUse) {
+                tabCompletionHandler.registerTabCompletion(label, hqCommand)
+            }
         }
     }
 
@@ -127,8 +140,9 @@ class CommandAnnotationHandler(
         }
     }
 
-    private class HQBukkitCommand(
+    internal class HQBukkitCommand(
         label: String,
+        private val paperUse: Boolean,
         private val plugin: HQBukkitPlugin,
         private val hqCommandRoot: RegisteredCommandRoot,
         private val registry: CommandArgumentProviderRegistry,
@@ -260,8 +274,19 @@ class CommandAnnotationHandler(
             return this.tabComplete(sender, alias, args, null)
         }
 
-        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         override fun tabComplete(
+            sender: CommandSender,
+            alias: String,
+            args: Array<String>,
+            location: Location?
+        ): List<String> {
+            if (paperUse) return emptyList()
+
+            return hqTabComplete(sender, alias, args, location)
+        }
+
+        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
+        fun hqTabComplete(
             sender: CommandSender,
             alias: String,
             args: Array<String>,
