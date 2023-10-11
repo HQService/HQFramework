@@ -5,6 +5,7 @@ import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.PacketSender
+import kr.hqservice.framework.netty.extension.sendMessage
 import kr.hqservice.framework.netty.packet.Packet
 import net.md_5.bungee.api.ChatColor
 import net.md_5.bungee.api.ProxyServer
@@ -57,7 +58,8 @@ class ProxyPacketSender(
     override fun sendMessageToChannel(channel: NettyChannel, message: BaseComponent, logging: Boolean) {
         val newComponent = legacyToNewComponentStyle(message)
 
-        proxy.broadcast(newComponent)
+        val server = proxy.getServerInfo(channel.getName()) ?: return
+        server.players.forEach { it.sendMessage(newComponent) }
         if(logging) logger.info("[BROADCAST_${channel.getName().uppercase()}] ${ChatColor.stripColor(message.toLegacyText())}")
     }
 

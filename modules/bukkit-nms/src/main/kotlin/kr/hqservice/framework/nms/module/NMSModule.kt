@@ -7,6 +7,7 @@ import kr.hqservice.framework.global.core.component.HQModule
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.nms.registry.LanguageRegistry
 import org.bukkit.plugin.Plugin
+import java.io.File
 import java.util.*
 
 @Component
@@ -16,8 +17,12 @@ class NMSModule(
     @Qualifier("virtual") private val virtualScope: HQCoroutineScope
 ) : HQModule {
     override fun onEnable() {
-        plugin.getResource("lang/ko_kr.json")
-            ?.apply { languageRegistry.registerLanguage(this, Locale.KOREA) }
+        plugin.saveResource("lang/ko_kr.json", false)
+
+        val folder = File(plugin.dataFolder, "lang")
+        folder.listFiles()?.forEach {
+            languageRegistry.registerLanguage(it.inputStream(), Locale(it.name.removeSuffix(".json")))
+        }
     }
 
     override fun onDisable() {

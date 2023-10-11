@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
@@ -11,7 +12,9 @@ import java.util.*
 
 @Component
 @Singleton(binds = [LanguageRegistry::class])
-class LanguageRegistry : HQSimpleComponent {
+class LanguageRegistry(
+    private val config: HQYamlConfiguration
+) : HQSimpleComponent {
     private val languageMap = mutableMapOf<Locale, Map<String, String>>()
 
     @Suppress("unchecked_cast")
@@ -22,7 +25,7 @@ class LanguageRegistry : HQSimpleComponent {
         }
     }
 
-    fun getLocalizeValue(descriptionKey: String, locale: Locale = Locale.KOREA): String? {
-        return languageMap[locale]?.get(descriptionKey)
+    fun getLocalizeValue(descriptionKey: String): String? {
+        return languageMap[Locale(config.getString("lang"))]?.get(descriptionKey)
     }
 }

@@ -28,7 +28,7 @@ class NmsItemWrapper(
 
     fun getLocalizedName(): String? {
         val locale = Locale.getDefault()
-        return languageRegistry.getLocalizeValue(getDescriptionName(), locale)
+        return languageRegistry.getLocalizeValue(getDescriptionName())
     }
 
     override fun getUnwrappedInstance(): Any {
