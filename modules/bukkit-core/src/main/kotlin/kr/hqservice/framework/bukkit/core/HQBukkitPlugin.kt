@@ -251,6 +251,12 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
                     if (pluginConfig.isConfigurationSection(it)) return@forEach
                     else if (!fileConfig.isSet(it)) fileConfig.set(it, pluginConfig.get(it))
                 }
+
+                pluginConfig.getString("config-version").apply {
+                    if (!isNullOrEmpty())
+                        fileConfig.set("config-version", this)
+                }
+
                 fileConfig.save(file)
                 config.reload()
             }
