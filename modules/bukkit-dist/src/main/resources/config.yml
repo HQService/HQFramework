@@ -1,4 +1,4 @@
-config-version: 1
+config-version: 1.1
 
 lang: ko_kr
 
@@ -41,5 +41,8 @@ scheduler:
     misfire-threshold: 1100
     # https://stackoverflow.com/questions/14953297/recomended-value-for-org-quartz-jobstore-clustercheckininterval
     cluster-checkin-interval: 2000
+command:
+  tab-complete:
+    limit-per-second: 20
 
 forge-support: false
