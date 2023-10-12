@@ -14,6 +14,7 @@ import kr.hqservice.framework.command.registry.CommandRegistry
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender

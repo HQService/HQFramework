@@ -1,15 +1,18 @@
 package kr.hqservice.framework.command.handler.wrapper
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
+
 import kr.hqservice.framework.command.handler.CommandTabCompletionHandler.Companion.findHQCommand
+import kr.hqservice.framework.command.registry.TabCompleteRateLimitRegistry
 import org.bukkit.Location
 import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 import org.bukkit.event.Event
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberFunctions
 
 class TabCompleteEventWrapper(
+    private val tabCompleteRateLimitRegistry: TabCompleteRateLimitRegistry,
     clazz: KClass<Event>
 ) {
     private val buffer = clazz.memberFunctions.single { it.name == "getBuffer" }
@@ -31,16 +34,18 @@ class TabCompleteEventWrapper(
         val args = buffer.split(" ")
         val command = args[0].removePrefix("/")
         val sender = sender.call(event) as CommandSender
-        // TODO("같은 플레이어 1초에 10번 이상 오면 kick")
 
         val location = location.call(event) as? Location
-        val completion = findHQCommand(command)?.hqTabComplete(
+        val completion = if(sender is Player && !requestTabComplete(sender.uniqueId)) null else findHQCommand(command)?.hqTabComplete(
             sender, command,
             if (args.isNotEmpty()) args.subList(1, args.size).toTypedArray() else arrayOf(""), location
         )
+
         completion?.apply {
             setCompletions.call(event, this)
             setHandled.call(event, true)
         }
     }
+
+    private fun requestTabComplete(playerUniqueId: UUID) = tabCompleteRateLimitRegistry.requestTabComplete(playerUniqueId)
 }
