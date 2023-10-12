@@ -2,14 +2,18 @@ package kr.hqservice.framework.command.registry.impl
 
 import kr.hqservice.framework.command.registry.TabCompleteRateLimitRegistry
 import kr.hqservice.framework.global.core.component.Bean
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 @Bean
-class TabCompleteRateLimitRegistryImpl : TabCompleteRateLimitRegistry {
+class TabCompleteRateLimitRegistryImpl(
+    private val config: HQYamlConfiguration,
+) : TabCompleteRateLimitRegistry {
+
     private val tabCompleteRateLimitRegistry: MutableMap<UUID, Pair<Long, Int>> = ConcurrentHashMap()
 
-    override fun requestTabComplete(playerUniqueId: UUID): Boolean {
+    override fun isTabCompletable(playerUniqueId: UUID): Boolean {
         if(!tabCompleteRateLimitRegistry.containsKey(playerUniqueId)) {
             tabCompleteRateLimitRegistry[playerUniqueId] = System.currentTimeMillis() to 1
             return true
@@ -21,10 +25,9 @@ class TabCompleteRateLimitRegistryImpl : TabCompleteRateLimitRegistry {
             return true
         }
         tabCompleteRateLimitRegistry[playerUniqueId] = pair.first to pair.second + 1
-        return pair.second + 1 < 20
+        return pair.second + 1 < getLimitPerSecond()
     }
 
-    override fun get(playerUniqueId: UUID): Int {
-        return tabCompleteRateLimitRegistry[playerUniqueId]?.second ?: 0
-    }
+    private fun getLimitPerSecond() = config.getInt("command.tab-complete.limit-per-second")
+
 }

@@ -36,7 +36,7 @@ class TabCompleteEventWrapper(
         val sender = sender.call(event) as CommandSender
 
         val location = location.call(event) as? Location
-        val completion = if(sender is Player && !requestTabComplete(sender.uniqueId)) null else findHQCommand(command)?.hqTabComplete(
+        val completion = if(sender is Player && !sender.isTabCompletable()) null else findHQCommand(command)?.hqTabComplete(
             sender, command,
             if (args.isNotEmpty()) args.subList(1, args.size).toTypedArray() else arrayOf(""), location
         )
@@ -47,5 +47,5 @@ class TabCompleteEventWrapper(
         }
     }
 
-    private fun requestTabComplete(playerUniqueId: UUID) = tabCompleteRateLimitRegistry.requestTabComplete(playerUniqueId)
+    private fun Player.isTabCompletable() = tabCompleteRateLimitRegistry.isTabCompletable(this.uniqueId)
 }
