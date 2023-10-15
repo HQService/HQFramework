@@ -1,12 +1,15 @@
 package kr.hqservice.framework.nms.event
 
-import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
+import java.util.UUID
 
 class PlayerDataPreLoadEvent(
-    val player: Player
+    val uniqueId: UUID,
 ) : Event(true) {
+    private var valid = true
+    private var failReason = StringBuilder()
+
     companion object {
         @JvmStatic
         val HANDLER_LIST = HandlerList()
@@ -16,5 +19,18 @@ class PlayerDataPreLoadEvent(
 
     override fun getHandlers(): HandlerList {
         return getHandlerList()
+    }
+
+    fun setFailed(reason: String) {
+        valid = false
+        failReason.append(reason)
+    }
+
+    fun isInvalid(): Boolean {
+        return !valid
+    }
+
+    fun getFailReason(): String {
+        return failReason.toString()
     }
 }

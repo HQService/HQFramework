@@ -6,21 +6,37 @@ import io.netty.channel.ChannelPromise
 import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import org.bukkit.entity.Player
+import org.bukkit.Bukkit
 import org.bukkit.plugin.Plugin
+import java.util.UUID
+import java.util.logging.Level
 
 class PacketHandler(
-    private val player: Player,
+    private val uniqueId: UUID,
     private val plugin: Plugin,
-    private val virtualHandlerRegistry: VirtualHandlerRegistry
+    private val virtualHandlerRegistry: VirtualHandlerRegistry,
+    private val disconnectPacketSupplier: (String) -> Any
 ) : ChannelDuplexHandler() {
-    private val uniqueId = player.uniqueId
-    private var first = false
-
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
-        if (!first) {
-            first = true
-            plugin.server.pluginManager.callEvent(PlayerDataPreLoadEvent(player))
+        if (message::class.simpleName == "PacketLoginOutSuccess") {
+            // pre login
+            val event = PlayerDataPreLoadEvent(uniqueId)
+            try {
+                plugin.server.pluginManager.callEvent(event)
+                if (event.isInvalid()) {
+                    virtualHandlerRegistry.cleanup(uniqueId)
+                    super.write(context, disconnectPacketSupplier.invoke(event.getFailReason()), promise)
+                    return
+                }
+            } catch (e: Exception) {
+                virtualHandlerRegistry.cleanup(uniqueId)
+                super.write(context, disconnectPacketSupplier.invoke("데이터 로드 실패"), promise)
+                Bukkit.getLogger().log(Level.SEVERE, "~~", e)
+                return
+            }
+
+            super.write(context, message, promise)
+            return
         }
 
         virtualHandlerRegistry
