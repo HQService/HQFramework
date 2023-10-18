@@ -52,13 +52,11 @@ class PlayerConnectionPacketHandler(
 
     private fun saveAndClear(player: Player): Job {
         return coroutineScope.launch(Dispatchers.IO) {
-            val saveJobs = playerRepositoryRegistry.getAll().map { repository ->
-                launch {
-                    onSave(player, repository)
-                    repository.remove(player.uniqueId)
-                }
+            playerRepositoryRegistry.getAll().forEach { repository ->
+                onSave(player, repository)
+                repository.remove(player.uniqueId)
             }
-            saveJobs.joinAll()
+            //saveJobs.joinAll()
         }
     }
 
@@ -168,12 +166,12 @@ class PlayerConnectionPacketHandler(
         if (cancelled) {
             return@blocking
         }
-        val loadJobs = playerRepositoryRegistry.getAll().map { repository ->
-            coroutineScope.launch(Dispatchers.IO) {
+        playerRepositoryRegistry.getAll().forEach { repository ->
+            withContext(Dispatchers.IO) {
                 onLoad(event.player, repository)
             }
         }
-        loadJobs.joinAll()
+        //loadJobs.joinAll()
         pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
     }
 

@@ -9,7 +9,6 @@ internal inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R
     return if (!javaField.canAccess(instance.first())) {
         javaField.isAccessible = true
         val result = javaField.get(instance.first()) as R
-        javaField.isAccessible = false
         result
     } else call(*instance) as R
 }
@@ -19,6 +18,5 @@ internal inline fun <reified R> KCallable<*>.setAccess(instance: Any, value: R) 
     if (!javaField.canAccess(instance)) {
         javaField.isAccessible = true
         javaField.set(instance, value)
-        javaField.isAccessible = false
     } else javaField.set(instance, value)
 }
