@@ -86,6 +86,10 @@ class NettyChannelRegistryImpl(
         portChannelContainer.values.forEach(block)
     }
 
+    override fun getChannels(): List<ChannelWrapper> {
+        return portChannelContainer.values.toList()
+    }
+
     override fun getChannelNameByPort(port: Int): String {
         return nameChannelContainer.entries.firstOrNull { it.value.port == port }?.key
             ?: throw IllegalArgumentException()

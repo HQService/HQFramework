@@ -7,6 +7,8 @@ interface NettyChannelRegistry {
 
     fun loopChannels(block: (ChannelWrapper) -> Unit)
 
+    fun getChannels(): List<ChannelWrapper>
+
     fun getChannelNameByPort(port: Int): String
 
     fun getChannelByPort(port: Int): ChannelWrapper
