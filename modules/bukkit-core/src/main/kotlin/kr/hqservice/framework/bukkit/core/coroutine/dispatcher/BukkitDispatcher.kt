@@ -16,7 +16,8 @@ class BukkitDispatcher(private val isAsync: Boolean) : MainCoroutineDispatcher()
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val plugin = getPluginByCoroutineContext(context)
         try {
-            Bukkit.getScheduler().runTask(plugin, block)
+            if (isAsync) Bukkit.getScheduler().runTaskAsynchronously(plugin, block)
+            else Bukkit.getScheduler().runTask(plugin, block)
         } catch (_: IllegalPluginAccessException) {}
     }
 
@@ -32,7 +33,7 @@ class BukkitDispatcher(private val isAsync: Boolean) : MainCoroutineDispatcher()
         val task = if (isAsync) {
             try {
                 runnable.runTaskLaterAsynchronously(plugin, timeMillis / 50)
-            } catch (_: IllegalPluginAccessException) { null}
+            } catch (_: IllegalPluginAccessException) { null }
         } else {
             try {
                 runnable.runTaskLater(plugin, timeMillis / 50)
