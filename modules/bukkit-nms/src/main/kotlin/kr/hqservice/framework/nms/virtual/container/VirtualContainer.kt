@@ -44,6 +44,7 @@ class VirtualContainer(
             containersClass.java,
             baseComponentService.getTargetClass().java
         )
+
         return VirtualMessageImpl(
             constructor.newInstance(
                 container.getContainerId(),

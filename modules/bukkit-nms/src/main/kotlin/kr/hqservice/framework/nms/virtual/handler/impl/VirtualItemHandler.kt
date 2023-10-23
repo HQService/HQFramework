@@ -1,6 +1,5 @@
 package kr.hqservice.framework.nms.virtual.handler.impl
 
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.extension.getNmsItemStack
