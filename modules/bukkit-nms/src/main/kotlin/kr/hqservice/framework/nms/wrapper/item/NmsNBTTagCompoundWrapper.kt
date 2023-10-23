@@ -51,11 +51,12 @@ class NmsNBTTagCompoundWrapper(
     )
 
     fun getString(key: String, def: String = ""): String {
-        return getStringFunction.call(nbtTag, key) as? String ?: def
+        return (getStringFunction.call(nbtTag, key) as? String)?.ifEmpty { def }?: def
     }
 
     fun getStringOrNull(key: String): String? {
-        return getStringFunction.call(nbtTag, key) as? String?
+        return if (hasKey(key)) return getString(key)
+        else null
     }
 
     fun setString(key: String, value: String) {
@@ -67,7 +68,8 @@ class NmsNBTTagCompoundWrapper(
     }
 
     fun getIntOrNull(key: String): Int? {
-        return getIntFunction.call(nbtTag, key) as? Int?
+        return if (hasKey(key)) getInt(key)
+        else null
     }
 
     fun setInt(key: String, value: Int) {
