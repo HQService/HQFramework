@@ -14,6 +14,7 @@ import kotlin.reflect.full.valueParameters
 open class RegisteredCommandTree(
     val declaredAt: KClass<*>,
     override val label: String,
+    override val aliases: List<String>,
     override val priority: Int,
     override val permission: String,
     override val isOp: Boolean,
@@ -31,7 +32,7 @@ open class RegisteredCommandTree(
     }
 
     internal fun findExecutor(key: String): RegisteredCommandExecutor? {
-        return commandExecutors[key]
+        return commandExecutors[key] ?: commandExecutors.values.firstOrNull { it.aliases.contains(key) }
     }
 
     internal fun getSuggestions(sender: CommandSender): List<String> {
@@ -131,7 +132,8 @@ open class RegisteredCommandTree(
     fun findTreeExact(arguments: Array<String>): RegisteredCommandTree? {
         var tree: RegisteredCommandTree = this
         arguments.forEach { argument ->
-            tree = tree.commandTrees[argument] ?: return@findTreeExact null
+            tree = tree.commandTrees[argument]
+                ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) } ?: return@findTreeExact null
         }
         return tree
     }
@@ -139,7 +141,8 @@ open class RegisteredCommandTree(
     fun findTreeApproximate(arguments: Array<String>): RegisteredCommandTree {
         var tree: RegisteredCommandTree = this
         arguments.forEach { argument ->
-            tree = tree.commandTrees[argument] ?: return tree
+            tree = tree.commandTrees[argument]
+                ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) } ?: return tree
         }
         return tree
     }
@@ -149,7 +152,7 @@ open class RegisteredCommandTree(
         var index = 0
         arguments.forEach { argument ->
             index++
-            tree = tree.commandTrees[argument] ?: return index to tree
+            tree = tree.commandTrees[argument] ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) } ?: return index to tree
         }
         return index to tree
     }

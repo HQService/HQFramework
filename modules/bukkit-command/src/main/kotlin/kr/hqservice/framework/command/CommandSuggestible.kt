@@ -5,6 +5,7 @@ import org.bukkit.command.CommandSender
 interface CommandSuggestible {
     val priority: Int
     val label: String
+    val aliases: List<String>
     val permission: String
     val isOp: Boolean
     val hideSuggestion: Boolean

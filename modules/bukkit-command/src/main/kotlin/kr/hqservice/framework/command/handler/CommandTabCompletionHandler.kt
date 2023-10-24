@@ -15,7 +15,7 @@ class CommandTabCompletionHandler(
     companion object {
         private val handlerMap = mutableMapOf<String, CommandAnnotationHandler.HQBukkitCommand>()
         internal fun findHQCommand(command: String): CommandAnnotationHandler.HQBukkitCommand? {
-            return handlerMap[command]
+            return handlerMap[command] ?: handlerMap.values.firstOrNull { it.aliases.contains(command) }
         }
     }
     private var initialized = false
