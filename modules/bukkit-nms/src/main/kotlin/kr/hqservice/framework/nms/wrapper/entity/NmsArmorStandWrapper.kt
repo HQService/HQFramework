@@ -20,6 +20,10 @@ class NmsArmorStandWrapper(
         service.setSmall(this, small)
     }
 
+    fun setMarker(marker: Boolean) {
+        service.setMarker(this, marker)
+    }
+
     override fun getUnwrappedInstance(): Any {
         return baseEntity
     }

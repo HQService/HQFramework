@@ -35,5 +35,10 @@ class VirtualArmorStand(
         wrapper.setHeadPose(Triple(x, y, z))
         switchMetaMask()
     }
+
+    fun setMarker(marker: Boolean) {
+        wrapper.setMarker(marker)
+        switchMetaMask()
+    }
 }
 
