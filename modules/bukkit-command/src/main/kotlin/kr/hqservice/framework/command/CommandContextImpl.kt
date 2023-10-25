@@ -20,8 +20,8 @@ internal class CommandContextImpl(
     }.toMap()
 
     private val argumentsByType: Multimap<KClassifier, String> = ArrayListMultimap.create<KClassifier, String>().apply {
-        parameterMap.values.forEachIndexed { index, kParameter ->
-            this.put(kParameter.type.classifier, arguments[ContextData(getContextKey(kParameter), index)])
+        parameterMap.forEach { (key, kParameter) ->
+            this.put(kParameter.type.classifier, arguments[ContextData(getContextKey(kParameter), key.second)])
         }
     }
 
