@@ -51,6 +51,11 @@ class NmsArmorStandService(
         Version.V_20_FORGE.handleFunction("m_31603_") { setParameterClasses(Boolean::class) }
     )
 
+    private val setMarkerFunction = reflectionWrapper.getFunction(armorStandClass, "setMarker", listOf(Boolean::class),
+        Version.V_17.handleFunction("t") { setParameterClasses(Boolean::class) },
+        Version.V_19_4.handleFunction("u") { setParameterClasses(Boolean::class) },
+        Version.V_20_FORGE.handleFunction("m_31681_") { setParameterClasses(Boolean::class) })
+
     override fun wrap(target: Location): NmsArmorStandWrapper {
         val bukkitWorld = target.world ?: throw NullPointerException("world is null")
         val nmsWorld = worldService.wrap(bukkitWorld).getUnwrappedInstance()
@@ -83,5 +88,9 @@ class NmsArmorStandService(
 
     internal fun setSmall(wrapper: NmsArmorStandWrapper, small: Boolean) {
         setSmallFunction.call(wrapper.getUnwrappedInstance(), small)
+    }
+
+    internal fun setMarker(wrapper: NmsArmorStandWrapper, marker: Boolean) {
+        setMarkerFunction.call(wrapper.getUnwrappedInstance(), marker)
     }
 }
