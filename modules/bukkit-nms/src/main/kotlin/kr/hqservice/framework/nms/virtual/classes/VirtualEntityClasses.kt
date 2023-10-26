@@ -60,7 +60,7 @@ class VirtualEntityClasses(
         entityClass, "getDataWatcher",
         Version.V_15.handleFunction("V"),
         Version.V_17.handleFunction("ad"),
-        Version.V_19.handleFunction("ai"),
+        Version.V_18.handleFunction("ai"),
         Version.V_19_3.handleFunction("al"),
         Version.V_19_4.handleFunction("aj"),
         Version.V_20_FORGE.handleFunction("m_20088_")
@@ -72,13 +72,14 @@ class VirtualEntityClasses(
         entityClass, "getId",
         Version.V_15.handleFunction("S"),
         Version.V_17.handleFunction("Z"),
-        Version.V_19.handleFunction("ae"),
+        Version.V_18.handleFunction("ae"),
         Version.V_19_3.handleFunction("ah"),
         Version.V_19_4.handleFunction("af"),
         Version.V_20_FORGE.handleFunction("m_19879_")
     )
     private val setCustomNameFunction =
         reflectionWrapper.getFunction(entityClass, "setCustomName", listOf(componentWrapper.getTargetClass()),
+            Version.V_18.handleFunction("a") { setParameterClasses(componentWrapper.getTargetClass()) },
             Version.V_19.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) },
             Version.V_20_FORGE.handleFunction("m_6593_") { setParameterClasses(componentWrapper.getTargetClass()) })
 
@@ -106,7 +107,8 @@ class VirtualEntityClasses(
 
     private val setCustomNameVisibleFunction =
         reflectionWrapper.getFunction(entityClass, "setCustomNameVisible", listOf(Boolean::class),
-            Version.V_15.handleFunction("n") { setParameterClasses(Boolean::class) },
+            Version.V_15.handleFunction("m") { setParameterClasses(Boolean::class) },
+            Version.V_18.handleFunction("n") { setParameterClasses(Boolean::class) },
             Version.V_20_FORGE.handleFunction("m_20340_") { setParameterClasses(Boolean::class) })
 
     private val setInvisibleFunction =
