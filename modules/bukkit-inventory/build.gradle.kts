@@ -7,7 +7,7 @@ dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
     apiModule("bukkit", "nms")
-    api(libs.spigot.api)
+    compileOnly(libs.spigot.api)
     api(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.kotlinx.coroutines.test)
