@@ -19,31 +19,38 @@ class VirtualEntityClasses(
     reflectionWrapper: NmsReflectionWrapper,
     @Qualifier("base-component") private val componentWrapper: NmsService<String, BaseComponentWrapper>,
 ) : HQSimpleComponent {
+
     private val entityClass = reflectionWrapper.getNmsClass(
         "EntityLiving",
         Version.V_15.handle("world.entity.Entity", true)
     )
+
     private val dataWatcherClass = reflectionWrapper.getNmsClass(
         "DataWatcher",
         Version.V_15.handle("network.syncher")
     )
+
     internal val entitySpawnPacket = reflectionWrapper.getNmsClass(
         "PacketPlayOutSpawnEntityLiving",
         Version.V_15.handle("network.protocol.game.PacketPlayOutSpawnEntity", true)
     ).java.getConstructor(entityClass.java)
+
     internal val entityDestroyPacket = reflectionWrapper.getNmsClass(
         "PacketPlayOutEntityDestroy",
         Version.V_15.handle("network.protocol.game")
     ).java.getConstructor(IntArray::class.java)
+
     internal val entityTeleportPacket = reflectionWrapper.getNmsClass(
         "PacketPlayOutEntityTeleport",
         Version.V_15.handle("network.protocol.game")
     ).java.getConstructor(entityClass.java)
+
     internal val entityEquipmentPacket =
         reflectionWrapper.getNmsClass(
             "PacketPlayOutEntityEquipment",
             Version.V_15.handle("network.protocol.game")
         ).java.getConstructor(Int::class.java, List::class.java)
+
     private val listMetadata = Version.V_19.support(reflectionWrapper.getVersion())
     private val entityMetadataPacket = if (!listMetadata) {
         reflectionWrapper.getNmsClass(
@@ -56,29 +63,39 @@ class VirtualEntityClasses(
             Version.V_15.handle("network.protocol.game")
         ).java.getConstructor(Int::class.java, List::class.java)
     }
+
     private val getDataWatcherFunction = reflectionWrapper.getFunction(
         entityClass, "getDataWatcher",
         Version.V_15.handleFunction("V"),
         Version.V_17.handleFunction("ad"),
-        Version.V_19.handleFunction("ai"),
+        Version.V_18.handleFunction("ai"),
         Version.V_19_3.handleFunction("al"),
         Version.V_19_4.handleFunction("aj"),
+        Version.V_20_2.handleFunction("al"),
         Version.V_20_FORGE.handleFunction("m_20088_")
     )
+
     private val nonDefaultValueFunction = if (listMetadata) {
         dataWatcherClass.java.getMethod("c")
-    } else null
+    } else {
+        null
+    }
+
     private val getIdFunction = reflectionWrapper.getFunction(
         entityClass, "getId",
         Version.V_15.handleFunction("S"),
         Version.V_17.handleFunction("Z"),
-        Version.V_19.handleFunction("ae"),
+        Version.V_18.handleFunction("ae"),
         Version.V_19_3.handleFunction("ah"),
         Version.V_19_4.handleFunction("af"),
+        Version.V_20_2.handleFunction("ah"),
         Version.V_20_FORGE.handleFunction("m_19879_")
     )
+
     private val setCustomNameFunction =
         reflectionWrapper.getFunction(entityClass, "setCustomName", listOf(componentWrapper.getTargetClass()),
+            Version.V_15.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) },
+            Version.V_18.handleFunction("a") { setParameterClasses(componentWrapper.getTargetClass()) },
             Version.V_19.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) },
             Version.V_20_FORGE.handleFunction("m_6593_") { setParameterClasses(componentWrapper.getTargetClass()) })
 
@@ -106,12 +123,14 @@ class VirtualEntityClasses(
 
     private val setCustomNameVisibleFunction =
         reflectionWrapper.getFunction(entityClass, "setCustomNameVisible", listOf(Boolean::class),
-            Version.V_15.handleFunction("n") { setParameterClasses(Boolean::class) },
+            Version.V_15.handleFunction("m") { setParameterClasses(Boolean::class) },
+            Version.V_18.handleFunction("n") { setParameterClasses(Boolean::class) },
             Version.V_20_FORGE.handleFunction("m_20340_") { setParameterClasses(Boolean::class) })
 
     private val setInvisibleFunction =
         reflectionWrapper.getFunction(entityClass, "setInvisible", listOf(Boolean::class),
-            Version.V_15.handleFunction("j") { setParameterClasses(Boolean::class) },
+            Version.V_15.handleFunction("i") { setParameterClasses(Boolean::class) },
+            Version.V_18.handleFunction("j") { setParameterClasses(Boolean::class) },
             Version.V_20_FORGE.handleFunction("m_6842_") { setParameterClasses(Boolean::class) })
 
     private val enumItemSlotClass = reflectionWrapper.getNmsClass("EnumItemSlot", Version.V_15.handle("world.entity"))
@@ -125,6 +144,7 @@ class VirtualEntityClasses(
                 setParameterClasses(String::class)
                 static()
             })
+
     private val pairConstructor =
         Class.forName("com.mojang.datafixers.util.Pair").getConstructor(Any::class.java, Any::class.java)
 
