@@ -8,6 +8,8 @@ interface CommandContext {
 
     fun getArgumentLabel(): String
 
+    fun findArgumentByIndex(index: Int): String
+
     fun findArgument(key: String): String?
 
     fun getArgument(key: String): String

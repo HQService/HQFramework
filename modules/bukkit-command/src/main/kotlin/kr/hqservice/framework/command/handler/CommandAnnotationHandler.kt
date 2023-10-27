@@ -48,7 +48,7 @@ class CommandAnnotationHandler(
     override fun setup(instance: Any, annotation: Command) {
         val plugin = PluginScopeFinder.get(instance::class)
         if (!hasParent(annotation)) {
-            registerRoot(annotation.label, instance::class, plugin)
+            registerRoot(annotation.label, annotation.aliases.toList(), instance::class, plugin)
         }
 
         if (hasLabel(annotation)) {
@@ -103,7 +103,7 @@ class CommandAnnotationHandler(
         return true
     }
 
-    private fun registerRoot(label: String, rootClass: KClass<*>, plugin: HQBukkitPlugin) {
+    private fun registerRoot(label: String, aliases: List<String>, rootClass: KClass<*>, plugin: HQBukkitPlugin) {
         if (pluginManager !is SimplePluginManager) {
             plugin.logger.info("skipping registration while mocking")
             return
@@ -115,7 +115,7 @@ class CommandAnnotationHandler(
             .first { it.name == "commandMap" }
             .apply { isAccessible = true }
             .get(pluginManager) as CommandMap
-        val hqCommand = HQBukkitCommand(label, paperUse, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
+        val hqCommand = HQBukkitCommand(label, aliases, paperUse, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
         commandMap.register(
             "hq",
             hqCommand
@@ -143,12 +143,13 @@ class CommandAnnotationHandler(
 
     internal class HQBukkitCommand(
         label: String,
+        alias: List<String>,
         private val paperUse: Boolean,
         private val plugin: HQBukkitPlugin,
         private val hqCommandRoot: RegisteredCommandRoot,
         private val registry: CommandArgumentProviderRegistry,
         private val exceptionHandlerRegistry: CommandArgumentExceptionHandlerRegistry
-    ) : BukkitCommand(label) {
+    ) : BukkitCommand(label, "", "", alias) {
 
         override fun getPermission(): String {
             return if (hqCommandRoot.isOp) "op" else hqCommandRoot.permission
@@ -220,7 +221,9 @@ class CommandAnnotationHandler(
                         .toMutableList()
                         .apply { removeFirst() }
                         .associateBy { kParameter2 ->
-                            args.getOrNull(kParameter2.index - 1 + treeKey.size) ?: ""
+                            args.getOrNull(kParameter2.index - 1 + treeKey.size)?.run {
+                                this to kParameter2.index - 1 + treeKey.size
+                            } ?: ("" to kParameter2.index - 1 + treeKey.size)
                         }
                     val commandContext = CommandContextImpl(senderInstance, argumentLabel ?: kParameter.name!!, parameterMap)
                     var isFailed = false
@@ -323,7 +326,7 @@ class CommandAnnotationHandler(
                                 this.removeFirst()
                             }
                         }.mapIndexed { index, argument ->
-                            argument to executor.function.valueParameters[index + 1]
+                            (argument to index) to executor.function.valueParameters[index + 1]
                         }.toMap()
                     val context = CommandContextImpl(sender, findArgumentLabel(kParameter) ?: kParameter.name!!, parameterMap)
                     return runBlocking {

@@ -7,5 +7,6 @@ class RegisteredCommandRoot(
     label: String,
     permission: String,
     isOp: Boolean,
-    hideSuggestion: Boolean
-) : RegisteredCommandTree(declaredAt, label, 0, permission, isOp, hideSuggestion)
+    hideSuggestion: Boolean,
+    aliases: List<String>
+) : RegisteredCommandTree(declaredAt, label, aliases, 0, permission, isOp, hideSuggestion)

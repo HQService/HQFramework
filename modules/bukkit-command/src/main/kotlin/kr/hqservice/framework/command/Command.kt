@@ -13,4 +13,5 @@ annotation class Command(
     val permission: String = "",
     val isOp: Boolean = false,
     val hideSuggestion: Boolean = false,
+    val aliases: Array<String> = []
 )

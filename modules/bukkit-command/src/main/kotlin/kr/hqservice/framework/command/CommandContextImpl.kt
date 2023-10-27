@@ -10,16 +10,18 @@ import kotlin.reflect.full.findAnnotation
 internal class CommandContextImpl(
     private val commandSender: CommandSender,
     private val argumentLabel: String,
-    private val parameterMap: Map<String, KParameter>
+    //                             argument, index    parameter
+    private val parameterMap: Map<Pair<String, Int>, KParameter>
 ) : CommandContext {
-    //                     contextKey, argument
-    private val arguments: Map<String, String> = parameterMap.map { (argument, kParameter) ->
-        getContextKey(kParameter) to argument
+    private data class ContextData(val contextKey: String, val index: Int)
+
+    private val arguments: Map<ContextData, String> = parameterMap.map { (argument, kParameter) ->
+        ContextData(getContextKey(kParameter), argument.second) to argument.first
     }.toMap()
 
     private val argumentsByType: Multimap<KClassifier, String> = ArrayListMultimap.create<KClassifier, String>().apply {
-        parameterMap.values.forEach { kParameter ->
-            this.put(kParameter.type.classifier, arguments[getContextKey(kParameter)])
+        parameterMap.forEach { (key, kParameter) ->
+            this.put(kParameter.type.classifier, arguments[ContextData(getContextKey(kParameter), key.second)])
         }
     }
 
@@ -31,16 +33,20 @@ internal class CommandContextImpl(
         return argumentLabel
     }
 
+    override fun findArgumentByIndex(index: Int): String {
+        return arguments.entries.firstOrNull { it.key.index == index }?.value ?: throw IllegalArgumentException()
+    }
+
     override fun getCommandSender(): CommandSender {
         return commandSender
     }
 
     override fun findArgument(key: String): String? {
-        return arguments[key]
+        return arguments.entries.firstOrNull { it.key.contextKey == key }?.value
     }
 
     override fun getArgument(key: String): String {
-        return arguments[key] ?: throw IllegalArgumentException()
+        return arguments.entries.firstOrNull { it.key.contextKey == key }?.value ?: throw IllegalArgumentException()
     }
 
     override fun getArguments(): Collection<String> {

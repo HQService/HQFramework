@@ -9,4 +9,5 @@ annotation class CommandExecutor(
     val isOp: Boolean = false,
     val hideSuggestion: Boolean = false,
     val priority: Int = 0,
+    val aliases: Array<String> = [],
 )

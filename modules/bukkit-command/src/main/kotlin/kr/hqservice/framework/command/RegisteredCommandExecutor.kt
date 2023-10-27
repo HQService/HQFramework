@@ -6,6 +6,7 @@ import kotlin.reflect.full.valueParameters
 
 data class RegisteredCommandExecutor(
     override val label: String,
+    override val aliases: List<String>,
     val description: String? = null,
     override val permission: String = "",
     override val isOp: Boolean = false,
@@ -16,6 +17,7 @@ data class RegisteredCommandExecutor(
 ) : CommandSuggestible {
     constructor(annotation: CommandExecutor, executorInstance: Any, function: KFunction<Unit>) : this(
         annotation.label,
+        annotation.aliases.toList(),
         annotation.description,
         annotation.permission,
         annotation.isOp,
