@@ -41,6 +41,7 @@ class NmsArmorStandService(
         Version.V_17.handleFunction("v"),
         Version.V_19.handleFunction("u"),
         Version.V_19_4.handleFunction("x"),
+        Version.V_20_2.handleFunction("z"),
         Version.V_20_FORGE.handleFunction("m_31680_")
     )
 
