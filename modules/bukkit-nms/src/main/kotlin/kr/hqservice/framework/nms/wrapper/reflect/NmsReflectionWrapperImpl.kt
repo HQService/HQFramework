@@ -63,6 +63,7 @@ class NmsReflectionWrapperImpl(
     private val sendPacket by lazy {
         getFunction(playerConnection, "sendPacket", listOf(packet),
             Version.V_18.handleFunction("a") { setParameterClasses(packet) },
+            Version.V_20_2.handleFunction("b") { setParameterClasses(packet) },
             Version.V_20_FORGE.handleFunction("m_9829_") { setParameterClasses(packet) }
         )
     }
@@ -216,7 +217,7 @@ class NmsReflectionWrapperImpl(
             try {
                 functions.first { callable -> type.isMatched(clazz, callable) }
             } catch (e: Exception) {
-                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 업습니다.\n", e)
+                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 없습니다.\n", e)
             }
         }
     }
