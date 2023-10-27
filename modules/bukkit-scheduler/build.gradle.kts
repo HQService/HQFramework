@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    compileOnly(libs.spigot.api)
+    api(libs.spigot.api)
     apiModule("bukkit", "core")
     apiModule("bukkit", "database")
     apiModule("bukkit", "command")
