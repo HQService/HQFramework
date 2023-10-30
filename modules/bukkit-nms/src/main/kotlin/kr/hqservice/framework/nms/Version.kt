@@ -23,6 +23,7 @@ enum class Version {
     V_19_3,
     V_19_4,
     V_20,
+    V_20_2,
 
     // forge
     V_20_FORGE;
