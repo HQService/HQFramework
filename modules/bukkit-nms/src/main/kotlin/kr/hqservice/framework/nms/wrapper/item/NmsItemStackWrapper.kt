@@ -21,6 +21,7 @@ class NmsItemStackWrapper(
         nmsItemStackClass, "getTag",
         Version.V_15.handle("o"),
         Version.V_17.handle("s"),
+        Version.V_18_2.handle("t"),
         Version.V_19.handle("u"),
         Version.V_20.handle("v"),
         Version.V_20_FORGE.handle("m_41783_")

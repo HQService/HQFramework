@@ -18,6 +18,7 @@ enum class Version {
     V_16,
     V_17,
     V_18,
+    V_18_2,
     V_19,
     V_19_1,
     V_19_3,
