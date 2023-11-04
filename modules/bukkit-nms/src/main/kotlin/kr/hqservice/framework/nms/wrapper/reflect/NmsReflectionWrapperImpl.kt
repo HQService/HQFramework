@@ -89,7 +89,7 @@ class NmsReflectionWrapperImpl(
             getNmsClass(handlers.filter {
                 if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
                 else !it.getVersion().name.endsWith("_FORGE")
-            }.sortedByDescending { it.getVersion().ordinal }
+            }.ifEmpty { handlers.toList() }.sortedByDescending { it.getVersion().ordinal }
                 .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
                     name = if (isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
@@ -187,7 +187,7 @@ class NmsReflectionWrapperImpl(
         val type = handlers.filter {
             if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
             else !it.getVersion().name.endsWith("_FORGE")
-        }.sortedByDescending { it.getVersion().ordinal }
+        }.ifEmpty { handlers.toList() }.sortedByDescending { it.getVersion().ordinal }
             .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: fieldName
         return clazz.memberProperties.firstOrNull {
             it.name == type
@@ -203,7 +203,7 @@ class NmsReflectionWrapperImpl(
             .filter {
                 if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
                 else !it.getVersion().name.endsWith("_FORGE")
-            }.sortedByDescending { it.getVersion().ordinal }
+            }.ifEmpty { handlers.toList() }.sortedByDescending { it.getVersion().ordinal }
             .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
         return clazz.staticProperties.firstOrNull {
             it.name == type
@@ -222,7 +222,7 @@ class NmsReflectionWrapperImpl(
             val type = handlers.filter {
                 if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
                 else !it.getVersion().name.endsWith("_FORGE")
-            }.filter { it.getVersion().support(version, minorVersion) }
+            }.ifEmpty { handlers.toList() }.filter { it.getVersion().support(version, minorVersion) }
                 .run {
                     if (isEmpty()) null
                     else maxBy { it.getVersion().ordinal }
