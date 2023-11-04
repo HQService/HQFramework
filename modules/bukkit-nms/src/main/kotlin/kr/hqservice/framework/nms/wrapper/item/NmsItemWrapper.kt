@@ -16,10 +16,11 @@ class NmsItemWrapper(
     reflectionWrapper: NmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry
 ) : NmsWrapper {
-    private val getDescriptionIdFunction = reflectionWrapper
-        .getFunction(nmsItemClass, "j", listOf(nmsItemStackClass),
-            Version.V_20_FORGE.handleFunction("m_5671_") { setParameterClasses(nmsItemStackClass) }
-        )
+
+    private val getDescriptionIdFunction = reflectionWrapper.getFunction(nmsItemClass, "getDescriptionId", listOf(nmsItemStackClass),
+        Version.V_17.handleFunction("j") { setParameterClasses(nmsItemStackClass) },
+        Version.V_17_FORGE.handleFunction("m_5671_") { setParameterClasses(nmsItemStackClass) } // ~1.20.2
+    )
 
     fun getDescriptionName(): String {
         return getDescriptionIdFunction.call(nmsItem, nmsItemStackWrapper.getUnwrappedInstance()) as? String

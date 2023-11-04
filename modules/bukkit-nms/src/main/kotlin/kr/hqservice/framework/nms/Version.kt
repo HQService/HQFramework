@@ -6,7 +6,7 @@ import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.nms.handler.impl.NameVersionHandler
 
 enum class Version(
-    private val forge: Boolean = false
+    private val parent: Version? = null
 ) {
     V_7,
     V_8,
@@ -29,14 +29,21 @@ enum class Version(
     V_20_2,
 
     // forge
-    V_20_FORGE(true);
+    V_17_FORGE(V_17),
+    V_19_FORGE(V_19),
+    V_20_FORGE(V_20),
+    V_20_2_FORGE(V_20_2);
 
-    fun support(version: Version, minor: Int = 0, forge: Boolean): Boolean {
-        return (if (minor != 0) try {
-            ordinal <= Version.valueOf("${version.name}_$minor").ordinal
+    fun support(version: Version, minor: Int = 0): Boolean {
+        val serverOrdinal = if (minor != 0) try {
+            Version.valueOf("${version.name}_$minor").ordinal
         } catch (_: Exception) {
-            ordinal <= version.ordinal
-        } else ordinal <= version.ordinal) && forge == this.forge
+            version.ordinal
+        } else version.ordinal
+
+        val targetOrdinal = parent?.ordinal ?: ordinal
+
+        return serverOrdinal >= targetOrdinal
     }
 
     fun handle(name: String, changedName: Boolean = false): VersionHandler {

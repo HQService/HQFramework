@@ -19,14 +19,17 @@ class VirtualContainer(
     private val player: Player,
     private val title: String
 ) : Virtual, KoinComponent {
+
     private val reflectionWrapper: NmsReflectionWrapper by inject()
     private val baseComponentService: NmsService<String, BaseComponentWrapper> by inject(named("base-component"))
     private val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
-    private val containersClass = reflectionWrapper.getNmsClass("Containers", Version.V_15.handle("world.inventory"))
 
-    private val packetClass =
-        reflectionWrapper.getNmsClass("PacketPlayOutOpenWindow", Version.V_15.handle("network.protocol.game"))
-
+    private val containersClass = reflectionWrapper.getNmsClass("Containers",
+        Version.V_17.handle("world.inventory")
+    )
+    private val packetClass = reflectionWrapper.getNmsClass("PacketPlayOutOpenWindow",
+        Version.V_17.handle("network.protocol.game")
+    )
     private val bukkitViewFunction = reflectionWrapper.getFunction(containerService.getTargetClass(), "getBukkitView")
 
     override fun createVirtualMessage(): VirtualMessage? {

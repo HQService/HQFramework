@@ -24,9 +24,9 @@ class NettyInjectUtilImpl(
 ) : NettyInjectUtil, HQSimpleComponent {
     private val listenerClass = reflectionWrapper.getNmsClass(
         "PlayerConnection",
-        Version.V_15.handle("server.network.ServerGamePacketListenerImpl", true)
+        Version.V_17.handle("server.network.ServerGamePacketListenerImpl", true)
     )
-    private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))
+    private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_17.handle("network"))
     private val connectionField = reflectionWrapper.getField(listenerClass, connectionClass)
     private val channelField = reflectionWrapper.getField(connectionClass, Channel::class)
 
@@ -43,21 +43,21 @@ class NettyInjectUtilImpl(
 
     override fun getServerChannels(server: Server): List<Channel> {
         val nmsServer = reflectionWrapper.getNmsServer(server)
-        val mcServerClass = reflectionWrapper.getNmsClass("MinecraftServer", Version.V_15.handle("server"))
+        val mcServerClass = reflectionWrapper.getNmsClass("MinecraftServer", Version.V_17.handle("server"))
 
         val serverConnectionListener =
-            reflectionWrapper.getNmsClass("ServerConnection", Version.V_15.handle("server.network"))
+            reflectionWrapper.getNmsClass("ServerConnection", Version.V_17.handle("server.network"))
         val listenerField = reflectionWrapper.getField(mcServerClass, serverConnectionListener)
         listenerField.isAccessible = true
         val listener = listenerField.call(nmsServer)
 
         val connectionField = reflectionWrapper.getField(serverConnectionListener, "h",
-            Version.V_15.handle("g"),
+            Version.V_17.handle("g"),
             Version.V_20_FORGE.handle("f_9704_")
         )
         connectionField.isAccessible = true
 
-        val connectionType = reflectionWrapper.getNmsClass("NetworkManager", Version.V_15.handle("network"))
+        val connectionType = reflectionWrapper.getNmsClass("NetworkManager", Version.V_17.handle("network"))
         val connections = connectionField.call(listener) as List<*>
 
         val output = LinkedList<Channel>()

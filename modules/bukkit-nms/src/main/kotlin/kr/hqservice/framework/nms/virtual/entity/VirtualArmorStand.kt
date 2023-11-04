@@ -40,5 +40,15 @@ class VirtualArmorStand(
         wrapper.setMarker(marker)
         switchMetaMask()
     }
+
+    fun setArms(arms: Boolean) {
+        wrapper.setArms(arms)
+        switchMetaMask()
+    }
+
+    fun setBasePlate(basePlate: Boolean) {
+        wrapper.setBasePlate(basePlate)
+        switchMetaMask()
+    }
 }
 

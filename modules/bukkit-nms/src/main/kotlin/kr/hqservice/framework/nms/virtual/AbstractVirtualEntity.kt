@@ -78,6 +78,11 @@ abstract class AbstractVirtualEntity(
         switchMetaMask()
     }
 
+    fun setGlowing(glowing: Boolean) {
+        virtualEntityClasses.setGlowing(glowing, getEntity())
+        switchMetaMask()
+    }
+
     fun setEquipmentItems(items: List<Pair<EquipmentSlot, ItemStack>>) {
         itemContainer = items.map {
             val slot =

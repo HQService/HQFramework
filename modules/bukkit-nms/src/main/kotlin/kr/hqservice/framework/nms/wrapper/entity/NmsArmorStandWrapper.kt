@@ -24,6 +24,14 @@ class NmsArmorStandWrapper(
         service.setMarker(this, marker)
     }
 
+    fun setArms(arms: Boolean) {
+        service.setArms(this, arms)
+    }
+
+    fun setBasePlate(basePlate: Boolean) {
+        service.setBasePlate(this, basePlate)
+    }
+
     override fun getUnwrappedInstance(): Any {
         return baseEntity
     }

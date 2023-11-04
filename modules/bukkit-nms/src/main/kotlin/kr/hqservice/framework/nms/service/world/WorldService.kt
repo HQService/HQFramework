@@ -16,11 +16,11 @@ import kotlin.reflect.cast
 class WorldService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<World, WorldWrapper> {
+
     private val craftWorldClass = reflectionWrapper.getCraftBukkitClass("CraftWorld")
     private val getHandleFunction = reflectionWrapper.getFunction(craftWorldClass, "getHandle")
-    private val worldClass = reflectionWrapper.getNmsClass(
-        "World",
-        Version.V_15.handle("world.level")
+    private val worldClass = reflectionWrapper.getNmsClass("World",
+        Version.V_17.handle("world.level")
     )
 
     override fun wrap(target: World): WorldWrapper {

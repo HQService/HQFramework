@@ -16,7 +16,7 @@ class NmsNBTTagCompoundService(
 ) : NmsService<Any?, NmsNBTTagCompoundWrapper> {
     private val nbtTagClass = reflectionWrapper.getNmsClass(
         "NBTTagCompound",
-        Version.V_15.handle("nbt")
+        Version.V_17.handle("nbt")
     )
 
     override fun wrap(target: Any?): NmsNBTTagCompoundWrapper {
