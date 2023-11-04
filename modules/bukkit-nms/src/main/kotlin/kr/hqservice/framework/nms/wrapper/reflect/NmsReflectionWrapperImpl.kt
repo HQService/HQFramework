@@ -86,8 +86,11 @@ class NmsReflectionWrapperImpl(
     override fun getNmsClass(className: String, vararg handlers: VersionHandler): KClass<*> {
         var name = className
         return classMap.computeIfAbsent(className) {
-            getNmsClass(handlers.sortedByDescending { it.getVersion().ordinal }
-                .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.apply {
+            getNmsClass(handlers.filter {
+                if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
+                else !it.getVersion().name.endsWith("_FORGE")
+            }.sortedByDescending { it.getVersion().ordinal }
+                .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
                     name = if (isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
                 ?: name)
@@ -181,8 +184,11 @@ class NmsReflectionWrapperImpl(
     }
 
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
-        val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion,forgeSupport) }?.getName() ?: fieldName
+        val type = handlers.filter {
+            if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
+            else !it.getVersion().name.endsWith("_FORGE")
+        }.sortedByDescending { it.getVersion().ordinal }
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: fieldName
         return clazz.memberProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -193,8 +199,12 @@ class NmsReflectionWrapperImpl(
         staticFieldName: String,
         vararg handlers: VersionHandler
     ): KCallable<*> {
-        val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.getName() ?: staticFieldName
+        val type = handlers
+            .filter {
+                if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
+                else !it.getVersion().name.endsWith("_FORGE")
+            }.sortedByDescending { it.getVersion().ordinal }
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
         return clazz.staticProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -209,11 +219,15 @@ class NmsReflectionWrapperImpl(
         val key = "${clazz.simpleName}#" + functionType.getName()
         return if (callableMap.contains(key)) callableMap[key]!!
         else {
-            val type = handlers.filter { it.getVersion().support(version, minorVersion, forgeSupport) }
+            val type = handlers.filter {
+                if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
+                else !it.getVersion().name.endsWith("_FORGE")
+            }.filter { it.getVersion().support(version, minorVersion) }
                 .run {
                     if (isEmpty()) null
                     else maxBy { it.getVersion().ordinal }
                 } ?: CallableVersionHandler(version, functionType)
+
             try {
                 functions.first { callable -> type.isMatched(clazz, callable) }
             } catch (e: Exception) {
