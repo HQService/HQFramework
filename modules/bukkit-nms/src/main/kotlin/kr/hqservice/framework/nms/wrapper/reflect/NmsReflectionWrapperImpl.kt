@@ -85,12 +85,16 @@ class NmsReflectionWrapperImpl(
 
     override fun getNmsClass(className: String, vararg handlers: VersionHandler): KClass<*> {
         var name = className
+        var forgeSupport = forgeSupport
         return classMap.computeIfAbsent(className) {
             getNmsClass(handlers.filter {
                 if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
                 else !it.getVersion().name.endsWith("_FORGE")
-            }.ifEmpty { handlers.toList() }.sortedByDescending { it.getVersion().ordinal }
-                .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
+            }.ifEmpty {
+                forgeSupport = false
+                handlers.toList()
+            }.sortedByDescending { it.getVersion().ordinal }
+                .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.apply {
                     name = if (isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
                 ?: name)
@@ -184,11 +188,15 @@ class NmsReflectionWrapperImpl(
     }
 
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
+        var forgeSupport = forgeSupport
         val type = handlers.filter {
             if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
             else !it.getVersion().name.endsWith("_FORGE")
-        }.ifEmpty { handlers.toList() }.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: fieldName
+        }.ifEmpty {
+            forgeSupport = false
+            handlers.toList()
+        }.sortedByDescending { it.getVersion().ordinal }
+            .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.getName() ?: fieldName
         return clazz.memberProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -199,12 +207,16 @@ class NmsReflectionWrapperImpl(
         staticFieldName: String,
         vararg handlers: VersionHandler
     ): KCallable<*> {
+        var forgeSupport = forgeSupport
         val type = handlers
             .filter {
                 if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
                 else !it.getVersion().name.endsWith("_FORGE")
-            }.ifEmpty { handlers.toList() }.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
+            }.ifEmpty {
+                forgeSupport = false
+                handlers.toList()
+            }.sortedByDescending { it.getVersion().ordinal }
+            .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.getName() ?: staticFieldName
         return clazz.staticProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -219,10 +231,14 @@ class NmsReflectionWrapperImpl(
         val key = "${clazz.simpleName}#" + functionType.getName()
         return if (callableMap.contains(key)) callableMap[key]!!
         else {
+            var forgeSupport = forgeSupport
             val type = handlers.filter {
                 if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
                 else !it.getVersion().name.endsWith("_FORGE")
-            }.ifEmpty { handlers.toList() }.filter { it.getVersion().support(version, minorVersion) }
+            }.ifEmpty {
+                forgeSupport = false
+                handlers.toList()
+            }.filter { it.getVersion().support(version, minorVersion, forgeSupport) }
                 .run {
                     if (isEmpty()) null
                     else maxBy { it.getVersion().ordinal }
