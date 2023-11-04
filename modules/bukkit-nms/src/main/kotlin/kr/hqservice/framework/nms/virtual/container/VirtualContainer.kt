@@ -15,16 +15,16 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
 
-class VirtualContainer(
+open class VirtualContainer(
     private val player: Player,
     private val title: String
 ) : Virtual, KoinComponent {
-    private val reflectionWrapper: NmsReflectionWrapper by inject()
-    private val baseComponentService: NmsService<String, BaseComponentWrapper> by inject(named("base-component"))
-    private val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
-    private val containersClass = reflectionWrapper.getNmsClass("Containers", Version.V_15.handle("world.inventory"))
+    protected val reflectionWrapper: NmsReflectionWrapper by inject()
+    protected val baseComponentService: NmsService<String, BaseComponentWrapper> by inject(named("base-component"))
+    protected val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
+    protected val containersClass = reflectionWrapper.getNmsClass("Containers", Version.V_15.handle("world.inventory"))
 
-    private val packetClass =
+    protected val packetClass =
         reflectionWrapper.getNmsClass("PacketPlayOutOpenWindow", Version.V_15.handle("network.protocol.game"))
 
     private val bukkitViewFunction = reflectionWrapper.getFunction(containerService.getTargetClass(), "getBukkitView")

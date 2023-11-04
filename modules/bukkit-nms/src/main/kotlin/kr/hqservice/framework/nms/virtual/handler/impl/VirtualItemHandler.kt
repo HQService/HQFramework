@@ -1,6 +1,5 @@
 package kr.hqservice.framework.nms.virtual.handler.impl
 
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.extension.getNmsItemStack
@@ -56,16 +55,6 @@ class VirtualItemHandler(
     override fun handle(message: Any) {
         val clazz = message::class
         when (clazz.simpleName!!) {
-            /*"PacketPlayOutSetSlot" -> {
-                val slot = reflectionWrapper.getField(clazz, "e").callAccess<Int>(message)
-                val nmsItemStack = reflectionWrapper.getField(clazz, "f").callAccess<Any>(message)
-                val wrapper = itemStackService.getWrapper(nmsItemStack)
-                val itemStack = wrapper.getBukkitItemStack()
-                if(filter(slot, itemStack)) {
-
-                    return true
-                }
-            }*/
             "PacketPlayOutWindowItems", "ClientboundContainerSetContentPacket" -> {
                 val listField = reflectionWrapper.getField(message::class, "c", Version.V_20_FORGE.handle("f_131943_"))
                 val list = listField.callAccess<MutableList<Any>>(message)
