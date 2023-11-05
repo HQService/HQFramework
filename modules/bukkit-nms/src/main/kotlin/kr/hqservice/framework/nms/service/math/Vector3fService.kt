@@ -15,7 +15,7 @@ class Vector3fService(
 ) : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {
     private val vector3fClass = reflectionWrapper.getNmsClass(
         "Vector3f",
-        Version.V_15.handle("core")
+        Version.V_17.handle("core")
     )
     private val vector3fConstructor =
         vector3fClass.java.getConstructor(Float::class.java, Float::class.java, Float::class.java)

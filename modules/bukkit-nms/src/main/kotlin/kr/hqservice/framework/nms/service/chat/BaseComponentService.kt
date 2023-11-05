@@ -14,40 +14,42 @@ import kotlin.reflect.KClass
 class BaseComponentService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<String, BaseComponentWrapper> {
+
     private val componentClass = reflectionWrapper.getNmsClass(
         "IChatBaseComponent",
-        Version.V_15.handle("network.chat")
+        Version.V_17.handle("network.chat")
     )
     private val componentSerializerClass = reflectionWrapper.getNmsClass(
         "IChatBaseComponent\$ChatSerializer",
-        Version.V_15.handle("network.chat")
+        Version.V_17.handle("network.chat")
     )
-
-    private val serializeFromJsonFunction =
-        reflectionWrapper.getFunction(componentSerializerClass,
-            FunctionType("b", null, listOf(String::class), true),
-            Version.V_19.handleFunction("b") {
-                setParameterClasses(String::class)
-                static()
-            },
-            Version.V_20_FORGE.handleFunction("m_130701_") {
-                setParameterClasses(String::class)
-                static()
-            })
-
+    private val serializeFromJsonFunction = reflectionWrapper.getFunction(componentSerializerClass,
+        FunctionType("b", null, listOf(String::class), true),
+        Version.V_17.handleFunction("b") { // fromJsonLenient ~1.20.2
+            setParameterClasses(String::class)
+            static()
+        },
+        Version.V_17_FORGE.handleFunction("m_130714_") { // fromJsonLenient (old: m_130701_)
+            setParameterClasses(String::class)
+            static()
+        }
+    )
     private val serializeFunction = serializeFromJsonFunction
 
     override fun wrap(target: String): BaseComponentWrapper {
-        return BaseComponentWrapper(target,
+        return BaseComponentWrapper(
+            target,
             serializeFunction.call(target)
                 ?: throw UnsupportedOperationException("cannot called ChatSerializer#Serialize(String) function")
         )
     }
 
     fun wrapFromJson(json: String): BaseComponentWrapper {
-        return BaseComponentWrapper(json,
+        return BaseComponentWrapper(
+            json,
             serializeFromJsonFunction.call(json)
-                ?: throw UnsupportedOperationException("cannot called ChatSerializer#fromJson(String) function"))
+                ?: throw UnsupportedOperationException("cannot called ChatSerializer#fromJson(String) function")
+        )
     }
 
     override fun unwrap(wrapper: BaseComponentWrapper): String {

@@ -17,14 +17,16 @@ class NmsItemService(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry,
 ) : NmsService<NmsItemStackWrapper, NmsItemWrapper> {
-    private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_15.handle("world.item"))
-    private val nmsItemClass = reflectionWrapper.getNmsClass("Item", Version.V_15.handle("world.item"))
+
+    private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item"))
+    private val nmsItemClass = reflectionWrapper.getNmsClass("Item", Version.V_17.handle("world.item"))
+
     private val getItemFunction = reflectionWrapper.getFunction(
         nmsItemStackClass, "getItem",
-        Version.V_15.handle("b"),
+        Version.V_17.handle("b"),
         Version.V_17.handle("c"),
         Version.V_20.handle("d"),
-        Version.V_20_FORGE.handle("m_41720_")
+        Version.V_17_FORGE.handle("m_41720_"), // ~1.20.2
     )
 
     override fun wrap(target: NmsItemStackWrapper): NmsItemWrapper {

@@ -48,23 +48,25 @@ class NmsReflectionWrapperImpl(
     private val craftBukkitClass = "org.bukkit.craftbukkit.$versionClassName."
     private val nmsClass = "net.minecraft.".orLegacy("net.minecraft.server.$versionClassName.")
 
-    private val entityPlayer = getNmsClass("EntityPlayer", Version.V_15.handle("server.level"))
-    private val packet = getNmsClass("Packet", Version.V_15.handle("network.protocol"))
+    private val entityPlayer = getNmsClass("EntityPlayer", Version.V_17.handle("server.level"))
+    private val packet = getNmsClass("Packet", Version.V_17.handle("network.protocol"))
     private val craftPlayer = getCraftBukkitClass("entity.CraftPlayer")
-    private val playerConnection = getNmsClass("PlayerConnection", Version.V_15.handle("server.network"))
+    private val playerConnection = getNmsClass("PlayerConnection", Version.V_17.handle("server.network"))
 
-    private val connection by lazy { getField(entityPlayer, "playerConnection",
+    private val connection by lazy { getField(entityPlayer, "connection",
         Version.V_17.handle("b"),
         Version.V_20.handle("c"),
-        Version.V_20_FORGE.handle("f_8906_")
+        Version.V_17_FORGE.handle("f_8906_")
     ) }
     
     private val getHandle by lazy { getFunction(craftPlayer, "getHandle") }
     private val sendPacket by lazy {
         getFunction(playerConnection, "sendPacket", listOf(packet),
-            Version.V_18.handleFunction("a") { setParameterClasses(packet) },
+            Version.V_17.handleFunction("a") { setParameterClasses(packet) },
             Version.V_20_2.handleFunction("b") { setParameterClasses(packet) },
-            Version.V_20_FORGE.handleFunction("m_9829_") { setParameterClasses(packet) }
+            Version.V_17_FORGE.handleFunction("m_141995_") { setParameterClasses(packet) },
+            Version.V_19_FORGE.handleFunction("m_9829_") { setParameterClasses(packet) },
+            Version.V_20_2_FORGE.handleFunction("m_141995_") { setParameterClasses(packet) }
         )
     }
 
@@ -86,8 +88,8 @@ class NmsReflectionWrapperImpl(
     override fun getNmsClass(className: String, vararg handlers: VersionHandler): KClass<*> {
         var name = className
         return classMap.computeIfAbsent(className) {
-            getNmsClass(handlers.sortedByDescending { it.getVersion().ordinal }
-                .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.apply {
+            getNmsClass(sortHandlers(*handlers)
+                .firstOrNull { it.getVersion().support(version, minorVersion) }?.apply {
                     name = if (isChangedName()) "" else ".$name"
                 }?.getName()?.run { "$this$name" }
                 ?: name)
@@ -181,8 +183,8 @@ class NmsReflectionWrapperImpl(
     }
 
     override fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*> {
-        val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion,forgeSupport) }?.getName() ?: fieldName
+        val type = sortHandlers(*handlers)
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: fieldName
         return clazz.memberProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -193,8 +195,8 @@ class NmsReflectionWrapperImpl(
         staticFieldName: String,
         vararg handlers: VersionHandler
     ): KCallable<*> {
-        val type = handlers.sortedByDescending { it.getVersion().ordinal }
-            .firstOrNull { it.getVersion().support(version, minorVersion, forgeSupport) }?.getName() ?: staticFieldName
+        val type = sortHandlers(*handlers)
+            .firstOrNull { it.getVersion().support(version, minorVersion) }?.getName() ?: staticFieldName
         return clazz.staticProperties.firstOrNull {
             it.name == type
         } ?: throw IllegalArgumentException()
@@ -209,17 +211,29 @@ class NmsReflectionWrapperImpl(
         val key = "${clazz.simpleName}#" + functionType.getName()
         return if (callableMap.contains(key)) callableMap[key]!!
         else {
-            val type = handlers.filter { it.getVersion().support(version, minorVersion, forgeSupport) }
+            val type = sortHandlers(*handlers)
+                .filter { it.getVersion().support(version, minorVersion) }
                 .run {
                     if (isEmpty()) null
                     else maxBy { it.getVersion().ordinal }
                 } ?: CallableVersionHandler(version, functionType)
+
             try {
                 functions.first { callable -> type.isMatched(clazz, callable) }
             } catch (e: Exception) {
                 throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 없습니다.\n", e)
             }
         }
+    }
+
+    private fun sortHandlers(vararg handlers: VersionHandler): List<VersionHandler> {
+        return handlers
+            .filter {
+                if (forgeSupport) it.getVersion().name.endsWith("_FORGE")
+                else !it.getVersion().name.endsWith("_FORGE")
+            }
+            .ifEmpty { handlers.toList() }
+            .sortedByDescending { it.getVersion().ordinal }
     }
 
     private fun String.orLegacy(legacyName: String): String {

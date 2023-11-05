@@ -15,23 +15,27 @@ import kotlin.reflect.KClass
 class NmsContainerService(
     private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Player, ContainerWrapper> {
-    private val containerClass =
-        reflectionWrapper.getNmsClass("Container", Version.V_17.handle("world.inventory.Container", true))
-    private val activeContainerField = reflectionWrapper.getField(
-        reflectionWrapper.getNmsPlayerClass(), "activeContainer",
-        Version.V_15.handle("bx"),
+
+    private val containerClass = reflectionWrapper.getNmsClass("Container",
+        Version.V_17.handle("world.inventory.Container", true)
+    )
+    private val containerMenuField = reflectionWrapper.getField(
+        reflectionWrapper.getNmsPlayerClass(), "containerMenu",
+        Version.V_17.handle("bx"),
         Version.V_17.handle("bV"),
         Version.V_18.handle("bW"),
+        Version.V_18_2.handle("bV"),
         Version.V_19.handle("bU"),
         Version.V_19_4.handle("bP"),
         Version.V_20.handle("bR"),
-        Version.V_20_FORGE.handle("f_36096_")
+        Version.V_20_2.handle("bS"),
+        Version.V_17_FORGE.handle("f_36096_")
     )
 
     override fun wrap(target: Player): ContainerWrapper {
         val nmsPlayer = reflectionWrapper.getEntityPlayer(target)
-        val activeContainer = activeContainerField.call(nmsPlayer) ?: throw UnsupportedOperationException()
-        return ContainerWrapperImpl(activeContainer, reflectionWrapper, containerClass)
+        val containerMenu = containerMenuField.call(nmsPlayer) ?: throw UnsupportedOperationException()
+        return ContainerWrapperImpl(containerMenu, reflectionWrapper, containerClass)
     }
 
     override fun getWrapper(nmsInstance: Any): ContainerWrapper {

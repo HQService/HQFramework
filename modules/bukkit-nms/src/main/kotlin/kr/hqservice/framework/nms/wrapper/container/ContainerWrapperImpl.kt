@@ -11,21 +11,21 @@ class ContainerWrapperImpl(
     reflectionWrapper: NmsReflectionWrapper,
     containerClass: KClass<*>
 ) : ContainerWrapper {
-    private val windowIdField = reflectionWrapper.getField(
-        containerClass, "windowId",
-        Version.V_17.handle("j"),
-        Version.V_20_FORGE.handle("f_38840_")
-    )
 
+    private val containerIdField = reflectionWrapper.getField(
+        containerClass, "containerId",
+        Version.V_17.handle("j"),
+        Version.V_17_FORGE.handle("f_38840_")
+    )
     private val stateIdField = reflectionWrapper.getField(
-        containerClass, "q",
-        Version.V_19.handle("q"),
-        Version.V_19_1.handle("r"),
-        Version.V_20_FORGE.handle("f_182405_")
+        containerClass, "stateId",
+        Version.V_17.handle("q"),
+        Version.V_18_2.handle("r"),
+        Version.V_17_FORGE.handle("f_182405_")
     )
 
     override fun getContainerId(): Int {
-        return windowIdField.callAccess(container)
+        return containerIdField.callAccess(container)
     }
 
     override fun getStateId(): Int {

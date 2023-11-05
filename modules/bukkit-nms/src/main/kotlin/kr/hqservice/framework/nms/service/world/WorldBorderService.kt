@@ -16,8 +16,10 @@ class WorldBorderService(
     reflectionWrapper: NmsReflectionWrapper,
     @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>
 ) : NmsService<World, WorldBorderWrapper> {
+
     private val worldBorderClass = reflectionWrapper.getNmsClass("WorldBorder",
-        Version.V_15.handle("world.level.border"))
+        Version.V_17.handle("world.level.border")
+    )
     private val worldBorderConstructor = worldBorderClass.constructors.first { it.parameters.isEmpty() }
     private val worldField = worldBorderClass.java.getField("world")
 

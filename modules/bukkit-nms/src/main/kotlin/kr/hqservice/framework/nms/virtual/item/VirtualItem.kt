@@ -26,7 +26,7 @@ class VirtualItem(
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by inject(named("itemStack"))
     private val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
     private val packetClass =
-        reflectionWrapper.getNmsClass("PacketPlayOutSetSlot", Version.V_15.handle("network.protocol.game"))
+        reflectionWrapper.getNmsClass("PacketPlayOutSetSlot", Version.V_17.handle("network.protocol.game"))
 
     override fun createVirtualMessage(): VirtualMessage {
         val container = containerService.wrap(player)

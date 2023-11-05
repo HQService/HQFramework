@@ -13,12 +13,12 @@ class VirtualCamera(
     private val virtualEntity: AbstractVirtualEntity?,
     private val reflectionWrapper: NmsReflectionWrapper
 ) : Virtual {
-    private val entityClass = reflectionWrapper.getNmsClass("Entity", Version.V_15.handle("world.entity"))
+    private val entityClass = reflectionWrapper.getNmsClass("Entity", Version.V_17.handle("world.entity"))
     private val stateChangePacketClass =
-        reflectionWrapper.getNmsClass("PacketPlayOutGameStateChange", Version.V_15.handle("network.protocol.game"))
+        reflectionWrapper.getNmsClass("PacketPlayOutGameStateChange", Version.V_17.handle("network.protocol.game"))
     private val changeGameModeType = reflectionWrapper.getStaticField(stateChangePacketClass, "d").call()!!
     private val cameraPacketClass =
-        reflectionWrapper.getNmsClass("PacketPlayOutCamera", Version.V_15.handle("network.protocol.game"))
+        reflectionWrapper.getNmsClass("PacketPlayOutCamera", Version.V_17.handle("network.protocol.game"))
 
     override fun createVirtualMessage(): VirtualMessage {
         val stateChangePacket: Any
