@@ -35,7 +35,6 @@ class PacketHandler(
             .getHandlers(uniqueId)
             .filter { it.checkCondition(message) }
             .forEach { it.handle(message) }
-
         super.write(context, message, promise)
     }
 

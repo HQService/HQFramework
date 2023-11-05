@@ -59,16 +59,6 @@ class VirtualItemHandler(
     override fun handle(message: Any) {
         val clazz = message::class
         when (clazz.simpleName!!) {
-            /*"PacketPlayOutSetSlot" -> {
-                val slot = reflectionWrapper.getField(clazz, "e").callAccess<Int>(message)
-                val nmsItemStack = reflectionWrapper.getField(clazz, "f").callAccess<Any>(message)
-                val wrapper = itemStackService.getWrapper(nmsItemStack)
-                val itemStack = wrapper.getBukkitItemStack()
-                if(filter(slot, itemStack)) {
-
-                    return true
-                }
-            }*/
             "PacketPlayOutWindowItems", "ClientboundContainerSetContentPacket" -> {
                 val listField = reflectionWrapper.getField(message::class, "items",
                     Version.V_17.handle("c"),

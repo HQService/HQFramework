@@ -13,8 +13,8 @@ import kotlin.reflect.KClass
 class Vector3fService(
     private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {
-    private val vector3fClass = reflectionWrapper.getNmsClass(
-        "Vector3f",
+
+    private val vector3fClass = reflectionWrapper.getNmsClass("Vector3f",
         Version.V_17.handle("core")
     )
     private val vector3fConstructor =

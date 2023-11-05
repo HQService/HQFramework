@@ -15,12 +15,10 @@ class BaseComponentService(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<String, BaseComponentWrapper> {
 
-    private val componentClass = reflectionWrapper.getNmsClass(
-        "IChatBaseComponent",
+    private val componentClass = reflectionWrapper.getNmsClass("IChatBaseComponent",
         Version.V_17.handle("network.chat")
     )
-    private val componentSerializerClass = reflectionWrapper.getNmsClass(
-        "IChatBaseComponent\$ChatSerializer",
+    private val componentSerializerClass = reflectionWrapper.getNmsClass("IChatBaseComponent\$ChatSerializer",
         Version.V_17.handle("network.chat")
     )
     private val serializeFromJsonFunction = reflectionWrapper.getFunction(componentSerializerClass,

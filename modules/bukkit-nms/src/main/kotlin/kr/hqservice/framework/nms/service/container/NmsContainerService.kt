@@ -19,8 +19,7 @@ class NmsContainerService(
     private val containerClass = reflectionWrapper.getNmsClass("Container",
         Version.V_17.handle("world.inventory.Container", true)
     )
-    private val containerMenuField = reflectionWrapper.getField(
-        reflectionWrapper.getNmsPlayerClass(), "containerMenu",
+    private val containerMenuField = reflectionWrapper.getField(reflectionWrapper.getNmsPlayerClass(), "containerMenu",
         Version.V_17.handle("bV"),
         Version.V_18.handle("bW"),
         Version.V_18_2.handle("bV"),

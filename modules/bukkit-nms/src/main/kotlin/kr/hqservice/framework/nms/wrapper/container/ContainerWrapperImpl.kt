@@ -12,13 +12,11 @@ class ContainerWrapperImpl(
     containerClass: KClass<*>
 ) : ContainerWrapper {
 
-    private val containerIdField = reflectionWrapper.getField(
-        containerClass, "containerId",
+    private val containerIdField = reflectionWrapper.getField(containerClass, "containerId",
         Version.V_17.handle("j"),
         Version.V_17_FORGE.handle("f_38840_")
     )
-    private val stateIdField = reflectionWrapper.getField(
-        containerClass, "stateId",
+    private val stateIdField = reflectionWrapper.getField(containerClass, "stateId",
         Version.V_17.handle("q"),
         Version.V_18_2.handle("r"),
         Version.V_17_FORGE.handle("f_182405_")

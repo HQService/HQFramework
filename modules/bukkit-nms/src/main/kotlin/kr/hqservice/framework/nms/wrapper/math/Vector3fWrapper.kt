@@ -13,17 +13,17 @@ class Vector3fWrapper(
 ) : NmsWrapper {
 
     private val getXFunction = reflectionWrapper.getFunction(targetClass, "getX",
-        Version.V_17.handleFunction("b"),
+        Version.V_18.handleFunction("b"),
         Version.V_17_FORGE.handleFunction("m_123156_")
     )
 
     private val getYFunction = reflectionWrapper.getFunction(targetClass, "getY",
-        Version.V_17.handleFunction("c"),
+        Version.V_18.handleFunction("c"),
         Version.V_17_FORGE.handleFunction("m_123157_")
     )
 
     private val getZFunction = reflectionWrapper.getFunction(targetClass, "getZ",
-        Version.V_17.handleFunction("d"),
+        Version.V_18.handleFunction("d"),
         Version.V_17_FORGE.handleFunction("m_123158_")
     )
 
