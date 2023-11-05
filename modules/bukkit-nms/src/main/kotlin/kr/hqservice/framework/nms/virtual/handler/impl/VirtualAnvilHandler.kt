@@ -52,8 +52,9 @@ class VirtualAnvilHandler(
                 val slotNum = slotNumField.callAccess<Int>(message)
                 if (slotNum == 2) {
                     runBlocking {
-                        confirmScope(currentText)
-                        unregistered = true
+                        if (confirmScope(currentText)) {
+                            unregistered = true
+                        }
                     }
                 } else if (slotNum in 0..1) {
                     runBlocking { otherSlotClickScope() }
