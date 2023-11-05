@@ -1,6 +1,7 @@
 package kr.hqservice.framework.nms.virtual.handler.impl
 
 import kotlinx.coroutines.runBlocking
+import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
@@ -42,13 +43,19 @@ class VirtualAnvilHandler(
         val clazz = message::class
         when (clazz.simpleName!!) {
             "PacketPlayInItemName" -> {
-                val nameField = reflectionWrapper.getField(message::class, "a")
+                val nameField = reflectionWrapper.getField(message::class, "name",
+                    Version.V_17.handle("a"),
+                    Version.V_17_FORGE.handle("f_134393_")
+                )
                 val name = nameField.callAccess<String>(message)
                 runBlocking { textScope(name) }
                 currentText = name
             }
             "PacketPlayInWindowClick" -> {
-                val slotNumField = reflectionWrapper.getField(message::class, "d")
+                val slotNumField = reflectionWrapper.getField(message::class, "slotNum",
+                    Version.V_17.handle("d"),
+                    Version.V_17_FORGE.handle("f_133940_")
+                )
                 val slotNum = slotNumField.callAccess<Int>(message)
                 if (slotNum == 2) {
                     runBlocking {

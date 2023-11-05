@@ -21,8 +21,7 @@ class NmsItemService(
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item"))
     private val nmsItemClass = reflectionWrapper.getNmsClass("Item", Version.V_17.handle("world.item"))
 
-    private val getItemFunction = reflectionWrapper.getFunction(
-        nmsItemStackClass, "getItem",
+    private val getItemFunction = reflectionWrapper.getFunction(nmsItemStackClass, "getItem",
         Version.V_17.handle("c"),
         Version.V_20.handle("d"),
         Version.V_17_FORGE.handle("m_41720_"), // ~1.20.2

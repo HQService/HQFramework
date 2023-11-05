@@ -22,10 +22,10 @@ open class VirtualContainer(
     protected val reflectionWrapper: NmsReflectionWrapper by inject()
     protected val baseComponentService: NmsService<String, BaseComponentWrapper> by inject(named("base-component"))
     protected val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
-    protected val containersClass = reflectionWrapper.getNmsClass("Containers", Version.V_15.handle("world.inventory"))
+    protected val containersClass = reflectionWrapper.getNmsClass("Containers", Version.V_17.handle("world.inventory"))
 
     protected val packetClass =
-        reflectionWrapper.getNmsClass("PacketPlayOutOpenWindow", Version.V_15.handle("network.protocol.game"))
+        reflectionWrapper.getNmsClass("PacketPlayOutOpenWindow", Version.V_17.handle("network.protocol.game"))
 
     private val bukkitViewFunction = reflectionWrapper.getFunction(containerService.getTargetClass(), "getBukkitView")
 
