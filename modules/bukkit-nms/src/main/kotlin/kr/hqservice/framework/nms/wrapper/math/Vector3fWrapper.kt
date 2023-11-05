@@ -14,17 +14,17 @@ class Vector3fWrapper(
 
     private val getXFunction = reflectionWrapper.getFunction(targetClass, "getX",
         Version.V_17.handleFunction("b"),
-        Version.V_20_FORGE.handleFunction("m_123156_")
+        Version.V_17_FORGE.handleFunction("m_123156_")
     )
 
     private val getYFunction = reflectionWrapper.getFunction(targetClass, "getY",
         Version.V_17.handleFunction("c"),
-        Version.V_20_FORGE.handleFunction("m_123157_")
+        Version.V_17_FORGE.handleFunction("m_123157_")
     )
 
     private val getZFunction = reflectionWrapper.getFunction(targetClass, "getZ",
         Version.V_17.handleFunction("d"),
-        Version.V_20_FORGE.handleFunction("m_123158_")
+        Version.V_17_FORGE.handleFunction("m_123158_")
     )
 
     fun getX(): Float = getXFunction.call(vector3f) as Float
