@@ -8,21 +8,10 @@ import kr.hqservice.framework.nms.handler.impl.NameVersionHandler
 enum class Version(
     private val parent: Version? = null
 ) {
-    V_7,
-    V_8,
-    V_9,
-    V_10,
-    V_11,
-    V_12,
-    V_13,
-    V_14,
-    V_15,
-    V_16,
     V_17,
     V_18,
     V_18_2,
     V_19,
-    V_19_1,
     V_19_3,
     V_19_4,
     V_20,
@@ -31,7 +20,6 @@ enum class Version(
     // forge
     V_17_FORGE(V_17),
     V_19_FORGE(V_19),
-    V_20_FORGE(V_20),
     V_20_2_FORGE(V_20_2);
 
     fun support(version: Version, minor: Int = 0): Boolean {

@@ -67,7 +67,6 @@ class VirtualEntityClasses(
 
     private val getDataWatcherFunction = reflectionWrapper.getFunction(
         entityClass, "getEntityData",
-        Version.V_17.handleFunction("V"),
         Version.V_17.handleFunction("ad"),
         Version.V_18.handleFunction("ai"),
         Version.V_19_3.handleFunction("al"),
@@ -84,7 +83,6 @@ class VirtualEntityClasses(
 
     private val getIdFunction = reflectionWrapper.getFunction(
         entityClass, "getId",
-        Version.V_17.handleFunction("S"),
         Version.V_17.handleFunction("Z"),
         Version.V_18.handleFunction("ae"),
         Version.V_19_3.handleFunction("ah"),
@@ -95,14 +93,12 @@ class VirtualEntityClasses(
     )
 
     private val setCustomNameFunction = reflectionWrapper.getFunction(entityClass, "setCustomName", listOf(componentWrapper.getTargetClass()),
-        Version.V_17.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) },
         Version.V_17.handleFunction("a") { setParameterClasses(componentWrapper.getTargetClass()) },
         Version.V_19.handleFunction("b") { setParameterClasses(componentWrapper.getTargetClass()) },
         Version.V_17_FORGE.handleFunction("m_6593_") { setParameterClasses(componentWrapper.getTargetClass()) }
     )
 
     private val setCustomNameVisibleFunction = reflectionWrapper.getFunction(entityClass, "setCustomNameVisible", listOf(Boolean::class),
-        Version.V_17.handleFunction("m") { setParameterClasses(Boolean::class) },
         Version.V_17.handleFunction("n") { setParameterClasses(Boolean::class) },
         Version.V_17_FORGE.handleFunction("m_20340_") { setParameterClasses(Boolean::class) }
     )
@@ -118,7 +114,6 @@ class VirtualEntityClasses(
     )
 
     private val setInvisibleFunction = reflectionWrapper.getFunction(entityClass, "setInvisible", listOf(Boolean::class),
-        Version.V_17.handleFunction("i") { setParameterClasses(Boolean::class) },
         Version.V_17.handleFunction("j") { setParameterClasses(Boolean::class) },
         Version.V_17_FORGE.handleFunction("m_6842_") { setParameterClasses(Boolean::class) }
     )

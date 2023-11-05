@@ -23,7 +23,6 @@ class NmsItemService(
 
     private val getItemFunction = reflectionWrapper.getFunction(
         nmsItemStackClass, "getItem",
-        Version.V_17.handle("b"),
         Version.V_17.handle("c"),
         Version.V_20.handle("d"),
         Version.V_17_FORGE.handle("m_41720_"), // ~1.20.2
