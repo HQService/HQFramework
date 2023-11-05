@@ -14,8 +14,8 @@ import kotlin.reflect.full.createInstance
 class NmsNBTTagCompoundService(
     private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Any?, NmsNBTTagCompoundWrapper> {
-    private val nbtTagClass = reflectionWrapper.getNmsClass(
-        "NBTTagCompound",
+
+    private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound",
         Version.V_17.handle("nbt")
     )
 

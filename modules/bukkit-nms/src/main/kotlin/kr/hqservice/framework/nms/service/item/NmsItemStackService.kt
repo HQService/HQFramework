@@ -19,8 +19,11 @@ class NmsItemStackService(
     @Qualifier("tag") private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
     @Qualifier("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
 ) : NmsService<ItemStack, NmsItemStackWrapper> {
+
     private val craftItemStackClass = reflectionWrapper.getCraftBukkitClass("inventory.CraftItemStack")
-    private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item"))
+    private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack",
+        Version.V_17.handle("world.item")
+    )
 
     private val asNmsCopyFunction = reflectionWrapper.getStaticFunction(
         craftItemStackClass,

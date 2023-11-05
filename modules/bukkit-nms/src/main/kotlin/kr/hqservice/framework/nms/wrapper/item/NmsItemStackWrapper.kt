@@ -18,9 +18,8 @@ class NmsItemStackWrapper(
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item"))
     private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt"))
 
-    private val getTagFunction = reflectionWrapper.getFunction(
-        nmsItemStackClass, "getTag",
-        Version.V_17.handle("s"),
+    private val getTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "getTag",
+        Version.V_18.handle("s"),
         Version.V_18_2.handle("t"),
         Version.V_19.handle("u"),
         Version.V_20.handle("v"),
@@ -28,7 +27,7 @@ class NmsItemStackWrapper(
     )
 
     private val setTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
-        Version.V_17.handleFunction("c") { setParameterClasses(nbtTagClass) },
+        Version.V_18.handleFunction("c") { setParameterClasses(nbtTagClass) },
         Version.V_17_FORGE.handleFunction("m_41751_") { setParameterClasses(nbtTagClass) }, // ~1.20.2
     )
 

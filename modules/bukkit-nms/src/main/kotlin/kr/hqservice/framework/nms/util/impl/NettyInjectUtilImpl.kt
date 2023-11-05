@@ -22,11 +22,13 @@ class NettyInjectUtilImpl(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NettyInjectUtil, HQSimpleComponent {
-    private val listenerClass = reflectionWrapper.getNmsClass(
-        "PlayerConnection",
+
+    private val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection",
         Version.V_17.handle("server.network.ServerGamePacketListenerImpl", true)
     )
-    private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager", Version.V_17.handle("network"))
+    private val connectionClass = reflectionWrapper.getNmsClass("NetworkManager",
+        Version.V_17.handle("network")
+    )
     private val connectionField = reflectionWrapper.getField(listenerClass, connectionClass)
     private val channelField = reflectionWrapper.getField(connectionClass, Channel::class)
 
@@ -44,9 +46,7 @@ class NettyInjectUtilImpl(
     override fun getServerChannels(server: Server): List<Channel> {
         val nmsServer = reflectionWrapper.getNmsServer(server)
         val mcServerClass = reflectionWrapper.getNmsClass("MinecraftServer", Version.V_17.handle("server"))
-
-        val serverConnectionListener =
-            reflectionWrapper.getNmsClass("ServerConnection", Version.V_17.handle("server.network"))
+        val serverConnectionListener = reflectionWrapper.getNmsClass("ServerConnection", Version.V_17.handle("server.network"))
         val listenerField = reflectionWrapper.getField(mcServerClass, serverConnectionListener)
         listenerField.isAccessible = true
         val listener = listenerField.call(nmsServer)
