@@ -57,9 +57,12 @@ abstract class AbstractVirtualScope(
                 val resultItem = containerFactory.getResultItem(text)
                 reflectionWrapper.sendPacket(it, resultItem)
             }, { text -> if (containerFactory.confirm(text)) {
-                lazyPlugin.server.scheduler.runTask(lazyPlugin, Runnable { it.closeInventory() })
+                lazyPlugin.server.scheduler.runTask(lazyPlugin, Runnable {
+                    it.closeInventory()
+                })
                 InventoryClickEvent.getHandlerList().unregister(dummyListener)
-            } }, {
+                true
+            } else false }, {
                 reflectionWrapper.sendPacket(it, *containerFactory.getBaseItem().toTypedArray())
             }))
         }

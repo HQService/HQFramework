@@ -9,10 +9,11 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 class VirtualAnvilHandler(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val textScope: suspend (String) -> Unit,
-    private val confirmScope: suspend (String) -> Unit,
+    private val confirmScope: suspend (String) -> Boolean,
     private val otherSlotClickScope: suspend () -> Unit
 ) : VirtualHandler {
     private var currentText = ""
+    private var unregistered = false
 
     override fun getNmsSimpleNames(): List<String> {
         return listOf("PacketPlayInItemName", "PacketPlayInWindowClick")
@@ -27,7 +28,7 @@ class VirtualAnvilHandler(
     }
 
     override fun unregisterCondition(message: Any): Boolean {
-        return message::class.simpleName == "PacketPlayInCloseWindow"
+        return unregistered || message::class.simpleName == "PacketPlayInCloseWindow"
     }
 
     override fun handle(message: Any) {
@@ -43,7 +44,10 @@ class VirtualAnvilHandler(
                 val slotNumField = reflectionWrapper.getField(message::class, "d")
                 val slotNum = slotNumField.callAccess<Int>(message)
                 if (slotNum == 2) {
-                    runBlocking { confirmScope(currentText) }
+                    runBlocking {
+                        confirmScope(currentText)
+                        unregistered = true
+                    }
                 } else if (slotNum in 0..1) {
                     runBlocking { otherSlotClickScope() }
                 }
