@@ -60,11 +60,10 @@ abstract class AbstractVirtualScope(
                 lazyPlugin.server.scheduler.runTask(lazyPlugin, Runnable {
                     it.closeInventory()
                 })
-                InventoryClickEvent.getHandlerList().unregister(dummyListener)
                 true
             } else false }, {
                 reflectionWrapper.sendPacket(it, *containerFactory.getBaseItem().toTypedArray())
-            }))
+            }, dummyListener))
         }
     }
 

@@ -5,12 +5,15 @@ import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import org.bukkit.event.Listener
+import org.bukkit.event.inventory.InventoryClickEvent
 
 class VirtualAnvilHandler(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val textScope: suspend (String) -> Unit,
     private val confirmScope: suspend (String) -> Boolean,
-    private val otherSlotClickScope: suspend () -> Unit
+    private val otherSlotClickScope: suspend () -> Unit,
+    private val dummyListener: Listener,
 ) : VirtualHandler {
     private var currentText = ""
     private var unregistered = false
@@ -28,7 +31,11 @@ class VirtualAnvilHandler(
     }
 
     override fun unregisterCondition(message: Any): Boolean {
-        return unregistered || message::class.simpleName == "PacketPlayInCloseWindow"
+        if (unregistered || message::class.simpleName == "PacketPlayInCloseWindow") {
+            InventoryClickEvent.getHandlerList().unregister(dummyListener)
+            return true
+        }
+        return false
     }
 
     override fun handle(message: Any) {
