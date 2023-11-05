@@ -39,7 +39,6 @@ class NmsNBTTagCompoundWrapper(
     )
 
     private val getIntFunction = reflectionWrapper.getFunction(nbtTagClass, "getInt", listOf(String::class),
-        Version.V_17.handleFunction("i") { setParameterClasses(String::class) },
         Version.V_17.handleFunction("h") { setParameterClasses(String::class) },
         Version.V_17_FORGE.handleFunction("m_128451_") { setParameterClasses(String::class) } // ~1.20.2
     )

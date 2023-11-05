@@ -20,7 +20,6 @@ class NmsItemStackWrapper(
 
     private val getTagFunction = reflectionWrapper.getFunction(
         nmsItemStackClass, "getTag",
-        Version.V_17.handle("o"),
         Version.V_17.handle("s"),
         Version.V_18_2.handle("t"),
         Version.V_19.handle("u"),

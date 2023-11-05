@@ -37,7 +37,6 @@ class NmsArmorStandService(
 
     private val getHeadPoseFunction = reflectionWrapper.getFunction(
         armorStandClass, "getHeadPose",
-        Version.V_17.handleFunction("r"),
         Version.V_17.handleFunction("v"),
         Version.V_18.handleFunction("u"),
         Version.V_19_4.handleFunction("x"),
@@ -46,7 +45,6 @@ class NmsArmorStandService(
     )
 
     private val setSmallFunction = reflectionWrapper.getFunction(armorStandClass, "setSmall", listOf(Boolean::class),
-        Version.V_17.handleFunction("n") { setParameterClasses(Boolean::class) },
         Version.V_17.handleFunction("a") { setParameterClasses(Boolean::class) },
         Version.V_19_4.handleFunction("t") { setParameterClasses(Boolean::class) },
         Version.V_17_FORGE.handleFunction("m_31603_") { setParameterClasses(Boolean::class) }

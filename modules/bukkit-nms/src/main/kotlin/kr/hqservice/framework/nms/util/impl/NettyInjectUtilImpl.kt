@@ -51,9 +51,9 @@ class NettyInjectUtilImpl(
         listenerField.isAccessible = true
         val listener = listenerField.call(nmsServer)
 
-        val connectionField = reflectionWrapper.getField(serverConnectionListener, "h",
+        val connectionField = reflectionWrapper.getField(serverConnectionListener, "connections",
             Version.V_17.handle("g"),
-            Version.V_20_FORGE.handle("f_9704_")
+            Version.V_17_FORGE.handle("f_9704_")
         )
         connectionField.isAccessible = true
 
