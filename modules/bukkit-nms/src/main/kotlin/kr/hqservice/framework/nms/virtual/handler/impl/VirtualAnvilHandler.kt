@@ -6,16 +6,31 @@ import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.plugin.Plugin
 
 class VirtualAnvilHandler(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val textScope: suspend (String) -> Unit,
     private val confirmScope: suspend (String) -> Boolean,
     private val otherSlotClickScope: suspend () -> Unit,
-    private val dummyListener: Listener,
+    private val dummyListener: VirtualAnvilListener,
+    private val closeScope: suspend (String) -> Unit
 ) : VirtualHandler {
+    class VirtualAnvilListener(
+        private val player: Player,
+        private val plugin: Plugin
+    ) : Listener {
+        fun close() {
+            plugin.server.scheduler.runTask(plugin, Runnable {
+                InventoryClickEvent.getHandlerList().unregister(this)
+                player.updateInventory()
+            })
+        }
+    }
+
     private var currentText = ""
     private var unregistered = false
 
@@ -33,7 +48,8 @@ class VirtualAnvilHandler(
 
     override fun unregisterCondition(message: Any): Boolean {
         if (unregistered || message::class.simpleName == "PacketPlayInCloseWindow") {
-            InventoryClickEvent.getHandlerList().unregister(dummyListener)
+            runBlocking { closeScope.invoke(currentText) }
+            dummyListener.close()
             return true
         }
         return false

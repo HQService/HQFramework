@@ -43,6 +43,7 @@ class VirtualAnvilContainerScope(
     private var resultItem: VirtualItem? = null
     private var virtualResultSlotHandler: ((String) -> ItemStack)? = null
     private var virtualConfirmHandler: ((String) -> Boolean)? = null
+    private var closeHandler: ((String) -> Unit)? = null
     private var anvilPacket: VirtualContainer = VirtualAnvilContainer(receiver, ComponentSerializer.toString(title))
 
     fun setBaseItem(itemStack: ItemStack?) {
@@ -79,6 +80,10 @@ class VirtualAnvilContainerScope(
         virtualConfirmHandler = confirmHandleScope
     }
 
+    fun setCloseHandler(closeScope: (String) -> Unit) {
+        closeHandler = closeScope
+    }
+
     internal fun getBaseItem(): List<VirtualItem> {
         return baseItem ?: defaultBaseItems(receiver)
     }
@@ -90,6 +95,10 @@ class VirtualAnvilContainerScope(
 
     internal fun confirm(text: String): Boolean {
         return virtualConfirmHandler?.invoke(text) != false
+    }
+
+    internal fun close(text: String) {
+        closeHandler?.invoke(text)
     }
 
     fun getMessages(): Array<Virtual> {

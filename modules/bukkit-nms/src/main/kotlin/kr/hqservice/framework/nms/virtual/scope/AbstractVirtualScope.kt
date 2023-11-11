@@ -43,7 +43,7 @@ abstract class AbstractVirtualScope(
             val containerFactory = VirtualAnvilContainerScope(it, title)
             containerFactory.anvilFactoryScope()
             reflectionWrapper.sendPacket(it, *containerFactory.getMessages())
-            val dummyListener = object : Listener {}
+            val dummyListener = VirtualAnvilHandler.VirtualAnvilListener(it, lazyPlugin)
 
             lazyPlugin.server.pluginManager.registerEvent(InventoryClickEvent::class.java, dummyListener, EventPriority.LOWEST, { _, event ->
                 event as InventoryClickEvent
@@ -59,11 +59,14 @@ abstract class AbstractVirtualScope(
             }, { text -> if (containerFactory.confirm(text)) {
                 lazyPlugin.server.scheduler.runTask(lazyPlugin, Runnable {
                     it.closeInventory()
+                    it.updateInventory()
                 })
                 true
             } else false }, {
                 reflectionWrapper.sendPacket(it, *containerFactory.getBaseItem().toTypedArray())
-            }, dummyListener))
+            }, dummyListener, { text ->
+                containerFactory.close(text)
+            }))
         }
     }
 
