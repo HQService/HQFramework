@@ -6,6 +6,7 @@ import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualAnvilContainer
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
+import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -15,7 +16,7 @@ import java.util.*
 
 class VirtualAnvilContainerScope(
     private val receiver: Player,
-    title: String
+    title: BaseComponent
 ) : KoinComponent {
     companion object {
         private val defaultBaseItems: (Player) -> List<VirtualItem> = {
@@ -44,7 +45,7 @@ class VirtualAnvilContainerScope(
     private var virtualResultSlotHandler: ((String) -> ItemStack)? = null
     private var virtualConfirmHandler: ((String) -> Boolean)? = null
     private var closeHandler: ((String) -> Unit)? = null
-    private var anvilPacket: VirtualContainer = VirtualAnvilContainer(receiver, ComponentSerializer.toString(title))
+    private var anvilPacket: VirtualContainer = VirtualAnvilContainer(receiver, title)
 
     fun setBaseItem(itemStack: ItemStack?) {
         baseItem = if (itemStack == null || itemStack.type.isAir) {

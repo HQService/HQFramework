@@ -6,6 +6,8 @@ import kr.hqservice.framework.nms.virtual.handler.impl.VirtualAnvilHandler
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.virtual.world.VirtualWorldBorder
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import net.md_5.bungee.api.chat.BaseComponent
+import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventPriority
@@ -36,7 +38,7 @@ abstract class AbstractVirtualScope(
     }
 
     suspend fun anvil(
-        title: String = "",
+        title: BaseComponent = TextComponent(""),
         anvilFactoryScope: VirtualAnvilContainerScope.() -> Unit
     ) {
         viewers.forEach {
