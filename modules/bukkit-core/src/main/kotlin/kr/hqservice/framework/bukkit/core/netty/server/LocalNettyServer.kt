@@ -33,11 +33,11 @@ class LocalNettyServer(
     }
 
     override fun getPlayer(uniqueId: UUID): NettyPlayer? {
-        return server.getPlayer(uniqueId)?.let { NettyPlayerImpl(it.name, it.uniqueId, NettyChannelImpl(server.port, server.name)) }
+        return server.getPlayer(uniqueId)?.let { NettyPlayerImpl(it.name, it.displayName, it.uniqueId, NettyChannelImpl(server.port, server.name)) }
     }
 
     override fun getPlayers(): List<NettyPlayer> {
-        return server.onlinePlayers.map { NettyPlayerImpl(it.name, it.uniqueId, NettyChannelImpl(server.port, server.name)) }
+        return server.onlinePlayers.map { NettyPlayerImpl(it.name, it.displayName, it.uniqueId, NettyChannelImpl(server.port, server.name)) }
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {

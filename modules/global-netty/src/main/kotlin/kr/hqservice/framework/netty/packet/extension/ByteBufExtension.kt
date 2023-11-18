@@ -98,12 +98,14 @@ fun ByteBuf.readChannels(): List<NettyChannel> {
 
 fun ByteBuf.writePlayer(nettyPlayer: NettyPlayer) {
     writeString(nettyPlayer.getName())
+    writeString(nettyPlayer.getDisplayName())
     writeUUID(nettyPlayer.getUniqueId())
     nettyPlayer.getChannel().apply(::writeChannel)
 }
 
 fun ByteBuf.readPlayer(): NettyPlayer {
     return NettyPlayerImpl(
+        readString(),
         readString(),
         readUUID(),
         readChannel()
@@ -117,6 +119,7 @@ fun ByteBuf.writePlayers(nettyPlayers: List<NettyPlayer>) {
             oos.writeInt(nettyPlayers.size)
             nettyPlayers.forEach { player ->
                 oos.writeUTF(player.getName())
+                oos.writeUTF(player.getDisplayName())
                 oos.writeUTF(player.getUniqueId().toString())
                 player.getChannel()?.apply {
                     oos.writeInt(getPort())
@@ -139,11 +142,12 @@ fun ByteBuf.readPlayers(): List<NettyPlayer> {
                 val size = ois.readInt()
                 for (i in 0 until size) {
                     val name = ois.readUTF()
+                    val displayName = ois.readUTF()
                     val uuid = UUID.fromString(ois.readUTF())
                     val port = ois.readInt()
                     val channel =
                         if (port == -1) null else NettyChannelImpl(port, ois.readUTF())
-                    players.add(NettyPlayerImpl(name, uuid, channel))
+                    players.add(NettyPlayerImpl(name, displayName, uuid, channel))
                 }
             }
         }

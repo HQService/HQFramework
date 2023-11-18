@@ -8,7 +8,6 @@ import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.extension.*
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder
 
 class MessagePacket(
     var message: BaseComponent,

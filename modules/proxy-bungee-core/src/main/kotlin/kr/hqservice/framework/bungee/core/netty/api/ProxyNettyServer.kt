@@ -32,7 +32,7 @@ class ProxyNettyServer(
     }
 
     override fun getPlayers(): List<NettyPlayer> {
-        return proxy.players.map { NettyPlayerImpl(it.name, it.uniqueId, getChannel(it.server.address.port)) }
+        return proxy.players.map { NettyPlayerImpl(it.name, it.displayName, it.uniqueId, getChannel(it.server.address.port)) }
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {

@@ -71,6 +71,7 @@ class NettyChannelRegistryImpl(
                     players.add(
                         NettyPlayerImpl(
                             it.name,
+                            it.displayName,
                             it.uniqueId,
                             connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port })
                     )

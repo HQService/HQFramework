@@ -21,6 +21,7 @@ class PlayerConnectionListener(
     fun playerPreLoginEvent(event: PreLoginEvent) {
         val nettyPlayer = NettyPlayerImpl(
             event.connection.name,
+            event.connection.name,
             event.connection.uniqueId ?: UUID.randomUUID(),
             null
         )
@@ -39,6 +40,7 @@ class PlayerConnectionListener(
         if (event.target.address == from.address) return
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
+            event.player.displayName,
             event.player.uniqueId,
             getChannelByAddress(from.address)
         )
@@ -55,6 +57,7 @@ class PlayerConnectionListener(
         if (event.player.server != null) return
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
+            event.player.displayName,
             event.player.uniqueId,
             getChannelByAddress(event.server.address),
         )
@@ -72,6 +75,7 @@ class PlayerConnectionListener(
         if (event.player.server.address == from.address) return
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
+            event.player.displayName,
             event.player.uniqueId,
             getChannelByAddress(event.player.server.address)
         )
@@ -87,6 +91,7 @@ class PlayerConnectionListener(
     fun playerDisconnectEvent(event: PlayerDisconnectEvent) {
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
+            event.player.displayName,
             event.player.uniqueId,
             event.player.server?.run { getChannelByAddress(this.address) }
         )

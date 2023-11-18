@@ -6,11 +6,16 @@ import java.util.*
 
 data class NettyPlayerImpl(
     private val name: String,
+    private val displayName: String,
     private val uniqueId: UUID,
     private val channel: NettyChannel?
 ) : NettyPlayer {
     override fun getName(): String {
         return name
+    }
+
+    override fun getDisplayName(): String {
+        return displayName
     }
 
     override fun getUniqueId(): UUID {

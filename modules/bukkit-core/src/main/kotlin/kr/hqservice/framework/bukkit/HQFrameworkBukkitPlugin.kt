@@ -20,7 +20,10 @@ abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
     constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
 
     final override fun onPreLoad() {
-        ByteBuddyAgent.install()
+        try {
+            ByteBuddyAgent.install()
+        } catch (_: Exception) {
+        }
         startKoin()
     }
 
