@@ -1,6 +1,6 @@
 package kr.hqservice.framework.bungee
 
-import kr.hqservice.framework.bungee.core.util.MojangAPI
+import kr.hqservice.framework.global.core.util.MojangAPI
 import java.util.UUID
 import kotlin.test.Test
 
