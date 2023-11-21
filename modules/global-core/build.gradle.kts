@@ -10,6 +10,7 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     api(libs.guava)
+    compileOnly(libs.gson)
 
     testImplementation(libs.koin.core)
     testImplementation(libs.mockK)
