@@ -13,4 +13,6 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
     api(libs.netty)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.bungeecord.api)
 }
