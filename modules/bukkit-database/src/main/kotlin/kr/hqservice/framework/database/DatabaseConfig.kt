@@ -47,7 +47,8 @@ class DatabaseConfig(
         val user = config.getString("database.mysql.user")
         val password = config.getString("database.mysql.password")
         val database = config.getString("database.mysql.database")
-        return MySQLDataSource(host, port, database, user, password)
+        val maximumPoolSize = config.getInt("database.mysql.maximum-pool-size", 10)
+        return MySQLDataSource(host, port, database, user, password, maximumPoolSize)
     }
 
     private fun buildSQLiteDataSource(): HikariDataSource {

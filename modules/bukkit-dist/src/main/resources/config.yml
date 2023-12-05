@@ -25,6 +25,7 @@ database:
     user: root
     password: password
     database: hq
+    maximum-pool-size: 10
 
 scheduler:
   thread-pool:
