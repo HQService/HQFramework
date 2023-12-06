@@ -8,7 +8,8 @@ class MySQLDataSource(
     port: Int,
     database: String,
     user: String,
-    password: String
+    password: String,
+    maximumPoolSize: Int
 ) : HikariDataSource(HikariConfig().apply {
     this.jdbcUrl = "jdbc:mysql://${host}:${port}/${database}?autoReconnect=true&allowMultiQueries=true"
     this.driverClassName = "com.mysql.cj.jdbc.Driver"
@@ -16,6 +17,7 @@ class MySQLDataSource(
     this.password = password
     this.connectionTestQuery = "SELECT 1"
     this.poolName = "hqframework"
+    this.maximumPoolSize = maximumPoolSize
     addDataSourceProperty("cachePrepStmts", "true")
     addDataSourceProperty("prepStmtCacheSize", "250")
     addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
