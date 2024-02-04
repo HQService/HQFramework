@@ -150,6 +150,7 @@ class PlayerConnectionPacketHandler(
     @Subscribe
     fun onLoad(event: PlayerDataPreLoadEvent): Unit = runBlocking blocking@{
         var cancelled = false
+        event.player.isInvulnerable = true
         if (nettyService.isEnable()) {
             val lock = switchDefermentLock.findLock(event.player.uniqueId)
             if (lock != null) {
@@ -163,15 +164,19 @@ class PlayerConnectionPacketHandler(
                 }.join()
             }
         }
+
         if (cancelled) {
+            event.player.isInvulnerable = false
             return@blocking
         }
+
         playerRepositoryRegistry.getAll().forEach { repository ->
             withContext(Dispatchers.IO) {
                 onLoad(event.player, repository)
             }
         }
         //loadJobs.joinAll()
+        event.player.isInvulnerable = false
         pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
     }
 
