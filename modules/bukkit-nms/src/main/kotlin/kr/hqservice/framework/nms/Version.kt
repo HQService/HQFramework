@@ -16,6 +16,7 @@ enum class Version(
     V_19_4,
     V_20,
     V_20_2,
+    V_20_4,
 
     // forge
     V_17_FORGE(V_17),
