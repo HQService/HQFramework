@@ -39,7 +39,7 @@ enum class VirtualContainerType(
         fun getType(type: InventoryType, size: Int): VirtualContainerType? {
             if (type == InventoryType.CHEST) return VirtualContainerType.valueOf("GENERIC_9X${size / 9}")
             return values().firstOrNull {
-                it.inventoryTypeNames.contains(type.toString())
+                it.inventoryTypeNames.contains(type.name)
             }
         }
     }

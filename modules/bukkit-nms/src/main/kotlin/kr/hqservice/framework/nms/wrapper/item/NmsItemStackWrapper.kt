@@ -23,6 +23,7 @@ class NmsItemStackWrapper(
         Version.V_18_2.handle("t"),
         Version.V_19.handle("u"),
         Version.V_20.handle("v"),
+        Version.V_20_4.handle("v"),
         Version.V_17_FORGE.handle("m_41783_") // ~1.20.2
     )
 
