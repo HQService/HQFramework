@@ -10,7 +10,7 @@ import org.bukkit.Location
 class DoubleCommandArgumentProvider : CommandArgumentProvider<Double> {
     override suspend fun cast(context: CommandContext, argument: String?): Double {
         argument ?: throw ArgumentFeedback.RequireArgument
-        return argument.toDouble()
+        return argument.toDoubleOrNull() ?: throw ArgumentFeedback.NotNumber
     }
 
     override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
