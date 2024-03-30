@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.virtual.container
 
+import kr.hqservice.framework.nms.Version
 import org.bukkit.event.inventory.InventoryType
 import kotlin.reflect.KClass
 
@@ -35,6 +36,7 @@ enum class VirtualContainerType(
 
     companion object {
         private val alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray()
+        private val alphabet_v2 = "abcdefgijklmnopqrstuvwxyz".toCharArray()
 
         fun getType(type: InventoryType, size: Int): VirtualContainerType? {
             if (type == InventoryType.CHEST) return VirtualContainerType.valueOf("GENERIC_9X${size / 9}")
@@ -44,7 +46,7 @@ enum class VirtualContainerType(
         }
     }
 
-    fun getVirtualType(containersClass: KClass<*>): Any {
-        return containersClass.java.getField(alphabet[ordinal].toString()).get(null)
+    fun getVirtualType(containersClass: KClass<*>, v2: Boolean = false): Any {
+        return containersClass.java.getField((if (v2) alphabet_v2 else alphabet)[ordinal].toString()).get(null)
     }
 }

@@ -18,6 +18,8 @@ interface NmsReflectionWrapper {
 
     fun getVersion(): Version
 
+    fun getFullVersion(): Version
+
     fun getCraftBukkitClass(className: String): KClass<*>
 
     fun getNmsClass(className: String, vararg handlers: VersionHandler): KClass<*>

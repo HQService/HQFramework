@@ -44,6 +44,11 @@ class NmsReflectionWrapperImpl(
         0
     }
     private val version = Version.valueOf("V_$majorVersion")
+    private val fullVersion = try {
+        Version.valueOf("V_${majorVersion}_${minorVersion}")
+    } catch (e: Exception) {
+        version
+    }
 
     private val craftBukkitClass = "org.bukkit.craftbukkit.$versionClassName."
     private val nmsClass = "net.minecraft.".orLegacy("net.minecraft.server.$versionClassName.")
@@ -83,6 +88,10 @@ class NmsReflectionWrapperImpl(
 
     override fun getVersion(): Version {
         return version
+    }
+
+    override fun getFullVersion(): Version {
+        return fullVersion
     }
 
     override fun getNmsClass(className: String, vararg handlers: VersionHandler): KClass<*> {

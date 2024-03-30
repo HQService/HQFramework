@@ -41,7 +41,7 @@ open class VirtualContainer(
         val type = bukkitView.topInventory.type
         val size = bukkitView.topInventory.size
         val containerType = VirtualContainerType.getType(type, size) ?: return null
-        val virtualContainerType = containerType.getVirtualType(containersClass)
+        val virtualContainerType = containerType.getVirtualType(containersClass, reflectionWrapper.getFullVersion().ordinal >= Version.V_20_4.ordinal)
         val constructor = packetClass.java.getConstructor(
             Int::class.javaPrimitiveType,
             containersClass.java,
