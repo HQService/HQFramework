@@ -54,13 +54,13 @@ class PlayerConnectionListener(
 
     @EventHandler
     fun playerConnectedEvent(event: ServerConnectedEvent) {
-        if (event.player.server != null) return
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
             event.player.displayName,
             event.player.uniqueId,
             getChannelByAddress(event.server.address),
         )
+
         val packet = PlayerConnectionPacket(
             nettyPlayer,
             PlayerConnectionState.CONNECTED,

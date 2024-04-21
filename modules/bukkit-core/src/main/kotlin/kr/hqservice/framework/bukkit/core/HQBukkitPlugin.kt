@@ -199,7 +199,16 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
                         job.coroutineContext[CoroutineDispatcher.Key] != Dispatchers.BukkitMain && job.coroutineContext[CoroutineDispatcher.Key] != Dispatchers.BukkitAsync
                     }.filter {
                         it.job.children.count() == 0
-                    }.toList().joinAll()
+                    }.toList().forEach { job ->
+                        logger.info("${AnsiColor.CYAN}Disabling...[${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
+                        if (withTimeoutOrNull(1000) { job.join() } == null) {
+                            logger.info("${AnsiColor.CYAN}Timeout-Cancel [${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
+                            job.cancelAndJoin()
+                            logger.info("${AnsiColor.CYAN}Cancel finished. [${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
+                        } else {
+                            logger.info("${AnsiColor.CYAN}Finished. [${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
+                        }
+                    }
 
                 logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
                 onPreDisable()

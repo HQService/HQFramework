@@ -29,6 +29,7 @@ class NettyClientBootstrap(
             Direction.OUTBOUND.registerPacket(BroadcastPacket::class)
             Direction.OUTBOUND.registerPacket(MessagePacket::class)
         }
+
         bootup = false
         future.whenCompleteAsync { channel, throwable ->
             if (throwable != null) {
@@ -43,6 +44,7 @@ class NettyClientBootstrap(
             }
 
             val handlerBoss = channel.pipeline().get(BossHandler::class.java)
+
             handlerBoss.setDisconnectionHandler {
                 if (!plugin.isEnabled) return@setDisconnectionHandler
                 it.setEnabled(false)
@@ -58,6 +60,7 @@ class NettyClientBootstrap(
             }
 
             handlerBoss.setPacketPreprocessHandler { packet, wrapper ->
+                if (!plugin.isEnabled) return@setPacketPreprocessHandler
                 plugin.server.pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
                 plugin.server.scheduler.runTask(plugin, Runnable {
                     plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
@@ -65,10 +68,10 @@ class NettyClientBootstrap(
             }
 
             logger.info("netty-client initialization success!")
+
             handlerBoss.connectionState = ConnectionState.HANDSHAKING
             channel.writeAndFlush(HandShakePacket(plugin.server.port))
             channel.pipeline().addFirst("timeout-handler", TimeOutHandler(5L, TimeUnit.SECONDS))
         }
     }
-
 }

@@ -28,10 +28,7 @@ class NettyModule(
         (nettyService as HQNettyServiceImpl).enabled = config.getBoolean("netty.enabled")
         //nettyEnabled = config.getBoolean("netty.enabled")
 
-        channelHandler.apply {
-            Direction.INBOUND.addListener(HandShakePacket::class, this)
-        }
-
+        Direction.INBOUND.addListener(HandShakePacket::class, channelHandler)
         Direction.INBOUND.addListener(ShutdownPacket::class) { packet, channel ->
             if (packet.shutdownTarget) {
                 channel.setEnabled(false)

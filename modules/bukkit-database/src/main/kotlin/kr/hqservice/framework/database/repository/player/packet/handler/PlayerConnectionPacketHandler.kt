@@ -1,6 +1,7 @@
 package kr.hqservice.framework.database.repository.player.packet.handler
 
 import kotlinx.coroutines.*
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
@@ -51,7 +52,7 @@ class PlayerConnectionPacketHandler(
     }
 
     private fun saveAndClear(player: Player): Job {
-        return coroutineScope.launch(Dispatchers.IO) {
+        return coroutineScope.launch(Dispatchers.IO + CoroutineName("PlayerRepositorySaveRoutine")) {
             playerRepositoryRegistry.getAll().forEach { repository ->
                 onSave(player, repository)
                 repository.remove(player.uniqueId)
