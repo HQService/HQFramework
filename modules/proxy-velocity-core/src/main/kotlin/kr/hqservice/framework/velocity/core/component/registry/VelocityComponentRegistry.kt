@@ -1,5 +1,6 @@
 package kr.hqservice.framework.velocity.core.component.registry
 
+import com.velocitypowered.api.proxy.ProxyServer
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.proxy.core.HQProxyPlugin
 import kr.hqservice.framework.proxy.core.component.registry.ProxyComponentRegistry
@@ -14,11 +15,13 @@ class VelocityComponentRegistry(private val plugin: HQVelocityPlugin) :
     ProxyComponentRegistry<HQVelocityPlugin>(plugin) {
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
         return mutableMapOf<KClass<*>, Any>().apply {
+            put(HQVelocityPlugin::class, plugin)
             put(HQProxyPlugin::class, plugin)
             put(HQPlugin::class, plugin)
             put(plugin::class, plugin)
             put(Logger::class, plugin.getLogger())
             put(HQYamlConfiguration::class, getConfiguration())
+            put(ProxyServer::class, plugin.getProxyServer())
         }
     }
 

@@ -14,7 +14,7 @@ dependencies {
     relocatedRuntimeScope("kr.hqservice.framework.shadow") {
         implementation(libs.kotlinx.coroutines.core)
         api(libs.koin.core)
-        implementation(libs.netty)
+        //implementation(libs.netty)
         implementation(libs.kotlinx.serialization.json)
     }
 }

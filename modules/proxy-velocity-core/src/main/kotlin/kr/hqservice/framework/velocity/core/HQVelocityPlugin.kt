@@ -25,6 +25,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.logging.Logger
 
+
 abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
     protected open val velocityComponentRegistry: ComponentRegistry by inject { parametersOf(this) }
 
@@ -35,7 +36,10 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
 
     @Subscribe
     fun onProxyEnable(event: ProxyInitializeEvent) {
+        onLoad()
+
         onPreEnable()
+        loadConfig()
         onEnable()
         onPostEnable()
     }
@@ -74,6 +78,16 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
 
     final override fun getPluginClassLoader(): ClassLoader {
         return Thread.currentThread().contextClassLoader
+    }
+
+    private fun loadConfig() {
+        if (!getDataFolder().exists()) getDataFolder().mkdirs()
+        if (File(getDataFolder(), "config.yml").exists()) return
+
+        val config = getDataFolder().resolve("config.yml").toPath()
+        this.javaClass.classLoader.getResourceAsStream("config.yml")?.use { stream ->
+            Files.copy(stream, config)
+        }
     }
 
     private fun findTargetPluginJar(): File {
