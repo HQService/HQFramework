@@ -54,6 +54,8 @@ class PlayerConnectionListener(
 
     @EventHandler
     fun playerConnectedEvent(event: ServerConnectedEvent) {
+        if (event.player.server != null) return
+
         val nettyPlayer = NettyPlayerImpl(
             event.player.name,
             event.player.displayName,
