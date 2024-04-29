@@ -11,6 +11,10 @@ class ButtonClickEvent(
     private val button: HQButton,
     private val event: InventoryClickEvent
 ) {
+    fun getBukkitEvent(): InventoryClickEvent {
+        return event
+    }
+
     fun getSlot(): Int {
         return event.slot
     }
