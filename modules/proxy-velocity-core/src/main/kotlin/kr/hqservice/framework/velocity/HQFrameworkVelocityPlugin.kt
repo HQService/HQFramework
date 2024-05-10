@@ -1,5 +1,6 @@
 package kr.hqservice.framework.velocity
 
+import com.velocitypowered.api.proxy.ProxyServer
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.velocity.core.HQVelocityPlugin
@@ -20,8 +21,8 @@ abstract class HQFrameworkVelocityPlugin : HQVelocityPlugin() {
             val module = module {
                 single<HQPlugin>(named("hqframework")) { this@HQFrameworkVelocityPlugin }
                 single<HQVelocityPlugin>(named("hqframework")) { this@HQFrameworkVelocityPlugin }
-                single<HQFrameworkVelocityPlugin> { this@HQFrameworkVelocityPlugin }
-                single<ComponentRegistry> { VelocityComponentRegistry(it.get()) }
+                single<ProxyServer> { this@HQFrameworkVelocityPlugin.getProxyServer() }
+                factory<ComponentRegistry> { VelocityComponentRegistry(it.get()) }
             }
             modules(module)
         }
