@@ -6,14 +6,13 @@ plugins {
 dependencies {
     apiModule("global", "core")
     apiModule("global", "yaml")
-    apiModule("proxy", "core")
-    apiModule("velocity", "netty")
-
+    implementation(libs.byte.buddy.core)
+    implementation(libs.byte.buddy.agent)
     compileOnly(libs.velocity.api)
-    compileOnly(libs.byte.buddy.agent)
 
-    api(libs.kotlinx.coroutines.core)
-    api(libs.kotlinx.serialization.json)
     api(libs.koin.core)
+    api(libs.kotlin.reflect)
+    api(libs.kotlinx.coroutines.core)
     api(libs.netty)
+    api(libs.guava)
 }
