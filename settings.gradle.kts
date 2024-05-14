@@ -44,6 +44,7 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
+            library("paper-api", "io.papermc.paper:paper-api:${getProperty("spigotVersion")}")
             library("bungeecord-api", "net.md-5:bungeecord-api:${getProperty("bungeecordVersion")}")
             library("velocity-api", "com.velocitypowered:velocity-api:${getProperty("velocityVersion")}")
 

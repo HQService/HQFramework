@@ -20,6 +20,7 @@ import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.velocity.core.HQVelocityPlugin
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import java.util.concurrent.ConcurrentHashMap
 
 @Component
 @Singleton(binds = [NettyChannelRegistry::class])
@@ -28,8 +29,8 @@ class NettyChannelRegistryImpl(
     private val config: HQYamlConfiguration
 ) : NettyChannelRegistry, HQSimpleComponent {
     private val server = plugin.getProxyServer()
-    private val portChannelContainer = mutableMapOf<Int, ChannelWrapper>()
-    private val nameChannelContainer = mutableMapOf<String, ChannelWrapper>()
+    private val portChannelContainer = ConcurrentHashMap<Int, ChannelWrapper>()
+    private val nameChannelContainer = ConcurrentHashMap<String, ChannelWrapper>()
     private var unknownClientId = 1
 
     override fun registerActiveChannel(port: Int, wrapper: ChannelWrapper) {

@@ -6,31 +6,35 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import org.bukkit.inventory.ItemStack
+import org.koin.java.KoinJavaComponent.getKoin
 
 class NmsItemStackWrapper(
     private val nmsItemStack: Any,
-    reflectionWrapper: NmsReflectionWrapper,
     private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
     private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>
 ) : NmsWrapper {
 
-    private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item"))
-    private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt"))
+    companion object {
+        private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
 
-    private val getTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "getTag",
-        Version.V_18.handle("s"),
-        Version.V_18_2.handle("t"),
-        Version.V_19.handle("u"),
-        Version.V_20.handle("v"),
-        Version.V_20_4.handle("v"),
-        Version.V_17_FORGE.handle("m_41783_") // ~1.20.2
-    )
+        private val nmsItemStackClass by lazy { reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item")) }
+        private val nbtTagClass by lazy { reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt")) }
 
-    private val setTagFunction = reflectionWrapper.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
-        Version.V_18.handleFunction("c") { setParameterClasses(nbtTagClass) },
-        Version.V_17_FORGE.handleFunction("m_41751_") { setParameterClasses(nbtTagClass) }, // ~1.20.2
-    )
+        private val getTagFunction by lazy { reflectionWrapper.getFunction(nmsItemStackClass, "getTag",
+            Version.V_18.handle("s"),
+            Version.V_18_2.handle("t"),
+            Version.V_19.handle("u"),
+            Version.V_20.handle("v"),
+            Version.V_20_4.handle("v"),
+            Version.V_17_FORGE.handle("m_41783_") // ~1.20.2
+        ) }
+
+        private val setTagFunction by lazy { reflectionWrapper.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
+            Version.V_18.handleFunction("c") { setParameterClasses(nbtTagClass) },
+            Version.V_17_FORGE.handleFunction("m_41751_") { setParameterClasses(nbtTagClass) }, // ~1.20.2
+        ) }
+    }
 
     fun hasTag(): Boolean {
         return getTagOrNull() != null

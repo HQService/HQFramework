@@ -1,6 +1,7 @@
 package kr.hqservice.framework.bukkit.core.listener
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.merge
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import org.bukkit.event.Event
 import org.bukkit.event.Listener
@@ -20,25 +21,25 @@ class SuspendEventExecutor(
     private val method: KFunction<*>,
     private val plugin: HQBukkitPlugin
 ) : EventExecutor {
-    @OptIn(ExperimentalStdlibApi::class)
+    private val suspend = method.isSuspend
+
     override fun execute(empty: Listener, event: Event) {
         if (eventClass.isInstance(event)) {
-            runBlocking {
-                val dispatcher = coroutineContext[CoroutineDispatcher.Key]!!
-                CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(dispatcher) {
-                    invokeHandlerMethod(event)
-                }
-            }
+            invokeHandlerMethod(event)
         }
     }
 
-    private suspend fun invokeHandlerMethod(event: Event) {
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun invokeHandlerMethod(event: Event) {
         try {
-            if (method.isSuspend) {
-                method.callSuspend(listenerInstance, event)
-            } else {
-                method.call(listenerInstance, event)
-            }
+            if (suspend) {
+                runBlocking {
+                    val dispatcher = coroutineContext[CoroutineDispatcher.Key]!!
+                    CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(dispatcher) {
+                        method.callSuspend(listenerInstance, event)
+                    }
+                }
+            } else method.call(listenerInstance, event)
         } catch (exception: InvocationTargetException) {
             val cause = exception.cause ?: exception
             throw cause
