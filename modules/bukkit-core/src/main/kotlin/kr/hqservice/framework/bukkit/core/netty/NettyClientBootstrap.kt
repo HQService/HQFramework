@@ -3,6 +3,7 @@ package kr.hqservice.framework.bukkit.core.netty
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.event.NettyClientDisconnectedEvent
 import kr.hqservice.framework.bukkit.core.netty.event.NettyPacketReceivedEvent
+import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
@@ -48,9 +49,10 @@ class NettyClientBootstrap(
             handlerBoss.setDisconnectionHandler {
                 if (!plugin.isEnabled) return@setDisconnectionHandler
                 it.setEnabled(false)
-                plugin.server.scheduler.runTask(plugin, Runnable {
+                plugin.getScheduler().runTask {
                     plugin.server.pluginManager.callEvent(NettyClientDisconnectedEvent(it))
-                })
+                }
+
                 try {
                     TimeUnit.SECONDS.sleep(3)
                     initializing()
@@ -62,9 +64,9 @@ class NettyClientBootstrap(
             handlerBoss.setPacketPreprocessHandler { packet, wrapper ->
                 if (!plugin.isEnabled) return@setPacketPreprocessHandler
                 plugin.server.pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
-                plugin.server.scheduler.runTask(plugin, Runnable {
+                plugin.getScheduler().runTask {
                     plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
-                })
+                }
             }
 
             logger.info("netty-client initialization success!")

@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.virtual.scope
 
+import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.entity.inner.VirtualCamera
 import kr.hqservice.framework.nms.virtual.handler.impl.VirtualAnvilHandler
@@ -58,10 +59,10 @@ abstract class AbstractVirtualScope(
                 val resultItem = containerFactory.getResultItem(text)
                 reflectionWrapper.sendPacket(it, resultItem)
             }, { text -> if (containerFactory.confirm(text)) {
-                lazyPlugin.server.scheduler.runTask(lazyPlugin, Runnable {
+                lazyPlugin.getScheduler().runTask {
                     it.closeInventory()
                     it.updateInventory()
-                })
+                }
                 true
             } else false }, {
                 reflectionWrapper.sendPacket(it, *containerFactory.getBaseItem().toTypedArray())
