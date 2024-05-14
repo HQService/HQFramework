@@ -1,15 +1,15 @@
 package kr.hqservice.framework.bukkit.core.scheduler
 
 interface HQScheduler {
-    fun runTask(runnable: suspend () -> Unit): HQTask
+    fun runTask(runnable: () -> Unit)
 
-    fun runTaskLater(delay: Long, runnable: suspend () -> Unit): HQTask
+    fun runTaskLater(delay: Long, runnable: () -> Unit): HQTask
 
-    fun runTaskTimer(delay: Long, period: Long,  runnable: suspend () -> Unit): HQTask
+    fun runTaskTimer(delay: Long, period: Long,  runnable: () -> Unit): HQTask
 
-    fun runTaskAsynchronously(runnable: suspend () -> Unit): HQTask
+    fun runTaskAsynchronously(runnable: () -> Unit): HQTask
 
-    fun runTaskLaterAsynchronously(delay: Long, runnable: suspend () -> Unit): HQTask
+    fun runTaskLaterAsynchronously(delay: Long, runnable: () -> Unit): HQTask
 
-    fun runTaskTimerAsynchronously(delay: Long, period: Long, runnable: suspend () -> Unit): HQTask
+    fun runTaskTimerAsynchronously(delay: Long, period: Long, runnable: () -> Unit): HQTask
 }
