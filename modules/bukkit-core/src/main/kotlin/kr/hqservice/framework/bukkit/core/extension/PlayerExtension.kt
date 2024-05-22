@@ -2,7 +2,7 @@ package kr.hqservice.framework.bukkit.core.extension
 
 import org.bukkit.entity.Player
 
-fun Player.executeCommand(command: String): Boolean {
+fun Player.executeCommandAsOp(command: String): Boolean {
     val op = isOp
     isOp = true
     try {
