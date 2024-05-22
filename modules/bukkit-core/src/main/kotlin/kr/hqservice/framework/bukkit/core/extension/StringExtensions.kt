@@ -53,3 +53,7 @@ fun String.gradient(startHexCode: String, endHexCode: String): String {
 fun String.translateAlternateColorCodes(): String {
     return ChatColor.translateAlternateColorCodes('&', this)
 }
+
+fun String.removeColor(): String {
+    return ChatColor.stripColor(this)
+}

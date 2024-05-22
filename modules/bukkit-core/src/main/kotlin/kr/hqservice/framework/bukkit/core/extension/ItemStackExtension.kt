@@ -83,6 +83,10 @@ fun ItemStack.editMeta(block: ItemMeta.() -> Unit): ItemStack {
     return this
 }
 
+fun ItemStack.editMeta2(block: ItemMeta.() -> Unit): ItemStack {
+    return editMeta(block)
+}
+
 fun ItemMeta.addLine(line: String) {
     lore = lore?.apply {
         add(line)
