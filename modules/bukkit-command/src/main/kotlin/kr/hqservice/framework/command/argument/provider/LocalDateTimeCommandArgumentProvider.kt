@@ -12,10 +12,7 @@ import java.time.LocalDateTime
 class LocalDateTimeCommandArgumentProvider : CommandArgumentProvider<LocalDateTime> {
     override suspend fun cast(context: CommandContext, argument: String?): LocalDateTime {
         argument ?: throw ArgumentFeedback.RequireArgument
-
-        return argument
-            .replace("_", " ")
-            .parseLocalDateTimeOrNull()
+        return argument.replace("_", " ").parseLocalDateTimeOrNull()
             ?: throw ArgumentFeedback.Message("&c${context.getArgumentLabel()} 값이 올바르지 않습니다.")
     }
 

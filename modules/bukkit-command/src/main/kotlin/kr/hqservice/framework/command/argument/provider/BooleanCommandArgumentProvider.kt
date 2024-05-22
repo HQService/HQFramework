@@ -8,12 +8,15 @@ import org.bukkit.Location
 
 @Component
 class BooleanCommandArgumentProvider : CommandArgumentProvider<Boolean> {
-    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf("true", "false")
-    }
+
+    private val tabs = listOf("true", "false")
 
     override suspend fun cast(context: CommandContext, argument: String?): Boolean {
         argument ?: throw ArgumentFeedback.RequireArgument
         return argument.toBooleanStrictOrNull() ?: throw ArgumentFeedback.NotBoolean
+    }
+
+    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
+        return tabs
     }
 }
