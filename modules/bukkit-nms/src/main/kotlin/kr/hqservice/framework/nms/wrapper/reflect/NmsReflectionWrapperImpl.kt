@@ -230,7 +230,7 @@ class NmsReflectionWrapperImpl(
             try {
                 functions.first { callable -> type.isMatched(clazz, callable) }
             } catch (e: Exception) {
-                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 업습니다.\n", e)
+                throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 없습니다.\n", e)
             }
         }
     }

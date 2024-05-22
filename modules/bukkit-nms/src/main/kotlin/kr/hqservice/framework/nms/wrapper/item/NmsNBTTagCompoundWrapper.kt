@@ -12,7 +12,9 @@ class NmsNBTTagCompoundWrapper(
     reflectionWrapper: NmsReflectionWrapper
 ) : NmsWrapper {
 
-    private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt"))
+    private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound",
+        Version.V_17.handle("nbt")
+    )
 
     private val getStringFunction = reflectionWrapper.getFunction(nbtTagClass, "getString", listOf(String::class),
         Version.V_18.handleFunction("l") { setParameterClasses(String::class) },
