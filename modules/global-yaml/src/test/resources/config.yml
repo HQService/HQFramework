@@ -3,7 +3,32 @@ netty:
   host: 127.0.0.1
   port: 11286
 
+float: 1.5
+
+contains:
+  test: 1
+
+string-list:
+  - a
+  - b
+  - c
+
+int-list:
+  - 1
+  - 2
+  - 3
+
+double-list:
+  - 1.0
+  - 2.0
+  - 3.0
+
 long-list:
   - 979904716345597952
   - 1102780103118827530
   - 1017837311947440179
+
+float-list:
+  - 1.5
+  - 2.5
+  - 3.5
