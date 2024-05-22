@@ -2,11 +2,11 @@ package kr.hqservice.framework.bukkit.core.config
 
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
-import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.Bukkit
 import org.bukkit.Server
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.ServicesManager
+import org.bukkit.scheduler.BukkitScheduler
 
 @Configuration
 class BukkitConfig {
@@ -23,5 +23,10 @@ class BukkitConfig {
     @Bean
     fun provideServicesManager(server: Server): ServicesManager {
         return server.servicesManager
+    }
+
+    @Bean
+    fun provideBukkitScheduler(server: Server): BukkitScheduler {
+        return server.scheduler
     }
 }
