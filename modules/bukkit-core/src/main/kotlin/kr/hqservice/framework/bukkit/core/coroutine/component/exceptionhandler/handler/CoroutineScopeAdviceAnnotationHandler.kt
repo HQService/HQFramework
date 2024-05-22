@@ -37,14 +37,13 @@ class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScope
             override fun handle(throwable: Throwable): HandleResult {
                 val exceptionClass = function.valueParameters.firstOrNull {
                     it.type.jvmErasure.isSubclassOf(Exception::class) || it.type.jvmErasure.isSubclassOf(Throwable::class)
-                }
-                    ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
+                } ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
                 if (throwable::class.starProjectedType == exceptionClass.type) {
                     function.call(obj, throwable)
-                    if (function.hasAnnotation<MustBeStored>()) {
-                        return HandleResult.HANDLED_MUST_STORE
+                    return if (function.hasAnnotation<MustBeStored>()) {
+                        HandleResult.HANDLED_MUST_STORE
                     } else {
-                        return HandleResult.HANDLED
+                        HandleResult.HANDLED
                     }
                 }
                 return HandleResult.UNHANDLED
