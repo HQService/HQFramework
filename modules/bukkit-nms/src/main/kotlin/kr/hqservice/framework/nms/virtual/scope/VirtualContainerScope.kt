@@ -26,7 +26,7 @@ class VirtualContainerScope(
     }
 
     fun setTitle(title: String) {
-        titlePacket = VirtualContainer(receiver, "{\"text\": \"§f$${title.colorize()}\"}")
+        titlePacket = VirtualContainer(receiver, "{\"text\":\"§f${title.colorize()}\"}")
     }
 
     fun setTitle(title: BaseComponent) {
