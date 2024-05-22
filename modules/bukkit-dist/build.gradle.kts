@@ -8,6 +8,7 @@ bukkitResourceGenerator {
     main = "kr.hqservice.framework.HQFrameworkBukkit"
     name = "HQFramework"
     apiVersion = "1.13"
+    softDepend = listOf("Vault")
     libraries = excludedRuntimeDependencies(
         libs.kotlin.stdlib.jdk8,
         libs.kotlin.reflect,

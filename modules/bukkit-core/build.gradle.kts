@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.byte.buddy.agent)
     api(libs.kotlinx.serialization.json)
     implementation(libs.netty)
+    compileOnly(libs.vault.api)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)
