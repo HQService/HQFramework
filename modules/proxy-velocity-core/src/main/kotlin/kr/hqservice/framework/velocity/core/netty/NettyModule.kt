@@ -20,10 +20,16 @@ class NettyModule(
     private val bootstrap: NettyServerBootstrap,
     private val channelContainer: NettyChannelRegistry
 ) : HQModule {
+    companion object {
+        private var state = false
+    }
     private val nettyEnabled: Boolean = config.getBoolean("netty.enabled")
     private val listener = PlayerLastConnectionListener(plugin)
 
     override fun onEnable() {
+        if (state) return
+        state = true
+
         if (nettyEnabled) {
             bootstrap.initializing()
             plugin.getProxyServer().eventManager.register(plugin, PlayerConnectionListener(channelContainer))
