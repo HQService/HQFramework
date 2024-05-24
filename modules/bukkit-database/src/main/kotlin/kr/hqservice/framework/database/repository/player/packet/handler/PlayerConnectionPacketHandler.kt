@@ -2,8 +2,8 @@ package kr.hqservice.framework.database.repository.player.packet.handler
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
-import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
+import kr.hqservice.framework.bukkit.core.coroutine.extension.FoliaRegion
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
@@ -24,14 +24,11 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerAttemptPickupItemEvent
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
-import org.bukkit.event.player.PlayerCommandSendEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
-import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -198,7 +195,7 @@ class PlayerConnectionPacketHandler(
         coroutineScope {
             var cancelled = false
             lockedPlayer.add(event.player.uniqueId)
-            withContext(Dispatchers.BukkitMain) {
+            withContext(Dispatchers.FoliaRegion(event.player.location)) {
                 //event.player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, -1, 10), true)
                 server.onlinePlayers.forEach { it.hidePlayer(plugin, event.player) }
             }
@@ -210,7 +207,7 @@ class PlayerConnectionPacketHandler(
                     switchDefermentLock.unlock(event.player.uniqueId)
                 } else {
                     switchDefermentLock.tryLock(event.player) whenTimedOut@{ player ->
-                        launch(Dispatchers.BukkitMain) {
+                        launch(Dispatchers.FoliaRegion(event.player.location)) {
                             player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                             cancelled = true
                         }.join()
@@ -231,7 +228,7 @@ class PlayerConnectionPacketHandler(
             }
             //loadJobs.joinAll()
 
-            withContext(Dispatchers.BukkitMain) {
+            withContext(Dispatchers.FoliaRegion(event.player.location)) {
                 server.onlinePlayers.forEach { it.showPlayer(plugin, event.player) }
                 //event.player.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 10, 10), true)
             }
