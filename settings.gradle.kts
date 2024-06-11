@@ -80,6 +80,8 @@ dependencyResolutionManagement {
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
             library("quartz", "org.quartz-scheduler:quartz:${getProperty("quartzVersion")}")
             library("gson", "com.google.code.gson:gson:${getProperty("gsonVersion")}")
+
+            library("adventure-text-serializer-legacy", "net.kyori:adventure-text-serializer-legacy:${getProperty("AdventureTextVersion")}")
         }
     }
 }

@@ -15,6 +15,7 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.netty)
     api(libs.guava)
+    api(libs.adventure.text.serializer.legacy)
 
     testImplementationModule("global", "yaml")
     testImplementation(libs.junit.parameterizedTest)

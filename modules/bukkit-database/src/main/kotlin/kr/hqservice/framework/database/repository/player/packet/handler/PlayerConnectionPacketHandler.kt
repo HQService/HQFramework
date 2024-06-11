@@ -2,7 +2,7 @@ package kr.hqservice.framework.database.repository.player.packet.handler
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.coroutine.bukkitDelay
-import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
@@ -24,14 +24,11 @@ import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerAttemptPickupItemEvent
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
-import org.bukkit.event.player.PlayerCommandSendEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
-import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -195,7 +192,7 @@ class PlayerConnectionPacketHandler(
 
     @Subscribe
     suspend fun onLoad(event: PlayerDataPreLoadEvent) {
-        coroutineScope {
+        coroutineScope.launch(Dispatchers.BukkitAsync) {
             var cancelled = false
             lockedPlayer.add(event.player.uniqueId)
             withContext(Dispatchers.BukkitMain) {
@@ -221,7 +218,7 @@ class PlayerConnectionPacketHandler(
             if (cancelled) {
                 event.player.isInvulnerable = false
                 lockedPlayer.remove(event.player.uniqueId)
-                return@coroutineScope
+                return@launch
             }
 
             playerRepositoryRegistry.getAll().forEach { repository ->
