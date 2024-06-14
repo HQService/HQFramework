@@ -1,6 +1,7 @@
 package kr.hqservice.framework.nms.virtual.handler.impl
 
 import kotlinx.coroutines.runBlocking
+import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
@@ -24,10 +25,10 @@ class VirtualAnvilHandler(
         private val plugin: Plugin
     ) : Listener {
         fun close() {
-            plugin.server.scheduler.runTask(plugin, Runnable {
+            plugin.getScheduler().runTask {
                 InventoryClickEvent.getHandlerList().unregister(this)
                 player.updateInventory()
-            })
+            }
         }
     }
 

@@ -12,37 +12,42 @@ import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.coroutine.extension.childrenAll
 import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
 import kr.hqservice.framework.bukkit.core.extension.format
+import kr.hqservice.framework.bukkit.core.scheduler.HQScheduler
+import kr.hqservice.framework.bukkit.core.scheduler.bukkit.HQBukkitScheduler
+import kr.hqservice.framework.bukkit.core.scheduler.folia.HQFoliaGlobalScheduler
+import kr.hqservice.framework.bukkit.core.scheduler.folia.HQFoliaRegionScheduler
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.extension.yaml
+import org.bukkit.Location
 import org.bukkit.configuration.file.YamlConfiguration
-import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
-import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
 import java.io.File
-import java.io.InputStream
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.time.LocalDateTime
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
-abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
-    constructor() : super()
-    internal constructor(
+abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
+    /*internal constructor(
         loader: JavaPluginLoader,
         description: PluginDescriptionFile,
         dataFolder: File,
         file: File
-    ) : super(loader, description, dataFolder, file)
+    ) : super(loader, description, dataFolder, file)*/
 
     protected open val bukkitComponentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
     private val config = File(dataFolder, "config.yml").yaml()
+
+    // folia
+    private lateinit var globalScheduler: HQScheduler
+    private var hasRegionScheduler = false
 
     internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
         private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
@@ -61,6 +66,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             *GlobalExceptionHandlerRegistry.exceptionHandlers.toTypedArray(),
             *this.exceptionHandlers.toTypedArray()
         )
+
         exceptionHandlers.forEach forEach@{ handler ->
             when (handler.handle(throwable)) {
                 HandleResult.HANDLED -> return@handler
@@ -160,6 +166,15 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
     @OptIn(ExperimentalStdlibApi::class)
     final override fun onEnable() {
+        hasRegionScheduler = try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
+            globalScheduler = HQFoliaGlobalScheduler(this)
+            true
+        } catch (_: Exception) {
+            globalScheduler = HQBukkitScheduler(this)
+            false
+        }
+
         runBlocking(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
             val timerJob =
                 launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
@@ -238,6 +253,15 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
     final override fun getComponentRegistry(): ComponentRegistry {
         return bukkitComponentRegistry
+    }
+
+    fun getScheduler(): HQScheduler {
+        return globalScheduler
+    }
+
+    fun getScheduler(location: Location): HQScheduler {
+        return if (hasRegionScheduler) HQFoliaRegionScheduler(this, location)
+        else globalScheduler
     }
 
     private fun loadConfigIfExist() {
