@@ -22,10 +22,10 @@ import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.player.PlayerAttemptPickupItemEvent
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.event.player.PlayerPickupItemEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
@@ -48,7 +48,7 @@ class PlayerConnectionPacketHandler(
     private var lockedPlayer = ConcurrentLinkedDeque<UUID>()
 
     @Subscribe(HandleOrder.FIRST)
-    fun pickup(event: PlayerAttemptPickupItemEvent) {
+    fun pickup(event: PlayerPickupItemEvent) {
         if (lockedPlayer.contains(event.player.uniqueId))
             event.isCancelled = true
     }
