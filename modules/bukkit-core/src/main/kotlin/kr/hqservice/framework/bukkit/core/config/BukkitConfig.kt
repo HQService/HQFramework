@@ -6,7 +6,6 @@ import org.bukkit.Bukkit
 import org.bukkit.Server
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.ServicesManager
-import org.bukkit.scheduler.BukkitScheduler
 
 @Configuration
 class BukkitConfig {
@@ -23,10 +22,5 @@ class BukkitConfig {
     @Bean
     fun provideServicesManager(server: Server): ServicesManager {
         return server.servicesManager
-    }
-
-    @Bean
-    fun provideBukkitScheduler(server: Server): BukkitScheduler {
-        return server.scheduler
     }
 }
