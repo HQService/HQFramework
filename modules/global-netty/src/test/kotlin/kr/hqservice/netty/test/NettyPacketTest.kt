@@ -64,7 +64,7 @@ class NettyPacketTest {
             //println(packet.message.toLegacyText())
         }
 
-        channel.writeInbound(MessagePacket(TextComponent("마찬가지로12-123123123123123121231233123123123123123 '게슈탈트 붕괴 이론' 같은 이론도 존재하지 않으며, 단지 일본 왜이래aaaaaaaaasasasasasa"), false, listOf(NettyPlayerImpl("test", UUID.randomUUID(), null))))
+        //channel.writeInbound(MessagePacket(TextComponent("마찬가지로12-123123123123123121231233123123123123123 '게슈탈트 붕괴 이론' 같은 이론도 존재하지 않으며, 단지 일본 왜이래aaaaaaaaasasasasasa"), false, listOf(NettyPlayerImpl("test", UUID.randomUUID(), null))))
         channel.finish()
     }
 

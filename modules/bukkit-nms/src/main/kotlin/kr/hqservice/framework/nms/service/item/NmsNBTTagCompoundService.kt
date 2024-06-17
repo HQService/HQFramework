@@ -12,7 +12,7 @@ import kotlin.reflect.full.createInstance
 @Service
 @Qualifier("tag")
 class NmsNBTTagCompoundService(
-    private val reflectionWrapper: NmsReflectionWrapper
+    reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Any?, NmsNBTTagCompoundWrapper> {
 
     private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound",
@@ -20,7 +20,7 @@ class NmsNBTTagCompoundService(
     )
 
     override fun wrap(target: Any?): NmsNBTTagCompoundWrapper {
-        return NmsNBTTagCompoundWrapper(target ?: nbtTagClass.createInstance(), reflectionWrapper)
+        return NmsNBTTagCompoundWrapper(target ?: nbtTagClass.createInstance())
     }
 
     override fun unwrap(wrapper: NmsNBTTagCompoundWrapper): Any {

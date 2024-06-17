@@ -1,6 +1,7 @@
 package kr.hqservice.framework.inventory.container
 
 import kr.hqservice.framework.bukkit.core.extension.colorize
+import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.inventory.button.impl.HQButtonImpl
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -72,7 +73,7 @@ open class HQContainer(
             if (prevHolder is HQContainer) {
                 if (plugin == null) plugin = Bukkit.getPluginManager().getPlugin("HQFramework")
                 val plugin = plugin!!
-                plugin.server.scheduler.runTaskLater(plugin, Runnable { open(player) }, 1)
+                plugin.getScheduler().runTaskLater(1) { open(player) }
             } else {
                 player.openInventory(inventory)
                 openedPlayers.add(player)

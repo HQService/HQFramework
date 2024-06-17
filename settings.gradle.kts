@@ -44,6 +44,8 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
             library("spigot-api", "org.spigotmc:spigot-api:${getProperty("spigotVersion")}")
+            library("paper-api", "io.papermc.paper:paper-api:${getProperty("spigotVersion")}")
+            library("folia-api", "dev.folia:folia-api:${getProperty("foliaVersion")}")
             library("bungeecord-api", "net.md-5:bungeecord-api:${getProperty("bungeecordVersion")}")
             library("velocity-api", "com.velocitypowered:velocity-api:${getProperty("velocityVersion")}")
 
@@ -79,6 +81,8 @@ dependencyResolutionManagement {
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
             library("quartz", "org.quartz-scheduler:quartz:${getProperty("quartzVersion")}")
             library("gson", "com.google.code.gson:gson:${getProperty("gsonVersion")}")
+
+            library("adventure-text-serializer-legacy", "net.kyori:adventure-text-serializer-legacy:${getProperty("AdventureTextVersion")}")
         }
     }
 }

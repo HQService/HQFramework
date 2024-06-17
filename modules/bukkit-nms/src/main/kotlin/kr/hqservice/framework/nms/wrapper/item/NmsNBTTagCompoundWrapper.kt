@@ -4,151 +4,153 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
+import org.koin.java.KoinJavaComponent.getKoin
 import java.util.UUID
-import kotlin.reflect.full.declaredFunctions
+
+private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
 
 class NmsNBTTagCompoundWrapper(
-    private val nbtTag: Any,
-    reflectionWrapper: NmsReflectionWrapper
+    private val nbtTag: Any
 ) : NmsWrapper {
+    companion object {
+        private val nbtTagClass by lazy { reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt")) }
 
-    private val nbtTagClass = reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt"))
+        private val getStringFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getString", listOf(String::class),
+            Version.V_18.handleFunction("l") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128461_") { setParameterClasses(String::class) } // ~1.20.2
+        ) }
 
-    private val getStringFunction = reflectionWrapper.getFunction(nbtTagClass, "getString", listOf(String::class),
-        Version.V_18.handleFunction("l") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128461_") { setParameterClasses(String::class) } // ~1.20.2
-    )
+        private val getBooleanFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getBoolean", listOf(String::class),
+            Version.V_18.handleFunction("q") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128471_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getBooleanFunction = reflectionWrapper.getFunction(nbtTagClass, "getBoolean", listOf(String::class),
-        Version.V_18.handleFunction("q") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128471_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getUUIDFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getUUID", listOf(String::class),
+            Version.V_17.handleFunction("a") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128342_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getUUIDFunction = reflectionWrapper.getFunction(nbtTagClass, "getUUID", listOf(String::class),
-        Version.V_17.handleFunction("a") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128342_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getByteFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getByte", listOf(String::class),
+            Version.V_18.handleFunction("f") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128445_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getByteFunction = reflectionWrapper.getFunction(nbtTagClass, "getByte", listOf(String::class),
-        Version.V_18.handleFunction("f") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128445_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getShortFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getShort", listOf(String::class),
+            Version.V_18.handleFunction("g") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128448_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getShortFunction = reflectionWrapper.getFunction(nbtTagClass, "getShort", listOf(String::class),
-        Version.V_18.handleFunction("g") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128448_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getIntFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getInt", listOf(String::class),
+            Version.V_18.handleFunction("h") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128451_") { setParameterClasses(String::class) } // ~1.20.2
+        ) }
 
-    private val getIntFunction = reflectionWrapper.getFunction(nbtTagClass, "getInt", listOf(String::class),
-        Version.V_18.handleFunction("h") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128451_") { setParameterClasses(String::class) } // ~1.20.2
-    )
+        private val getLongFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getLong", listOf(String::class),
+            Version.V_18.handleFunction("i") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128454_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getLongFunction = reflectionWrapper.getFunction(nbtTagClass, "getLong", listOf(String::class),
-        Version.V_18.handleFunction("i") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128454_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getFloatFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getFloat", listOf(String::class),
+            Version.V_18.handleFunction("j") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128457_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getFloatFunction = reflectionWrapper.getFunction(nbtTagClass, "getFloat", listOf(String::class),
-        Version.V_18.handleFunction("j") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128457_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getDoubleFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getDouble", listOf(String::class),
+            Version.V_18.handleFunction("k") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128459_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getDoubleFunction = reflectionWrapper.getFunction(nbtTagClass, "getDouble", listOf(String::class),
-        Version.V_18.handleFunction("k") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128459_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getByteArrayFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getByteArray", listOf(String::class),
+            Version.V_18.handleFunction("m") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128463_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getByteArrayFunction = reflectionWrapper.getFunction(nbtTagClass, "getByteArray", listOf(String::class),
-        Version.V_18.handleFunction("m") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128463_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getIntArrayFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getIntArray", listOf(String::class),
+            Version.V_18.handleFunction("n") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128465_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getIntArrayFunction = reflectionWrapper.getFunction(nbtTagClass, "getIntArray", listOf(String::class),
-        Version.V_18.handleFunction("n") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128465_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val getLongArrayFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "getLongArray", listOf(String::class),
+            Version.V_18.handleFunction("o") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128467_") { setParameterClasses(String::class) }, // ~1.20.2
+        ) }
 
-    private val getLongArrayFunction = reflectionWrapper.getFunction(nbtTagClass, "getLongArray", listOf(String::class),
-        Version.V_18.handleFunction("o") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128467_") { setParameterClasses(String::class) }, // ~1.20.2
-    )
+        private val setStringFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, String::class) },
+            Version.V_17_FORGE.handleFunction("m_128359_") { setParameterClasses(String::class, String::class) } // ~1.20.2
+        ) }
 
-    private val setStringFunction = reflectionWrapper.getFunction(nbtTagClass, "setString", listOf(String::class, String::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, String::class) },
-        Version.V_17_FORGE.handleFunction("m_128359_") { setParameterClasses(String::class, String::class) } // ~1.20.2
-    )
+        private val setBooleanFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setBoolean", listOf(String::class, Boolean::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Boolean::class) },
+            Version.V_17_FORGE.handleFunction("m_128379_") { setParameterClasses(String::class, Boolean::class) } // ~1.20.2
+        ) }
 
-    private val setBooleanFunction = reflectionWrapper.getFunction(nbtTagClass, "setBoolean", listOf(String::class, Boolean::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Boolean::class) },
-        Version.V_17_FORGE.handleFunction("m_128379_") { setParameterClasses(String::class, Boolean::class) } // ~1.20.2
-    )
+        private val setUUIDFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setUUID", listOf(String::class, UUID::class),
+            Version.V_17.handleFunction("a") { setParameterClasses(String::class, UUID::class) },
+            Version.V_17_FORGE.handleFunction("m_128362_") { setParameterClasses(String::class, UUID::class) } // ~1.20.2
+        ) }
 
-    private val setUUIDFunction = reflectionWrapper.getFunction(nbtTagClass, "setUUID", listOf(String::class, UUID::class),
-        Version.V_17.handleFunction("a") { setParameterClasses(String::class, UUID::class) },
-        Version.V_17_FORGE.handleFunction("m_128362_") { setParameterClasses(String::class, UUID::class) } // ~1.20.2
-    )
+        private val setByteFunction by lazy {  reflectionWrapper.getFunction(nbtTagClass, "setByte", listOf(String::class, Byte::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Byte::class) },
+            Version.V_17_FORGE.handleFunction("m_128344_") { setParameterClasses(String::class, Byte::class) } // ~1.20.2
+        ) }
 
-    private val setByteFunction = reflectionWrapper.getFunction(nbtTagClass, "setByte", listOf(String::class, Byte::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Byte::class) },
-        Version.V_17_FORGE.handleFunction("m_128344_") { setParameterClasses(String::class, Byte::class) } // ~1.20.2
-    )
+        private val setShortFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setShort", listOf(String::class, Short::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Short::class) },
+            Version.V_17_FORGE.handleFunction("m_128376_") { setParameterClasses(String::class, Short::class) } // ~1.20.2
+        ) }
 
-    private val setShortFunction = reflectionWrapper.getFunction(nbtTagClass, "setShort", listOf(String::class, Short::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Short::class) },
-        Version.V_17_FORGE.handleFunction("m_128376_") { setParameterClasses(String::class, Short::class) } // ~1.20.2
-    )
+        private val setIntFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setInt", listOf(String::class, Int::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Int::class) },
+            Version.V_17_FORGE.handleFunction("m_128405_") { setParameterClasses(String::class, Int::class) } // ~1.20.2
+        ) }
 
-    private val setIntFunction = reflectionWrapper.getFunction(nbtTagClass, "setInt", listOf(String::class, Int::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Int::class) },
-        Version.V_17_FORGE.handleFunction("m_128405_") { setParameterClasses(String::class, Int::class) } // ~1.20.2
-    )
+        private val setLongFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setLong", listOf(String::class, Long::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Long::class) },
+            Version.V_17_FORGE.handleFunction("m_128356_") { setParameterClasses(String::class, Long::class) } // ~1.20.2
+        ) }
 
-    private val setLongFunction = reflectionWrapper.getFunction(nbtTagClass, "setLong", listOf(String::class, Long::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Long::class) },
-        Version.V_17_FORGE.handleFunction("m_128356_") { setParameterClasses(String::class, Long::class) } // ~1.20.2
-    )
+        private val setFloatFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setFloat", listOf(String::class, Float::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Float::class) },
+            Version.V_17_FORGE.handleFunction("m_128350_") { setParameterClasses(String::class, Float::class) } // ~1.20.2
+        ) }
 
-    private val setFloatFunction = reflectionWrapper.getFunction(nbtTagClass, "setFloat", listOf(String::class, Float::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Float::class) },
-        Version.V_17_FORGE.handleFunction("m_128350_") { setParameterClasses(String::class, Float::class) } // ~1.20.2
-    )
+        private val setDoubleFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setDouble", listOf(String::class, Double::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, Double::class) },
+            Version.V_17_FORGE.handleFunction("m_128347_") { setParameterClasses(String::class, Double::class) } // ~1.20.2
+        ) }
 
-    private val setDoubleFunction = reflectionWrapper.getFunction(nbtTagClass, "setDouble", listOf(String::class, Double::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, Double::class) },
-        Version.V_17_FORGE.handleFunction("m_128347_") { setParameterClasses(String::class, Double::class) } // ~1.20.2
-    )
+        private val setByteArrayFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setByteArray", listOf(String::class, ByteArray::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, ByteArray::class) },
+            Version.V_17_FORGE.handleFunction("m_128382_") { setParameterClasses(String::class, ByteArray::class) } // ~1.20.2
+        ) }
 
-    private val setByteArrayFunction = reflectionWrapper.getFunction(nbtTagClass, "setByteArray", listOf(String::class, ByteArray::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, ByteArray::class) },
-        Version.V_17_FORGE.handleFunction("m_128382_") { setParameterClasses(String::class, ByteArray::class) } // ~1.20.2
-    )
+        private val setIntArrayFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setIntArray", listOf(String::class, IntArray::class),
+            Version.V_18.handleFunction("a") { setParameterClasses(String::class, IntArray::class) },
+            Version.V_17_FORGE.handleFunction("m_128385_") { setParameterClasses(String::class, IntArray::class) } // ~1.20.2
+        ) }
 
-    private val setIntArrayFunction = reflectionWrapper.getFunction(nbtTagClass, "setIntArray", listOf(String::class, IntArray::class),
-        Version.V_18.handleFunction("a") { setParameterClasses(String::class, IntArray::class) },
-        Version.V_17_FORGE.handleFunction("m_128385_") { setParameterClasses(String::class, IntArray::class) } // ~1.20.2
-    )
+        private val setLongArrayFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "setLongArray", listOf(String::class, LongArray::class),
+            Version.V_17.handleFunction("a") { setParameterClasses(String::class, LongArray::class) },
+            Version.V_17_FORGE.handleFunction("m_128388_") { setParameterClasses(String::class, LongArray::class) } // ~1.20.2
+        ) }
 
-    private val setLongArrayFunction = reflectionWrapper.getFunction(nbtTagClass, "setLongArray", listOf(String::class, LongArray::class),
-        Version.V_17.handleFunction("a") { setParameterClasses(String::class, LongArray::class) },
-        Version.V_17_FORGE.handleFunction("m_128388_") { setParameterClasses(String::class, LongArray::class) } // ~1.20.2
-    )
+        private val removeFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "remove", listOf(String::class),
+            Version.V_18.handleFunction("r") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128473_") { setParameterClasses(String::class) } // ~1.20.2
+        ) }
 
-    private val removeFunction = reflectionWrapper.getFunction(nbtTagClass, "remove", listOf(String::class),
-        Version.V_18.handleFunction("r") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128473_") { setParameterClasses(String::class) } // ~1.20.2
-    )
+        private val containsFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "hasKey", listOf(String::class),
+            Version.V_18.handleFunction("e") { setParameterClasses(String::class) },
+            Version.V_17_FORGE.handleFunction("m_128441_") { setParameterClasses(String::class) } // ~1.20.2
+        ) }
 
-    private val containsFunction = reflectionWrapper.getFunction(nbtTagClass, "hasKey", listOf(String::class),
-        Version.V_18.handleFunction("e") { setParameterClasses(String::class) },
-        Version.V_17_FORGE.handleFunction("m_128441_") { setParameterClasses(String::class) } // ~1.20.2
-    )
-
-    private val isEmptyFunction = reflectionWrapper.getFunction(nbtTagClass, "isEmpty",
-        Version.V_18.handleFunction("f"),
-        Version.V_19_3.handleFunction("g"),
-        Version.V_17_FORGE.handleFunction("m_128456_") // ~1.20.2
-    )
+        private val isEmptyFunction by lazy { reflectionWrapper.getFunction(nbtTagClass, "isEmpty",
+            Version.V_18.handleFunction("f"),
+            Version.V_19_3.handleFunction("g"),
+            Version.V_17_FORGE.handleFunction("m_128456_") // ~1.20.2
+        ) }
+    }
 
     fun getString(key: String, def: String = ""): String {
         return (getStringFunction.call(nbtTag, key) as? String)?.ifEmpty { def }?: def
