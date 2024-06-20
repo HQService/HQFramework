@@ -64,6 +64,12 @@ abstract class AbstractVirtualScope(
                     it.updateInventory()
                 }
                 true
+            } else false }, { slot, text -> if (containerFactory.button(slot, text)) {
+                lazyPlugin.getScheduler().runTask {
+                    it.closeInventory()
+                    it.updateInventory()
+                }
+                true
             } else false }, {
                 reflectionWrapper.sendPacket(it, *containerFactory.getBaseItem().toTypedArray())
             }, dummyListener, { text ->

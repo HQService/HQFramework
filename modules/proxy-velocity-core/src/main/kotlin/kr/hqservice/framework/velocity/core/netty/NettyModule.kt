@@ -33,7 +33,7 @@ class NettyModule(
         if (nettyEnabled) {
             bootstrap.initializing()
             plugin.getProxyServer().eventManager.register(plugin, PlayerConnectionListener(channelContainer))
-            plugin.getProxyServer().eventManager.register(plugin, listener)
+            //plugin.getProxyServer().eventManager.register(plugin, listener)
             //plugin.getProxyServer().pluginManager.registerListener(plugin, PlayerConnectionListener(channelContainer))
         }
     }

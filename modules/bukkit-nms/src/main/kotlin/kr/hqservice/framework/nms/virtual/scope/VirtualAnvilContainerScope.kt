@@ -7,7 +7,6 @@ import kr.hqservice.framework.nms.virtual.container.VirtualAnvilContainer
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
 import net.md_5.bungee.api.chat.BaseComponent
-import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -44,6 +43,7 @@ class VirtualAnvilContainerScope(
     private var resultItem: VirtualItem? = null
     private var virtualResultSlotHandler: ((String) -> ItemStack)? = null
     private var virtualConfirmHandler: ((String) -> Boolean)? = null
+    private var virtualButtonHandler: ((Int, String) -> Boolean)? = null
     private var closeHandler: ((String) -> Unit)? = null
     private var anvilPacket: VirtualContainer = VirtualAnvilContainer(receiver, title)
 
@@ -64,6 +64,19 @@ class VirtualAnvilContainerScope(
         }
     }
 
+    fun setBaseItems(items: List<ItemStack>?) {
+        baseItem = if (items.isNullOrEmpty()) {
+            null
+        } else {
+            items.mapIndexed { index, itemStack ->
+                itemStack.clone().run {
+                    editMeta { nms { tag { setString("BASE${index + 1}_RANDOM_ID", UUID.randomUUID().toString()) } } }
+                    VirtualItem(receiver, index, this)
+                }
+            }
+        }
+    }
+
     fun setResultItem(itemStack: ItemStack?) {
         resultItem =
             if (itemStack == null || itemStack.type.isAir) null
@@ -75,6 +88,10 @@ class VirtualAnvilContainerScope(
 
     fun setInputHandler(inputHandleScope: (String) -> ItemStack) {
         virtualResultSlotHandler = inputHandleScope
+    }
+
+    fun setButtonHandler(buttonHandlerScope: (Int, String) -> Boolean) {
+        virtualButtonHandler = buttonHandlerScope
     }
 
     fun setConfirmHandler(confirmHandleScope: (String) -> Boolean) {
@@ -95,7 +112,11 @@ class VirtualAnvilContainerScope(
     }
 
     internal fun confirm(text: String): Boolean {
-        return virtualConfirmHandler?.invoke(text) != false
+        return virtualConfirmHandler?.invoke(text) == true
+    }
+
+    internal fun button(index: Int, text: String): Boolean {
+        return virtualButtonHandler?.invoke(index, text) == true
     }
 
     internal fun close(text: String) {

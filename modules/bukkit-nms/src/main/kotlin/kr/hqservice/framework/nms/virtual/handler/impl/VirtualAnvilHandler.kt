@@ -16,6 +16,7 @@ class VirtualAnvilHandler(
     private val reflectionWrapper: NmsReflectionWrapper,
     private val textScope: suspend (String) -> Unit,
     private val confirmScope: suspend (String) -> Boolean,
+    private val buttonScope: suspend (Int, String) -> Boolean,
     private val otherSlotClickScope: suspend () -> Unit,
     private val dummyListener: VirtualAnvilListener,
     private val closeScope: suspend (String) -> Unit
@@ -78,10 +79,16 @@ class VirtualAnvilHandler(
                     runBlocking {
                         if (confirmScope(currentText)) {
                             unregistered = true
+                        } else if (buttonScope(2, currentText)) {
+                            unregistered = true
                         }
                     }
                 } else if (slotNum in 0..1) {
-                    runBlocking { otherSlotClickScope() }
+                    runBlocking {
+                        if (buttonScope(slotNum, currentText)) {
+                            unregistered = true
+                        } else otherSlotClickScope()
+                    }
                 }
             }
         }
