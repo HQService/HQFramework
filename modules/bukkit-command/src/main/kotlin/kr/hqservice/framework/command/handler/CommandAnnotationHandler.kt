@@ -110,15 +110,16 @@ class CommandAnnotationHandler(
         }
         val root = commandRegistry.registerRoot(rootClass)
 
-        val hqCommand = HQBukkitCommand(label, aliases, paperUse, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
-        hqCommand.permission = if (root.isOp) "op" else root.permission
-
         val commandMap = SimplePluginManager::class
             .declaredMemberProperties
             .first { it.name == "commandMap" }
             .apply { isAccessible = true }
             .get(pluginManager) as CommandMap
-        commandMap.register("hq", hqCommand)
+        val hqCommand = HQBukkitCommand(label, aliases, paperUse, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
+        commandMap.register(
+            "hq",
+            hqCommand
+        )
 
         plugin.launch {
             bukkitDelay(1)
@@ -149,6 +150,10 @@ class CommandAnnotationHandler(
         private val registry: CommandArgumentProviderRegistry,
         private val exceptionHandlerRegistry: CommandArgumentExceptionHandlerRegistry
     ) : BukkitCommand(label, "", "", alias) {
+
+        override fun getPermission(): String {
+            return if (hqCommandRoot.isOp) "op" else hqCommandRoot.permission
+        }
 
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
