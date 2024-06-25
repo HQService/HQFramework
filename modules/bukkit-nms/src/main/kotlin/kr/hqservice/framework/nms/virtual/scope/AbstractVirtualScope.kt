@@ -4,12 +4,14 @@ import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.entity.inner.VirtualCamera
 import kr.hqservice.framework.nms.virtual.handler.impl.VirtualAnvilHandler
+import kr.hqservice.framework.nms.virtual.handler.impl.VirtualSignHandler
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.virtual.world.VirtualWorldBorder
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventPriority
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -75,6 +77,33 @@ abstract class AbstractVirtualScope(
             }, dummyListener, { text ->
                 containerFactory.close(text)
             }))
+        }
+    }
+
+    suspend fun sign(
+        signFactoryScope: VirtualSignScope.() -> Unit
+    ) {
+        viewers.forEach { player ->
+            val containerFactory = VirtualSignScope(player, reflectionWrapper)
+            containerFactory.signFactoryScope()
+
+            val server = player.server
+            val location = player.location
+            val blockData = server.createBlockData(Material.OAK_SIGN)
+            player.sendBlockChange(location, blockData)
+            reflectionWrapper.sendPacket(player, *containerFactory.getMessages())
+
+            val virtualSignHandler = VirtualSignHandler(reflectionWrapper) { texts ->
+                if (containerFactory.confirm(texts)) {
+                    val airBlockData = server.createBlockData(Material.AIR)
+                    player.sendBlockChange(location, airBlockData)
+                    true
+                } else {
+                    sign(signFactoryScope)
+                    false
+                }
+            }
+            handlerRegistry.register(player.uniqueId, virtualSignHandler)
         }
     }
 

@@ -14,7 +14,7 @@ import kotlin.reflect.cast
 @Qualifier("nms.world")
 @Service
 class WorldService(
-    reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<World, WorldWrapper> {
 
     private val craftWorldClass = reflectionWrapper.getCraftBukkitClass("CraftWorld")
@@ -25,10 +25,8 @@ class WorldService(
 
     override fun wrap(target: World): WorldWrapper {
         val craftWorld = craftWorldClass.cast(target)
-        return WorldWrapper(
-            getHandleFunction.call(craftWorld)
-                ?: throw IllegalStateException("could not wrapping ${target::class.simpleName} class")
-        )
+        val worldServer = getHandleFunction.call(craftWorld) ?: throw IllegalStateException("could not wrapping ${target::class.simpleName} class")
+        return WorldWrapper(worldServer, reflectionWrapper)
     }
 
     override fun unwrap(wrapper: WorldWrapper): World {
