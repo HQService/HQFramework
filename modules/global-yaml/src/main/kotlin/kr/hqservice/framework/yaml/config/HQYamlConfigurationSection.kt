@@ -1,17 +1,17 @@
 package kr.hqservice.framework.yaml.config
 
 interface HQYamlConfigurationSection {
-    fun getString(key: String, default: String = ""): String
+    fun set(key: String, value: Any?)
 
-    fun findString(key: String): String?
+    fun getSection(key: String): HQYamlConfigurationSection?
 
     fun getKeys(): List<String>
 
-    fun getStringList(key: String): List<String>
+    fun contains(key: String): Boolean
 
-    fun getIntegerList(key: String): List<Int>
+    fun getString(key: String, default: String = ""): String
 
-    fun getLongList(key: String): List<Long>
+    fun findString(key: String): String?
 
     fun getBoolean(key: String, default: Boolean = false): Boolean
 
@@ -25,11 +25,21 @@ interface HQYamlConfigurationSection {
 
     fun findDouble(key: String): Double?
 
+    fun getFloat(key: String, default: Float = 0f): Float
+
+    fun findFloat(key: String): Float?
+
     fun getLong(key: String, default: Long = 0L): Long
 
     fun findLong(key: String): Long?
 
-    fun set(key: String, value: Any?)
+    fun getStringList(key: String): List<String>
 
-    fun getSection(key: String): HQYamlConfigurationSection?
+    fun getIntegerList(key: String): List<Int>
+
+    fun getLongList(key: String): List<Long>
+
+    fun getDoubleList(key: String): List<Double>
+
+    fun getFloatList(key: String): List<Float>
 }
