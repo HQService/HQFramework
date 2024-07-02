@@ -10,6 +10,8 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.getStaticFunction
+import net.md_5.bungee.api.chat.BaseComponent
+import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 
@@ -156,6 +158,10 @@ class VirtualEntityClasses(
 
     fun setCustomName(name: String, entity: Any) {
         setCustomNameFunction.call(entity, componentWrapper.wrap("{\"text\":\"$name\"}").getUnwrappedInstance())
+    }
+
+    fun setCustomName(name: BaseComponent, entity: Any) {
+        setCustomNameFunction.call(entity, componentWrapper.wrap(ComponentSerializer.toString(name)).getUnwrappedInstance())
     }
 
     fun setCustomNameVisible(visible: Boolean, entity: Any) {
