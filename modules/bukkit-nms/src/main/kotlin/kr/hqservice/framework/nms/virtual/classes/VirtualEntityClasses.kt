@@ -79,6 +79,7 @@ class VirtualEntityClasses(
         Version.V_19_3.handleFunction("ah"),
         Version.V_19_4.handleFunction("af"),
         Version.V_20_2.handleFunction("ah"),
+        Version.V_20_4.handleFunction("aj"),
         Version.V_17_FORGE.handleFunction("m_142049_"),
         Version.V_19_FORGE.handleFunction("m_19879_")
     )
