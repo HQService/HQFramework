@@ -18,17 +18,13 @@ open class HQYamlConfigurationSectionImpl(
         return root
     }
 
+    override fun set(key: String, value: Any?) {
+        findNode(key).set(value)
+    }
+
     override fun getSection(key: String): HQYamlConfigurationSection? {
         val node = findNode(key)
         return if (node.virtual()) null else HQYamlConfigurationSectionImpl(node)
-    }
-
-    override fun getString(key: String, default: String): String {
-        return findNode(key).getString(default) ?: default
-    }
-
-    override fun findString(key: String): String? {
-        return findNode(key).string
     }
 
     override fun getKeys(): List<String> {
@@ -37,19 +33,16 @@ open class HQYamlConfigurationSectionImpl(
         }
     }
 
-    override fun getStringList(key: String): List<String> {
-        return if (!findNode(key).isList) emptyList()
-        else findNode(key).getList(String::class.java) ?: emptyList()
+    override fun contains(key: String): Boolean {
+        return !findNode(key).isNull
     }
 
-    override fun getIntegerList(key: String): List<Int> {
-        return if (!findNode(key).isList) emptyList()
-        else findNode(key).getList(Int::class.javaObjectType) ?: emptyList()
+    override fun getString(key: String, default: String): String {
+        return findNode(key).getString(default) ?: default
     }
 
-    override fun getLongList(key: String): List<Long> {
-        return if (!findNode(key).isList) emptyList()
-        else findNode(key).getList(Long::class.javaObjectType) ?: emptyList()
+    override fun findString(key: String): String? {
+        return findNode(key).string
     }
 
     override fun getBoolean(key: String, default: Boolean): Boolean {
@@ -76,6 +69,14 @@ open class HQYamlConfigurationSectionImpl(
         return findNode(key).double
     }
 
+    override fun getFloat(key: String, default: Float): Float {
+        return findNode(key).getFloat(default)
+    }
+
+    override fun findFloat(key: String): Float? {
+        return findNode(key).float
+    }
+
     override fun getLong(key: String, default: Long): Long {
         return findNode(key).getLong(default)
     }
@@ -84,7 +85,28 @@ open class HQYamlConfigurationSectionImpl(
         return findNode(key).long
     }
 
-    override fun set(key: String, value: Any?) {
-        findNode(key).set(value)
+    override fun getStringList(key: String): List<String> {
+        return getList(key, String::class.java)
+    }
+
+    override fun getIntegerList(key: String): List<Int> {
+        return getList(key, Int::class.javaObjectType)
+    }
+
+    override fun getLongList(key: String): List<Long> {
+        return getList(key, Long::class.javaObjectType)
+    }
+
+    override fun getDoubleList(key: String): List<Double> {
+        return getList(key, Double::class.javaObjectType)
+    }
+
+    override fun getFloatList(key: String): List<Float> {
+        return getList(key, Float::class.javaObjectType)
+    }
+
+    private fun <T> getList(key: String, clazz: Class<T>): List<T> {
+        return if (!findNode(key).isList) emptyList()
+        else findNode(key).getList(clazz) ?: emptyList()
     }
 }

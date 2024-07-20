@@ -33,8 +33,20 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
         cachedFile?.apply(this::load)
     }
 
+    override fun set(key: String, value: Any?) {
+        rootSection?.set(key, value)
+    }
+
     override fun getSection(key: String): HQYamlConfigurationSection? {
         return rootSection?.getSection(key)
+    }
+
+    override fun getKeys(): List<String> {
+        return rootSection?.getKeys() ?: emptyList()
+    }
+
+    override fun contains(key: String): Boolean {
+        return rootSection?.contains(key) ?: false
     }
 
     override fun getString(key: String, default: String): String {
@@ -43,22 +55,6 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
 
     override fun findString(key: String): String? {
         return rootSection?.findString(key)
-    }
-
-    override fun getKeys(): List<String> {
-        return rootSection?.getKeys() ?: emptyList()
-    }
-
-    override fun getStringList(key: String): List<String> {
-        return rootSection?.getStringList(key) ?: emptyList()
-    }
-
-    override fun getIntegerList(key: String): List<Int> {
-        return rootSection?.getIntegerList(key) ?: emptyList()
-    }
-
-    override fun getLongList(key: String): List<Long> {
-        return rootSection?.getLongList(key) ?: emptyList()
     }
 
     override fun getBoolean(key: String, default: Boolean): Boolean {
@@ -85,6 +81,14 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
         return rootSection?.findDouble(key)
     }
 
+    override fun getFloat(key: String, default: Float): Float {
+        return rootSection?.getFloat(key) ?: default
+    }
+
+    override fun findFloat(key: String): Float? {
+        return rootSection?.findFloat(key)
+    }
+
     override fun getLong(key: String, default: Long): Long {
         return rootSection?.getLong(key) ?: default
     }
@@ -93,7 +97,23 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
         return rootSection?.findLong(key)
     }
 
-    override fun set(key: String, value: Any?) {
-        rootSection?.set(key, value)
+    override fun getStringList(key: String): List<String> {
+        return rootSection?.getStringList(key) ?: emptyList()
+    }
+
+    override fun getIntegerList(key: String): List<Int> {
+        return rootSection?.getIntegerList(key) ?: emptyList()
+    }
+
+    override fun getLongList(key: String): List<Long> {
+        return rootSection?.getLongList(key) ?: emptyList()
+    }
+
+    override fun getDoubleList(key: String): List<Double> {
+        return rootSection?.getDoubleList(key) ?: emptyList()
+    }
+
+    override fun getFloatList(key: String): List<Float> {
+        return rootSection?.getFloatList(key) ?: emptyList()
     }
 }
