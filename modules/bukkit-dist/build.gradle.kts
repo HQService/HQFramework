@@ -50,4 +50,5 @@ dependencies {
 configurations.runtimeClasspath.configure {
     exclude(libs.spigot.api.get().group, libs.spigot.api.get().name)
     exclude(libs.paper.api.get().group, libs.paper.api.get().name)
+    exclude(libs.kotlin.stdlib.jdk8.get().apply { println(this.name) }.group, "*")
 }
