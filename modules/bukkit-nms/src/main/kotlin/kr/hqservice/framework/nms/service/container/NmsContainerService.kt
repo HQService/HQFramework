@@ -7,6 +7,7 @@ import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.container.ContainerWrapperImpl
+import net.minecraft.world.inventory.AbstractContainerMenu
 import org.bukkit.entity.Player
 import kotlin.reflect.KClass
 
@@ -15,7 +16,7 @@ import kotlin.reflect.KClass
 class NmsContainerService(
     private val reflectionWrapper: NmsReflectionWrapper
 ) : NmsService<Player, ContainerWrapper> {
-
+/*
     private val containerClass = reflectionWrapper.getNmsClass("Container",
         Version.V_17.handle("world.inventory.Container", true)
     )
@@ -28,16 +29,16 @@ class NmsContainerService(
         Version.V_20.handle("bR"),
         Version.V_20_2.handle("bS"),
         Version.V_17_FORGE.handle("f_36096_")
-    )
+    )*/
 
     override fun wrap(target: Player): ContainerWrapper {
         val nmsPlayer = reflectionWrapper.getEntityPlayer(target)
-        val containerMenu = containerMenuField.call(nmsPlayer) ?: throw UnsupportedOperationException()
-        return ContainerWrapperImpl(containerMenu, reflectionWrapper, containerClass)
+        val containerMenu = nmsPlayer.containerMenu
+        return ContainerWrapperImpl(containerMenu)
     }
 
     override fun getWrapper(nmsInstance: Any): ContainerWrapper {
-        return ContainerWrapperImpl(nmsInstance, reflectionWrapper, containerClass)
+        return ContainerWrapperImpl(nmsInstance as AbstractContainerMenu)
     }
 
     override fun unwrap(wrapper: ContainerWrapper): Player {
@@ -49,6 +50,6 @@ class NmsContainerService(
     }
 
     override fun getTargetClass(): KClass<*> {
-        return containerClass
+        return AbstractContainerMenu::class
     }
 }

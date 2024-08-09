@@ -23,7 +23,7 @@ jobs:
       - name: Prepare JDK17
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
       - name: Prepare Gradle
         uses: gradle/gradle-build-action@v2
@@ -39,5 +39,5 @@ jobs:
           # name: ${{ github.event.repository.name }}
           body: "${{ steps.vars.outputs.sha_short }}"
           commit: ${{ github.sha }}
-          artifacts: 'build_outputs/*.jar'
+          artifacts: 'build_outputs/version/2.0.0/*.jar'
           generateReleaseNotes: true

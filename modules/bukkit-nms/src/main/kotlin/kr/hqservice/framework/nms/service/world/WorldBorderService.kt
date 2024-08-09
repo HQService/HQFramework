@@ -2,31 +2,23 @@ package kr.hqservice.framework.nms.service.world
 
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
-import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldBorderWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.border.WorldBorder
 import org.bukkit.World
 import kotlin.reflect.KClass
 
 @Qualifier("nms.world.border")
 @Service
 class WorldBorderService(
-    reflectionWrapper: NmsReflectionWrapper,
     @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>
 ) : NmsService<World, WorldBorderWrapper> {
-
-    private val worldBorderClass = reflectionWrapper.getNmsClass("WorldBorder",
-        Version.V_17.handle("world.level.border")
-    )
-    private val worldBorderConstructor = worldBorderClass.constructors.first { it.parameters.isEmpty() }
-    private val worldField = worldBorderClass.java.getField("world")
-
     override fun wrap(target: World): WorldBorderWrapper {
-        val worldBorderInst = worldBorderConstructor.call()
+        val worldBorderInst = WorldBorder()
         val worldWrapper = worldService.wrap(target)
-        worldField.set(worldBorderInst, worldWrapper.getUnwrappedInstance())
+        worldBorderInst.world = worldWrapper.getUnwrappedInstance() as ServerLevel
         return WorldBorderWrapper(worldBorderInst)
     }
 
@@ -39,6 +31,6 @@ class WorldBorderService(
     }
 
     override fun getTargetClass(): KClass<*> {
-        return worldBorderClass
+        return WorldBorder::class
     }
 }

@@ -5,7 +5,7 @@ plugins {
 dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
-    implementation(libs.spigot.api)
+    implementation(libs.paper.api)
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(libs.mockBukkit)

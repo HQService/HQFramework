@@ -53,11 +53,11 @@ abstract class AbstractVirtualScope(
                 event as InventoryClickEvent
                 if (event.whoClicked.uniqueId == it.uniqueId) {
                     event.isCancelled = true
-                    event.cursor = null
+                    event.view.setCursor(null)
                 }
             }, lazyPlugin)
 
-            handlerRegistry.register(it.uniqueId, VirtualAnvilHandler(reflectionWrapper, { text ->
+            handlerRegistry.register(it.uniqueId, VirtualAnvilHandler({ text ->
                 val resultItem = containerFactory.getResultItem(text)
                 reflectionWrapper.sendPacket(it, resultItem)
             }, { text -> if (containerFactory.confirm(text)) {
@@ -84,7 +84,7 @@ abstract class AbstractVirtualScope(
         signFactoryScope: VirtualSignScope.() -> Unit
     ) {
         viewers.forEach { player ->
-            val containerFactory = VirtualSignScope(player, reflectionWrapper)
+            val containerFactory = VirtualSignScope(player)
             containerFactory.signFactoryScope()
 
             val server = player.server
@@ -93,7 +93,7 @@ abstract class AbstractVirtualScope(
             player.sendBlockChange(location, blockData)
             reflectionWrapper.sendPacket(player, *containerFactory.getMessages())
 
-            val virtualSignHandler = VirtualSignHandler(reflectionWrapper) { texts ->
+            val virtualSignHandler = VirtualSignHandler { texts ->
                 if (containerFactory.confirm(texts)) {
                     val airBlockData = server.createBlockData(Material.AIR)
                     player.sendBlockChange(location, airBlockData)

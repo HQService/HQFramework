@@ -2,9 +2,10 @@ package kr.hqservice.framework.nms.wrapper.entity
 
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
 import kr.hqservice.framework.nms.wrapper.EntityWrapper
+import net.minecraft.world.entity.Entity
 
 class NmsArmorStandWrapper(
-    private val baseEntity: Any,
+    private val baseEntity: Entity,
     private val service: NmsArmorStandService
 ) : EntityWrapper {
     fun getHeadPose(): Triple<Float, Float, Float> {
@@ -32,7 +33,7 @@ class NmsArmorStandWrapper(
         service.setBasePlate(this, basePlate)
     }
 
-    override fun getUnwrappedInstance(): Any {
+    override fun getUnwrappedInstance(): Entity {
         return baseEntity
     }
 }

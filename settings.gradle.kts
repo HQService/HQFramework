@@ -5,6 +5,7 @@ rootProject.name = "HQFramework"
 pluginManagement {
     val kotlinVersion: String by settings
     val shadowVersion: String by settings
+    val paperWeightVersion: String by settings
 
     plugins {
         kotlin("jvm") version kotlinVersion apply false
@@ -14,12 +15,13 @@ pluginManagement {
         id("hqframework.dependency-handler-extensions")
         id("kr.hqservice.resource-generator.bukkit") version "1.0.0" apply false
         id("kr.hqservice.resource-generator.bungee") version "1.0.0" apply false
-
+        id("io.papermc.paperweight.userdev") version paperWeightVersion apply false
     }
 
     repositories {
         mavenCentral()
         maven("https://maven.hqservice.kr/repository/maven-public/")
+        maven("https://repo.papermc.io/repository/maven-public/")
         gradlePluginPortal()
     }
 }
@@ -33,9 +35,9 @@ file(rootProject.projectDir.path + "/credentials.gradle.kts").let {
 
 dependencyResolutionManagement {
     repositories {
+        maven("https://repo.papermc.io/repository/maven-public/")
         mavenCentral()
         maven("https://jitpack.io")
-        maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
         maven("https://maven.hqservice.kr/repository/maven-public/")
@@ -81,8 +83,6 @@ dependencyResolutionManagement {
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
             library("quartz", "org.quartz-scheduler:quartz:${getProperty("quartzVersion")}")
             library("gson", "com.google.code.gson:gson:${getProperty("gsonVersion")}")
-
-            library("adventure-text-serializer-legacy", "net.kyori:adventure-text-serializer-legacy:${getProperty("AdventureTextVersion")}")
         }
     }
 }

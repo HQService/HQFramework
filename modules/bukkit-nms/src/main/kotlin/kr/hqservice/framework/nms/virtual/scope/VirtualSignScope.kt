@@ -2,16 +2,14 @@ package kr.hqservice.framework.nms.virtual.scope
 
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.entity.inner.VirtualSign
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.entity.Player
 import org.koin.core.component.KoinComponent
 
 class VirtualSignScope(
     player: Player,
-    reflectionWrapper: NmsReflectionWrapper
 ) : KoinComponent {
 
-    private var signPacket = VirtualSign(player, reflectionWrapper)
+    private var signPacket = VirtualSign(player)
 
     private var confirmHandler: ((List<String>) -> Boolean)? = null
 

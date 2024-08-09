@@ -6,7 +6,7 @@ plugins {
 dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
-    api(libs.spigot.api)
+    api(libs.paper.api)
     api(libs.kotlinx.coroutines.core)
 
     testImplementationModule("bukkit", "test")

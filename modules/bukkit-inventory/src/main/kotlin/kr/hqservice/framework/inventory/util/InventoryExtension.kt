@@ -13,7 +13,7 @@ fun PlayerInventory.hasSpace(vararg itemStacks: ItemStack, repeat: Int = 1): Boo
     val inventoryCloned = Bukkit.getServer().createInventory(null, 36).apply {
         if (this@hasSpace.storageContents.isNotEmpty()) {
             this@hasSpace.storageContents.filter { it != null && !it.type.isAir }.forEachIndexed { index, itemStack ->
-                setItem(index, itemStack.clone())
+                setItem(index, itemStack!!.clone())
             }
         }
     }

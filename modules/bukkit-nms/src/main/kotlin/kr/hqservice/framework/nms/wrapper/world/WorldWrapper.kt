@@ -1,16 +1,15 @@
 package kr.hqservice.framework.nms.wrapper.world
 
-import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import net.minecraft.core.BlockPos
+import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.state.BlockState
 import org.bukkit.Location
 
 class WorldWrapper(
-    private val world: Any,
-    reflectionWrapper: NmsReflectionWrapper
+    private val world: Level
 ) : NmsWrapper {
-
+/*
     private val worldClass = reflectionWrapper.getNmsClass("World",
         Version.V_17.handle("world.level")
     )
@@ -22,16 +21,14 @@ class WorldWrapper(
     private val getBlockStateFunction = reflectionWrapper.getFunction(worldClass, "getBlockState", listOf(blockPositionClass),
         Version.V_17.handleFunction("a_") { setParameterClasses(blockPositionClass) },
         Version.V_17_FORGE.handleFunction("m_8055_") { setParameterClasses(blockPositionClass) }
-    )
+    )*/
 
-    fun getBlockPosition(location: Location): Any {
-        val intClass = Int::class.java
-        return blockPositionClass.java.getConstructor(intClass, intClass, intClass)
-            .newInstance(location.blockX, location.blockY, location.blockZ) ?: throw NullPointerException()
+    fun getBlockPosition(location: Location): BlockPos {
+        return BlockPos(location.blockX, location.blockY, location.blockZ)
     }
 
-    fun getIBlockData(blockPosition: Any): Any {
-        return getBlockStateFunction.call(world, blockPosition) ?: throw NullPointerException()
+    fun getIBlockData(blockPosition: BlockPos): BlockState {
+        return world.getBlockState(blockPosition)
     }
 
     override fun getUnwrappedInstance(): Any {

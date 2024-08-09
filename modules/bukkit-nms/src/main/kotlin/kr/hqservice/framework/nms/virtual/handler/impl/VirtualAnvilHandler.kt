@@ -2,18 +2,17 @@ package kr.hqservice.framework.nms.virtual.handler.impl
 
 import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
-import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import net.minecraft.network.protocol.game.ServerboundContainerClickPacket
+import net.minecraft.network.protocol.game.ServerboundContainerClosePacket
+import net.minecraft.network.protocol.game.ServerboundRenameItemPacket
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.plugin.Plugin
 
 class VirtualAnvilHandler(
-    private val reflectionWrapper: NmsReflectionWrapper,
     private val textScope: suspend (String) -> Unit,
     private val confirmScope: suspend (String) -> Boolean,
     private val buttonScope: suspend (Int, String) -> Boolean,
@@ -36,12 +35,8 @@ class VirtualAnvilHandler(
     private var currentText = ""
     private var unregistered = false
 
-    override fun getNmsSimpleNames(): List<String> {
-        return listOf("PacketPlayInItemName", "PacketPlayInWindowClick")
-    }
-
     override fun checkCondition(message: Any): Boolean {
-        return getNmsSimpleNames().contains(message::class.simpleName)
+        return message is ServerboundRenameItemPacket || message is ServerboundContainerClickPacket
     }
 
     override fun unregisterType(): HandlerUnregisterType {
@@ -49,7 +44,7 @@ class VirtualAnvilHandler(
     }
 
     override fun unregisterCondition(message: Any): Boolean {
-        if (unregistered || message::class.simpleName == "PacketPlayInCloseWindow") {
+        if (unregistered || message is ServerboundContainerClosePacket) {
             runBlocking { closeScope.invoke(currentText) }
             dummyListener.close()
             return true
@@ -58,23 +53,14 @@ class VirtualAnvilHandler(
     }
 
     override fun handle(message: Any) {
-        val clazz = message::class
-        when (clazz.simpleName!!) {
-            "PacketPlayInItemName" -> {
-                val nameField = reflectionWrapper.getField(message::class, "name",
-                    Version.V_17.handle("a"),
-                    Version.V_17_FORGE.handle("f_134393_")
-                )
-                val name = nameField.callAccess<String>(message)
+        when (message) {
+            is ServerboundRenameItemPacket -> {
+                val name = message.name
                 runBlocking { textScope(name) }
                 currentText = name
             }
-            "PacketPlayInWindowClick" -> {
-                val slotNumField = reflectionWrapper.getField(message::class, "slotNum",
-                    Version.V_17.handle("d"),
-                    Version.V_17_FORGE.handle("f_133940_")
-                )
-                val slotNum = slotNumField.callAccess<Int>(message)
+            is ServerboundContainerClickPacket -> {
+                val slotNum = message.slotNum
                 if (slotNum == 2) {
                     runBlocking {
                         if (confirmScope(currentText)) {

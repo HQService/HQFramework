@@ -3,13 +3,11 @@ package kr.hqservice.framework.nms.virtual.scope
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.virtual.handler.impl.VirtualItemHandler
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 
 class VirtualViewScope(
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper>,
-    private val reflectionWrapper: NmsReflectionWrapper,
     private val containerId: Int
 ) {
     private var filter: (Int, ItemStack) -> Boolean = { _, _ -> true }
@@ -24,6 +22,6 @@ class VirtualViewScope(
     }
 
     internal fun create(): VirtualHandler {
-        return VirtualItemHandler(itemStackService, reflectionWrapper, containerId, filter, item)
+        return VirtualItemHandler(itemStackService, containerId, filter, item)
     }
 }

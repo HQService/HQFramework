@@ -2,27 +2,18 @@ package kr.hqservice.framework.nms.service.math
 
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
-import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.math.Vector3fWrapper
+import net.minecraft.core.Rotations
 import kotlin.reflect.KClass
 
 @Qualifier("vector3f")
 @Service
-class Vector3fService(
-    private val reflectionWrapper: NmsReflectionWrapper
-) : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {
-
-    private val vector3fClass = reflectionWrapper.getNmsClass("Vector3f",
-        Version.V_17.handle("core")
-    )
-    private val vector3fConstructor =
-        vector3fClass.java.getConstructor(Float::class.java, Float::class.java, Float::class.java)
+class Vector3fService : NmsService<Triple<Float, Float, Float>, Vector3fWrapper> {
 
     override fun wrap(target: Triple<Float, Float, Float>): Vector3fWrapper {
-        val vector3f = vector3fConstructor.newInstance(target.first, target.second, target.third)
-        return Vector3fWrapper(vector3f, vector3fClass, reflectionWrapper)
+        val vector3f = Rotations(target.first, target.second, target.third)
+        return Vector3fWrapper(vector3f)
     }
 
     override fun unwrap(wrapper: Vector3fWrapper): Triple<Float, Float, Float> {
@@ -34,6 +25,6 @@ class Vector3fService(
     }
 
     override fun getTargetClass(): KClass<*> {
-        return vector3fClass
+        return Rotations::class
     }
 }

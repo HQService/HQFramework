@@ -54,7 +54,7 @@ fun Location.virtual(distance: Double, virtualScope: suspend GlobalVirtualScope.
 }
 
 fun Player.virtualView(virtualScope: VirtualViewScope.() -> Unit) {
-    val scope = VirtualViewScope(itemStackService, reflectionWrapper, containerService.wrap(this).getContainerId())
+    val scope = VirtualViewScope(itemStackService, containerService.wrap(this).getContainerId())
     scope.virtualScope()
     handlerRegistry.register(uniqueId, scope.create())
 }

@@ -8,7 +8,7 @@ dependencies {
     apiModule("bukkit", "core")
     apiModule("bukkit", "nms")
     apiModule("global", "netty")
-    api(libs.spigot.api)
+    api(libs.paper.api)
     api(libs.kotlinx.coroutines.core)
     api(libs.exposed.core)
     api(libs.exposed.dao)

@@ -1,13 +1,12 @@
 package kr.hqservice.framework.nms.virtual.item
 
-import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -22,14 +21,8 @@ class VirtualItem(
     private val itemStack: ItemStack,
     private val itemEditBlock: ItemMeta.() -> Unit = {},
 ) : Virtual, KoinComponent {
-
-    private val reflectionWrapper: NmsReflectionWrapper by inject()
     private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by inject(named("itemStack"))
     private val containerService: NmsService<Player, ContainerWrapper> by inject(named("container"))
-
-    private val packetClass = reflectionWrapper.getNmsClass("PacketPlayOutSetSlot",
-        Version.V_17.handle("network.protocol.game")
-    )
 
     override fun createVirtualMessage(): VirtualMessage {
         val container = containerService.wrap(player)
@@ -41,12 +34,7 @@ class VirtualItem(
                     itemMeta = itemMeta?.apply(itemEditBlock)
                 }
             )
-        val message = packetClass.java.getConstructor(
-            Int::class.javaPrimitiveType,
-            Int::class.javaPrimitiveType,
-            Int::class.javaPrimitiveType,
-            itemStackService.getTargetClass().java
-        ).newInstance(container.getContainerId(), container.getStateId(), slot, nmsItemStack.getUnwrappedInstance())
+        val message = ClientboundContainerSetSlotPacket(container.getContainerId(), container.getStateId(), slot, nmsItemStack.getUnwrappedInstance() as net.minecraft.world.item.ItemStack)
         return VirtualMessageImpl(message)
     }
 }

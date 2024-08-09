@@ -8,6 +8,12 @@ import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
+import net.minecraft.network.protocol.Packet
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
+import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket
+import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket
+import net.minecraft.world.entity.Entity
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -22,9 +28,9 @@ abstract class AbstractVirtualEntity(
     private val virtualEntityClasses: VirtualEntityClasses by inject()
 
     private var state: Byte = 0x7
-    private var itemContainer: List<Any>? = null
+    private var itemContainer: List<com.mojang.datafixers.util.Pair<net.minecraft.world.entity.EquipmentSlot, net.minecraft.world.item.ItemStack>>? = null
     private var vaild = false
-    abstract fun getEntity(): Any
+    abstract fun getEntity(): Entity
     private fun entityInitialize() {
         if (name.isNotEmpty()) {
             setName(name.colorize())
@@ -97,7 +103,7 @@ abstract class AbstractVirtualEntity(
                 virtualEntityClasses.getEnumItemSlot(if (it.first == EquipmentSlot.HAND) "mainhand" else it.first.name)
             virtualEntityClasses.createBukkitPair(
                 slot,
-                it.second.getNmsItemStack().getUnwrappedInstance()
+                it.second.getNmsItemStack().getUnwrappedInstance() as net.minecraft.world.item.ItemStack
             )
         }
         if (!(state mask VirtualEntityState.UPDATE_ITEM))
@@ -123,31 +129,31 @@ abstract class AbstractVirtualEntity(
     internal fun createVirtualMessage(switchState: Boolean): VirtualMessage? {
         if (state mask VirtualEntityState.UNHANDLED) return null
 
-        val packets = mutableListOf<Any>()
+        val packets = mutableListOf<Packet<*>>()
         if (state mask VirtualEntityState.DESTROY) {
             if (switchState) state = state switch VirtualEntityState.UNHANDLED
-            return VirtualMessageImpl(virtualEntityClasses.entityDestroyPacket.newInstance(arrayOf(getEntityId()).toIntArray()))
+            return VirtualMessageImpl(ClientboundRemoveEntitiesPacket(*arrayOf(getEntityId()).toIntArray()))
         }
 
         if (state mask VirtualEntityState.CREAT) {
             if (!vaild) entityInitialize()
             if (switchState) state = state switch VirtualEntityState.CREAT
-            packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(getEntity()))
+            packets.add(ClientboundAddEntityPacket(getEntity()))
         }
 
         if (state mask VirtualEntityState.UPDATE_ITEM) {
             if (switchState) state = state switch VirtualEntityState.UPDATE_ITEM
             packets.add(
-                virtualEntityClasses.entityEquipmentPacket.newInstance(
+                ClientboundSetEquipmentPacket(
                     getEntityId(),
-                    itemContainer ?: emptyList<Any>()
+                    itemContainer ?: emptyList<com.mojang.datafixers.util.Pair<net.minecraft.world.entity.EquipmentSlot, net.minecraft.world.item.ItemStack>>()
                 )
             )
         }
 
         if (state mask VirtualEntityState.RELOCATE) {
             if (switchState) state = state switch VirtualEntityState.RELOCATE
-            packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(getEntity()))
+            packets.add(ClientboundTeleportEntityPacket(getEntity()))
         }
 
         if (state mask VirtualEntityState.UPDATE_META_DATA) {

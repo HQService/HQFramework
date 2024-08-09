@@ -33,7 +33,7 @@ bukkitResourceGenerator {
 }
 
 dependencies {
-    compileOnly(libs.spigot.api)
+    compileOnly(libs.paper.api)
 
     implementationModule("bukkit", "core")
     implementationModule("bukkit", "command")

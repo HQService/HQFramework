@@ -2,62 +2,37 @@ package kr.hqservice.framework.nms.service.item
 
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
-import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getStaticFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
-import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.inventory.ItemStack
-import org.koin.java.KoinJavaComponent.getKoin
 import kotlin.reflect.KClass
 
 @Qualifier("itemStack")
 @Service
 class NmsItemStackService(
-    @Qualifier("tag") private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
-    @Qualifier("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
+    private val languageRegistry: LanguageRegistry
 ) : NmsService<ItemStack, NmsItemStackWrapper> {
-
-    companion object {
-        private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
-
-        private val craftItemStackClass by lazy { reflectionWrapper.getCraftBukkitClass("inventory.CraftItemStack") }
-        private val nmsItemStackClass  by lazy { reflectionWrapper.getNmsClass("ItemStack",
-            Version.V_17.handle("world.item")
-        ) }
-
-        private val asNmsCopyFunction  by lazy { reflectionWrapper.getStaticFunction(
-            craftItemStackClass,
-            "asNMSCopy",
-            nmsItemStackClass,
-            listOf(ItemStack::class)
-        ) }
-
-        private val asBukkitCopyFunction  by lazy { reflectionWrapper.getStaticFunction(
-            craftItemStackClass,
-            "asBukkitCopy",
-            ItemStack::class,
-            listOf(nmsItemStackClass)
-        ) }
-    }
-
     override fun wrap(target: ItemStack): NmsItemStackWrapper {
-        return NmsItemStackWrapper(
-            asNmsCopyFunction.call(target) ?: throw IllegalArgumentException(),
-            tagService,
-            itemService, this
-        )
+        return NmsItemStackWrapper(CraftItemStack.asNMSCopy(target))
     }
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
-        return asBukkitCopyFunction.call(wrapper.getUnwrappedInstance()) as? ItemStack
-            ?: throw IllegalArgumentException()
+        return (wrapper.getBukkitItemStack() as net.minecraft.world.item.ItemStack).asBukkitCopy()
+    }
+
+    fun getItem(target: ItemStack): NmsItemWrapper {
+        return NmsItemWrapper(
+            wrap(target),
+            (CraftItemStack.asNMSCopy(target)).item,
+            languageRegistry
+        )
     }
 
     override fun getWrapper(nmsInstance: Any): NmsItemStackWrapper {
-        return NmsItemStackWrapper(nmsInstance, tagService, itemService, this)
+        return NmsItemStackWrapper(nmsInstance as net.minecraft.world.item.ItemStack)
     }
 
     override fun getOriginalClass(): KClass<*> {
@@ -65,6 +40,6 @@ class NmsItemStackService(
     }
 
     override fun getTargetClass(): KClass<*> {
-        return nmsItemStackClass
+        return net.minecraft.world.item.ItemStack::class
     }
 }
