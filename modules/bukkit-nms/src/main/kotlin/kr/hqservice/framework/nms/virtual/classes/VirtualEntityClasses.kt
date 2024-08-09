@@ -65,6 +65,7 @@ class VirtualEntityClasses(
         Version.V_19_3.handleFunction("al"),
         Version.V_19_4.handleFunction("aj"),
         Version.V_20_2.handleFunction("al"),
+        Version.V_20_4.handleFunction("an"),
         Version.V_17_FORGE.handleFunction("m_20088_")
     )
 
