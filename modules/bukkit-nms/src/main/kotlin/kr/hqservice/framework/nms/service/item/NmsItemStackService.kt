@@ -20,7 +20,7 @@ class NmsItemStackService(
     }
 
     override fun unwrap(wrapper: NmsItemStackWrapper): ItemStack {
-        return (wrapper.getBukkitItemStack() as net.minecraft.world.item.ItemStack).asBukkitCopy()
+        return wrapper.getBukkitItemStack()
     }
 
     fun getItem(target: ItemStack): NmsItemWrapper {
