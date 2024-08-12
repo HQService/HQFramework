@@ -7,30 +7,30 @@ import org.bukkit.persistence.PersistentDataType
 import java.util.*
 
 class NmsNBTTagCompoundWrapper(
-    val persistentDataContainer: PersistentDataContainer
+    private val persistentDataContainer: PersistentDataContainer?
 ) : NmsWrapper {
-    fun getString(key: String, def: String): String {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING) ?: def
+    fun getString(key: String, def: String = ""): String {
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING) ?: def
     }
 
     fun getStringOrNull(key: String): String? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING)
     }
 
     fun setString(key: String, value: String) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING, value)
     }
 
-    fun getBoolean(key: String, def: Boolean): Boolean {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN) ?: def
+    fun getBoolean(key: String, def: Boolean = false): Boolean {
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN) ?: def
     }
 
     fun getBooleanOrNull(key: String): Boolean? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN) 
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN) 
     }
 
     fun setBoolean(key: String, value: Boolean) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN, value)
     }
 
     fun getUUID(key: String): UUID {
@@ -38,83 +38,83 @@ class NmsNBTTagCompoundWrapper(
     }
 
     fun getUUIDOrNull(key: String): UUID? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING)?.run(UUID::fromString)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING)?.run(UUID::fromString)
     }
 
     fun setUUID(key: String, value: UUID) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING, value.toString())
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING, value.toString())
     }
 
-    fun getByte(key: String, def: Byte): Byte {
+    fun getByte(key: String, def: Byte = 0): Byte {
         return getByteOrNull(key.toKey()) ?: def
     }
 
     fun getByteOrNull(key: String): Byte? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE)
     }
 
     fun setByte(key: String, value: Byte) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE, value)
     }
 
-    fun getShort(key: String, def: Short): Short {
+    fun getShort(key: String, def: Short = 0): Short {
         return getShortOrNull(key.toKey()) ?: def
     }
 
     fun getShortOrNull(key: String): Short? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.SHORT)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.SHORT)
     }
 
     fun setShort(key: String, value: Short) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.SHORT, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.SHORT, value)
     }
 
-    fun getInt(key: String, def: Int): Int {
+    fun getInt(key: String, def: Int = 0): Int {
         return getIntOrNull(key.toKey()) ?: def
     }
 
     fun getIntOrNull(key: String): Int? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER)
     }
 
     fun setInt(key: String, value: Int) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER, value)
     }
 
-    fun getLong(key: String, def: Long): Long {
+    fun getLong(key: String, def: Long = 0): Long {
         return getLongOrNull(key.toKey()) ?: def
     }
 
     fun getLongOrNull(key: String): Long? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG)
     }
 
     fun setLong(key: String, value: Long) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG, value)
     }
 
-    fun getFloat(key: String, def: Float): Float {
+    fun getFloat(key: String, def: Float = 0f): Float {
         return getFloatOrNull(key.toKey()) ?: def
     }
 
     fun getFloatOrNull(key: String): Float? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.FLOAT)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.FLOAT)
     }
 
     fun setFloat(key: String, value: Float) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.FLOAT, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.FLOAT, value)
     }
 
-    fun getDouble(key: String, def: Double): Double {
+    fun getDouble(key: String, def: Double = .0): Double {
         return getDoubleOrNull(key.toKey()) ?: def
     }
 
     fun getDoubleOrNull(key: String): Double? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.DOUBLE)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.DOUBLE)
     }
 
     fun setDouble(key: String, value: Double) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.DOUBLE, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.DOUBLE, value)
     }
 
     fun getByteArray(key: String, def: ByteArray): ByteArray {
@@ -122,11 +122,11 @@ class NmsNBTTagCompoundWrapper(
     }
 
     fun getByteArrayOrNull(key: String): ByteArray? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE_ARRAY)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE_ARRAY)
     }
 
     fun setByteArray(key: String, value: ByteArray) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE_ARRAY, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE_ARRAY, value)
     }
 
     fun getIntArray(key: String, def: IntArray): IntArray {
@@ -134,11 +134,11 @@ class NmsNBTTagCompoundWrapper(
     }
 
     fun getIntArrayOrNull(key: String): IntArray? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER_ARRAY)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER_ARRAY)
     }
 
     fun setIntArray(key: String, value: IntArray) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER_ARRAY, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER_ARRAY, value)
     }
 
     fun getLongArray(key: String, def: LongArray): LongArray {
@@ -146,35 +146,27 @@ class NmsNBTTagCompoundWrapper(
     }
 
     fun getLongArrayOrNull(key: String): LongArray? {
-        return persistentDataContainer.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG_ARRAY)
+        return persistentDataContainer?.get(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG_ARRAY)
     }
 
     fun setLongArray(key: String, value: LongArray) {
-        persistentDataContainer.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG_ARRAY, value)
+        persistentDataContainer?.set(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG_ARRAY, value)
     }
 
     fun hasKey(key: String): Boolean {
-        return persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.STRING)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BOOLEAN)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.SHORT)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.INTEGER_ARRAY)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.LONG_ARRAY)
-                || persistentDataContainer.has(NamespacedKey("hq_container", key.toKey()), PersistentDataType.BYTE_ARRAY)
+        return persistentDataContainer?.keys?.contains(NamespacedKey("hq_container", key.toKey())) ?: false
     }
 
     fun remove(key: String) {
-        persistentDataContainer.remove(NamespacedKey("hq_container", key.toKey()))
+        persistentDataContainer?.remove(NamespacedKey("hq_container", key.toKey()))
     }
 
     fun isEmpty(): Boolean {
-        return persistentDataContainer.isEmpty
+        return persistentDataContainer?.isEmpty ?: true
     }
 
     override fun getUnwrappedInstance(): Any {
-        return persistentDataContainer
+        return persistentDataContainer ?: 1
     }
     
     private fun String.toKey(): String = this

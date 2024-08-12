@@ -8,6 +8,7 @@ import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket
 import org.bukkit.Material
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
@@ -26,15 +27,17 @@ class VirtualItem(
 
     override fun createVirtualMessage(): VirtualMessage {
         val container = containerService.wrap(player)
-        val nmsItemStack =
-            if (itemStack.type == Material.AIR) {
-                itemStackService.wrap(itemStack)
-            } else itemStackService.wrap(
+        if (itemStack.type == Material.AIR) {
+            val message = ClientboundContainerSetSlotPacket(container.getContainerId(), container.getStateId(), slot, CraftItemStack.asNMSCopy(itemStack))
+            return VirtualMessageImpl(message)
+        } else {
+            val nmsItemStack = itemStackService.wrap(
                 itemStack.clone().apply {
                     itemMeta = itemMeta?.apply(itemEditBlock)
                 }
             )
-        val message = ClientboundContainerSetSlotPacket(container.getContainerId(), container.getStateId(), slot, nmsItemStack.getUnwrappedInstance() as net.minecraft.world.item.ItemStack)
-        return VirtualMessageImpl(message)
+            val message = ClientboundContainerSetSlotPacket(container.getContainerId(), container.getStateId(), slot, nmsItemStack.getUnwrappedInstance() as net.minecraft.world.item.ItemStack)
+            return VirtualMessageImpl(message)
+        }
     }
 }
