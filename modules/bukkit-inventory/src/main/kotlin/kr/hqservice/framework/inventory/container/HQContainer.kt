@@ -60,6 +60,7 @@ open class HQContainer(
         baseInventory?.apply {
             buttons.filter { it.value.isRemovable() }
                 .forEach { inventory.setItem(it.key, null) }
+
             buttons.entries.removeIf { it.value.isRemovable() }
             initialize(this)
         }
@@ -73,7 +74,7 @@ open class HQContainer(
             if (prevHolder is HQContainer) {
                 if (plugin == null) plugin = Bukkit.getPluginManager().getPlugin("HQFramework")
                 val plugin = plugin!!
-                plugin.getScheduler().runTaskLater(1) { open(player) }
+                plugin.getScheduler(player.location).runTaskLater(1) { open(player) }
             } else {
                 player.openInventory(inventory)
                 openedPlayers.add(player)
@@ -83,7 +84,7 @@ open class HQContainer(
         onOpen(*openedPlayers.toTypedArray())
     }
 
-    @Suppress("deprecation")
+    @Suppress("DEPRECATION")
     private fun ItemStack.isMatchedType(other: ItemStack): Boolean {
         return type == other.type && durability == other.durability
     }

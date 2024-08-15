@@ -1,5 +1,6 @@
 package kr.hqservice.framework.inventory.util
 
+import com.destroystokyo.paper.profile.PlayerProfile
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
@@ -11,6 +12,7 @@ import org.bukkit.Server
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.inventory.meta.SkullMeta
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
@@ -23,7 +25,7 @@ class PlayerSkullRepository(
     private val server: Server,
     private val coroutineScope: CoroutineScope
 ) {
-    private val skinTagMap = mutableMapOf<UUID, String>()
+    private val skinTagMap = mutableMapOf<UUID, PlayerProfile>()
     private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()
     private val gson = Gson()
 
@@ -36,10 +38,17 @@ class PlayerSkullRepository(
     ) {
         val itemStack = inventory.getItem(slot) ?: return
         if (skinTagMap.containsKey(targetUniqueId)) {
-            if (!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack))
-                server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!).apply {
-                    itemMeta = itemMeta?.also(metaScope)
+
+            if (!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack)) {
+                val skullMeta = itemStack.itemMeta as SkullMeta
+                // set Player Profile
+                skullMeta.playerProfile = skinTagMap[targetUniqueId]
+                skullMeta.also(metaScope)
+
+                itemStack.apply {
+                    itemMeta = skullMeta
                 }
+            }
         } else {
             if (lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
             else {
@@ -47,27 +56,21 @@ class PlayerSkullRepository(
                 lambdaQueueMap[targetUniqueId] = queue
                 queue.offer(itemStack)
                 coroutineScope.launch(Dispatchers.BukkitAsync) {
-                    val contents =
-                        getURLContents("https://sessionserver.mojang.com/session/minecraft/profile/$targetUniqueId")
-                    val jsonObject = gson.fromJson(contents, JsonObject::class.java)
-                    val value = jsonObject.getAsJsonArray("properties")[0].asJsonObject["value"].asString
-                    val decoded = String(Base64.getDecoder().decode(value))
-                    val newObject = gson.fromJson(decoded, JsonObject::class.java)
-                    val skinUrl = newObject.getAsJsonObject("textures").getAsJsonObject("SKIN")["url"].asString
-                    val skin = "{\"textures\":{\"SKIN\":{\"url\":\"$skinUrl\"}}}".toByteArray()
-                    val encoded = Base64.getEncoder().encode(skin)
-                    val hash = Arrays.hashCode(encoded).toLong()
-                    val hashAsId = UUID(hash, hash)
-                    val tag = "{SkullOwner:{Id:\"$hashAsId\", Properties:{textures:[{Value:\"$value\"}]}}}"
-                    skinTagMap[targetUniqueId] = tag
+                    val profile = server.getOfflinePlayer(targetUniqueId).playerProfile
+                    skinTagMap[targetUniqueId] = profile
                     lambdaQueueMap.remove(targetUniqueId)
                     while (queue.isNotEmpty()) {
                         try {
                             val element = queue.poll()
-                            if (!element.type.isAir && targetedItemStack.isSimilar(element))
-                                server.unsafe.modifyItemStack(element, tag).apply {
-                                    itemMeta = itemMeta?.also(metaScope)
+                            if (!element.type.isAir && targetedItemStack.isSimilar(element)) {
+                                val skullMeta = element.itemMeta as SkullMeta
+                                skullMeta.playerProfile = profile
+                                skullMeta.also(metaScope)
+
+                                element.apply {
+                                    itemMeta = skullMeta
                                 }
+                            }
                         } catch (_: Exception) {
                         }
                     }
