@@ -19,7 +19,7 @@ class PacketEncoder : MessageToByteEncoder<Packet>() {
         } else {
             val packetClass = packet::class
             if (Direction.OUTBOUND.findPacketByClass(packetClass) == null)
-                throw IllegalArgumentException("packet is not registered to outbound")
+                return
 
             out.writeString(
                 packetClass.qualifiedName ?: throw IllegalStateException("'${packetClass}' has not qualified name")

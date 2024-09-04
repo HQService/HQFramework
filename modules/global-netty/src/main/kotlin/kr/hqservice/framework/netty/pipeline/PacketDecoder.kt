@@ -18,7 +18,7 @@ class PacketDecoder : MessageToMessageDecoder<ByteBuf>() {
 
         val packetClass = Class.forName(packetName).kotlin as KClass<Packet>
         val wrapper = Direction.INBOUND.findPacketByClass(packetClass)
-            ?: throw NullPointerException("unregistered packet ('${packetName}')")
+            ?: return
         val codecClass = wrapper.codecClass
         val codecPacket = codecClass.getConstructor().newInstance()
 
