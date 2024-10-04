@@ -13,12 +13,16 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
 import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket
 import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket
+import net.minecraft.server.level.ServerEntity
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.server.network.ServerPlayerConnection
 import net.minecraft.world.entity.Entity
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+
 
 abstract class AbstractVirtualEntity(
     private var location: Location,
@@ -138,7 +142,12 @@ abstract class AbstractVirtualEntity(
         if (state mask VirtualEntityState.CREAT) {
             if (!vaild) entityInitialize()
             if (switchState) state = state switch VirtualEntityState.CREAT
-            packets.add(ClientboundAddEntityPacket(getEntity()))
+
+            val npcServerEntity = ServerEntity(
+                getEntity().level() as ServerLevel, getEntity(), 0, false,
+                { packet: Packet<*>? -> }, setOf<ServerPlayerConnection>()
+            )
+            packets.add(ClientboundAddEntityPacket(getEntity(), npcServerEntity))
         }
 
         if (state mask VirtualEntityState.UPDATE_ITEM) {

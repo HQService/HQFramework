@@ -12,7 +12,7 @@ dependencies {
     api(libs.exposed.core)
     api(libs.netty)
     api(libs.koin.core)
-    paperweight.paperDevBundle("1.20.6-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mockBukkit)
@@ -20,4 +20,4 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 }
 
-paperweight.reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
+//paperweight.reobfArtifactConfiguration = io.papermc.paperweight.userdev.ReobfArtifactConfiguration.MOJANG_PRODUCTION
