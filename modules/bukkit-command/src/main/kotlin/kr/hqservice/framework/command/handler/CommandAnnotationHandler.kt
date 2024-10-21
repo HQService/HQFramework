@@ -14,7 +14,6 @@ import kr.hqservice.framework.command.registry.CommandRegistry
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
-import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
@@ -58,7 +57,9 @@ class CommandAnnotationHandler(
             registerExecutors(annotation.parent, instance)
         }
 
-        if (paperUse) tabCompletionHandler.initialize(plugin)
+        if (paperUse) {
+            tabCompletionHandler.initialize(plugin)
+        }
     }
 
     private fun hasParent(annotation: Command): Boolean {
@@ -110,9 +111,17 @@ class CommandAnnotationHandler(
         }
         val root = commandRegistry.registerRoot(rootClass)
 
-        val hqCommand = HQBukkitCommand(label, aliases, paperUse, plugin, root, argumentProviderRegistry, commandArgumentExceptionHandlerRegistry)
+        val hqCommand = HQBukkitCommand(
+            label,
+            aliases,
+            paperUse,
+            plugin,
+            root,
+            argumentProviderRegistry,
+            commandArgumentExceptionHandlerRegistry
+        )
         hqCommand.permission = if (root.isOp) "op" else root.permission
-        
+
         val commandMap = SimplePluginManager::class
             .declaredMemberProperties
             .first { it.name == "commandMap" }
@@ -280,7 +289,6 @@ class CommandAnnotationHandler(
             location: Location?
         ): List<String> {
             if (paperUse) return emptyList()
-
             return hqTabComplete(sender, alias, args, location)
         }
 
@@ -361,7 +369,7 @@ class CommandAnnotationHandler(
         }
 
         private fun sendPermissionDeclinedMessage(sender: CommandSender) {
-            sender.sendMessage("§c권한이 부족합니다.")
+            sender.sendMessage("§fUnknown command. Type \"/help\" for help.")
         }
     }
 }
