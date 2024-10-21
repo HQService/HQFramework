@@ -10,6 +10,8 @@ import java.time.LocalDateTime
 
 @Component
 class LocalDateTimeCommandArgumentProvider : CommandArgumentProvider<LocalDateTime> {
+    private val tabs = listOf("yyyy-MM-dd_HH:mm:ss")
+
     override suspend fun cast(context: CommandContext, argument: String?): LocalDateTime {
         argument ?: throw ArgumentFeedback.RequireArgument
 
@@ -20,6 +22,6 @@ class LocalDateTimeCommandArgumentProvider : CommandArgumentProvider<LocalDateTi
     }
 
     override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf("yyyy-MM-dd_HH:mm:ss")
+        return tabs
     }
 }
