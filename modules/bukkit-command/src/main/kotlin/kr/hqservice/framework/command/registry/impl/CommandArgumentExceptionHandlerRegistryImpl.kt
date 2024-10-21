@@ -18,8 +18,12 @@ class CommandArgumentExceptionHandlerRegistryImpl : CommandArgumentExceptionHand
         exceptionHandlers[getExceptionHandlerKey(throwableType, senderType)] = instance
     }
 
-    override fun find(throwableType: KClass<*>, senderType: KClass<*>): CommandArgumentExceptionHandler<Throwable, CommandSender>? {
-        return exceptionHandlers[getExceptionHandlerKey(throwableType, senderType)] ?: exceptionHandlers[getExceptionHandlerKey(throwableType, CommandSender::class)]
+    override fun find(
+        throwableType: KClass<*>,
+        senderType: KClass<*>
+    ): CommandArgumentExceptionHandler<Throwable, CommandSender>? {
+        return exceptionHandlers[getExceptionHandlerKey(throwableType, senderType)]
+            ?: exceptionHandlers[getExceptionHandlerKey(throwableType, CommandSender::class)]
     }
 
     private fun getExceptionHandlerKey(throwableType: KClass<*>, senderType: KClass<*>): String {

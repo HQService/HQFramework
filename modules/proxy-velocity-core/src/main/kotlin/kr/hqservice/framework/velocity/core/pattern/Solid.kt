@@ -1,6 +1,5 @@
 package kr.hqservice.framework.velocity.core.pattern
 
-import java.awt.Color
 import java.util.regex.Pattern
 
 internal object Solid : TextColorPattern {

@@ -1,7 +1,9 @@
 package kr.hqservice.framework.bukkit.core.listener
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import org.bukkit.event.Event
 import org.bukkit.event.Listener
@@ -10,7 +12,6 @@ import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
-import kotlin.reflect.full.hasAnnotation
 
 /**
  * @param eventClass event handler 의 첫번째 인자
@@ -39,10 +40,11 @@ class SuspendEventExecutor(
                         method.callSuspend(listenerInstance, event)
                     }
                 }
-            } else method.call(listenerInstance, event)
+            } else {
+                method.call(listenerInstance, event)
+            }
         } catch (exception: InvocationTargetException) {
-            val cause = exception.cause ?: exception
-            throw cause
+            throw exception.cause ?: exception
         }
     }
 }

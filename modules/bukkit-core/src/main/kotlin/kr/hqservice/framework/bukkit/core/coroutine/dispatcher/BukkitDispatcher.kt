@@ -7,7 +7,6 @@ import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.plugin.IllegalPluginAccessException
 import org.bukkit.plugin.Plugin
-import org.bukkit.scheduler.BukkitRunnable
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
@@ -21,8 +20,7 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
             if (location != null) {
                 if (isAsync) plugin.getScheduler(location).runTaskAsynchronously { block.run() }
                 else plugin.getScheduler(location).runTask { block.run() }
-            }
-            else {
+            } else {
                 if (isAsync) plugin.getScheduler().runTaskAsynchronously { block.run() }
                 else plugin.getScheduler().runTask { block.run() }
             }

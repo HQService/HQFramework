@@ -63,9 +63,10 @@ class NettyClientBootstrap(
 
             handlerBoss.setPacketPreprocessHandler { packet, wrapper ->
                 if (!plugin.isEnabled) return@setPacketPreprocessHandler
-                plugin.server.pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
+                val pluginManager = plugin.server.pluginManager
+                pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
                 plugin.getScheduler().runTask {
-                    plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
+                    pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
                 }
             }
 

@@ -6,5 +6,10 @@ import org.koin.core.qualifier.Qualifier
 import kotlin.reflect.KAnnotatedElement
 
 interface HQInstanceFactory<T> : HQComponent {
-    fun createInstance(plugin: HQBukkitPlugin, annotatedElement: KAnnotatedElement, qualifier: Qualifier?, scopeQualifier: Qualifier?): T
+    fun createInstance(
+        plugin: HQBukkitPlugin,
+        annotatedElement: KAnnotatedElement,
+        qualifier: Qualifier?,
+        scopeQualifier: Qualifier?
+    ): T
 }

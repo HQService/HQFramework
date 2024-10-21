@@ -12,7 +12,12 @@ interface CommandRegistry {
 
     fun registerTree(parent: KClass<*>, treeClass: KClass<*>): RegisteredCommandTree
 
-    fun registerExecutor(parent: KClass<*>, annotation: CommandExecutor, executorInstance: Any, function: KFunction<Unit>): RegisteredCommandExecutor
+    fun registerExecutor(
+        parent: KClass<*>,
+        annotation: CommandExecutor,
+        executorInstance: Any,
+        function: KFunction<Unit>
+    ): RegisteredCommandExecutor
 
     fun findRoot(label: String): RegisteredCommandRoot?
 

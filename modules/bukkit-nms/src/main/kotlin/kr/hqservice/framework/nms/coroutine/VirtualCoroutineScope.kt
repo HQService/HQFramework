@@ -11,7 +11,9 @@ import kr.hqservice.framework.global.core.component.Singleton
 @Qualifier("virtual")
 @Singleton(binds = [HQCoroutineScope::class])
 @Component
-class VirtualCoroutineScope(plugin: HQBukkitPlugin) : HQCoroutineScope(plugin, Dispatchers.IO) {
+class VirtualCoroutineScope(
+    plugin: HQBukkitPlugin
+) : HQCoroutineScope(plugin, Dispatchers.IO) {
     private val coroutineName = CoroutineName("PacketCoroutineContext")
 
     override fun getCoroutineName(): CoroutineName {

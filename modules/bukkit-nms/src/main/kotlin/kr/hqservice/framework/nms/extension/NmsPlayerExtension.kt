@@ -4,10 +4,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.virtual.scope.VirtualViewScope
 import kr.hqservice.framework.nms.virtual.scope.impl.GlobalVirtualScope
 import kr.hqservice.framework.nms.virtual.scope.impl.SingleVirtualScope
-import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
@@ -44,9 +44,10 @@ fun Player.virtual(virtualScope: suspend SingleVirtualScope.() -> Unit): Job {
 
 fun Location.virtual(distance: Double, virtualScope: suspend GlobalVirtualScope.() -> Unit): Job {
     if (distance <= .0) throw IllegalArgumentException("distance 는 0 이하일 수 없습니다.")
-    val receivers =
-        world?.getNearbyEntities(this, distance, distance, distance)?.filterIsInstance<Player>()?.filter { it.isOnline }
-            ?: emptyList()
+    val receivers = world?.getNearbyEntities(this, distance, distance, distance)
+        ?.filterIsInstance<Player>()
+        ?.filter { it.isOnline }
+        ?: emptyList()
     val factory = GlobalVirtualScope(receivers, reflectionWrapper)
     return scope.launch {
         factory.virtualScope()

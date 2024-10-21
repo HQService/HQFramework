@@ -9,7 +9,9 @@ import org.bukkit.Location
 import org.bukkit.Server
 
 @Component
-class HQBukkitCommandArgumentProvider(private val server: Server) : CommandArgumentProvider<HQBukkitPlugin> {
+class HQBukkitCommandArgumentProvider(
+    private val server: Server
+) : CommandArgumentProvider<HQBukkitPlugin> {
     override suspend fun cast(context: CommandContext, argument: String?): HQBukkitPlugin {
         argument ?: throw ArgumentFeedback.RequireArgument
         return server.pluginManager.plugins.filterIsInstance<HQBukkitPlugin>()

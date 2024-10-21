@@ -30,5 +30,4 @@ fun ItemStack.setNmsItemStack(nmsItemStack: NmsItemStackWrapper) {
 }
 
 val ItemStack.localizedName: String
-    get() =
-        itemService.wrap(this).getItem().getLocalizedName() ?: type.name.lowercase()
+    get() = itemService.wrap(this).getItem().getLocalizedName() ?: type.name.lowercase()

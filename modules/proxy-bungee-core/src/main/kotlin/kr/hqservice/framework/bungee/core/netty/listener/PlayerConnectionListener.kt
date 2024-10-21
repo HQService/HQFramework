@@ -16,7 +16,6 @@ import java.util.*
 class PlayerConnectionListener(
     private val channelContainer: NettyChannelRegistry
 ) : Listener {
-
     @EventHandler
     fun playerPreLoginEvent(event: PreLoginEvent) {
         val nettyPlayer = NettyPlayerImpl(
