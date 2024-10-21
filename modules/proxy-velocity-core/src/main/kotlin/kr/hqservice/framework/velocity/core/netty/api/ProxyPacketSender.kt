@@ -41,7 +41,6 @@ class ProxyPacketSender(
     }
 
     override fun broadcast(message: Component, logging: Boolean) {
-
         proxy.sendMessage(message)
         if(logging) logger.info("[BROADCAST] ${LegacyComponentSerializer.legacySection().serialize(message)}")
     }

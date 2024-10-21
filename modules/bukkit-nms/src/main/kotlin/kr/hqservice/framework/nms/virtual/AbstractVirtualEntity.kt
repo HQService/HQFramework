@@ -6,6 +6,8 @@ import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import net.md_5.bungee.api.chat.BaseComponent
+import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -61,6 +63,12 @@ abstract class AbstractVirtualEntity(
     fun setName(name: String) {
         virtualEntityClasses.setCustomName(name, getEntity())
         this.name = name
+        switchMetaMask()
+    }
+
+    fun setName(name: BaseComponent) {
+        virtualEntityClasses.setCustomName(name, getEntity())
+        this.name = ComponentSerializer.toString(name)
         switchMetaMask()
     }
 

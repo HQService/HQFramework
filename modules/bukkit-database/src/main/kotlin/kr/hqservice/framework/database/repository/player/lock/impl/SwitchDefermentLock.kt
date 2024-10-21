@@ -38,14 +38,18 @@ class SwitchDefermentLock(plugin: HQBukkitPlugin) : HQCoroutineScope(plugin, Dis
 
     override fun unlock(playerId: UUID) {
         val lock = getSupervisor().children.firstOrNull {
-            it.coroutineContext[UUIDCoroutineContextElement]?.uuid == playerId
+            try {
+                it.coroutineContext[UUIDCoroutineContextElement]?.uuid == playerId
+            } catch (_: Exception) { false }
         }
         lock?.cancel()
     }
 
     override fun findLock(playerId: UUID): Job? {
         return getSupervisor().children.firstOrNull {
-            it.coroutineContext[UUIDCoroutineContextElement]?.uuid == playerId
+            try {
+                it.coroutineContext[UUIDCoroutineContextElement]?.uuid == playerId
+            } catch (_: Exception) { false }
         }
     }
 }

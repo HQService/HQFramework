@@ -10,6 +10,8 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.getStaticFunction
+import net.md_5.bungee.api.chat.BaseComponent
+import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 
@@ -63,6 +65,7 @@ class VirtualEntityClasses(
         Version.V_19_3.handleFunction("al"),
         Version.V_19_4.handleFunction("aj"),
         Version.V_20_2.handleFunction("al"),
+        Version.V_20_4.handleFunction("an"),
         Version.V_17_FORGE.handleFunction("m_20088_")
     )
 
@@ -77,6 +80,7 @@ class VirtualEntityClasses(
         Version.V_19_3.handleFunction("ah"),
         Version.V_19_4.handleFunction("af"),
         Version.V_20_2.handleFunction("ah"),
+        Version.V_20_4.handleFunction("aj"),
         Version.V_17_FORGE.handleFunction("m_142049_"),
         Version.V_19_FORGE.handleFunction("m_19879_")
     )
@@ -156,6 +160,10 @@ class VirtualEntityClasses(
 
     fun setCustomName(name: String, entity: Any) {
         setCustomNameFunction.call(entity, componentWrapper.wrap("{\"text\":\"$name\"}").getUnwrappedInstance())
+    }
+
+    fun setCustomName(name: BaseComponent, entity: Any) {
+        setCustomNameFunction.call(entity, componentWrapper.wrap(ComponentSerializer.toString(name)).getUnwrappedInstance())
     }
 
     fun setCustomNameVisible(visible: Boolean, entity: Any) {
