@@ -13,10 +13,15 @@ fun NettyPlayer.sendMessage(message: String, logging: Boolean = true) {
     packetSender.sendMessageToPlayer(this, message, logging)
 }
 
+@Deprecated("sendMessage(BaseComponent)")
 fun NettyChannel.sendMessage(message: String, logging: Boolean = true) {
     packetSender.sendMessageToChannel(this, message, logging)
 }
 
 fun NettyPlayer.sendMessage(message: BaseComponent, logging: Boolean = true) {
     packetSender.sendMessageToPlayer(this, message, logging)
+}
+
+fun NettyChannel.sendMessage(message: BaseComponent, logging: Boolean = true) {
+    packetSender.sendMessageToChannel(this, message, logging)
 }
