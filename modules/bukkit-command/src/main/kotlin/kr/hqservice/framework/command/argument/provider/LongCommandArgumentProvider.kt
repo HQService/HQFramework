@@ -8,12 +8,12 @@ import org.bukkit.Location
 
 @Component
 class LongCommandArgumentProvider : CommandArgumentProvider<Long> {
+    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
+        return listOf(context.getArgumentLabel())
+    }
+
     override suspend fun cast(context: CommandContext, argument: String?): Long {
         argument ?: throw ArgumentFeedback.RequireArgument
         return argument.toLongOrNull() ?: throw ArgumentFeedback.NotNumber
-    }
-
-    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
-        return listOf(context.getArgumentLabel())
     }
 }

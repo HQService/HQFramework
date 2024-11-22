@@ -14,8 +14,7 @@ import org.quartz.SchedulerException
 import org.quartz.SchedulerFactory
 import org.quartz.core.JobRunShellFactory
 import org.quartz.core.QuartzSchedulerResources
-import org.quartz.impl.SchedulerRepository
-import org.quartz.impl.StdScheduler
+import org.quartz.impl.*
 import org.quartz.spi.*
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method

@@ -1,6 +1,7 @@
 package kr.hqservice.framework.velocity.core.netty
 
 import kr.hqservice.framework.global.core.component.Bean
+import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.netty.HQNettyBootstrap
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Direction
@@ -11,7 +12,6 @@ import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.RelayingResult
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
-import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.component.KoinComponent
 import java.util.concurrent.TimeUnit

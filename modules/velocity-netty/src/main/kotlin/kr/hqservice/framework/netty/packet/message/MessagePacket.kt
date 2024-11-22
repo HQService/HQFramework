@@ -5,8 +5,7 @@ import kr.hqservice.framework.global.core.extension.compress
 import kr.hqservice.framework.global.core.extension.decompress
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.packet.Packet
-import kr.hqservice.framework.netty.packet.extension.readPlayers
-import kr.hqservice.framework.netty.packet.extension.writePlayers
+import kr.hqservice.framework.netty.packet.extension.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 

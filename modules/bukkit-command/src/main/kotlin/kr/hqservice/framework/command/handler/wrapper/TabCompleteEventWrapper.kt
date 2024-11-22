@@ -1,11 +1,13 @@
 package kr.hqservice.framework.command.handler.wrapper
 
+
 import kr.hqservice.framework.command.handler.CommandTabCompletionHandler.Companion.findHQCommand
 import kr.hqservice.framework.command.registry.TabCompleteRateLimitRegistry
 import org.bukkit.Location
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberFunctions
 
@@ -26,23 +28,18 @@ class TabCompleteEventWrapper(
 
         val buffer = buffer.call(event) as String
         val isCommand = isCommand.call(event) as Boolean
-        if ((!isCommand && !buffer.startsWith("/")) || buffer.indexOf(' ') == -1) return
+        if ((!isCommand && !buffer.startsWith("/")) || buffer.indexOf(' ') == -1)
+            return
 
         val args = buffer.split(" ")
         val command = args[0].removePrefix("/")
         val sender = sender.call(event) as CommandSender
 
         val location = location.call(event) as? Location
-        val completion = if(sender is Player && !sender.isTabCompletable()) {
-            null
-        } else {
-            val args2 = if (args.isNotEmpty()) {
-                args.subList(1, args.size).toTypedArray()
-            } else {
-                arrayOf("")
-            }
-            findHQCommand(command)?.hqTabComplete(sender, command, args2, location)
-        }
+        val completion = if(sender is Player && !sender.isTabCompletable()) null else findHQCommand(command)?.hqTabComplete(
+            sender, command,
+            if (args.isNotEmpty()) args.subList(1, args.size).toTypedArray() else arrayOf(""), location
+        )
 
         completion?.apply {
             setCompletions.call(event, this)
@@ -50,7 +47,5 @@ class TabCompleteEventWrapper(
         }
     }
 
-    private fun Player.isTabCompletable(): Boolean {
-        return tabCompleteRateLimitRegistry.isTabCompletable(this.uniqueId)
-    }
+    private fun Player.isTabCompletable() = tabCompleteRateLimitRegistry.isTabCompletable(this.uniqueId)
 }

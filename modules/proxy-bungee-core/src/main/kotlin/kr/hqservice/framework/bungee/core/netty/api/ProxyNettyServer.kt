@@ -18,6 +18,7 @@ import kotlin.reflect.KClass
 class ProxyNettyServer(
     private val proxy: ProxyServer
 ) : NettyServer {
+
     override fun getChannels(): List<NettyChannel> {
         return proxy.servers.map { NettyChannelImpl(it.value.address.port, it.key) }
     }

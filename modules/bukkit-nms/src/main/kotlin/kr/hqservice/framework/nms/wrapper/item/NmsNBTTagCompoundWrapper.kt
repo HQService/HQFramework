@@ -5,7 +5,7 @@ import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import kr.hqservice.framework.nms.wrapper.getFunction
 import org.koin.java.KoinJavaComponent.getKoin
-import java.util.*
+import java.util.UUID
 
 private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
 

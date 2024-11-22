@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bukkit.core.netty.server
 
+import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.NettyServer

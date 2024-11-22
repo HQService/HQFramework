@@ -5,13 +5,14 @@ import com.velocitypowered.api.event.Subscribe
 import com.velocitypowered.api.event.connection.DisconnectEvent
 import com.velocitypowered.api.event.connection.PreLoginEvent
 import com.velocitypowered.api.event.player.ServerConnectedEvent
+import com.velocitypowered.api.event.player.ServerPostConnectEvent
 import com.velocitypowered.api.event.player.ServerPreConnectEvent
+import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.impl.NettyChannelImpl
 import kr.hqservice.framework.netty.api.impl.NettyPlayerImpl
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionPacket
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
-import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import java.net.InetSocketAddress
 import java.util.*
 

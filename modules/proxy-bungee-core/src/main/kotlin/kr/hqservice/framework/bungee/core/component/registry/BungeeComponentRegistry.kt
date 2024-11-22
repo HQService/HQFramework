@@ -11,9 +11,8 @@ import java.io.File
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 
-class BungeeComponentRegistry(
-    private val plugin: HQBungeePlugin
-) : ProxyComponentRegistry<HQBungeePlugin>(plugin) {
+class BungeeComponentRegistry(private val plugin: HQBungeePlugin) :
+    ProxyComponentRegistry<HQBungeePlugin>(plugin) {
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
         return mutableMapOf<KClass<*>, Any>().apply {
             put(Plugin::class, plugin)

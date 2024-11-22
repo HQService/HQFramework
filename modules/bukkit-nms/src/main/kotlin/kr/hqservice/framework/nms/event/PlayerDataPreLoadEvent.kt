@@ -7,17 +7,14 @@ import org.bukkit.event.HandlerList
 class PlayerDataPreLoadEvent(
     val player: Player
 ) : Event(true) {
-    override fun getHandlers(): HandlerList {
-        return getHandlerList()
-    }
-
     companion object {
         @JvmStatic
-        val handlerList = HandlerList()
-
+        val HANDLER_LIST = HandlerList()
         @JvmStatic
-        fun getHandlerList(): HandlerList {
-            return handlerList
-        }
+        fun getHandlerList() = HANDLER_LIST
+    }
+
+    override fun getHandlers(): HandlerList {
+        return getHandlerList()
     }
 }

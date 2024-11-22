@@ -5,6 +5,7 @@ import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.*
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
+import java.lang.Exception
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
@@ -36,13 +37,14 @@ class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScope
             override fun handle(throwable: Throwable): HandleResult {
                 val exceptionClass = function.valueParameters.firstOrNull {
                     it.type.jvmErasure.isSubclassOf(Exception::class) || it.type.jvmErasure.isSubclassOf(Throwable::class)
-                } ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
+                }
+                    ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
                 if (throwable::class.starProjectedType == exceptionClass.type) {
                     function.call(obj, throwable)
-                    return if (function.hasAnnotation<MustBeStored>()) {
-                        HandleResult.HANDLED_MUST_STORE
+                    if (function.hasAnnotation<MustBeStored>()) {
+                        return HandleResult.HANDLED_MUST_STORE
                     } else {
-                        HandleResult.HANDLED
+                        return HandleResult.HANDLED
                     }
                 }
                 return HandleResult.UNHANDLED

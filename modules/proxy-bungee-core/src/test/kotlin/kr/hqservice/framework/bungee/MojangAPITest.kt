@@ -1,7 +1,7 @@
 package kr.hqservice.framework.bungee
 
 import kr.hqservice.framework.global.core.util.MojangAPI
-import java.util.*
+import java.util.UUID
 import kotlin.test.Test
 
 class MojangAPITest {

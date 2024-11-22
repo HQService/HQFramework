@@ -2,7 +2,7 @@ package kr.hqservice.framework.view.navigator
 
 import kr.hqservice.framework.view.View
 import org.bukkit.entity.Player
-import java.util.*
+import java.util.UUID
 
 interface Navigator {
     suspend fun goNext(view: View, vararg players: Player)

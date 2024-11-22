@@ -6,10 +6,7 @@ import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineConte
 import kr.hqservice.framework.global.core.component.HQComponent
 import kotlin.coroutines.CoroutineContext
 
-abstract class HQCoroutineScope(
-    private val plugin: HQBukkitPlugin,
-    private val dispatcher: CoroutineDispatcher
-) : CoroutineScope, HQComponent {
+abstract class HQCoroutineScope(private val plugin: HQBukkitPlugin, private val dispatcher: CoroutineDispatcher) : CoroutineScope, HQComponent {
     private val supervisorJob = SupervisorJob()
 
     final override val coroutineContext: CoroutineContext

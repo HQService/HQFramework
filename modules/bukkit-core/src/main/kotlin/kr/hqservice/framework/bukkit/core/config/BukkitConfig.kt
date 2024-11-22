@@ -2,6 +2,7 @@ package kr.hqservice.framework.bukkit.core.config
 
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
+import kr.hqservice.framework.global.core.component.Singleton
 import org.bukkit.Bukkit
 import org.bukkit.Server
 import org.bukkit.plugin.PluginManager

@@ -11,9 +11,8 @@ import java.io.File
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 
-class VelocityComponentRegistry(
-    private val plugin: HQVelocityPlugin
-) : ProxyComponentRegistry<HQVelocityPlugin>(plugin) {
+class VelocityComponentRegistry(private val plugin: HQVelocityPlugin) :
+    ProxyComponentRegistry<HQVelocityPlugin>(plugin) {
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
         return mutableMapOf<KClass<*>, Any>().apply {
             put(HQVelocityPlugin::class, plugin)

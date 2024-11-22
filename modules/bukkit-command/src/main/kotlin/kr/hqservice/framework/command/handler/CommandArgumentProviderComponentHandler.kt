@@ -8,9 +8,8 @@ import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kotlin.reflect.full.findAnnotation
 
 @ComponentHandler
-class CommandArgumentProviderComponentHandler(
-    private val registry: CommandArgumentProviderRegistry
-) : HQComponentHandler<CommandArgumentProvider<*>> {
+class CommandArgumentProviderComponentHandler(private val registry: CommandArgumentProviderRegistry) :
+    HQComponentHandler<CommandArgumentProvider<*>> {
     override fun setup(element: CommandArgumentProvider<*>) {
         registry.addProvider(element, element::class.findAnnotation<Qualifier>()?.value)
     }
