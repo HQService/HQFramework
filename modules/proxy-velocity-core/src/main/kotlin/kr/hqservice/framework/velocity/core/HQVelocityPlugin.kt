@@ -25,7 +25,6 @@ import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.logging.Logger
 
-
 abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
     protected open val velocityComponentRegistry: ComponentRegistry by inject { parametersOf(this) }
 
@@ -37,11 +36,11 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
     @Subscribe
     fun onProxyEnable(event: ProxyInitializeEvent) {
         onLoad()
-
         onPreEnable()
         loadConfig()
         onEnable()
         onPostEnable()
+        proxyServer = getProxyServer()
     }
 
     @Subscribe
@@ -112,5 +111,9 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
             }
             throw NullPointerException("플러그인의 velocity-plugin.json 을 로드할 수 없습니다.")
         }
+    }
+
+    internal companion object {
+        var proxyServer: ProxyServer? = null
     }
 }
