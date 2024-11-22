@@ -7,7 +7,6 @@ import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.plugin.IllegalPluginAccessException
 import org.bukkit.plugin.Plugin
-import org.bukkit.scheduler.BukkitRunnable
 import kotlin.coroutines.CoroutineContext
 
 @OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)

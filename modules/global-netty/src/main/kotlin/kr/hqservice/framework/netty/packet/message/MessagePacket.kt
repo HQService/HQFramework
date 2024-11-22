@@ -5,7 +5,8 @@ import kr.hqservice.framework.global.core.extension.compress
 import kr.hqservice.framework.global.core.extension.decompress
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.packet.Packet
-import kr.hqservice.framework.netty.packet.extension.*
+import kr.hqservice.framework.netty.packet.extension.readPlayers
+import kr.hqservice.framework.netty.packet.extension.writePlayers
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
 

@@ -1,6 +1,5 @@
 package kr.hqservice.framework.nms.virtual.container
 
-import kr.hqservice.framework.nms.Version
 import org.bukkit.event.inventory.InventoryType
 import kotlin.reflect.KClass
 

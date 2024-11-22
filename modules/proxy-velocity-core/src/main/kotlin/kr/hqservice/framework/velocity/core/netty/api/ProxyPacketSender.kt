@@ -1,12 +1,12 @@
 package kr.hqservice.framework.velocity.core.netty.api
 
 import com.velocitypowered.api.proxy.ProxyServer
-import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Packet
+import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.util.logging.Logger

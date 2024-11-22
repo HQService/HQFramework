@@ -7,7 +7,8 @@ import kr.hqservice.framework.inventory.test.container.TestContainer
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class HQContainerTest {
