@@ -29,6 +29,7 @@ bukkitResourceGenerator {
         libs.byte.buddy.core,
         libs.byte.buddy.agent,
         libs.quartz
+
     )
 }
 
