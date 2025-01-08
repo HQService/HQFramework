@@ -1,4 +1,4 @@
-config-version: 1.1
+config-version: 1.2
 
 lang: ko_kr
 
@@ -14,10 +14,10 @@ log:
     print-stack-traces-when-unhandled: false
 
 database:
-  type: sqlite
-
-  sqlite:
-    path: "hq-database/sqlite.db"
+  # h2, sqlite, mysql
+  type: h2
+  # 확장자는 붙이지 않아야합니다.
+  file-path: "hq-database/database"
 
   mysql:
     host: localhost

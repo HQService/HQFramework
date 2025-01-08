@@ -67,6 +67,7 @@ dependencyResolutionManagement {
 
             library("hikaricp", "com.zaxxer:HikariCP:${getProperty("hikariCPVersion")}")
             library("sqlite", "org.xerial:sqlite-jdbc:${getProperty("sqliteVersion")}")
+            library("h2", "com.h2database:h2:${getProperty("h2Version")}")
             library("mysql-connector", "mysql:mysql-connector-java:${getProperty("mysqlConnectorVersion")}")
 
             library("mockK", "io.mockk:mockk:${getProperty("mockKVersion")}")
