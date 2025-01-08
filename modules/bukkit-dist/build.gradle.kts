@@ -21,6 +21,7 @@ bukkitResourceGenerator {
         libs.exposed.jdbc,
         libs.hikaricp,
         libs.sqlite,
+        libs.h2,
         libs.netty,
         libs.guava,
         libs.snakeyaml,
@@ -29,7 +30,6 @@ bukkitResourceGenerator {
         libs.byte.buddy.core,
         libs.byte.buddy.agent,
         libs.quartz
-
     )
 }
 

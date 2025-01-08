@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerEntity
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.network.ServerPlayerConnection
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.PositionMoveRotation
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -162,7 +163,8 @@ abstract class AbstractVirtualEntity(
 
         if (state mask VirtualEntityState.RELOCATE) {
             if (switchState) state = state switch VirtualEntityState.RELOCATE
-            packets.add(ClientboundTeleportEntityPacket(getEntity()))
+            val entity = getEntity()
+            packets.add(ClientboundTeleportEntityPacket(entity.id, PositionMoveRotation.of(entity), setOf(), entity.onGround))
         }
 
         if (state mask VirtualEntityState.UPDATE_META_DATA) {

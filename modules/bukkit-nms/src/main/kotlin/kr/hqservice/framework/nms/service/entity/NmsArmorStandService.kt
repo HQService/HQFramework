@@ -57,10 +57,10 @@ class NmsArmorStandService(
     }
 
     internal fun setArms(wrapper: NmsArmorStandWrapper, arms: Boolean) {
-        (wrapper.getUnwrappedInstance() as ArmorStand).isShowArms = arms
+        (wrapper.getUnwrappedInstance() as ArmorStand).setShowArms(arms)
     }
 
     internal fun setBasePlate(wrapper: NmsArmorStandWrapper, basePlate: Boolean) {
-        (wrapper.getUnwrappedInstance() as ArmorStand).isNoBasePlate = !basePlate
+        (wrapper.getUnwrappedInstance() as ArmorStand).setNoBasePlate(!basePlate)
     }
 }

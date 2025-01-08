@@ -12,7 +12,8 @@ class NmsItemWrapper(
     private val languageRegistry: LanguageRegistry
 ) : NmsWrapper {
     private fun getDescriptionName(): String {
-        return nmsItem.getDescriptionId(nmsItemStackWrapper.getUnwrappedInstance() as ItemStack)
+        /*nmsItemStackWrapper.getUnwrappedInstance() as ItemStack*/
+        return nmsItem.descriptionId
     }
 
     fun getLocalizedName(): String? {
