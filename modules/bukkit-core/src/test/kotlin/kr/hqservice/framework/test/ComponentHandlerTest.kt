@@ -24,7 +24,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.core.context.*
+import org.koin.core.context.stopKoin
 import java.util.logging.Logger
 
 @ExtendWith(MockKExtension::class)

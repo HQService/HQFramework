@@ -3,7 +3,6 @@ package kr.hqservice.framework.scheduler.test
 import be.seeseemelk.mockbukkit.MockBukkit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kr.hqservice.framework.bukkit.scheduler.HQFrameworkSchedulerConfig
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

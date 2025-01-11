@@ -4,10 +4,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
 import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.virtual.scope.VirtualViewScope
 import kr.hqservice.framework.nms.virtual.scope.impl.GlobalVirtualScope
 import kr.hqservice.framework.nms.virtual.scope.impl.SingleVirtualScope
-import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper

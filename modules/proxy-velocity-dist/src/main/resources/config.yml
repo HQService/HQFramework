@@ -3,3 +3,6 @@ netty:
   host: 127.0.0.1
   port: 11286
   shutdown-servers: true
+
+# 마지막으로 나간 서버 기록
+last-connection: false

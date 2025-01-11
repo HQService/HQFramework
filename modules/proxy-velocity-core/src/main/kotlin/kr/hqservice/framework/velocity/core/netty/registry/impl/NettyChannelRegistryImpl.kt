@@ -1,9 +1,5 @@
 package kr.hqservice.framework.velocity.core.netty.registry.impl
 
-import kr.hqservice.framework.velocity.core.netty.event.NettyClientConnectedEvent
-import kr.hqservice.framework.velocity.core.netty.event.NettyClientDisconnectedEvent
-import kr.hqservice.framework.velocity.core.netty.event.NettyPacketReceivedEvent
-import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.Singleton
@@ -18,6 +14,10 @@ import kr.hqservice.framework.netty.packet.channel.ChannelListPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.velocity.core.HQVelocityPlugin
+import kr.hqservice.framework.velocity.core.netty.event.NettyClientConnectedEvent
+import kr.hqservice.framework.velocity.core.netty.event.NettyClientDisconnectedEvent
+import kr.hqservice.framework.velocity.core.netty.event.NettyPacketReceivedEvent
+import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.util.concurrent.ConcurrentHashMap

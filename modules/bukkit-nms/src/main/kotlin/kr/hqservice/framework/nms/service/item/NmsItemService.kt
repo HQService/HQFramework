@@ -10,9 +10,6 @@ import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredFunctions
-import kotlin.reflect.full.functions
-import kotlin.reflect.full.memberFunctions
 
 @Qualifier("item")
 @Service

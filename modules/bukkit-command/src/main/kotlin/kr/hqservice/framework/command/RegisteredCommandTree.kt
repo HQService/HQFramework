@@ -45,8 +45,8 @@ open class RegisteredCommandTree(
             })
         }.sortedBy {
             it.priority
-        }.map {
-            it.label
+        }.flatMap {
+            it.aliases + it.label
         }
     }
 
@@ -67,7 +67,9 @@ open class RegisteredCommandTree(
             components.forEach {
                 target.spigot().sendMessage(it)
             }
-        } else target.sendMessage("§fUnknown command. Type \"/help\" for help.")
+        } else {
+            target.sendMessage("§fUnknown command. Type \"/help\" for help.")
+        }
     }
 
     private fun getTextComponents(
@@ -82,8 +84,10 @@ open class RegisteredCommandTree(
         for ((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
             val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()
             val prefix = if (lastNode) " §7┗━§f" else " §7┣━§f"
-            val parameters =
-                executor.function.valueParameters.toMutableList().apply { removeFirst() }.joinToString("") {
+            val parameters = executor.function.valueParameters
+                .toMutableList()
+                .apply { removeFirst() }
+                .joinToString("") {
                     val argumentLabel = it.findAnnotation<ArgumentLabel>()?.label ?: it.name!!
                     if (it.type.isMarkedNullable || it.isOptional) {
                         "[${argumentLabel}] "
@@ -91,8 +95,16 @@ open class RegisteredCommandTree(
                         "<${argumentLabel}> "
                     }
                 }
+            val baseLabel = executor.label
+            val finalLabel = if (pointer.matches(koreanRegex)) {
+                executor.aliases.find {
+                    it.matches(koreanRegex)
+                } ?: baseLabel
+            } else {
+                baseLabel
+            }
             val component =
-                TextComponent((padding + prefix + executor.label + " " + parameters + "&7" + executor.description).colorize())
+                TextComponent((padding + prefix + finalLabel + " " + parameters + "&7" + executor.description).colorize())
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${executor.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
 
@@ -152,8 +164,13 @@ open class RegisteredCommandTree(
         var index = 0
         arguments.forEach { argument ->
             index++
-            tree = tree.commandTrees[argument] ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) } ?: return index to tree
+            tree = tree.commandTrees[argument] ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) }
+                    ?: return index to tree
         }
         return index to tree
+    }
+
+    private companion object {
+        val koreanRegex = Regex(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*")
     }
 }
