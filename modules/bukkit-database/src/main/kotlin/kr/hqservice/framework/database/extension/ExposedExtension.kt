@@ -30,11 +30,15 @@ fun Array<ItemStack?>.toExposedBlob(): ExposedBlob {
 }
 
 fun ExposedBlob.toItemStack(): ItemStack {
-    return this.bytes.toItemStack()
+    return this.inputStream.use {
+        toItemStack()
+    }
 }
 
 fun ExposedBlob.toItemArray(): Array<ItemStack> {
-    return this.bytes.toItemArray()
+    return this.inputStream.use { stream ->
+        stream.readAllBytes().toItemArray()
+    }
 }
 
 fun <ID : Comparable<ID>, E : Entity<ID>> EntityClass<ID, E>.findForUpdate(
