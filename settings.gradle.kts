@@ -5,6 +5,7 @@ rootProject.name = "HQFramework"
 pluginManagement {
     val kotlinVersion: String by settings
     val shadowVersion: String by settings
+    val paperWeightVersion: String by settings
 
     plugins {
         kotlin("jvm") version kotlinVersion apply false
@@ -14,11 +15,13 @@ pluginManagement {
         id("hqframework.dependency-handler-extensions")
         id("kr.hqservice.resource-generator.bukkit") version "1.0.0" apply false
         id("kr.hqservice.resource-generator.bungee") version "1.0.0" apply false
+        id("io.papermc.paperweight.userdev") version paperWeightVersion apply false
 
     }
 
     repositories {
         mavenCentral()
+        maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://maven.hqservice.kr/repository/maven-public/")
         gradlePluginPortal()
     }
@@ -90,6 +93,7 @@ dependencyResolutionManagement {
 
 includeBuild("build-logic")
 includeAll("modules")
+includeAll("nms")
 
 fun includeAll(modulesDir: String) {
     file("${rootProject.projectDir.path}/${modulesDir.replace(":", "/")}/").listFiles()?.forEach { modulePath ->

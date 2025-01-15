@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.util.impl
+package kr.hqservice.framework.nms.legacy.util
 
 import io.netty.channel.Channel
 import kr.hqservice.framework.global.core.component.Component
@@ -17,12 +17,11 @@ import kotlin.reflect.jvm.isAccessible
 
 @Component
 @Singleton(binds = [NettyInjectUtil::class])
-class NettyInjectUtilImpl(
+class LegacyNettyInjectUtil(
     private val plugin: Plugin,
     private val reflectionWrapper: NmsReflectionWrapper,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NettyInjectUtil, HQSimpleComponent {
-
     private val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection",
         Version.V_17.handle("server.network.ServerGamePacketListenerImpl", true)
     )
@@ -90,9 +89,5 @@ class NettyInjectUtilImpl(
             channel.pipeline().remove("hq_packet_handler")
             return@submit Unit
         }
-        /*if(pipeline.get("hq_packet_handler") != null) {
-            virtualHandlerRegistry.cleanup(player.uniqueId)
-            pipeline.remove("hq_packet_handler")
-        }*/
     }
 }

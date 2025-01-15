@@ -9,7 +9,11 @@ import org.koin.java.KoinJavaComponent.getKoin
 private val itemService: NmsService<ItemStack, NmsItemStackWrapper> by getKoin().inject(named("itemStack"))
 
 fun ItemStack.nms(block: NmsItemStackWrapper.() -> Unit): ItemStack {
-    itemMeta = itemService.wrap(this).apply(block).run(itemService::unwrap).itemMeta
+    itemMeta = itemService
+        .wrap(this)
+        .apply(block)
+        .run(itemService::unwrap)
+        .itemMeta
     return this
 }
 
