@@ -3,6 +3,8 @@ package kr.hqservice.framework.nms.legacy
 import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.legacy.virtual.classes.LegacyVirtualEntityClasses
 import kr.hqservice.framework.nms.legacy.virtual.container.LegacyVirtualContainerMessageFactory
+import kr.hqservice.framework.nms.legacy.virtual.entity.EmptyBillboardFactory
+import kr.hqservice.framework.nms.legacy.virtual.entity.LegacyHQBillboardFactory
 import kr.hqservice.framework.nms.legacy.virtual.entity.LegacyVirtualCameraFactory
 import kr.hqservice.framework.nms.legacy.virtual.entity.LegacyVirtualSignFactory
 import kr.hqservice.framework.nms.legacy.virtual.handler.LegacyVirtualAnvilHandlerFactory
@@ -13,6 +15,7 @@ import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.container.VirtualContainerMessageFactory
 import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.display.HQBillboardFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualItemHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
@@ -20,7 +23,8 @@ import kr.hqservice.framework.nms.virtual.item.VirtualItemMessageFactory
 
 class LegacyVirtualFactoryProvider(
     reflectionWrapper: LegacyNmsReflectionWrapper,
-    serviceProvider: LegacyNMSServiceProvider
+    serviceProvider: LegacyNMSServiceProvider,
+    supportDisplay: Boolean
 ) : NMSVirtualFactoryProvider {
     private val entityClasses = LegacyVirtualEntityClasses(reflectionWrapper, serviceProvider.provideBaseComponentService())
     private val virtualContainerMessageFactory = LegacyVirtualContainerMessageFactory(reflectionWrapper, serviceProvider.provideBaseComponentService(), serviceProvider.provideContainerService())
@@ -30,6 +34,7 @@ class LegacyVirtualFactoryProvider(
     private val virtualItemHandlerFactory = LegacyVirtualItemHandlerFactory()
     private val virtualSignHandlerFactory = LegacyVirtualSignHandlerFactory()
     private val virtualItemMessageFactory = LegacyVirtualItemMessageFactory(reflectionWrapper, serviceProvider.provideItemStackService(), serviceProvider.provideContainerService())
+    private val legacyHQBillboardFactory = if (supportDisplay) LegacyHQBillboardFactory(reflectionWrapper) else EmptyBillboardFactory()
 
     override fun provideVirtualEntityClasses(): VirtualEntityClasses {
         return entityClasses
@@ -61,5 +66,9 @@ class LegacyVirtualFactoryProvider(
 
     override fun provideVirtualItemMessageFactory(): VirtualItemMessageFactory {
         return virtualItemMessageFactory
+    }
+
+    override fun provideHQBillboardFactory(): HQBillboardFactory {
+        return legacyHQBillboardFactory
     }
 }

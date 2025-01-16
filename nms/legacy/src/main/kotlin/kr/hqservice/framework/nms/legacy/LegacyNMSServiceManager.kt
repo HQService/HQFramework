@@ -22,15 +22,17 @@ class LegacyNMSServiceManager(
 ) : NMSServiceManager {
     private lateinit var serviceProvider: LegacyNMSServiceProvider
     private lateinit var virtualFactoryProvider: LegacyVirtualFactoryProvider
+    private var supportDisplay = false
 
     override fun support(version: Version): Boolean {
+        supportDisplay = version.ordinal > Version.V_19_3.ordinal
         return version.ordinal <= Version.V_20_4.ordinal
     }
 
     override fun initialize() {
         val reflectionWrapper = LegacyNmsReflectionWrapperImpl(server, config)
-        serviceProvider = LegacyNMSServiceProvider(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
-        virtualFactoryProvider = LegacyVirtualFactoryProvider(reflectionWrapper, serviceProvider)
+        serviceProvider = LegacyNMSServiceProvider(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper, supportDisplay)
+        virtualFactoryProvider = LegacyVirtualFactoryProvider(reflectionWrapper, serviceProvider, supportDisplay)
     }
 
     override fun getServiceProvider(): NMSServiceProvider {

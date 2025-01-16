@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms.v20_6
 import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.v20_6.virtual.classes.VirtualEntityClassesImpl
 import kr.hqservice.framework.nms.v20_6.virtual.container.VirtualContainerMessageFactoryImpl
+import kr.hqservice.framework.nms.v20_6.virtual.entity.HQBillboardFactoryImpl
 import kr.hqservice.framework.nms.v20_6.virtual.entity.VirtualCameraFactoryImpl
 import kr.hqservice.framework.nms.v20_6.virtual.entity.VirtualSignFactoryImpl
 import kr.hqservice.framework.nms.v20_6.virtual.handler.VirtualAnvilHandlerFactoryImpl
@@ -13,6 +14,7 @@ import kr.hqservice.framework.nms.v20_6.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.container.VirtualContainerMessageFactory
 import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.display.HQBillboardFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualItemHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
@@ -30,6 +32,7 @@ class VirtualFactoryProviderImpl(
     private val virtualItemHandlerFactory = VirtualItemHandlerFactoryImpl()
     private val virtualSignHandlerFactory = VirtualSignHandlerFactoryImpl()
     private val virtualItemMessageFactory = VirtualItemMessageFactoryImpl(serviceProvider.provideItemStackService(), serviceProvider.provideContainerService())
+    private val hqBillboardFactory = HQBillboardFactoryImpl()
 
     override fun provideVirtualEntityClasses(): VirtualEntityClasses {
         return entityClasses
@@ -61,5 +64,9 @@ class VirtualFactoryProviderImpl(
 
     override fun provideVirtualItemMessageFactory(): VirtualItemMessageFactory {
         return virtualItemMessageFactory
+    }
+
+    override fun provideHQBillboardFactory(): HQBillboardFactory {
+        return hqBillboardFactory
     }
 }

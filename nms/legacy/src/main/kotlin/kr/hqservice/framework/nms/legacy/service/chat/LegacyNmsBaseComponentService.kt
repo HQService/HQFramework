@@ -37,7 +37,7 @@ class LegacyNmsBaseComponentService(
         )
     }
 
-    fun wrapFromJson(json: String): BaseComponentWrapper {
+    override fun wrapFromJson(json: String): BaseComponentWrapper {
         return BaseComponentWrapper(
             json,
             serializeFromJsonFunction.call(json)

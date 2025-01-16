@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.container.VirtualContainerMessageFactory
 import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.display.HQBillboardFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualItemHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
@@ -24,4 +25,6 @@ interface NMSVirtualFactoryProvider {
     fun provideVirtualSignHandlerFactory(): VirtualSignHandlerFactory
 
     fun provideVirtualItemMessageFactory(): VirtualItemMessageFactory
+
+    fun provideHQBillboardFactory(): HQBillboardFactory
 }

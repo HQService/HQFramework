@@ -14,7 +14,7 @@ class NmsBaseComponentServiceImpl : NmsBaseComponentService {
         )
     }
 
-    fun wrapFromJson(json: String): BaseComponentWrapper {
+    override fun wrapFromJson(json: String): BaseComponentWrapper {
         return wrap(json)
     }
 

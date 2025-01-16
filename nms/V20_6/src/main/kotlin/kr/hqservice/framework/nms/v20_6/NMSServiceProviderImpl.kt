@@ -5,6 +5,8 @@ import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
+import kr.hqservice.framework.nms.service.entity.NmsDisplayService
+import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
@@ -15,6 +17,8 @@ import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import kr.hqservice.framework.nms.v20_6.service.chat.NmsBaseComponentServiceImpl
 import kr.hqservice.framework.nms.v20_6.service.container.NmsContainerServiceImpl
 import kr.hqservice.framework.nms.v20_6.service.entity.NmsArmorStandServiceImpl
+import kr.hqservice.framework.nms.v20_6.service.entity.NmsDisplayServiceImpl
+import kr.hqservice.framework.nms.v20_6.service.entity.NmsTextDisplayServiceImpl
 import kr.hqservice.framework.nms.v20_6.service.item.NmsItemServiceImpl
 import kr.hqservice.framework.nms.v20_6.service.item.NmsItemStackServiceImpl
 import kr.hqservice.framework.nms.v20_6.service.item.NmsNBTTagCompoundServiceImpl
@@ -43,6 +47,8 @@ class NMSServiceProviderImpl(
     private val itemService = NmsItemServiceImpl(languageRegistry)
     private val itemStackService = NmsItemStackServiceImpl(languageRegistry)
     private val nettyInjectService = NmsNettyInjectServiceImpl(plugin, reflectionWrapper, virtualHandlerRegistry)
+    private val displayService = NmsDisplayServiceImpl()
+    private val textDisplayService = NmsTextDisplayServiceImpl(baseComponentService)
 
     override fun provideBaseComponentService(): NmsBaseComponentService {
         return baseComponentService
@@ -86,5 +92,13 @@ class NMSServiceProviderImpl(
 
     override fun provideReflectionWrapperService(): NmsReflectionWrapper {
         return reflectionWrapper
+    }
+
+    override fun provideDisplayService(): NmsDisplayService {
+        return displayService
+    }
+
+    override fun provideTextDisplayService(): NmsTextDisplayService {
+        return textDisplayService
     }
 }

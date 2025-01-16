@@ -9,6 +9,8 @@ import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
+import kr.hqservice.framework.nms.service.entity.NmsDisplayService
+import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
@@ -19,6 +21,7 @@ import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.virtual.container.VirtualContainerMessageFactory
 import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.display.HQBillboardFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualItemHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
@@ -140,6 +143,20 @@ class HQFrameworkNMSConfiguration(
 
     @Singleton
     @Bean
+    override fun provideDisplayService(): NmsDisplayService {
+        return NMSServiceManager.instance?.getServiceProvider()?.provideDisplayService()
+            ?: throw UnsupportedOperationException("unsupported version")
+    }
+
+    @Singleton
+    @Bean
+    override fun provideTextDisplayService(): NmsTextDisplayService {
+        return NMSServiceManager.instance?.getServiceProvider()?.provideTextDisplayService()
+            ?: throw UnsupportedOperationException("unsupported version")
+    }
+
+    @Singleton
+    @Bean
     override fun provideVirtualEntityClasses(): VirtualEntityClasses {
         return NMSServiceManager.instance?.getVirtualFactoryProvider()?.provideVirtualEntityClasses()
             ?: throw UnsupportedOperationException("unsupported version")
@@ -193,6 +210,13 @@ class HQFrameworkNMSConfiguration(
     @Bean
     override fun provideVirtualItemMessageFactory(): VirtualItemMessageFactory {
         return NMSServiceManager.instance?.getVirtualFactoryProvider()?.provideVirtualItemMessageFactory()
+            ?: throw UnsupportedOperationException("unsupported version")
+    }
+
+    @Singleton
+    @Bean
+    override fun provideHQBillboardFactory(): HQBillboardFactory {
+        return NMSServiceManager.instance?.getVirtualFactoryProvider()?.provideHQBillboardFactory()
             ?: throw UnsupportedOperationException("unsupported version")
     }
 }

@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.legacy
 import kr.hqservice.framework.nms.NMSServiceProvider
 import kr.hqservice.framework.nms.legacy.service.chat.LegacyNmsBaseComponentService
 import kr.hqservice.framework.nms.legacy.service.container.LegacyNMSContainerService
-import kr.hqservice.framework.nms.legacy.service.entity.LegacyNMSArmorStandService
+import kr.hqservice.framework.nms.legacy.service.entity.*
 import kr.hqservice.framework.nms.legacy.service.item.LegacyNMSItemService
 import kr.hqservice.framework.nms.legacy.service.item.LegacyNMSItemStackService
 import kr.hqservice.framework.nms.legacy.service.item.LegacyNMSNBTTagCompoundService
@@ -16,6 +16,8 @@ import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
+import kr.hqservice.framework.nms.service.entity.NmsDisplayService
+import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
@@ -31,7 +33,8 @@ class LegacyNMSServiceProvider(
     plugin: Plugin,
     languageRegistry: LanguageRegistry,
     virtualHandlerRegistry: VirtualHandlerRegistry,
-    private val reflectionWrapper: LegacyNmsReflectionWrapper
+    private val reflectionWrapper: LegacyNmsReflectionWrapper,
+    private val supportDisplay: Boolean
 ) : NMSServiceProvider {
     private val baseComponentService = LegacyNmsBaseComponentService(reflectionWrapper)
     private val containerService = LegacyNMSContainerService(reflectionWrapper)
@@ -43,6 +46,8 @@ class LegacyNMSServiceProvider(
     private val itemService = LegacyNMSItemService(reflectionWrapper, languageRegistry)
     private val itemStackService = LegacyNMSItemStackService(nbtTagService, itemService)
     private val nettyInjectService = LegacyNmsNettyInjectService(plugin, reflectionWrapper, virtualHandlerRegistry)
+    private val displayService = if (supportDisplay) LegacyNmsDisplayService(worldService, reflectionWrapper) else EmptyNmsDisplayService()
+    private val textDisplayService = if (supportDisplay) LegacyNmsTextDisplayService(worldService, displayService, baseComponentService, reflectionWrapper) else EmptyNmsTextDisplayService()
 
     override fun provideBaseComponentService(): NmsBaseComponentService {
         return baseComponentService
@@ -86,5 +91,13 @@ class LegacyNMSServiceProvider(
 
     override fun provideReflectionWrapperService(): NmsReflectionWrapper {
         return reflectionWrapper
+    }
+
+    override fun provideDisplayService(): NmsDisplayService {
+        return displayService
+    }
+
+    override fun provideTextDisplayService(): NmsTextDisplayService {
+        return textDisplayService
     }
 }

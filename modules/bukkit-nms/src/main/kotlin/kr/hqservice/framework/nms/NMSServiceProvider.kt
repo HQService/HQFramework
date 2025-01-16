@@ -3,6 +3,8 @@ package kr.hqservice.framework.nms
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
+import kr.hqservice.framework.nms.service.entity.NmsDisplayService
+import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
@@ -34,4 +36,8 @@ interface NMSServiceProvider {
     fun provideNettyInjectService(): NmsNettyInjectService
 
     fun provideReflectionWrapperService(): NmsReflectionWrapper
+
+    fun provideDisplayService(): NmsDisplayService
+
+    fun provideTextDisplayService(): NmsTextDisplayService
 }
