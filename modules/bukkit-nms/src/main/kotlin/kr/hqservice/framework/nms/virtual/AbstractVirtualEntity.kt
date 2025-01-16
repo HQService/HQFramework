@@ -22,7 +22,7 @@ abstract class AbstractVirtualEntity(
     private val virtualEntityClasses: VirtualEntityClasses by inject()
 
     private var state: Byte = 0x7
-    private var itemContainer: List<Any>? = null
+    var itemContainer: List<Any>? = null
     private var vaild = false
     abstract fun getEntity(): Any
 
@@ -37,7 +37,7 @@ abstract class AbstractVirtualEntity(
 
     protected abstract fun initialize()
 
-    private fun getEntityId(): Int {
+    fun getEntityId(): Int {
         return virtualEntityClasses.getId(getEntity())
     }
 
@@ -127,28 +127,25 @@ abstract class AbstractVirtualEntity(
         val packets = mutableListOf<Any>()
         if (state mask VirtualEntityState.DESTROY) {
             if (switchState) state = state switch VirtualEntityState.UNHANDLED
-            return VirtualMessageImpl(virtualEntityClasses.entityDestroyPacket.newInstance(arrayOf(getEntityId()).toIntArray()))
+            return VirtualMessageImpl(virtualEntityClasses.entityDestroyPacket.newInstance(this))
         }
 
         if (state mask VirtualEntityState.CREAT) {
             if (!vaild) entityInitialize()
             if (switchState) state = state switch VirtualEntityState.CREAT
-            packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(getEntity()))
+            packets.add(virtualEntityClasses.entitySpawnPacket.newInstance(this))
         }
 
         if (state mask VirtualEntityState.UPDATE_ITEM) {
             if (switchState) state = state switch VirtualEntityState.UPDATE_ITEM
             packets.add(
-                virtualEntityClasses.entityEquipmentPacket.newInstance(
-                    getEntityId(),
-                    itemContainer ?: emptyList<Any>()
-                )
+                virtualEntityClasses.entityEquipmentPacket.newInstance(this)
             )
         }
 
         if (state mask VirtualEntityState.RELOCATE) {
             if (switchState) state = state switch VirtualEntityState.RELOCATE
-            packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(getEntity()))
+            packets.add(virtualEntityClasses.entityTeleportPacket.newInstance(this))
         }
 
         if (state mask VirtualEntityState.UPDATE_META_DATA) {

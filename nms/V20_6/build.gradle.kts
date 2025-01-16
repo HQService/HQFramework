@@ -6,6 +6,7 @@ plugins {
 dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
+    apiModule("bukkit", "nms")
     api(libs.paper.api)
     api(libs.kotlinx.coroutines.core)
     api(libs.exposed.core)

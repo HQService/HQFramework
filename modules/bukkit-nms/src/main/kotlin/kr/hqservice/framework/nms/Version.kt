@@ -24,7 +24,6 @@ enum class Version(
     V_20_6,
     V_21,
     V_21_1,
-    V_21_2,
     V_21_3,
 
     // forge

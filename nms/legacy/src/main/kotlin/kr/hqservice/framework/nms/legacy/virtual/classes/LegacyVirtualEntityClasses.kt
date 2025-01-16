@@ -6,6 +6,7 @@ import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
 import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.legacy.wrapper.getStaticFunction
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
+import kr.hqservice.framework.nms.virtual.classes.VirtualMessageConstructor
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Location
@@ -25,23 +26,37 @@ class LegacyVirtualEntityClasses(
         Version.V_17.handle("network.syncher")
     )
 
-    override val entitySpawnPacket = LegacyVirtualMessageConstructor(reflectionWrapper.getNmsClass("PacketPlayOutSpawnEntityLiving",
+    private val entitySpawnPacketConstructor = reflectionWrapper.getNmsClass("PacketPlayOutSpawnEntityLiving",
         Version.V_17.handle("network.protocol.game.PacketPlayOutSpawnEntity", true)
-    ).java.getConstructor(entityClass.java))
+    ).java.getConstructor(entityClass.java)
 
-    override val entityDestroyPacket = LegacyVirtualMessageConstructor(
-        reflectionWrapper.getNmsClass("PacketPlayOutEntityDestroy",
+    private val entityDestroyPacketConstructor = reflectionWrapper.getNmsClass("PacketPlayOutEntityDestroy",
         Version.V_17.handle("network.protocol.game")
-    ).java.getConstructor(IntArray::class.java))
+    ).java.getConstructor(IntArray::class.java)
 
-    override val entityTeleportPacket = LegacyVirtualMessageConstructor(
-        reflectionWrapper.getNmsClass("PacketPlayOutEntityTeleport",
+    private val entityTeleportPacketConstructor = reflectionWrapper.getNmsClass("PacketPlayOutEntityTeleport",
         Version.V_17.handle("network.protocol.game")
-    ).java.getConstructor(entityClass.java))
+    ).java.getConstructor(entityClass.java)
 
-    override val entityEquipmentPacket = LegacyVirtualMessageConstructor(reflectionWrapper.getNmsClass("PacketPlayOutEntityEquipment",
+    private val entityEquipmentPacketConstructor = reflectionWrapper.getNmsClass("PacketPlayOutEntityEquipment",
         Version.V_17.handle("network.protocol.game")
-    ).java.getConstructor(Int::class.java, List::class.java))
+    ).java.getConstructor(Int::class.java, List::class.java)
+
+    override val entitySpawnPacket = VirtualMessageConstructor {
+        entitySpawnPacketConstructor.newInstance(it.getEntity())
+    }
+
+    override val entityDestroyPacket = VirtualMessageConstructor {
+        entityDestroyPacketConstructor.newInstance(intArrayOf(it.getEntityId()))
+    }
+
+    override val entityTeleportPacket = VirtualMessageConstructor {
+        entityTeleportPacketConstructor.newInstance(it.getEntity())
+    }
+
+    override val entityEquipmentPacket = VirtualMessageConstructor {
+        entityEquipmentPacketConstructor.newInstance(it.getEntityId(), it.itemContainer ?: emptyList<Any>())
+    }
 
     private val listMetadata = Version.V_19.support(reflectionWrapper.getVersion())
     private val entityMetadataPacket = if (!listMetadata) {
