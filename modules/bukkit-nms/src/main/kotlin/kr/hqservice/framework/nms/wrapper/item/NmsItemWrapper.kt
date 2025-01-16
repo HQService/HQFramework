@@ -2,8 +2,8 @@ package kr.hqservice.framework.nms.wrapper.item
 
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 
-interface NmsItemWrapper : NmsWrapper {
-    fun getDescriptionName(): String
+abstract class NmsItemWrapper : NmsWrapper {
+    abstract fun getDescriptionName(): String
 
-    fun getLocalizedName(): String?
+    abstract fun getLocalizedName(): String?
 }

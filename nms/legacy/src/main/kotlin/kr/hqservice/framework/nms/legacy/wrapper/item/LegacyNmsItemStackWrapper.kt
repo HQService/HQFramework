@@ -6,6 +6,7 @@ import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.legacy.wrapper.getFunction
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
@@ -17,14 +18,14 @@ class LegacyNmsItemStackWrapper(
     private val tagService: NmsNBTTagCompoundService,
     private val itemService: NmsItemService,
     private val itemStackService: NmsItemStackService
-) : NmsItemStackWrapper {
+) : NmsItemStackWrapper() {
     companion object {
-        private val reflectionWrapper: LegacyNmsReflectionWrapper by getKoin().inject()
+        private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
 
-        private val nmsItemStackClass by lazy { reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item")) }
-        private val nbtTagClass by lazy { reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt")) }
+        private val nmsItemStackClass by lazy { (reflectionWrapper as LegacyNmsReflectionWrapper).getNmsClass("ItemStack", Version.V_17.handle("world.item")) }
+        private val nbtTagClass by lazy { (reflectionWrapper as LegacyNmsReflectionWrapper).getNmsClass("NBTTagCompound", Version.V_17.handle("nbt")) }
 
-        private val getTagFunction by lazy { reflectionWrapper.getFunction(nmsItemStackClass, "getTag",
+        private val getTagFunction by lazy { (reflectionWrapper as LegacyNmsReflectionWrapper).getFunction(nmsItemStackClass, "getTag",
             Version.V_18.handle("s"),
             Version.V_18_2.handle("t"),
             Version.V_19.handle("u"),
@@ -33,7 +34,7 @@ class LegacyNmsItemStackWrapper(
             Version.V_17_FORGE.handle("m_41783_") // ~1.20.2
         ) }
 
-        private val setTagFunction by lazy { reflectionWrapper.getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
+        private val setTagFunction by lazy { (reflectionWrapper as LegacyNmsReflectionWrapper).getFunction(nmsItemStackClass, "setTag", listOf(nbtTagClass),
             Version.V_18.handleFunction("c") { setParameterClasses(nbtTagClass) },
             Version.V_17_FORGE.handleFunction("m_41751_") { setParameterClasses(nbtTagClass) }, // ~1.20.2
         ) }

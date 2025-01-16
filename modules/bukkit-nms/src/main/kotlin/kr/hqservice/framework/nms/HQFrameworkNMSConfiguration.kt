@@ -1,5 +1,7 @@
 package kr.hqservice.framework.nms
 
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Qualifier
@@ -22,9 +24,43 @@ import kr.hqservice.framework.nms.virtual.handler.VirtualItemHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
 import kr.hqservice.framework.nms.virtual.item.VirtualItemMessageFactory
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import org.bukkit.Server
 
 @Configuration
-class HQFrameworkNMSConfiguration : NMSServiceProvider, NMSVirtualFactoryProvider {
+class HQFrameworkNMSConfiguration(
+    private val plugin: HQBukkitPlugin,
+    server: Server,
+) : NMSServiceProvider, NMSVirtualFactoryProvider {
+    private val versionName: String = server.bukkitVersion.split("-")[0]
+    private val majorVersion = versionName.split(".")[1].toInt()
+    private val minorVersion = try {
+        versionName.split(".")[2].toInt()
+    } catch (e: Exception) {
+        0
+    }
+    private val version = Version.majorVersionOf("V_$majorVersion")
+    private val fullVersion = try {
+        Version.valueOf("V_${majorVersion}_${minorVersion}")
+    } catch (e: Exception) {
+        version
+    }
+
+    fun setup() {
+        if (fullVersion == null)
+            throw UnsupportedOperationException("unsupported version: $versionName")
+
+        val serviceManagers = plugin.bukkitComponentRegistry.getComponents(NMSServiceManager::class)
+        val serviceManager = serviceManagers.firstOrNull { it.support(fullVersion) }
+            ?: throw UnsupportedOperationException("unsupported version: $versionName")
+
+        serviceManager.initialize()
+        NMSServiceManager.instance = serviceManager
+    }
+
+    init {
+        if (NMSServiceManager.instance == null) setup()
+    }
+
     @Singleton
     @Bean
     override fun provideBaseComponentService(): NmsBaseComponentService {

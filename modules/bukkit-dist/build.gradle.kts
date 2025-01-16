@@ -45,10 +45,13 @@ dependencies {
     runtimeOnlyModule("bukkit", "region")
     runtimeOnlyModule("bukkit", "database")
     runtimeOnlyModule("bukkit", "nms")
+    runtimeOnly(project(":nms:legacy"))
+
     runtimeOnlyModule("bukkit", "scheduler")
 }
 
 configurations.runtimeClasspath.configure {
     exclude(libs.spigot.api.get().group, libs.spigot.api.get().name)
     exclude(libs.paper.api.get().group, libs.paper.api.get().name)
+    exclude(libs.kotlin.stdlib.jdk8.get().group, "*")
 }

@@ -3,82 +3,82 @@ package kr.hqservice.framework.nms.wrapper.item
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import java.util.*
 
-interface NmsNBTTagCompoundWrapper : NmsWrapper {
-    fun getString(key: String, def: String = ""): String
+abstract class NmsNBTTagCompoundWrapper : NmsWrapper {
+    abstract fun getString(key: String, def: String = ""): String
 
-    fun getStringOrNull(key: String): String?
+    abstract fun getStringOrNull(key: String): String?
 
-    fun setString(key: String, value: String)
+    abstract fun setString(key: String, value: String)
 
-    fun getBoolean(key: String, def: Boolean = false): Boolean
+    abstract fun getBoolean(key: String, def: Boolean = false): Boolean
 
-    fun getBooleanOrNull(key: String): Boolean?
+    abstract fun getBooleanOrNull(key: String): Boolean?
 
-    fun setBoolean(key: String, value: Boolean)
+    abstract fun setBoolean(key: String, value: Boolean)
 
-    fun getUUID(key: String): UUID
+    abstract fun getUUID(key: String): UUID
 
-    fun getUUIDOrNull(key: String): UUID?
+    abstract fun getUUIDOrNull(key: String): UUID?
 
-    fun setUUID(key: String, value: UUID)
+    abstract fun setUUID(key: String, value: UUID)
 
-    fun getByte(key: String, def: Byte = 0): Byte
+    abstract fun getByte(key: String, def: Byte = 0): Byte
 
-    fun getByteOrNull(key: String): Byte?
+    abstract fun getByteOrNull(key: String): Byte?
 
-    fun setByte(key: String, value: Byte)
+    abstract fun setByte(key: String, value: Byte)
 
-    fun getShort(key: String, def: Short = 0): Short
+    abstract fun getShort(key: String, def: Short = 0): Short
 
-    fun getShortOrNull(key: String): Short?
+    abstract fun getShortOrNull(key: String): Short?
 
-    fun setShort(key: String, value: Short)
+    abstract fun setShort(key: String, value: Short)
 
-    fun getInt(key: String, def: Int = 0): Int
+    abstract fun getInt(key: String, def: Int = 0): Int
 
-    fun getIntOrNull(key: String): Int?
+    abstract fun getIntOrNull(key: String): Int?
 
-    fun setInt(key: String, value: Int)
+    abstract fun setInt(key: String, value: Int)
 
-    fun getLong(key: String, def: Long = 0L): Long
+    abstract fun getLong(key: String, def: Long = 0L): Long
 
-    fun getLongOrNull(key: String): Long?
+    abstract fun getLongOrNull(key: String): Long?
 
-    fun setLong(key: String, value: Long)
+    abstract fun setLong(key: String, value: Long)
 
-    fun getFloat(key: String, def: Float = 0f): Float
+    abstract fun getFloat(key: String, def: Float = 0f): Float
 
-    fun getFloatOrNull(key: String): Float?
+    abstract fun getFloatOrNull(key: String): Float?
 
-    fun setFloat(key: String, value: Float)
+    abstract fun setFloat(key: String, value: Float)
 
-    fun getDouble(key: String, def: Double = 0.0): Double
+    abstract fun getDouble(key: String, def: Double = 0.0): Double
 
-    fun getDoubleOrNull(key: String): Double?
+    abstract fun getDoubleOrNull(key: String): Double?
 
-    fun setDouble(key: String, value: Double)
+    abstract fun setDouble(key: String, value: Double)
 
-    fun getByteArray(key: String, def: ByteArray = byteArrayOf()): ByteArray
+    abstract fun getByteArray(key: String, def: ByteArray = byteArrayOf()): ByteArray
 
-    fun getByteArrayOrNull(key: String): ByteArray?
+    abstract fun getByteArrayOrNull(key: String): ByteArray?
 
-    fun setByteArray(key: String, value: ByteArray)
+    abstract fun setByteArray(key: String, value: ByteArray)
 
-    fun getIntArray(key: String, def: IntArray = intArrayOf()): IntArray
+    abstract fun getIntArray(key: String, def: IntArray = intArrayOf()): IntArray
 
-    fun getIntArrayOrNull(key: String): IntArray?
+    abstract fun getIntArrayOrNull(key: String): IntArray?
 
-    fun setIntArray(key: String, value: IntArray)
+    abstract fun setIntArray(key: String, value: IntArray)
 
-    fun getLongArray(key: String, def: LongArray = longArrayOf()): LongArray
+    abstract fun getLongArray(key: String, def: LongArray = longArrayOf()): LongArray
 
-    fun getLongArrayOrNull(key: String): LongArray?
+    abstract fun getLongArrayOrNull(key: String): LongArray?
 
-    fun setLongArray(key: String, value: LongArray)
+    abstract fun setLongArray(key: String, value: LongArray)
 
-    fun hasKey(key: String): Boolean
+    abstract fun hasKey(key: String): Boolean
 
-    fun remove(key: String)
+    abstract fun remove(key: String)
 
-    fun isEmpty(): Boolean
+    abstract fun isEmpty(): Boolean
 }

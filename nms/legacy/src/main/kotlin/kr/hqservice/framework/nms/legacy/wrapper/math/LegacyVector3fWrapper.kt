@@ -10,7 +10,7 @@ class LegacyVector3fWrapper(
     private val vector3f: Any,
     targetClass: KClass<*>,
     reflectionWrapper: LegacyNmsReflectionWrapper
-) : Vector3fWrapper {
+) : Vector3fWrapper() {
     private val getXFunction = reflectionWrapper.getFunction(targetClass, "getX",
         Version.V_18.handleFunction("b"),
         Version.V_17_FORGE.handleFunction("m_123156_")

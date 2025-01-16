@@ -7,7 +7,7 @@ import java.util.*
 class LegacyNmsNBTTagCompoundWrapper(
     private val nbtTag: Any,
     private val reflectionWrapper: LegacyNmsReflectionWrapper
-) : NmsNBTTagCompoundWrapper {
+) : NmsNBTTagCompoundWrapper() {
     companion object {
         private var functions: LegacyNBTTagFunctions? = null
 

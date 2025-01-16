@@ -1,8 +1,8 @@
 package kr.hqservice.framework.nms
 
-import kr.hqservice.framework.global.core.component.HQComponent
+import kr.hqservice.framework.global.core.component.HQSimpleComponent
 
-interface NMSServiceManager : HQComponent {
+interface NMSServiceManager : HQSimpleComponent {
     companion object {
         internal var instance: NMSServiceManager? = null
     }

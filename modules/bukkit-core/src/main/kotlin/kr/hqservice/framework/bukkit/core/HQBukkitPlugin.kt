@@ -42,7 +42,7 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
         file: File
     ) : super(loader, description, dataFolder, file)*/
 
-    protected open val bukkitComponentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
+    open val bukkitComponentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
     private val config = File(dataFolder, "config.yml").yaml()
 
     // folia

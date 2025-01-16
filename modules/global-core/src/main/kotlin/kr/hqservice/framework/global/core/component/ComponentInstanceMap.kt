@@ -17,6 +17,11 @@ class ComponentInstanceMap : MutableMap<KClass<*>, HQComponent> by mutableMapOf(
         return get(key) as T
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun <T : HQComponent> getComponents(key: KClass<out T>): List<T> {
+        return values.filter { key.isInstance(it) } as List<T>
+    }
+
     fun getComponents(): Collection<HQComponent> {
         return this.values
     }

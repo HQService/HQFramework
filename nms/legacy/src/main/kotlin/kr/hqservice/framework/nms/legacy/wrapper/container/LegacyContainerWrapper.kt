@@ -10,7 +10,7 @@ class LegacyContainerWrapper(
     private val container: Any,
     reflectionWrapper: LegacyNmsReflectionWrapper,
     containerClass: KClass<*>
-) : IContainerWrapper {
+) : IContainerWrapper() {
     private val containerIdField = reflectionWrapper.getField(containerClass, "containerId",
         Version.V_17.handle("j"),
         Version.V_17_FORGE.handle("f_38840_")

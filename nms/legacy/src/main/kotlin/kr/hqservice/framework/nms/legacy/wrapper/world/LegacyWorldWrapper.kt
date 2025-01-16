@@ -9,7 +9,7 @@ import org.bukkit.Location
 class LegacyWorldWrapper(
     private val world: Any,
     reflectionWrapper: LegacyNmsReflectionWrapper
-) : WorldWrapper {
+) : WorldWrapper() {
     private val worldClass = reflectionWrapper.getNmsClass("World",
         Version.V_17.handle("world.level")
     )

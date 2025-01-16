@@ -3,18 +3,18 @@ package kr.hqservice.framework.nms.wrapper.item
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.bukkit.inventory.ItemStack
 
-interface NmsItemStackWrapper : NmsWrapper {
-    fun hasTag(): Boolean
+abstract class NmsItemStackWrapper : NmsWrapper {
+    abstract fun hasTag(): Boolean
 
-    fun tag(tagScope: NmsNBTTagCompoundWrapper.() -> Unit = {}): NmsNBTTagCompoundWrapper
+    abstract fun tag(tagScope: NmsNBTTagCompoundWrapper.() -> Unit = {}): NmsNBTTagCompoundWrapper
 
-    fun getTag(): NmsNBTTagCompoundWrapper
+    abstract fun getTag(): NmsNBTTagCompoundWrapper
 
-    fun getTagOrNull(): NmsNBTTagCompoundWrapper?
+    abstract fun getTagOrNull(): NmsNBTTagCompoundWrapper?
 
-    fun setTag(nbtTagCompoundWrapper: NmsNBTTagCompoundWrapper?)
+    abstract fun setTag(nbtTagCompoundWrapper: NmsNBTTagCompoundWrapper?)
 
-    fun getItem(): NmsItemWrapper
+    abstract fun getItem(): NmsItemWrapper
 
-    fun getBukkitItemStack(): ItemStack
+    abstract fun getBukkitItemStack(): ItemStack
 }
