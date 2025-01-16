@@ -3,11 +3,10 @@ package kr.hqservice.framework.nms.legacy.service.container
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.legacy.wrapper.container.LegacyContainerWrapper
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.container.ContainerWrapperImpl
 import org.bukkit.entity.Player
 import kotlin.reflect.KClass
 
@@ -34,11 +33,11 @@ class LegacyNMSContainerService(
     override fun wrap(target: Player): ContainerWrapper {
         val nmsPlayer = reflectionWrapper.getEntityPlayer(target)
         val containerMenu = containerMenuField.call(nmsPlayer) ?: throw UnsupportedOperationException()
-        return ContainerWrapperImpl(containerMenu, reflectionWrapper, containerClass)
+        return LegacyContainerWrapper(containerMenu, reflectionWrapper, containerClass)
     }
 
     override fun getWrapper(nmsInstance: Any): ContainerWrapper {
-        return ContainerWrapperImpl(nmsInstance, reflectionWrapper, containerClass)
+        return LegacyContainerWrapper(nmsInstance, reflectionWrapper, containerClass)
     }
 
     override fun unwrap(wrapper: ContainerWrapper): Player {

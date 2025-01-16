@@ -3,13 +3,13 @@ package kr.hqservice.framework.nms.legacy.service.item
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.legacy.wrapper.item.LegacyNmsItemStackWrapper
+import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
+import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.getStaticFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
-import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
-import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.java.KoinJavaComponent.getKoin
 import kotlin.reflect.KClass
@@ -17,8 +17,8 @@ import kotlin.reflect.KClass
 @Qualifier("itemStack")
 @Service
 class LegacyNMSItemStackService(
-    @Qualifier("tag") private val tagService: NmsService<Any?, NmsNBTTagCompoundWrapper>,
-    @Qualifier("item") private val itemService: NmsService<NmsItemStackWrapper, NmsItemWrapper>,
+    @Qualifier("tag") private val tagService: NmsNBTTagCompoundService,
+    @Qualifier("item") private val itemService: NmsItemService,
 ) : NmsItemStackService {
 
     companion object {
@@ -45,7 +45,7 @@ class LegacyNMSItemStackService(
     }
 
     override fun wrap(target: ItemStack): NmsItemStackWrapper {
-        return NmsItemStackWrapper(
+        return LegacyNmsItemStackWrapper(
             asNmsCopyFunction.call(target) ?: throw IllegalArgumentException(),
             tagService,
             itemService, this
@@ -58,7 +58,7 @@ class LegacyNMSItemStackService(
     }
 
     override fun getWrapper(nmsInstance: Any): NmsItemStackWrapper {
-        return NmsItemStackWrapper(nmsInstance, tagService, itemService, this)
+        return LegacyNmsItemStackWrapper(nmsInstance, tagService, itemService, this)
     }
 
     override fun getOriginalClass(): KClass<*> {

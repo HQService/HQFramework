@@ -19,12 +19,13 @@ abstract class AbstractVirtualEntity(
     private var name: String,
 ) : Virtual, KoinComponent {
     protected val reflectionWrapper: NmsReflectionWrapper by inject()
-    private val virtualEntityClasses: VirtualEntityClasses by inject()
+    private val virtualEntityClasses: VirtualEntityClasses<*> by inject()
 
     private var state: Byte = 0x7
     private var itemContainer: List<Any>? = null
     private var vaild = false
     abstract fun getEntity(): Any
+
     private fun entityInitialize() {
         if (name.isNotEmpty()) {
             setName(name.colorize())
@@ -120,7 +121,7 @@ abstract class AbstractVirtualEntity(
             state = state switch VirtualEntityState.UPDATE_META_DATA
     }
 
-    internal fun createVirtualMessage(switchState: Boolean): VirtualMessage? {
+    fun createVirtualMessage(switchState: Boolean): VirtualMessage? {
         if (state mask VirtualEntityState.UNHANDLED) return null
 
         val packets = mutableListOf<Any>()

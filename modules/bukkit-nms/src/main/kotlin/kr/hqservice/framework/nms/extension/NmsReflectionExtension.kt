@@ -4,7 +4,7 @@ import kotlin.reflect.KCallable
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaField
 
-internal inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R {
+inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R {
     val javaField = (this as KProperty).javaField!!
     return if (!javaField.canAccess(instance.first())) {
         javaField.isAccessible = true
@@ -13,7 +13,7 @@ internal inline fun <reified R> KCallable<*>.callAccess(vararg instance: Any): R
     } else call(*instance) as R
 }
 
-internal inline fun <reified R> KCallable<*>.setAccess(instance: Any, value: R) {
+inline fun <reified R> KCallable<*>.setAccess(instance: Any, value: R) {
     val javaField = (this as KProperty).javaField!!
     if (!javaField.canAccess(instance)) {
         javaField.isAccessible = true
