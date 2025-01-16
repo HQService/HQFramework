@@ -16,7 +16,6 @@ class LegacyNmsItemWrapper(
     reflectionWrapper: LegacyNmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry
 ) : NmsItemWrapper {
-
     private val getDescriptionIdFunction = reflectionWrapper.getFunction(nmsItemClass, "getDescriptionId", listOf(nmsItemStackClass),
         Version.V_17.handleFunction("j") { setParameterClasses(nmsItemStackClass) },
         Version.V_17_FORGE.handleFunction("m_5671_") { setParameterClasses(nmsItemStackClass) } // ~1.20.2

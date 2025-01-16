@@ -1,8 +1,6 @@
 package kr.hqservice.framework.nms.legacy.wrapper.reflect
 
-import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
@@ -12,7 +10,6 @@ import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
 import org.bukkit.entity.Player
@@ -25,8 +22,6 @@ import kotlin.reflect.full.staticFunctions
 import kotlin.reflect.full.staticProperties
 import kotlin.reflect.jvm.jvmErasure
 
-@Component
-@Singleton(binds = [NmsReflectionWrapper::class, LegacyNmsReflectionWrapper::class])
 class LegacyNmsReflectionWrapperImpl(
     server: Server,
     config: HQYamlConfiguration

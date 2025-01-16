@@ -1,25 +1,21 @@
 package kr.hqservice.framework.nms.legacy.service.entity
 
-import kr.hqservice.framework.global.core.component.Qualifier
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.service.math.LegacyNmsVector3FService
+import kr.hqservice.framework.nms.legacy.service.world.LegacyWorldService
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.math.LegacyVector3fWrapper
-import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
 import kr.hqservice.framework.nms.wrapper.entity.NmsArmorStandWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.math.Vector3fWrapper
-import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.Location
-import org.bukkit.World
 import kotlin.reflect.KClass
 
-@Service
 class LegacyNMSArmorStandService(
     private val reflectionWrapper: LegacyNmsReflectionWrapper,
-    @Qualifier("vector3f") private val vector3fService: NmsService<Triple<Float, Float, Float>, Vector3fWrapper>,
-    @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>,
+    private val vector3fService: LegacyNmsVector3FService,
+    private val worldService: LegacyWorldService,
 ) : NmsArmorStandService {
 
     private val armorStandClass = reflectionWrapper.getNmsClass("EntityArmorStand",

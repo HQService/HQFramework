@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.legacy.service.item
 
-import kr.hqservice.framework.global.core.component.Qualifier
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.item.LegacyNmsItemStackWrapper
@@ -13,8 +11,6 @@ import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import kotlin.reflect.KClass
 
-@Qualifier("item")
-@Service
 class LegacyNMSItemService(
     private val reflectionWrapper: LegacyNmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry,

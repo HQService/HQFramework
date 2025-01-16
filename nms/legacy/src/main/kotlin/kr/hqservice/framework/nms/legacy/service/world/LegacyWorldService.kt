@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.legacy.service.world
 
-import kr.hqservice.framework.global.core.component.Qualifier
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.world.LegacyWorldWrapper
@@ -12,12 +10,9 @@ import org.bukkit.World
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
-@Qualifier("nms.world")
-@Service
 class LegacyWorldService(
     private val reflectionWrapper: LegacyNmsReflectionWrapper
 ) : NmsWorldService {
-
     private val craftWorldClass = reflectionWrapper.getCraftBukkitClass("CraftWorld")
     private val getHandleFunction = reflectionWrapper.getFunction(craftWorldClass, "getHandle")
     private val worldClass = reflectionWrapper.getNmsClass("World",

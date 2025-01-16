@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.legacy.virtual.classes
 
-import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
@@ -13,8 +11,6 @@ import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 
-@Component
-@Singleton(binds = [LegacyVirtualEntityClasses::class])
 class LegacyVirtualEntityClasses(
     reflectionWrapper: LegacyNmsReflectionWrapper,
     private val componentWrapper: NmsBaseComponentService,

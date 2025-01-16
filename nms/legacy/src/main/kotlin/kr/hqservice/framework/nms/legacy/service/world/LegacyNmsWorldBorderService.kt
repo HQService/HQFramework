@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.legacy.service.world
 
-import kr.hqservice.framework.global.core.component.Qualifier
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.setAccess
 import kr.hqservice.framework.nms.service.NmsService
@@ -16,11 +14,9 @@ import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.World
 import kotlin.reflect.KClass
 
-@Qualifier("nms.world.border")
-@Service
 class LegacyNmsWorldBorderService(
     private val reflectionWrapper: LegacyNmsReflectionWrapper,
-    @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>
+    private val worldService: NmsService<World, WorldWrapper>
 ) : NmsWorldBorderService {
 
     private val worldBorderClass = reflectionWrapper.getNmsClass("WorldBorder",

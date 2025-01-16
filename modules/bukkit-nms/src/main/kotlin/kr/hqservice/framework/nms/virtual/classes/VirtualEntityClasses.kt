@@ -1,14 +1,10 @@
 package kr.hqservice.framework.nms.virtual.classes
 
-import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
-import kr.hqservice.framework.global.core.component.Singleton
 import net.md_5.bungee.api.chat.BaseComponent
 import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 
-@Component
-@Singleton(binds = [VirtualEntityClasses::class])
 interface VirtualEntityClasses : HQSimpleComponent {
     val entitySpawnPacket : VirtualMessageConstructor
     val entityDestroyPacket : VirtualMessageConstructor

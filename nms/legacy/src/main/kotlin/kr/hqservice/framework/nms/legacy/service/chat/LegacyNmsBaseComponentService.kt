@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.legacy.service.chat
 
-import kr.hqservice.framework.global.core.component.Qualifier
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
@@ -9,8 +7,6 @@ import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import kotlin.reflect.KClass
 
-@Qualifier("base-component")
-@Service
 class LegacyNmsBaseComponentService(
     reflectionWrapper: LegacyNmsReflectionWrapper
 ) : NmsBaseComponentService {

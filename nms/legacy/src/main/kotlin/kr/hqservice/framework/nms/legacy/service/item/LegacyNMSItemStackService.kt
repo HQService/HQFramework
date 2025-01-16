@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.legacy.service.item
 
-import kr.hqservice.framework.global.core.component.Qualifier
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.item.LegacyNmsItemStackWrapper
@@ -14,11 +12,9 @@ import org.bukkit.inventory.ItemStack
 import org.koin.java.KoinJavaComponent.getKoin
 import kotlin.reflect.KClass
 
-@Qualifier("itemStack")
-@Service
 class LegacyNMSItemStackService(
-    @Qualifier("tag") private val tagService: NmsNBTTagCompoundService,
-    @Qualifier("item") private val itemService: NmsItemService,
+    private val tagService: NmsNBTTagCompoundService,
+    private val itemService: NmsItemService,
 ) : NmsItemStackService {
 
     companion object {
