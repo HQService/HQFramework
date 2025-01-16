@@ -7,9 +7,9 @@ interface HQBillboard : NmsWrapper {
     companion object {
         private val billboardFactory by getKoin().inject<HQBillboardFactory>()
 
-        val FIXED = billboardFactory.create("FIXED")
-        val VERTICAL = billboardFactory.create("VERTICAL")
-        val HORIZONTAL = billboardFactory.create("HORIZONTAL")
-        val CENTER = billboardFactory.create("CENTER")
+        val FIXED by lazy { billboardFactory.create("FIXED") }
+        val VERTICAL by lazy { billboardFactory.create("VERTICAL") }
+        val HORIZONTAL by lazy { billboardFactory.create("HORIZONTAL") }
+        val CENTER  by lazy { billboardFactory.create("CENTER") }
     }
 }
