@@ -11,7 +11,7 @@ pluginManagement {
         kotlin("jvm") version kotlinVersion apply false
         kotlin("plugin.serialization") version kotlinVersion apply false
         kotlin("kapt") version kotlinVersion apply false
-        id("com.github.johnrengelman.shadow") version shadowVersion apply false
+        id("com.gradleup.shadow") version shadowVersion apply false
         id("hqframework.dependency-handler-extensions")
         id("kr.hqservice.resource-generator.bukkit") version "1.0.0" apply false
         id("kr.hqservice.resource-generator.bungee") version "1.0.0" apply false

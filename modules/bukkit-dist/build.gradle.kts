@@ -46,6 +46,9 @@ dependencies {
     runtimeOnlyModule("bukkit", "database")
     runtimeOnlyModule("bukkit", "nms")
     runtimeOnly(project(":nms:legacy"))
+    runtimeOnly(project(":nms:V20_6"))
+    runtimeOnly(project(":nms:V21"))
+    runtimeOnly(project(":nms:V21_3"))
 
     runtimeOnlyModule("bukkit", "scheduler")
 }
