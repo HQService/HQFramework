@@ -3,13 +3,13 @@ package kr.hqservice.framework.nms.legacy.virtual.entity
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.VirtualMessage
-import kr.hqservice.framework.nms.virtual.entity.factory.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import org.bukkit.entity.Player
 
 class LegacyVirtualCameraFactory(
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: LegacyNmsReflectionWrapper
 ) : VirtualEntityFactory {
     private val entityClass = reflectionWrapper.getNmsClass("Entity",
         Version.V_17.handle("world.entity")

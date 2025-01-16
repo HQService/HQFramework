@@ -1,14 +1,14 @@
 package kr.hqservice.framework.nms.legacy.wrapper.world
 
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.Location
 
 class LegacyWorldWrapper(
     private val world: Any,
-    reflectionWrapper: NmsReflectionWrapper
+    reflectionWrapper: LegacyNmsReflectionWrapper
 ) : WorldWrapper {
     private val worldClass = reflectionWrapper.getNmsClass("World",
         Version.V_17.handle("world.level")

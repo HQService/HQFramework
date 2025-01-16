@@ -3,10 +3,12 @@ package kr.hqservice.framework.nms.legacy.service.item
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.item.LegacyNmsItemStackWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.item.LegacyNmsItemWrapper
 import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.service.item.NmsItemService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import kotlin.reflect.KClass
@@ -14,10 +16,9 @@ import kotlin.reflect.KClass
 @Qualifier("item")
 @Service
 class LegacyNMSItemService(
-    private val reflectionWrapper: NmsReflectionWrapper,
+    private val reflectionWrapper: LegacyNmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry,
 ) : NmsItemService {
-
     private val nmsItemStackClass = reflectionWrapper.getNmsClass("ItemStack",
         Version.V_17.handle("world.item")
     )
@@ -31,8 +32,8 @@ class LegacyNMSItemService(
     )
 
     override fun wrap(target: NmsItemStackWrapper): NmsItemWrapper {
-        return NmsItemWrapper(
-            target,
+        return LegacyNmsItemWrapper(
+            target as LegacyNmsItemStackWrapper,
             getItemFunction.call(target.getUnwrappedInstance()) ?: throw IllegalArgumentException(),
             nmsItemStackClass,
             nmsItemClass,

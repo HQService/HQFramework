@@ -5,13 +5,14 @@ import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
+import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
 
-interface NmsReflectionWrapper {
+interface LegacyNmsReflectionWrapper : NmsReflectionWrapper {
     fun getNmsPlayerClass(): KClass<*>
 
     fun getVersionName(): String
@@ -37,19 +38,13 @@ interface NmsReflectionWrapper {
     fun getField(clazz: KClass<*>, fieldName: String, vararg handlers: VersionHandler): KCallable<*>
 
     fun getStaticField(clazz: KClass<*>, staticFieldName: String, vararg handlers: VersionHandler): KCallable<*>
-
-    suspend fun sendPacket(player: Player, vararg virtual: Virtual)
-
-    suspend fun sendPacket(players: List<Player>, vararg virtual: Virtual)
-
-    suspend fun sendPacket(players: List<Player>, virtualEntity: AbstractVirtualEntity, switchState: Boolean)
 }
 
-fun NmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {
+fun LegacyNmsReflectionWrapper.getFunction(clazz: KClass<*>, name: String, vararg handlers: VersionHandler): KCallable<*> {
     return getFunction(clazz, FunctionType(name), *handlers)
 }
 
-fun NmsReflectionWrapper.getFunction(
+fun LegacyNmsReflectionWrapper.getFunction(
     clazz: KClass<*>,
     name: String,
     returnType: KClass<*>,
@@ -58,7 +53,7 @@ fun NmsReflectionWrapper.getFunction(
     return getFunction(clazz, FunctionType(name, returnType.createType()), *handlers)
 }
 
-fun NmsReflectionWrapper.getFunction(
+fun LegacyNmsReflectionWrapper.getFunction(
     clazz: KClass<*>,
     name: String,
     params: List<KClass<*>>,
@@ -67,7 +62,7 @@ fun NmsReflectionWrapper.getFunction(
     return getFunction(clazz, FunctionType(name, null, params), *handlers)
 }
 
-fun NmsReflectionWrapper.getFunction(
+fun LegacyNmsReflectionWrapper.getFunction(
     clazz: KClass<*>,
     name: String,
     returnType: KClass<*>,
@@ -77,7 +72,7 @@ fun NmsReflectionWrapper.getFunction(
     return getFunction(clazz, FunctionType(name, returnType.createType(), params), *handlers)
 }
 
-fun NmsReflectionWrapper.getStaticFunction(
+fun LegacyNmsReflectionWrapper.getStaticFunction(
     clazz: KClass<*>,
     name: String,
     params: List<KClass<*>>,
@@ -90,7 +85,7 @@ fun NmsReflectionWrapper.getStaticFunction(
     )
 }
 
-fun NmsReflectionWrapper.getStaticFunction(
+fun LegacyNmsReflectionWrapper.getStaticFunction(
     clazz: KClass<*>,
     name: String,
     returnType: KClass<*>,

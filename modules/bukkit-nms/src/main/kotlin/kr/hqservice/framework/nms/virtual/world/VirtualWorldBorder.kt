@@ -1,6 +1,6 @@
 package kr.hqservice.framework.nms.virtual.world
 
-import kr.hqservice.framework.nms.service.world.WorldBorderService
+import kr.hqservice.framework.nms.service.world.NmsWorldBorderService
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import org.bukkit.World
@@ -10,7 +10,7 @@ import org.koin.core.component.inject
 class VirtualWorldBorder(
     val world: World
 ) : Virtual, KoinComponent {
-    private val service: WorldBorderService by inject()
+    private val service: NmsWorldBorderService by inject()
     private val borderWrapper = service.wrap(world)
     val packetQueue = mutableMapOf<Int, Any>()
 

@@ -1,20 +1,20 @@
 package kr.hqservice.framework.nms.legacy.virtual.entity
 
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.service.world.WorldService
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.service.world.NmsWorldService
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.VirtualMessage
-import kr.hqservice.framework.nms.virtual.entity.factory.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
-import kr.hqservice.framework.nms.wrapper.getStaticFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getStaticFunction
 import org.bukkit.entity.Player
 import kotlin.reflect.full.cast
 
 class LegacyVirtualSignFactory(
-    private val worldService: WorldService,
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val nmsWorldService: NmsWorldService,
+    private val reflectionWrapper: LegacyNmsReflectionWrapper
 ) : VirtualEntityFactory {
     private val blockPositionClass = reflectionWrapper.getNmsClass("BlockPosition",
         Version.V_17.handle("core")
@@ -56,7 +56,7 @@ class LegacyVirtualSignFactory(
     ).call()!!
 
     override fun create(player: Player, virtualEntity: AbstractVirtualEntity?): VirtualMessage {
-        val worldServer = worldService.wrap(player.world)
+        val worldServer = nmsWorldService.wrap(player.world)
         val blockPosition = worldServer.getBlockPosition(player.location)
         val iBlockData = worldServer.getIBlockData(blockPosition)
         val tileEntity = tileEntityCreateFunction.call(tileEntitySign, blockPosition, iBlockData)

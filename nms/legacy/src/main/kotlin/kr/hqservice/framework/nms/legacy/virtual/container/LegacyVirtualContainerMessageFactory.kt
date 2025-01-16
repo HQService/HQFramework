@@ -1,6 +1,7 @@
 package kr.hqservice.framework.nms.legacy.virtual.container
 
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.service.NmsService
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.container.VirtualAnvilContainer
@@ -8,16 +9,15 @@ import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.virtual.container.VirtualContainerMessageFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.InventoryView
 
 class LegacyVirtualContainerMessageFactory(
-    private val reflectionWrapper: NmsReflectionWrapper,
+    private val reflectionWrapper: LegacyNmsReflectionWrapper,
     private val baseComponentService: NmsService<String, BaseComponentWrapper>,
     private val containerService: NmsService<Player, ContainerWrapper>
 ) : VirtualContainerMessageFactory {

@@ -1,11 +1,11 @@
 package kr.hqservice.framework.nms.legacy.wrapper.item
 
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
@@ -19,7 +19,7 @@ class LegacyNmsItemStackWrapper(
     private val itemStackService: NmsItemStackService
 ) : NmsItemStackWrapper {
     companion object {
-        private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
+        private val reflectionWrapper: LegacyNmsReflectionWrapper by getKoin().inject()
 
         private val nmsItemStackClass by lazy { reflectionWrapper.getNmsClass("ItemStack", Version.V_17.handle("world.item")) }
         private val nbtTagClass by lazy { reflectionWrapper.getNmsClass("NBTTagCompound", Version.V_17.handle("nbt")) }

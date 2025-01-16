@@ -5,7 +5,7 @@ import java.lang.reflect.Constructor
 
 class LegacyVirtualMessageConstructor(
     private val constructor: Constructor<out Any>
-) : VirtualMessageConstructor<Any> {
+) : VirtualMessageConstructor {
     override fun newInstance(vararg args: Any): Any {
         return constructor.newInstance(*args)
     }

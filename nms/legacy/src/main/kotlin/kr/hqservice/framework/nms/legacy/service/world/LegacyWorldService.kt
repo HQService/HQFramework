@@ -3,9 +3,10 @@ package kr.hqservice.framework.nms.legacy.service.world
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.service.world.WorldService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.world.LegacyWorldWrapper
+import kr.hqservice.framework.nms.service.world.NmsWorldService
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.World
 import kotlin.reflect.KClass
@@ -14,8 +15,8 @@ import kotlin.reflect.cast
 @Qualifier("nms.world")
 @Service
 class LegacyWorldService(
-    private val reflectionWrapper: NmsReflectionWrapper
-) : WorldService {
+    private val reflectionWrapper: LegacyNmsReflectionWrapper
+) : NmsWorldService {
 
     private val craftWorldClass = reflectionWrapper.getCraftBukkitClass("CraftWorld")
     private val getHandleFunction = reflectionWrapper.getFunction(craftWorldClass, "getHandle")
@@ -26,7 +27,7 @@ class LegacyWorldService(
     override fun wrap(target: World): WorldWrapper {
         val craftWorld = craftWorldClass.cast(target)
         val worldServer = getHandleFunction.call(craftWorld) ?: throw IllegalStateException("could not wrapping ${target::class.simpleName} class")
-        return WorldWrapper(worldServer, reflectionWrapper)
+        return LegacyWorldWrapper(worldServer, reflectionWrapper)
     }
 
     override fun unwrap(wrapper: WorldWrapper): World {

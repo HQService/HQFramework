@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.legacy.util
+package kr.hqservice.framework.nms.legacy.service.netty
 
 import io.netty.channel.Channel
 import kr.hqservice.framework.global.core.component.Component
@@ -6,9 +6,9 @@ import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.PacketHandler
-import kr.hqservice.framework.nms.util.NettyInjectUtil
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
@@ -16,12 +16,12 @@ import java.util.*
 import kotlin.reflect.jvm.isAccessible
 
 @Component
-@Singleton(binds = [NettyInjectUtil::class])
-class LegacyNettyInjectUtil(
+@Singleton(binds = [NmsNettyInjectService::class])
+class LegacyNmsNettyInjectService(
     private val plugin: Plugin,
-    private val reflectionWrapper: NmsReflectionWrapper,
+    private val reflectionWrapper: LegacyNmsReflectionWrapper,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
-) : NettyInjectUtil, HQSimpleComponent {
+) : NmsNettyInjectService, HQSimpleComponent {
     private val listenerClass = reflectionWrapper.getNmsClass("PlayerConnection",
         Version.V_17.handle("server.network.ServerGamePacketListenerImpl", true)
     )

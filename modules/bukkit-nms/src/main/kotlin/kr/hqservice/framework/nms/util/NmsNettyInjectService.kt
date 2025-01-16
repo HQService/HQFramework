@@ -4,7 +4,7 @@ import io.netty.channel.Channel
 import org.bukkit.Server
 import org.bukkit.entity.Player
 
-interface NettyInjectUtil {
+interface NmsNettyInjectService {
     fun getPlayerChannel(player: Player): Channel
 
     fun getServerChannels(server: Server): List<Channel>

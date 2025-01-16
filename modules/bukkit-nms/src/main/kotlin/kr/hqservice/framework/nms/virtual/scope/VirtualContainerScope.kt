@@ -9,11 +9,10 @@ import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
-import org.koin.core.component.KoinComponent
 
 class VirtualContainerScope(
     private val receiver: Player,
-) : KoinComponent {
+) {
     private val slotItems = mutableListOf<VirtualItem>()
     private var titlePacket: VirtualContainer? = null
 

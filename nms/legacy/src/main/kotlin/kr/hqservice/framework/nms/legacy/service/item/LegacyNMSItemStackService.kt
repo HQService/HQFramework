@@ -3,12 +3,12 @@ package kr.hqservice.framework.nms.legacy.service.item
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.item.LegacyNmsItemStackWrapper
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getStaticFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getStaticFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
 import org.koin.java.KoinJavaComponent.getKoin
@@ -22,7 +22,7 @@ class LegacyNMSItemStackService(
 ) : NmsItemStackService {
 
     companion object {
-        private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
+        private val reflectionWrapper: LegacyNmsReflectionWrapper by getKoin().inject()
 
         private val craftItemStackClass by lazy { reflectionWrapper.getCraftBukkitClass("inventory.CraftItemStack") }
         private val nmsItemStackClass  by lazy { reflectionWrapper.getNmsClass("ItemStack",

@@ -4,16 +4,16 @@ import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
-import kr.hqservice.framework.nms.service.chat.BaseComponentService
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import kotlin.reflect.KClass
 
 @Qualifier("base-component")
 @Service
-class LegacyBaseComponentService(
-    reflectionWrapper: NmsReflectionWrapper
-) : BaseComponentService {
+class LegacyNmsBaseComponentService(
+    reflectionWrapper: LegacyNmsReflectionWrapper
+) : NmsBaseComponentService {
     private val componentClass = reflectionWrapper.getNmsClass("IChatBaseComponent",
         Version.V_17.handle("network.chat")
     )

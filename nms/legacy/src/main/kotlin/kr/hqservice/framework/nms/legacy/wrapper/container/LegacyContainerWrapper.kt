@@ -2,13 +2,13 @@ package kr.hqservice.framework.nms.legacy.wrapper.container
 
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.container.IContainerWrapper
 import kotlin.reflect.KClass
 
 class LegacyContainerWrapper(
     private val container: Any,
-    reflectionWrapper: NmsReflectionWrapper,
+    reflectionWrapper: LegacyNmsReflectionWrapper,
     containerClass: KClass<*>
 ) : IContainerWrapper {
     private val containerIdField = reflectionWrapper.getField(containerClass, "containerId",

@@ -1,11 +1,9 @@
 package kr.hqservice.framework.nms.service.entity
 
-import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.service.NmsEntityService
 import kr.hqservice.framework.nms.wrapper.entity.NmsArmorStandWrapper
 import kr.hqservice.framework.nms.wrapper.math.Vector3fWrapper
 
-@Service
 interface NmsArmorStandService : NmsEntityService<NmsArmorStandWrapper> {
     fun getHeadPose(wrapper: NmsArmorStandWrapper): Vector3fWrapper
 

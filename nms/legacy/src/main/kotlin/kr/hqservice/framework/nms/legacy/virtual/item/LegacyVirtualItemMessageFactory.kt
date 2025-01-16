@@ -1,19 +1,19 @@
 package kr.hqservice.framework.nms.legacy.virtual.item
 
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.item.VirtualItemMessageFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 
 class LegacyVirtualItemMessageFactory(
-    reflectionWrapper: NmsReflectionWrapper,
+    reflectionWrapper: LegacyNmsReflectionWrapper,
     private val itemStackService: NmsItemStackService,
     private val containerService: NmsContainerService
 ) : VirtualItemMessageFactory {

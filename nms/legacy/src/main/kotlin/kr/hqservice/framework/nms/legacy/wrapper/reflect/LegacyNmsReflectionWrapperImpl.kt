@@ -7,11 +7,12 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.handler.VersionHandler
 import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
 import org.bukkit.entity.Player
@@ -25,17 +26,17 @@ import kotlin.reflect.full.staticProperties
 import kotlin.reflect.jvm.jvmErasure
 
 @Component
-@Singleton(binds = [NmsReflectionWrapper::class])
+@Singleton(binds = [NmsReflectionWrapper::class, LegacyNmsReflectionWrapper::class])
 class LegacyNmsReflectionWrapperImpl(
     server: Server,
     config: HQYamlConfiguration
-) : NmsReflectionWrapper, HQSimpleComponent {
+) : LegacyNmsReflectionWrapper, HQSimpleComponent {
     private val classMap = ConcurrentHashMap<String, KClass<*>>()
     private val callableMap = ConcurrentHashMap<String, KCallable<*>>()
     private val forgeSupport = config.getBoolean("forge-support")
     private val versionClassName: String = server.javaClass.`package`.name.split(".")[3]
     private val versionName: String = server.bukkitVersion.split("-")[0]
-    private val majorVersion = /*versionClassName.substring(1)*/versionName.split(".")[1].toInt()
+    private val majorVersion = versionName.split(".")[1].toInt()
     private val minorVersion = try {
         versionName.split(".")[2].toInt()
     } catch (e: Exception) {

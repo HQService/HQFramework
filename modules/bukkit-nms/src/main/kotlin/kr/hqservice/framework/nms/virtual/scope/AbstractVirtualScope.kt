@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.virtual.scope
 import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.entity.VirtualCamera
-import kr.hqservice.framework.nms.virtual.entity.factory.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry

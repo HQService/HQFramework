@@ -2,14 +2,13 @@ package kr.hqservice.framework.nms.virtual.scope
 
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.entity.VirtualSign
-import kr.hqservice.framework.nms.virtual.entity.factory.VirtualEntityFactory
+import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
 import org.bukkit.entity.Player
-import org.koin.core.component.KoinComponent
 
 class VirtualSignScope(
     player: Player,
     signFactory: VirtualEntityFactory
-) : KoinComponent {
+) {
     private var signPacket = VirtualSign(player, signFactory)
     private var confirmHandler: ((List<String>) -> Boolean)? = null
 

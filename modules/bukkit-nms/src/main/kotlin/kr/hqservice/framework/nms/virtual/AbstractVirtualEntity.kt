@@ -19,7 +19,7 @@ abstract class AbstractVirtualEntity(
     private var name: String,
 ) : Virtual, KoinComponent {
     protected val reflectionWrapper: NmsReflectionWrapper by inject()
-    private val virtualEntityClasses: VirtualEntityClasses<*> by inject()
+    private val virtualEntityClasses: VirtualEntityClasses by inject()
 
     private var state: Byte = 0x7
     private var itemContainer: List<Any>? = null

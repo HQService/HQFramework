@@ -3,17 +3,17 @@ package kr.hqservice.framework.nms.legacy.service.container
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.legacy.wrapper.container.LegacyContainerWrapper
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.entity.Player
 import kotlin.reflect.KClass
 
 @Qualifier("container")
 @Service
 class LegacyNMSContainerService(
-    private val reflectionWrapper: NmsReflectionWrapper
+    private val reflectionWrapper: LegacyNmsReflectionWrapper
 ) : NmsContainerService {
 
     private val containerClass = reflectionWrapper.getNmsClass("Container",

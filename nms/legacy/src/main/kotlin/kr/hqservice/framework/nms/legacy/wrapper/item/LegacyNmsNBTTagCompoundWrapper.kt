@@ -1,14 +1,13 @@
 package kr.hqservice.framework.nms.legacy.wrapper.item
 
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.NmsWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsNBTTagCompoundWrapper
 import org.koin.java.KoinJavaComponent.getKoin
 import java.util.*
 
-private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
+private val reflectionWrapper: LegacyNmsReflectionWrapper by getKoin().inject()
 
 class LegacyNmsNBTTagCompoundWrapper(
     private val nbtTag: Any

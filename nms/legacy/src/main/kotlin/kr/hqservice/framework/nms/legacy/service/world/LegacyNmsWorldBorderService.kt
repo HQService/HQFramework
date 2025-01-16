@@ -5,12 +5,12 @@ import kr.hqservice.framework.global.core.component.Service
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.setAccess
 import kr.hqservice.framework.nms.service.NmsService
-import kr.hqservice.framework.nms.service.world.WorldBorderService
+import kr.hqservice.framework.nms.service.world.NmsWorldBorderService
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.virtual.world.VirtualWorldBorder
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldBorderWrapper
 import kr.hqservice.framework.nms.wrapper.world.WorldWrapper
 import org.bukkit.World
@@ -18,10 +18,10 @@ import kotlin.reflect.KClass
 
 @Qualifier("nms.world.border")
 @Service
-class LegacyWorldBorderService(
-    private val reflectionWrapper: NmsReflectionWrapper,
+class LegacyNmsWorldBorderService(
+    private val reflectionWrapper: LegacyNmsReflectionWrapper,
     @Qualifier("nms.world") private val worldService: NmsService<World, WorldWrapper>
-) : WorldBorderService {
+) : NmsWorldBorderService {
 
     private val worldBorderClass = reflectionWrapper.getNmsClass("WorldBorder",
         Version.V_17.handle("world.level.border")

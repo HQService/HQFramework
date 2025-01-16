@@ -1,9 +1,9 @@
 package kr.hqservice.framework.nms.legacy.wrapper.item
 
 import kr.hqservice.framework.nms.Version
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.registry.LanguageRegistry
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
 import kr.hqservice.framework.nms.wrapper.item.NmsItemWrapper
 import java.util.*
 import kotlin.reflect.KClass
@@ -13,7 +13,7 @@ class LegacyNmsItemWrapper(
     private val nmsItem: Any,
     nmsItemStackClass: KClass<*>,
     nmsItemClass: KClass<*>,
-    reflectionWrapper: NmsReflectionWrapper,
+    reflectionWrapper: LegacyNmsReflectionWrapper,
     private val languageRegistry: LanguageRegistry
 ) : NmsItemWrapper {
 

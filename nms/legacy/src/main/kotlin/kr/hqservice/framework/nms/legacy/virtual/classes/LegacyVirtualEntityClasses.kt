@@ -1,15 +1,13 @@
 package kr.hqservice.framework.nms.legacy.virtual.classes
 
 import kr.hqservice.framework.global.core.component.Component
-import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
-import kr.hqservice.framework.nms.wrapper.getFunction
-import kr.hqservice.framework.nms.wrapper.getStaticFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getFunction
+import kr.hqservice.framework.nms.legacy.wrapper.getStaticFunction
+import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
 import org.bukkit.Location
@@ -18,9 +16,9 @@ import org.bukkit.inventory.EquipmentSlot
 @Component
 @Singleton(binds = [LegacyVirtualEntityClasses::class])
 class LegacyVirtualEntityClasses(
-    reflectionWrapper: NmsReflectionWrapper,
-    @Qualifier("base-component") private val componentWrapper: NmsService<String, BaseComponentWrapper>,
-) : VirtualEntityClasses<Any> {
+    reflectionWrapper: LegacyNmsReflectionWrapper,
+    private val componentWrapper: NmsBaseComponentService,
+) : VirtualEntityClasses {
     private val entityClass = reflectionWrapper.getNmsClass(
         "EntityLiving",
         Version.V_17.handle("world.entity.Entity", true)
