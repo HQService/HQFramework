@@ -71,7 +71,7 @@ class VirtualContainerMessageFactoryImpl(
         return VirtualMessageImpl(ClientboundOpenScreenPacket(
             container.getContainerId(),
             MenuType.ANVIL,
-            baseComponentService.wrap(ComponentSerializer.toString(virtualContainer.title)).getUnwrappedInstance() as Component
+            baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
         ))
     }
 }
