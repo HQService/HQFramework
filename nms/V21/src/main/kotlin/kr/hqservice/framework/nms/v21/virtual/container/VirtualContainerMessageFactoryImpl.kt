@@ -8,10 +8,14 @@ import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.v21.wrapper.container.ContainerWrapperImpl
+import kr.hqservice.framework.nms.virtual.message.VirtualFunc
+import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
 import net.md_5.bungee.chat.ComponentSerializer
 import net.minecraft.network.chat.Component
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket
+import net.minecraft.world.inventory.AnvilMenu
 import net.minecraft.world.inventory.MenuType
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.InventoryView
 

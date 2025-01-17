@@ -5,7 +5,9 @@ import kr.hqservice.framework.nms.virtual.VirtualMessage
 class VirtualListMessage(
     private val virtualPacket: List<Any>
 ) : VirtualMessage {
-    override fun send(block: (packet: Any) -> Unit) {
-        virtualPacket.forEach(block)
+    override suspend fun send(block: suspend (packet: Any) -> Unit) {
+        virtualPacket.forEach {
+            block(it)
+        }
     }
 }

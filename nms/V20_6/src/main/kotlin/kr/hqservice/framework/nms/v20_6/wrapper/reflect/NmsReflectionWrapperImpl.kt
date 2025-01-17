@@ -4,6 +4,7 @@ import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
+import kr.hqservice.framework.nms.virtual.message.VirtualFunc
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import net.minecraft.network.protocol.Packet
 import net.minecraft.server.dedicated.DedicatedServer
@@ -28,7 +29,8 @@ class NmsReflectionWrapperImpl : NmsReflectionWrapper, HQSimpleComponent {
         virtual.forEach {
             it.createVirtualMessage()?.also { virtual ->
                 virtual.send { packet ->
-                    connection.sendPacket(packet as Packet<*>)
+                    if (packet is Packet<*>) connection.sendPacket(packet)
+                    else if (packet is VirtualFunc) packet.invoke(player)
                     if (it is VirtualContainer) player.updateInventory()
                 }
             }
@@ -42,7 +44,8 @@ class NmsReflectionWrapperImpl : NmsReflectionWrapper, HQSimpleComponent {
                     val handle = (player as CraftPlayer).handle
                     val connection = handle.connection
                     virtual.send { packet ->
-                        connection.sendPacket(packet as Packet<*>)
+                        if (packet is Packet<*>) connection.sendPacket(packet)
+                        else if (packet is VirtualFunc) packet.invoke(player)
                     }
                 }
             }
@@ -55,7 +58,8 @@ class NmsReflectionWrapperImpl : NmsReflectionWrapper, HQSimpleComponent {
                 val handle = (player as CraftPlayer).handle
                 val connection = handle.connection
                 virtual.send { packet ->
-                    connection.sendPacket(packet as Packet<*>)
+                    if (packet is Packet<*>) connection.sendPacket(packet)
+                    else if (packet is VirtualFunc) packet.invoke(player)
                 }
             }
         }
