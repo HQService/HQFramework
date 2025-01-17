@@ -8,17 +8,13 @@ import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import kr.hqservice.framework.yaml.config.HQYamlConfiguration
-import org.bukkit.Server
 import org.bukkit.plugin.Plugin
 
 @Component
-class NMSServiceManagerV21(
+class NMSServiceManagerV21_3(
     private val plugin: Plugin,
-    private val server: Server,
     private val languageRegistry: LanguageRegistry,
     private val virtualHandlerRegistry: VirtualHandlerRegistry,
-    private val config: HQYamlConfiguration
 ) : NMSServiceManager {
     private lateinit var serviceProvider: NMSServiceProviderV21_3
     private lateinit var virtualFactoryProvider: VirtualFactoryProviderV21_3

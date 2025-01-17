@@ -33,6 +33,7 @@ import org.bukkit.Server
 class HQFrameworkNMSConfiguration(
     private val plugin: HQBukkitPlugin,
     server: Server,
+    serviceManager: NMSServiceManager
 ) : NMSServiceProvider, NMSVirtualFactoryProvider {
     private val versionName: String = server.bukkitVersion.split("-")[0]
     private val majorVersion = versionName.split(".")[1].toInt()
