@@ -75,7 +75,7 @@ class LegacyVirtualContainerMessageFactory(
             constructor.newInstance(
                 container.getContainerId(),
                 virtualContainerType,
-                baseComponentService.wrap(ComponentSerializer.toString(virtualContainer.title)).getUnwrappedInstance()
+                baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance()
             )
         )
     }
