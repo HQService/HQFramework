@@ -17,10 +17,7 @@ class NettyPlayerCommandArgumentProvider(
         return nettyServer.getPlayer(argument) ?: throw ArgumentFeedback.PlayerNotFound
     }
 
-    override suspend fun getTabComplete(
-        context: CommandContext,
-        location: Location?
-    ): List<String> {
+    override suspend fun getTabComplete(context: CommandContext, location: Location?): List<String> {
         return nettyServer.getPlayers().map { it.getName() }
     }
 }
