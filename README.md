@@ -33,12 +33,12 @@ HQFramework는 완성도가 높은 의존성 주입 라이브러리 Koin과 연�
 ```kotlin
 package kr.hqservice.exampleplugin.listener
 
-@Component
+@Listener
 class ExampleListener(
   private val exampleService: ExampleService,
   private val plugin: Plugin
-) : HQListener {
-  @EventHandler
+) {
+  @Subscribe
   fun onExampleEvent(event: BukkitExampleEvent) {
     exampleService.doAnything(plugin)
   }
@@ -47,15 +47,14 @@ class ExampleListener(
 ```kotlin
 package kr.hqservice.exampleplugin.service
 
-interface ExampleService : HQService {
+interface ExampleService {
   fun doAnything(plugin: Plugin)
 }
 ```
 ```kotlin
 package kr.hqservice.exampleplugin.service.impl
 
-@Component
-@HQSingleton(binds = [ExampleService::class])
+@Service
 class ExampleServiceImpl : ExampleService {
   override fun doAnything(plugin: Plugin) {
     println("Hello ${plugin.name}!")
@@ -78,12 +77,12 @@ Hello ExamplePlugin!
 ### 복잡한 의존관계에서의 HQComponent
 이번에는 여러 계층의 의존관계를 지닌 컴포넌트들로 예시를 들어보겠습니다.
 ```kotlin
-@Component
+@Listener
 class ExampleListener(
   private val exampleService: ExampleService,
   private val exampleConfig: ExampleConfig
-) : HQListener {
-  @EventHandler
+) {
+  @Subscribe
   fun onExampleEvent(event: BukkitExampleEvent) {
     val result = exampleService.printAndReturn()
     if (result == exampleConfig.getConfiguratedString()) {
@@ -93,12 +92,11 @@ class ExampleListener(
 }
 ```
 ```kotlin
-interface ExampleService : HQService { fun printAndReturn(): String }
-interface ExampleConfig : ConfigurationSection, HQSimpleComponent { fun getConfiguratedString(): String }
+interface ExampleService { fun printAndReturn(): String }
+interface ExampleConfig : ConfigurationSection { fun getConfiguratedString(): String }
 ```
 ```kotlin
-@Component
-@HQSingleton(binds = [ExamplePrimaryService::class])
+@Service
 class ExampleServiceImpl(private val config: ExampleConfig) : ExampleService {
   override fun printAndReturn(): String {
     val string = config.getConfiguratedString()
@@ -107,8 +105,7 @@ class ExampleServiceImpl(private val config: ExampleConfig) : ExampleService {
   }
 }
 
-@Component
-@HQSingleton(binds = [ExampleConfig::class])
+@Bean
 class ExampleConfigImpl(private val plugin: Plugin) : ExampleConfig {
   override fun getConfiguratedString(): String {
     return plugin.config.getString("string") ?: throw Exception()
@@ -200,27 +197,25 @@ class DependedExampleComponentHandler : HQComponentHandler<DependedExampleCompon
  이럴때는 Qualifier 을 통해 인스턴스를 가져올 수 있습니다.
 
 ---
-### Named
+### Qualifier
 Named Qualifier는 Koin의 Qualifier 입니다. HQFramework는 Koin의 Named Qualifier를 지원합니다.
  아래는 Named Qualifier 사용에 대한 예제입니다.
 ```kotlin
-interface ExampleService : HQService { fun get(): String }
+interface ExampleService { fun get(): String }
 ```
 ```kotlin
-@Component
-@HQSingleton(binds = [ExampleService::class])
-@Named("item")
+@Service
+@Qualifier("item")
 class ItemService : ExampleService { override fun get(): String { return "item" } } 
 
-@Component
-@HQSingleton(binds = [ExampleService::class])
-@Named("material")
+@Service
+@Qualifier("material")
 class MaterialService : ExampleService { override fun get(): String { return "material" } }
 ```
 ```kotlin
-@Component
-class ExampleItemListener(@Named("item") private val service: ExampleService) : HQListener {
-  @EventHandler
+@Listener
+class ExampleItemListener(@Qualifier("item") private val service: ExampleService) {
+  @Subscribe
   fun onEvent(event: BukkitExampleEvent) {
     println(service.get())
   }
@@ -252,16 +247,16 @@ data-source:
 ```kotlin
 interface ExampleDataSource : HQDataSource { fun getName(): String }
 
-@Named("mysql")
+@Qualifier("mysql")
 @Component
-@HQSingleton(binds = [ExampleDataSource::class])
+@Singleton(binds = [ExampleDataSource::class])
 class MySQLDataSource : ExampleDataSource { 
   override fun getName(): String { return "mysql datasource" }
 }
 
-@Named("sqlite")
+@Qualifier("sqlite")
 @Component
-@HQSingleton(binds = [ExampleDataSource::class])
+@Singleton(binds = [ExampleDataSource::class])
 class SQLiteDataSource : ExampleDataSource { 
   override fun getName(): String { return "sqlite datasource" }
 }
@@ -423,7 +418,7 @@ class PacketPlayOutChat : Packet<PacketListenerPlayOut> {
  아래는 HQFramework 가 ByteBuddy 를 사용하여 위의 클래스를 저희의 방식으로 정의했을 때의 대한 예제입니다.
 ```kotlin
 data class PacketPlayOutChat(
-  var a: IChatBaseComponent
+  var a: IChatBaseComponent,
   var b: ChatMessageType
 ): Packet() {
   override fun read(byteBuf: ByteBuf) {
