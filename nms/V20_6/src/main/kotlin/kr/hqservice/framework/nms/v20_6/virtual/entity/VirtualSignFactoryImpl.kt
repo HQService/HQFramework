@@ -1,15 +1,18 @@
 package kr.hqservice.framework.nms.v20_6.virtual.entity
 
 import kr.hqservice.framework.nms.service.world.NmsWorldService
-import kr.hqservice.framework.nms.v20_6.service.world.NmsWorldServiceImpl
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
+import net.minecraft.core.BlockPos
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundOpenSignEditorPacket
-import net.minecraft.world.level.block.entity.BlockEntityType
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.entity.SignBlockEntity
+import net.minecraft.world.level.block.state.BlockState
 import org.bukkit.entity.Player
 
 class VirtualSignFactoryImpl(
@@ -19,14 +22,15 @@ class VirtualSignFactoryImpl(
         player: Player,
         virtualEntity: AbstractVirtualEntity?,
     ): VirtualMessage {
-        worldService as NmsWorldServiceImpl
-        val worldServer = worldService.wrap(player.world)
-        val blockPosition = worldServer.getBlockPosition(player.location)
-        val iBlockData = worldServer.getIBlockData(blockPosition)
-        val tileEntity = BlockEntityType.SIGN.create(blockPosition, iBlockData)
-        val tileEntitySign = tileEntity as SignBlockEntity
-        val tileEntityDataPacket = ClientboundBlockEntityDataPacket.create(tileEntitySign)
-        val signEditorDataPacket = ClientboundOpenSignEditorPacket(blockPosition, true)
-        return VirtualListMessage(listOf(tileEntityDataPacket, signEditorDataPacket))
+        val blockPos = BlockPos(player.location.blockX, player.location.blockY, player.location.blockZ)
+        val fakeSignBlockState: BlockState = Blocks.OAK_SIGN.defaultBlockState()
+        val virtualSignEntity = SignBlockEntity(blockPos, fakeSignBlockState)
+        virtualSignEntity.level = worldService.wrap(player.world).getUnwrappedInstance() as ServerLevel
+
+        return VirtualListMessage(listOf(
+            ClientboundBlockUpdatePacket(blockPos, fakeSignBlockState),
+            ClientboundBlockEntityDataPacket.create(virtualSignEntity),
+            ClientboundOpenSignEditorPacket(blockPos, true)
+        ))
     }
 }
