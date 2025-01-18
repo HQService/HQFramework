@@ -51,6 +51,10 @@ dependencies {
     runtimeOnly(project(":nms:V21_3"))
 
     runtimeOnlyModule("bukkit", "scheduler")
+
+    relocatedRuntimeScope("kr.hqservice.framework.shadow") {
+        implementation(libs.bStats)
+    }
 }
 
 configurations.runtimeClasspath.configure {

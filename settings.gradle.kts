@@ -37,11 +37,11 @@ file(rootProject.projectDir.path + "/credentials.gradle.kts").let {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://jitpack.io")
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
         maven("https://maven.hqservice.kr/repository/maven-public/")
+        maven("https://jitpack.io")
     }
 
     versionCatalogs {
@@ -85,7 +85,7 @@ dependencyResolutionManagement {
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
             library("quartz", "org.quartz-scheduler:quartz:${getProperty("quartzVersion")}")
             library("gson", "com.google.code.gson:gson:${getProperty("gsonVersion")}")
-
+            library("bStats", "org.bstats:bstats-bukkit:${getProperty("bStatsVersion")}")
             library("adventure-text-serializer-legacy", "net.kyori:adventure-text-serializer-legacy:${getProperty("AdventureTextVersion")}")
         }
     }
