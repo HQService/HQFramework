@@ -3,24 +3,25 @@ package kr.hqservice.framework.nms.extension
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
-import kr.hqservice.framework.nms.service.NmsService
+import kr.hqservice.framework.nms.service.container.NmsContainerService
+import kr.hqservice.framework.nms.service.item.NmsItemStackService
+import kr.hqservice.framework.nms.virtual.handler.VirtualItemHandlerFactory
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.virtual.scope.VirtualViewScope
 import kr.hqservice.framework.nms.virtual.scope.impl.GlobalVirtualScope
 import kr.hqservice.framework.nms.virtual.scope.impl.SingleVirtualScope
-import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
-import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.Location
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
 import org.koin.core.qualifier.named
 import org.koin.java.KoinJavaComponent.getKoin
 
 private val reflectionWrapper: NmsReflectionWrapper by getKoin().inject()
-private val itemStackService: NmsService<ItemStack, NmsItemStackWrapper> by getKoin().inject(named("itemStack"))
-private val containerService: NmsService<Player, ContainerWrapper> by getKoin().inject(named("container"))
+private val itemStackService: NmsItemStackService by getKoin().inject()
+private val containerService: NmsContainerService by getKoin().inject()
 private val handlerRegistry: VirtualHandlerRegistry by getKoin().inject()
+private val itemHandlerFactory: VirtualItemHandlerFactory by getKoin().inject()
+
 private val scope: HQCoroutineScope by getKoin().inject(named("virtual"))
 
 fun Player.virtual(distance: Double, virtualScope: suspend GlobalVirtualScope.() -> Unit): Job {
@@ -54,7 +55,7 @@ fun Location.virtual(distance: Double, virtualScope: suspend GlobalVirtualScope.
 }
 
 fun Player.virtualView(virtualScope: VirtualViewScope.() -> Unit) {
-    val scope = VirtualViewScope(itemStackService, reflectionWrapper, containerService.wrap(this).getContainerId())
+    val scope = VirtualViewScope(itemStackService, reflectionWrapper, itemHandlerFactory, containerService.wrap(this).getContainerId())
     scope.virtualScope()
     handlerRegistry.register(uniqueId, scope.create())
 }

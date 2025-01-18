@@ -5,20 +5,23 @@ rootProject.name = "HQFramework"
 pluginManagement {
     val kotlinVersion: String by settings
     val shadowVersion: String by settings
+    val paperWeightVersion: String by settings
 
     plugins {
         kotlin("jvm") version kotlinVersion apply false
         kotlin("plugin.serialization") version kotlinVersion apply false
         kotlin("kapt") version kotlinVersion apply false
-        id("com.github.johnrengelman.shadow") version shadowVersion apply false
+        id("com.gradleup.shadow") version shadowVersion apply false
         id("hqframework.dependency-handler-extensions")
         id("kr.hqservice.resource-generator.bukkit") version "1.0.0" apply false
         id("kr.hqservice.resource-generator.bungee") version "1.0.0" apply false
+        id("io.papermc.paperweight.userdev") version paperWeightVersion apply false
 
     }
 
     repositories {
         mavenCentral()
+        maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://maven.hqservice.kr/repository/maven-public/")
         gradlePluginPortal()
     }
@@ -34,11 +37,11 @@ file(rootProject.projectDir.path + "/credentials.gradle.kts").let {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://jitpack.io")
         maven("https://repo.papermc.io/repository/maven-public/")
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
         maven("https://maven.hqservice.kr/repository/maven-public/")
+        maven("https://jitpack.io")
     }
 
     versionCatalogs {
@@ -82,7 +85,7 @@ dependencyResolutionManagement {
             library("byte-buddy-agent", "net.bytebuddy:byte-buddy-agent:${getProperty("byteBuddyVersion")}")
             library("quartz", "org.quartz-scheduler:quartz:${getProperty("quartzVersion")}")
             library("gson", "com.google.code.gson:gson:${getProperty("gsonVersion")}")
-
+            library("bStats", "org.bstats:bstats-bukkit:${getProperty("bStatsVersion")}")
             library("adventure-text-serializer-legacy", "net.kyori:adventure-text-serializer-legacy:${getProperty("AdventureTextVersion")}")
         }
     }
@@ -90,6 +93,7 @@ dependencyResolutionManagement {
 
 includeBuild("build-logic")
 includeAll("modules")
+includeAll("nms")
 
 fun includeAll(modulesDir: String) {
     file("${rootProject.projectDir.path}/${modulesDir.replace(":", "/")}/").listFiles()?.forEach { modulePath ->

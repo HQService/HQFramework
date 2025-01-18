@@ -11,10 +11,11 @@ dependencies {
     implementationModule("proxy", "core")
     implementationModule("proxy", "velocity-core")
     kapt(libs.velocity.api)
+
     relocatedRuntimeScope("kr.hqservice.framework.shadow") {
-        implementation(libs.kotlinx.coroutines.core)
         api(libs.koin.core)
-        //implementation(libs.netty)
+
+        implementation(libs.kotlinx.coroutines.core)
         implementation(libs.kotlinx.serialization.json)
     }
 }

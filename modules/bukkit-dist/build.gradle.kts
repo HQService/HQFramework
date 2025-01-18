@@ -45,10 +45,20 @@ dependencies {
     runtimeOnlyModule("bukkit", "region")
     runtimeOnlyModule("bukkit", "database")
     runtimeOnlyModule("bukkit", "nms")
+    runtimeOnly(project(":nms:legacy"))
+    runtimeOnly(project(":nms:V20_6"))
+    runtimeOnly(project(":nms:V21"))
+    runtimeOnly(project(":nms:V21_3"))
+
     runtimeOnlyModule("bukkit", "scheduler")
+
+    relocatedRuntimeScope("kr.hqservice.framework.shadow") {
+        implementation(libs.bStats)
+    }
 }
 
 configurations.runtimeClasspath.configure {
     exclude(libs.spigot.api.get().group, libs.spigot.api.get().name)
     exclude(libs.paper.api.get().group, libs.paper.api.get().name)
+    exclude(libs.kotlin.stdlib.jdk8.get().group, "*")
 }

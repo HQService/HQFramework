@@ -300,6 +300,10 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         return componentInstances.getComponent(key)
     }
 
+    fun <T : HQComponent> getComponents(key: KClass<out T>): List<T> {
+        return componentInstances.getComponents(key)
+    }
+
     private fun printFriendlyException(classes: List<KClass<*>>) {
         classes.forEach { kClass ->
             val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
@@ -402,7 +406,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 return@mapIndexed proxy
             }
             val factory = getKoin().instanceRegistry.instances[indexKey]
-            val defaultContext = InstanceContext(getKoin(), getKoin().getScope(scopeQualifier.value))
+            val defaultContext = InstanceContext(getKoin().logger, getKoin().getScope(scopeQualifier.value))
 
             try {
                 factory?.get(defaultContext)

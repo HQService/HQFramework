@@ -10,13 +10,12 @@ import net.md_5.bungee.api.chat.BaseComponent
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import org.koin.core.component.KoinComponent
 import java.util.*
 
 class VirtualAnvilContainerScope(
     private val receiver: Player,
     title: BaseComponent
-) : KoinComponent {
+)  {
     companion object {
         private val defaultBaseItems: (Player) -> List<VirtualItem> = {
             listOf(

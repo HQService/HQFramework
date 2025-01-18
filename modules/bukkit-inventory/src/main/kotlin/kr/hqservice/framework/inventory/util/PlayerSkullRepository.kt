@@ -1,7 +1,5 @@
 package kr.hqservice.framework.inventory.util
 
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -11,6 +9,8 @@ import org.bukkit.Server
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.inventory.meta.SkullMeta
+import org.bukkit.profile.PlayerProfile
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
@@ -23,9 +23,8 @@ class PlayerSkullRepository(
     private val server: Server,
     private val coroutineScope: CoroutineScope
 ) {
-    private val skinTagMap = mutableMapOf<UUID, String>()
+    private val skinProfileMap = mutableMapOf<UUID, PlayerProfile>()
     private val lambdaQueueMap = mutableMapOf<UUID, ConcurrentLinkedQueue<ItemStack>>()
-    private val gson = Gson()
 
     fun setOwnerPlayer(
         targetUniqueId: UUID,
@@ -35,11 +34,14 @@ class PlayerSkullRepository(
         metaScope: (ItemMeta) -> Unit
     ) {
         val itemStack = inventory.getItem(slot) ?: return
-        if (skinTagMap.containsKey(targetUniqueId)) {
-            if (!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack))
-                server.unsafe.modifyItemStack(itemStack, skinTagMap[targetUniqueId]!!).apply {
-                    itemMeta = itemMeta?.also(metaScope)
+        if (skinProfileMap.containsKey(targetUniqueId)) {
+            if (!itemStack.type.isAir && targetedItemStack.isSimilar(itemStack)) {
+                val skullMeta = itemStack.itemMeta
+                if (skullMeta is SkullMeta) {
+                    skullMeta.ownerProfile = skinProfileMap[targetUniqueId]
+                    itemStack.itemMeta = skullMeta.also(metaScope)
                 }
+            }
         } else {
             if (lambdaQueueMap.containsKey(targetUniqueId)) lambdaQueueMap[targetUniqueId]?.offer(itemStack)
             else {
@@ -47,28 +49,29 @@ class PlayerSkullRepository(
                 lambdaQueueMap[targetUniqueId] = queue
                 queue.offer(itemStack)
                 coroutineScope.launch(Dispatchers.BukkitAsync) {
-                    val contents =
-                        getURLContents("https://sessionserver.mojang.com/session/minecraft/profile/$targetUniqueId")
-                    val jsonObject = gson.fromJson(contents, JsonObject::class.java)
-                    val value = jsonObject.getAsJsonArray("properties")[0].asJsonObject["value"].asString
-                    val decoded = String(Base64.getDecoder().decode(value))
-                    val newObject = gson.fromJson(decoded, JsonObject::class.java)
-                    val skinUrl = newObject.getAsJsonObject("textures").getAsJsonObject("SKIN")["url"].asString
-                    val skin = "{\"textures\":{\"SKIN\":{\"url\":\"$skinUrl\"}}}".toByteArray()
-                    val encoded = Base64.getEncoder().encode(skin)
-                    val hash = Arrays.hashCode(encoded).toLong()
-                    val hashAsId = UUID(hash, hash)
-                    val tag = "{SkullOwner:{Id:\"$hashAsId\", Properties:{textures:[{Value:\"$value\"}]}}}"
-                    skinTagMap[targetUniqueId] = tag
-                    lambdaQueueMap.remove(targetUniqueId)
-                    while (queue.isNotEmpty()) {
-                        try {
-                            val element = queue.poll()
-                            if (!element.type.isAir && targetedItemStack.isSimilar(element))
-                                server.unsafe.modifyItemStack(element, tag).apply {
-                                    itemMeta = itemMeta?.also(metaScope)
+                    val offlinePlayer = server.getOfflinePlayer(targetUniqueId)
+
+                    if (offlinePlayer.isOnline) {
+                        val player = offlinePlayer.player
+                        if (player != null) {
+                            //val tag = "{SkullOwner:{Id:\"${player.uniqueId}\", Name:\"${player.name}\"}}"
+                            val profile = player.playerProfile
+                            skinProfileMap[targetUniqueId] = profile
+                            lambdaQueueMap.remove(targetUniqueId)
+                            while (queue.isNotEmpty()) {
+                                try {
+                                    val element = queue.poll()
+                                    if (!element.type.isAir && targetedItemStack.isSimilar(element)) {
+                                        val meta = element.itemMeta
+                                        if (meta is SkullMeta) {
+                                            meta.ownerProfile = profile
+                                            element.itemMeta = meta.also(metaScope)
+                                        }
+                                    }
+                                } catch (_: Exception) {
                                 }
-                        } catch (_: Exception) {
+                            }
+                            return@launch
                         }
                     }
                 }
