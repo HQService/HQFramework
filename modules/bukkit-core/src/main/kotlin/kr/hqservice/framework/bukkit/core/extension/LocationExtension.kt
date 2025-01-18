@@ -12,11 +12,11 @@ fun Location.getFrontLocation(distance: Double, absolute: Boolean = true): Locat
 fun Location.getLeftLocation(distance: Double): Location {
     val direction = direction.normalize()
     val newDirection = Vector(direction.z, 0.0, -direction.x).normalize()
-    return add(newDirection.multiply(distance))
+    return clone().add(newDirection.multiply(distance))
 }
 
 fun Location.getRightLocation(distance: Double): Location {
     val direction = direction.normalize()
     val newDirection = Vector(-direction.z, 0.0, direction.x).normalize()
-    return add(newDirection.multiply(distance))
+    return clone().add(newDirection.multiply(distance))
 }
