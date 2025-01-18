@@ -74,7 +74,7 @@ class LegacyNmsTextDisplayService(
 
     override fun wrap(target: Location): NmsTextDisplayWrapper {
         nmsDisplayService as LegacyNmsDisplayService
-        val const = nmsDisplayService.getConstructor(getTargetClass(), "TEXT_DISPLAY")
+        val const = nmsDisplayService.getConstructor(nmsDisplayService.textDisplayType::class, "TextDisplay")
         val level = worldService.wrap(target.world!!).getUnwrappedInstance()
         return NmsTextDisplayWrapper(const.newInstance(nmsDisplayService.textDisplayType, level), this)
     }
