@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bukkit.core.extension
 
+import com.google.common.collect.ImmutableMultiset
 import kr.hqservice.framework.global.core.extension.compress
 import kr.hqservice.framework.global.core.extension.decompress
 import kr.hqservice.framework.global.core.extension.throwIf
@@ -10,8 +11,6 @@ import org.bukkit.util.io.BukkitObjectInputStream
 import org.bukkit.util.io.BukkitObjectOutputStream
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-
-// ItemStack builder extensions
 
 inline fun <reified T : ItemMeta> ItemStack.meta(
     block: T.() -> Unit,
@@ -40,8 +39,6 @@ fun ItemStack.addLore(lore: String): ItemStack = meta<ItemMeta> {
 fun ItemStack.customModelData(data: Int): ItemStack = meta<ItemMeta> {
     this.setCustomModelData(data)
 }
-
-// ItemStack serialization extensions
 
 fun ItemStack?.toByteArray(compress: Boolean = true): ByteArray {
     return arrayOf(this).toByteArray(compress)
@@ -87,4 +84,17 @@ fun ItemMeta.addLine(line: String) {
     lore = lore?.apply {
         add(line)
     } ?: mutableListOf(line)
+}
+
+fun List<ItemStack>.toMap(): Map<ItemStack, Int> {
+    val itemStackMap = mutableMapOf<ItemStack, Int>()
+    forEach {
+        val itemStack = it.clone().apply { this.amount = 1 }
+        itemStackMap[itemStack] = itemStackMap.getOrDefault(itemStack, 0) + it.amount
+    }
+    return itemStackMap
+}
+
+fun List<ItemStack>.isEqual(itemStacks: List<ItemStack>): Boolean {
+    return ImmutableMultiset.copyOf(this) == ImmutableMultiset.copyOf(itemStacks)
 }
