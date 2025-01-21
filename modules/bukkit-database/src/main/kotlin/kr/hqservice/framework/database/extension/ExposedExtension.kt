@@ -31,7 +31,7 @@ fun Array<ItemStack?>.toExposedBlob(): ExposedBlob {
 
 fun ExposedBlob.toItemStack(): ItemStack {
     return this.inputStream.use {
-        toItemStack()
+        it.readAllBytes().toItemStack()
     }
 }
 
