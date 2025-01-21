@@ -6,34 +6,35 @@ import kr.hqservice.framework.nms.handler.impl.CallableVersionHandler
 import kr.hqservice.framework.nms.handler.impl.NameVersionHandler
 
 enum class Version(
+    private val majorVersion: Int = -1,
     private val parent: Version? = null
 ) {
-    V_17,
-    V_18,
+    V_17(17),
+    V_18(18),
     V_18_2,
-    V_19,
+    V_19(19),
     V_19_1,
     V_19_2,
     V_19_3,
     V_19_4,
-    V_20,
+    V_20(20),
     V_20_1,
     V_20_2,
     V_20_3,
     V_20_4,
     V_20_6,
-    V_21,
+    V_21(21),
     V_21_1,
     V_21_3,
 
     // forge
-    V_17_FORGE(V_17),
-    V_19_FORGE(V_19),
-    V_20_2_FORGE(V_20_2);
+    V_17_FORGE(parent= V_17),
+    V_19_FORGE(parent= V_19),
+    V_20_2_FORGE(parent= V_20_2);
 
     companion object {
-        fun majorVersionOf(majorVersion: String): Version? {
-            return try { valueOf("V_$majorVersion") } catch (_: Exception) { null }
+        fun majorVersionOf(majorVersion: Int): Version? {
+            return try { entries.first { it.majorVersion == majorVersion } } catch (_: Exception) { null }
         }
     }
 

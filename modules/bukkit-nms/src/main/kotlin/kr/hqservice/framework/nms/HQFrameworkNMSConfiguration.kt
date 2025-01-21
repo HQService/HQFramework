@@ -42,7 +42,7 @@ class HQFrameworkNMSConfiguration(
     } catch (e: Exception) {
         0
     }
-    private val version = Version.majorVersionOf("V_$majorVersion")
+    private val version = Version.majorVersionOf(majorVersion)
     private val fullVersion = try {
         Version.valueOf("V_${majorVersion}_${minorVersion}")
     } catch (e: Exception) {
