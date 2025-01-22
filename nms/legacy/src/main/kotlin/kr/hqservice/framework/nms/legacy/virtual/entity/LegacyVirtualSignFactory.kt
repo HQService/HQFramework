@@ -43,6 +43,10 @@ class LegacyVirtualSignFactory(
         Version.V_18.handleFunction("a") {
             setParameterClasses(tileEntityClass)
             static()
+        },
+        Version.V_19_FORGE.handleFunction("m_195640_") {
+            setParameterClasses(tileEntityClass)
+            static()
         }
     )
     private val tileEntityCreateFunction = reflectionWrapper.getFunction(tileEntityTypeClass, "create", listOf(blockPositionClass, iBlockDataClass),
