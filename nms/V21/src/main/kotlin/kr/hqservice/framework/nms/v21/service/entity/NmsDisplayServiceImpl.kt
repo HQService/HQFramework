@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.v21.service.entity
 
+import com.mojang.math.Transformation
 import kr.hqservice.framework.nms.service.entity.NmsDisplayService
 import kr.hqservice.framework.nms.virtual.entity.AbstractVirtualDisplay
 import kr.hqservice.framework.nms.wrapper.entity.NmsDisplayWrapper
@@ -18,8 +19,9 @@ class NmsDisplayServiceImpl : NmsDisplayService {
 
     override fun applyTransformation(virtualDisplay: AbstractVirtualDisplay) {
         val entity = virtualDisplay.getEntity() as TextDisplay
-        entity.setPosRaw(virtualDisplay.getLocation().x, virtualDisplay.getLocation().y, virtualDisplay.getLocation().z)
-        entity.yRot = virtualDisplay.getLocation().yaw
+        /*entity.setPosRaw(virtualDisplay.getLocation().x, virtualDisplay.getLocation().y, virtualDisplay.getLocation().z)
+        entity.yRot = virtualDisplay.getLocation().yaw*/
+        entity.setTransformation(virtualDisplay.transformation.getUnwrappedInstance() as Transformation)
     }
 
     override fun applyInterpolationDuration(virtualDisplay: AbstractVirtualDisplay) {
