@@ -60,7 +60,7 @@ abstract class AbstractVirtualScope(
                 event as InventoryClickEvent
                 if (event.whoClicked.uniqueId == it.uniqueId) {
                     event.isCancelled = true
-                    event.cursor = null
+                    event.setCursor(null)
                 }
             }, lazyPlugin)
 
