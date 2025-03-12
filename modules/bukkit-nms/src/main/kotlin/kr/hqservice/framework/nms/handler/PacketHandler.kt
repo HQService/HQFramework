@@ -54,10 +54,4 @@ class PacketHandler(
         super.channelRead(context, message)
     }
 
-    override fun channelInactive(ctx: ChannelHandlerContext) {
-        if (ctx.pipeline().get("hq_injector") != null) {
-            virtualHandlerRegistry.cleanup(uniqueId)
-            ctx.pipeline().remove("hq_injector")
-        }
-    }
 }
