@@ -71,7 +71,7 @@ class LegacyNmsNettyInjectService(
 
         if (pipeline.get("hq_packet_handler") == null) {
             pipeline.addBefore(
-                "packet_handler",
+                "packet_handler", // TODO: Change the hardcoded value to a constant
                 "hq_packet_handler",
                 PacketHandler(player, plugin, virtualHandlerRegistry)
             )
