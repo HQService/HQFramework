@@ -59,7 +59,8 @@ class VirtualItemHandlerFactoryImpl : VirtualItemHandlerFactory {
                             val wrapper = itemStackService.getWrapper(itemStack)
                             val bukkitItemStack = wrapper.getBukkitItemStack()
                             if (filter(index, bukkitItemStack)) {
-                                list[index] = bukkitItemStack.apply { item(index, bukkitItemStack) }.getNmsItemStack()
+                                list[index] = bukkitItemStack.apply { item(index, bukkitItemStack) }
+                                    .getNmsItemStack()
                                     .getUnwrappedInstance() as net.minecraft.world.item.ItemStack
                             }
                         }

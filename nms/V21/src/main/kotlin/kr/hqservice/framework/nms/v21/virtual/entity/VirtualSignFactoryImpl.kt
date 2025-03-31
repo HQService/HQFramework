@@ -25,7 +25,7 @@ class VirtualSignFactoryImpl(
         val blockPos = BlockPos(player.location.blockX, player.location.blockY, player.location.blockZ)
         val fakeSignBlockState: BlockState = Blocks.OAK_SIGN.defaultBlockState()
         val virtualSignEntity = SignBlockEntity(blockPos, fakeSignBlockState)
-        virtualSignEntity.level = worldService.wrap(player.world).getUnwrappedInstance() as ServerLevel
+        virtualSignEntity.setLevel(worldService.wrap(player.world).getUnwrappedInstance() as ServerLevel)
 
         return VirtualListMessage(listOf(
             ClientboundBlockUpdatePacket(blockPos, fakeSignBlockState),

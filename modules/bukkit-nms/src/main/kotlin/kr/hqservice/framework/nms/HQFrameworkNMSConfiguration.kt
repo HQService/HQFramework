@@ -1,11 +1,11 @@
 package kr.hqservice.framework.nms
 
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
-import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
+import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
@@ -35,7 +35,7 @@ class HQFrameworkNMSConfiguration(
     server: Server,
     serviceManager: NMSServiceManager
 ) : NMSServiceProvider, NMSVirtualFactoryProvider {
-    private val versionName: String = server.bukkitVersion.split("-")[0]
+    private val versionName: String = server.minecraftVersion.split("-")[0]
     private val majorVersion = versionName.split(".")[1].toInt()
     private val minorVersion = try {
         versionName.split(".")[2].toInt()
@@ -44,7 +44,7 @@ class HQFrameworkNMSConfiguration(
     }
     private val version = Version.majorVersionOf(majorVersion)
     private val fullVersion = try {
-        Version.valueOf("V_${majorVersion}_${minorVersion}")
+        Version.valueOf("V_${majorVersion}_${minorVersion}").print("HQFramework- ServerVersion: ")
     } catch (e: Exception) {
         version
     }

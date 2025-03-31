@@ -1,11 +1,21 @@
 package kr.hqservice.framework.nms.extension
 
+import kr.hqservice.framework.nms.NMSServiceManager
+import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
 import org.koin.java.KoinJavaComponent.getKoin
 
 private val itemService: NmsItemStackService by getKoin().inject()
+private val nmsServiceManager: NMSServiceManager by getKoin().inject()
+
+private val getItemNameMethod by lazy {
+    try {
+        ItemMeta::class.java.getDeclaredMethod("getItemName")
+    } catch (_: Exception) { null }
+}
 
 fun ItemStack.nms(block: NmsItemStackWrapper.() -> Unit): ItemStack {
     itemMeta = itemService
@@ -25,7 +35,13 @@ fun ItemStack.getNmsItemStack(block: NmsItemStackWrapper.() -> Unit): NmsItemSta
 }
 
 fun ItemStack.getDisplayName(): String {
-    return if (this.itemMeta?.hasDisplayName() == true) this.itemMeta!!.displayName else this.localizedName
+    return if (this.itemMeta?.hasDisplayName() == true) this.itemMeta!!.displayName else {
+        if (nmsServiceManager.support(Version.V_21_4)) {
+            this.itemMeta?.let { meta ->
+                getItemNameMethod?.invoke(meta) as? String
+            } ?: localizedName
+        } else this.localizedName
+    }
 }
 
 fun ItemStack.setNmsItemStack(nmsItemStack: NmsItemStackWrapper) {
