@@ -38,7 +38,8 @@ fun ItemStack.getDisplayName(): String {
     return if (this.itemMeta?.hasDisplayName() == true) this.itemMeta!!.displayName else {
         if (nmsServiceManager.support(Version.V_21_4)) {
             this.itemMeta?.let { meta ->
-                getItemNameMethod?.invoke(meta) as? String
+                val result = getItemNameMethod?.invoke(meta) as? String
+                if (result?.isEmpty() == true) null else result
             } ?: localizedName
         } else this.localizedName
     }
