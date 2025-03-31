@@ -12,7 +12,7 @@ import org.bukkit.inventory.InventoryView
 
 @Listener
 class HQContainerHandler {
-    @Subscribe(handleOrder = HandleOrder.FIRST)
+    @Subscribe(handleOrder = HandleOrder.EARLY)
     fun inventoryClick(event: InventoryClickEvent) {
         getContainer(event.view)?.apply {
             event.isCancelled = isCancelled()
@@ -24,14 +24,14 @@ class HQContainerHandler {
         }
     }
 
-    @Subscribe(handleOrder = HandleOrder.FIRST)
+    @Subscribe(handleOrder = HandleOrder.EARLY)
     fun inventoryClose(event: InventoryCloseEvent) {
         getContainer(event.view)?.apply {
             onClose(event)
         }
     }
 
-    @Subscribe(handleOrder = HandleOrder.FIRST)
+    @Subscribe(handleOrder = HandleOrder.EARLY)
     fun inventoryDrag(event: InventoryDragEvent) {
         getContainer(event.view)?.apply {
             onDrag(event)
