@@ -18,17 +18,17 @@ class RelocatedRuntimeScope(
     private val dependencyHandler: DependencyHandler
 ) {
     fun runtimeOnly(provider: Provider<MinimalExternalModuleDependency>): Dependency? {
-        relocateDependency(provider.get().group!!)
+        relocateDependency(provider.get().group)
         return dependencyHandler.add("runtimeOnly", provider)
     }
 
     fun api(provider: Provider<MinimalExternalModuleDependency>): Dependency? {
-        relocateDependency(provider.get().group!!)
+        relocateDependency(provider.get().group)
         return dependencyHandler.add("api", provider)
     }
 
     fun implementation(provider: Provider<MinimalExternalModuleDependency>): Dependency? {
-        relocateDependency(provider.get().group!!)
+        relocateDependency(provider.get().group)
         return dependencyHandler.add("implementation", provider)
     }
 

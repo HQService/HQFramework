@@ -23,7 +23,8 @@ import org.koin.core.definition.indexKey
 import org.koin.core.error.DefinitionOverrideException
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
-import org.koin.core.instance.InstanceContext
+import org.koin.core.instance.NoClass
+import org.koin.core.instance.ResolutionContext
 import org.koin.core.instance.SingleInstanceFactory
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
@@ -406,7 +407,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 return@mapIndexed proxy
             }
             val factory = getKoin().instanceRegistry.instances[indexKey]
-            val defaultContext = InstanceContext(getKoin().logger, getKoin().getScope(scopeQualifier.value))
+            val defaultContext = ResolutionContext(getKoin().logger, getKoin().getScope(scopeQualifier.value), NoClass::class)
 
             try {
                 factory?.get(defaultContext)
