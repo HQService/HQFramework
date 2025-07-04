@@ -16,11 +16,14 @@ class HQContainerHandler {
     fun inventoryClick(event: InventoryClickEvent) {
         getContainer(event.view)?.apply {
             event.isCancelled = isCancelled()
-
-            getButton(event.rawSlot)?.also { button ->
-                event.isCancelled = true
-                button.click(ButtonClickEvent(this, button, event))
-            } ?: onClick(event)
+            val button = getButton(event.rawSlot)
+            if (button != null) {
+                if (event.currentItem?.run { if (type.isAir) null else this } == null) onClick(event)
+                else {
+                    event.isCancelled = true
+                    button.click(ButtonClickEvent(this, button, event))
+                }
+            } else onClick(event)
         }
     }
 
