@@ -233,9 +233,8 @@ class PlayerConnectionPacketHandler(
 
     @Subscribe
     fun onLoad(event: PlayerDataPreLoadEvent) {
+        loadPlayer.add(event.player.uniqueId)
         playerScopes.scope(event.player.uniqueId).launch(CoroutineName("load")) {
-            loadPlayer.add(event.player.uniqueId)
-
             withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = true }
             val loadJobs = playerRepositoryRegistry.getAll().map { repository ->
                 launch(Dispatchers.IO) {
