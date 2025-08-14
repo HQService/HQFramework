@@ -2,12 +2,12 @@ package kr.hqservice.framework.bukkit.core.coroutine.extension
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlin.coroutines.CoroutineContext
 
 val Job.coroutineContext: CoroutineContext
     get() {
-        return (this as CoroutineScope).coroutineContext
+        return if (this is CoroutineScope) this.coroutineContext
+        else this
     }
 
 val Job.childrenAll: List<Job>
@@ -15,10 +15,10 @@ val Job.childrenAll: List<Job>
         val resultJobs: MutableList<Job> = mutableListOf()
         fun findChildrenJobsAsFlatAndStoreTo(job: Job, result: MutableList<Job>) {
             for (childJob in job.children) {
-                if (childJob !is SupervisorJob) result.add(childJob)
                 findChildrenJobsAsFlatAndStoreTo(childJob, result)
             }
         }
+
         findChildrenJobsAsFlatAndStoreTo(this, resultJobs)
         return resultJobs
     }
