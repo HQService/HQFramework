@@ -1,13 +1,22 @@
 package kr.hqservice.framework.nms.event
 
-import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
+import java.util.UUID
 
-@Deprecated("Use AsyncPlayerDataPreLoadEvent instead")
-class PlayerDataPreLoadEvent(
-    val player: Player
+class AsyncPlayerDataPreLoadEvent(
+    val playerId: UUID
 ) : Event(true) {
+    private var kickMessage: String? = null
+
+    fun cancel(message: String) {
+        kickMessage = message
+    }
+
+    fun getKickMessage(): String? {
+        return kickMessage
+    }
+
     companion object {
         @JvmStatic
         val HANDLER_LIST = HandlerList()

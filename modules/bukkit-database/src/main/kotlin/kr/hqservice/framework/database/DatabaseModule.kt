@@ -5,6 +5,7 @@ import kr.hqservice.framework.bukkit.core.component.module.Module
 import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
+import kr.hqservice.framework.database.repository.player.lock.SwitchGate
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.netty.api.NettyServer
 import org.jetbrains.exposed.sql.Database
@@ -15,7 +16,8 @@ class DatabaseModule(
     private val nettyServer: NettyServer,
     private val database: Database,
     private val databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
-    private val dataSource: HikariDataSource
+    private val dataSource: HikariDataSource,
+    private val switchGate: SwitchGate
 ) {
     @Setup
     fun registerPackets() {
@@ -30,5 +32,6 @@ class DatabaseModule(
             it.shutdown(dataSource)
         }
         dataSource.close()
+        switchGate.clear()
     }
 }

@@ -23,7 +23,7 @@ class PlayerConnectionListener(
         val nettyPlayer = NettyPlayerImpl(
             event.username,
             event.username,
-            UUID.randomUUID(),
+            event.uniqueId ?: UUID.randomUUID(),
             null
         )
 
