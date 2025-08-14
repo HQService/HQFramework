@@ -16,7 +16,12 @@ class PacketDecoder : MessageToMessageDecoder<ByteBuf>() {
         val packetName = buf.readString()
         val callbackResult = buf.readBoolean()
 
-        val packetClass = Class.forName(packetName).kotlin as KClass<Packet>
+        val packetClass = try {
+            Class.forName(packetName).kotlin as KClass<Packet>
+        } catch (_: ClassNotFoundException) {
+            return
+        }
+
         val wrapper = Direction.INBOUND.findPacketByClass(packetClass)
             ?: return
         val codecClass = wrapper.codecClass
