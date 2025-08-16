@@ -2,6 +2,7 @@ package kr.hqservice.framework.database.repository.player.packet.handler
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
@@ -11,6 +12,7 @@ import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.repository.player.lock.DefermentLock
+import kr.hqservice.framework.database.repository.player.lock.IOGate
 import kr.hqservice.framework.database.repository.player.lock.SwitchGate
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
@@ -20,6 +22,7 @@ import kr.hqservice.framework.netty.packet.player.PlayerConnectionPacket
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
 import kr.hqservice.framework.nms.event.AsyncPlayerDataPreLoadEvent
 import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -27,6 +30,7 @@ import org.bukkit.event.player.*
 import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -34,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Listener
 class PlayerConnectionPacketHandler(
     private val plugin: Plugin,
+    private val config: HQYamlConfiguration,
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
     private val coroutineScope: CoroutineScope,
     @Qualifier("switch") private val switchDefermentLock: DefermentLock,
@@ -46,6 +51,10 @@ class PlayerConnectionPacketHandler(
 ) {
     private var loadPlayer = ConcurrentHashMap.newKeySet<UUID>()
     private val playerScopes = PlayerScopes(coroutineScope, Dispatchers.IO)
+    private val ioGate = IOGate(
+        if (config.getString("database.type").lowercase() == "mysql")
+            config.getInt("database.mysql.maximum-pool-size")
+        else 10, 2)
 
     @Subscribe(HandleOrder.FIRST)
     fun pickup(event: PlayerPickupItemEvent) {
@@ -85,13 +94,13 @@ class PlayerConnectionPacketHandler(
     }
 
     private suspend fun <T : Any> onPreLoad(playerId: UUID, repository: PlayerRepository<T>) =
-        newSuspendedTransaction(Dispatchers.IO) { repository.preLoad0(playerId) }
+        repository.preLoad0(playerId)
 
     private suspend fun <T : Any> onLoad(player: Player, repository: PlayerRepository<T>) {
-        val value = repository.preValue(player) ?: newSuspendedTransaction(Dispatchers.IO) { repository.load(player) }
-        if (player.isOnline) {
-            repository[player.uniqueId] = value
-        } else {
+        val pre = repository.preValue(player)
+        val value = pre ?: repository.load(player)
+        if (player.isOnline) repository[player.uniqueId] = value
+        else {
             repository.removePreLoad(player.uniqueId)
             repository.remove(player.uniqueId)
         }
@@ -99,22 +108,34 @@ class PlayerConnectionPacketHandler(
 
     private suspend fun <T : Any> onSave(player: Player, repository: PlayerRepository<T>) {
         val value = repository[player.uniqueId] ?: return
-        newSuspendedTransaction(Dispatchers.IO) {
+        val tx = TransactionManager.currentOrNull()
+        if (tx != null) repository.save(player, value)
+        else newSuspendedTransaction(Dispatchers.IO) {
             repository.save(player, value)
         }
     }
 
     private suspend fun saveAndClear(player: Player) = coroutineScope {
-        val exceptionHandler = coroutineScope.coroutineContext[CoroutineExceptionHandler]
-        playerRepositoryRegistry.getAll().map { repo ->
-            launch(CoroutineName("save:${repo::class.simpleName}")) {
-                runCatching {
-                    onSave(player, repo)
-                }.onFailure { exceptionHandler?.handleException(coroutineScope.coroutineContext, it) }
+        val playerRepositories = playerRepositoryRegistry.getAll()
+        val exceptionHandler = coroutineContext[CoroutineExceptionHandler]
+        runCatching {
+            ioGate.withPermit(IOGate.GateType.SAVE, -1L) {
+                newSuspendedTransaction(Dispatchers.IO + CoroutineName("save:${player.uniqueId}")) {
+                    for (repo in playerRepositories) {
+                        withContext(CoroutineName("save:${player.uniqueId}:${repo::class.simpleName}")) {
+                            onSave(player, repo)
+                        }
+                    }
+                }
+            }
+
+            for (repo in playerRepositories) {
                 repo.removePreLoad(player.uniqueId)
                 repo.remove(player.uniqueId)
             }
-        }.joinAll()
+        }.onFailure {
+            exceptionHandler?.handleException(coroutineContext, it)
+        }
     }
 
     // proxied server
@@ -148,7 +169,7 @@ class PlayerConnectionPacketHandler(
                 } else if (packet.player.getChannel()?.getPort() == server.port) {
                     val player =
                         server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
-                    playerScopes.scope(player.uniqueId).launch {
+                    playerScopes.scope(player.uniqueId).launch(TeardownOptionCoroutineContextElement(false)) {
                         saveAndClear(player)
                         packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                     }
@@ -206,11 +227,10 @@ class PlayerConnectionPacketHandler(
     }
 
     @Subscribe
-    fun onPreLoad(event: AsyncPlayerDataPreLoadEvent) = runBlocking blocking@{
+    fun onPreLoad(event: AsyncPlayerDataPreLoadEvent) {
         val playerId = event.playerId
-        val ps = playerScopes.scope(playerId)
 
-        withContext(ps.coroutineContext + CoroutineName("preLoad")) {
+        playerScopes.scope(playerId).launch(CoroutineName("preLoad")) {
             if (nettyService.isEnable() && !loadPlayer.contains(playerId)) {
                 val lock = switchDefermentLock.findLock(playerId)
                 if (lock != null && !lock.isCancelled && lock.isActive) {
@@ -218,35 +238,53 @@ class PlayerConnectionPacketHandler(
                     if (!ok) {
                         event.cancel("데이터 저장 시점을 받아오지 못하였습니다.")
                         switchGate.cancel(playerId)
-                        return@withContext
+                        return@launch
                     }
                 }
             }
 
-            supervisorScope {
-                playerRepositoryRegistry.getAll()
-                    .map { repo -> async(Dispatchers.IO) { onPreLoad(playerId, repo) } }
-                    .awaitAll()
+            ioGate.withPermit(IOGate.GateType.PRELOAD) {
+                supervisorScope {
+                    val repositories = playerRepositoryRegistry.getAll()
+                    newSuspendedTransaction(Dispatchers.IO) {
+                        for (repo in repositories) onPreLoad(playerId, repo)
+                    }
+                }
             }
         }
     }
 
     @Subscribe
     fun onLoad(event: PlayerDataPreLoadEvent) {
-        loadPlayer.add(event.player.uniqueId)
-        playerScopes.scope(event.player.uniqueId).launch(CoroutineName("load")) {
-            withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = true }
-            val loadJobs = playerRepositoryRegistry.getAll().map { repository ->
-                launch(Dispatchers.IO) {
-                    onLoad(event.player, repository)
+        val playerId = event.player.uniqueId
+        loadPlayer.add(playerId)
+
+        playerScopes.scope(playerId).launch(CoroutineName("load")) {
+            ioGate.withPermit(IOGate.GateType.LOAD) {
+                withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = true }
+
+                if (nettyService.isEnable() && !loadPlayer.contains(playerId)) {
+                    val lock = switchDefermentLock.findLock(playerId)
+                    if (lock != null && !lock.isCancelled && lock.isActive) {
+                        val ok = withTimeoutOrNull(1500) { switchGate.ensure(playerId).await() } != null
+                        if (!ok) {
+                            withContext(Dispatchers.BukkitMain) {
+                                event.player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
+                            }
+                            switchGate.cancel(playerId)
+                            return@withPermit
+                        }
+                    }
                 }
+                val repositories = playerRepositoryRegistry.getAll()
+                newSuspendedTransaction(Dispatchers.IO) {
+                    for (repo in repositories) onLoad(event.player, repo)
+                }
+
+                loadPlayer.remove(event.player.uniqueId)
+                pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
+                withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = false }
             }
-
-            loadJobs.joinAll()
-
-            loadPlayer.remove(event.player.uniqueId)
-            pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
-            withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = false }
         }
     }
 
