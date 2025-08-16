@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.v21_3
+package kr.hqservice.framework.nms.v21_5
 
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.nms.NMSServiceManager
@@ -11,22 +11,22 @@ import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import org.bukkit.plugin.Plugin
 
 @Component
-class NMSServiceManagerV21_3(
+class NMSServiceManagerV21_5(
     private val plugin: Plugin,
     private val languageRegistry: LanguageRegistry,
     private val virtualHandlerRegistry: VirtualHandlerRegistry,
 ) : NMSServiceManager {
-    private lateinit var serviceProvider: NMSServiceProviderV21_3
-    private lateinit var virtualFactoryProvider: VirtualFactoryProviderV21_3
+    private lateinit var serviceProvider: NMSServiceProviderImplV21_5
+    private lateinit var virtualFactoryProvider: VirtualFactoryProviderImplV21_5
 
     override fun support(version: Version): Boolean {
-        return version.ordinal in Version.V_21_3.ordinal .. Version.V_21_3.ordinal
+        return version.ordinal in Version.V_21_5.ordinal .. Version.V_21_5.ordinal
     }
 
     override fun initialize() {
         val reflectionWrapper = NmsReflectionWrapperImpl()
-        serviceProvider = NMSServiceProviderV21_3(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
-        virtualFactoryProvider = VirtualFactoryProviderV21_3(reflectionWrapper, serviceProvider)
+        serviceProvider = NMSServiceProviderImplV21_5(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
+        virtualFactoryProvider = VirtualFactoryProviderImplV21_5(reflectionWrapper, serviceProvider)
     }
 
     override fun getServiceProvider(): NMSServiceProvider {
