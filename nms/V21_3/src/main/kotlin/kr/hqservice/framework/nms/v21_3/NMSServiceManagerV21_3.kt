@@ -20,7 +20,7 @@ class NMSServiceManagerV21_3(
     private lateinit var virtualFactoryProvider: VirtualFactoryProviderV21_3
 
     override fun support(version: Version): Boolean {
-        return version.ordinal in Version.V_21_3.ordinal .. Version.V_21_3.ordinal
+        return version.ordinal in Version.V_21_3.ordinal .. Version.V_21_4.ordinal
     }
 
     override fun initialize() {
