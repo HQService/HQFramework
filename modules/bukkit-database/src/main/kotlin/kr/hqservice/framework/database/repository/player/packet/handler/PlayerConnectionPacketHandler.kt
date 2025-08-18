@@ -54,7 +54,20 @@ class PlayerConnectionPacketHandler(
     private val ioGate = IOGate(
         if (config.getString("database.type").lowercase() == "mysql")
             config.getInt("database.mysql.maximum-pool-size")
-        else 10, 2)
+        else 10, 2
+    )
+    private val preLoadGate = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
+
+    private fun ensurePreload(id: UUID): CompletableDeferred<Unit> =
+        preLoadGate.computeIfAbsent(id) { CompletableDeferred() }
+
+    private fun completePreload(id: UUID) {
+        preLoadGate.remove(id)?.complete(Unit)
+    }
+
+    private fun failPreload(id: UUID, exception: Throwable) {
+        preLoadGate.remove(id)?.completeExceptionally(exception)
+    }
 
     @Subscribe(HandleOrder.FIRST)
     fun pickup(event: PlayerPickupItemEvent) {
@@ -231,24 +244,26 @@ class PlayerConnectionPacketHandler(
         val playerId = event.playerId
 
         playerScopes.scope(playerId).launch(CoroutineName("preLoad")) {
-            if (nettyService.isEnable() && !loadPlayer.contains(playerId)) {
+            if (nettyService.isEnable()) {
                 val lock = switchDefermentLock.findLock(playerId)
                 if (lock != null && !lock.isCancelled && lock.isActive) {
-                    val ok = withTimeoutOrNull(1500) { switchGate.ensure(playerId).await() } != null
+                    val ok = withTimeoutOrNull(3000) { switchGate.ensure(playerId).await() } != null
                     if (!ok) {
-                        event.cancel("데이터 저장 시점을 받아오지 못하였습니다.")
+                        withContext(Dispatchers.BukkitMain) { server.getPlayer(event.playerId)?.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.") }
                         switchGate.cancel(playerId)
                         return@launch
                     }
                 }
             }
-
             ioGate.withPermit(IOGate.GateType.PRELOAD) {
-                supervisorScope {
-                    val repositories = playerRepositoryRegistry.getAll()
-                    newSuspendedTransaction(Dispatchers.IO) {
-                        for (repo in repositories) onPreLoad(playerId, repo)
-                    }
+                ensurePreload(playerId)
+                val repositories = playerRepositoryRegistry.getAll()
+                try {
+                    newSuspendedTransaction(Dispatchers.IO + CoroutineName("preload:${playerId}")) { for (repo in repositories) onPreLoad(playerId, repo) }
+                    completePreload(playerId)
+                } catch (e: Exception) {
+                    failPreload(playerId, e)
+                    throw e
                 }
             }
         }
@@ -260,31 +275,43 @@ class PlayerConnectionPacketHandler(
         loadPlayer.add(playerId)
 
         playerScopes.scope(playerId).launch(CoroutineName("load")) {
-            ioGate.withPermit(IOGate.GateType.LOAD) {
-                withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = true }
-
-                if (nettyService.isEnable() && !loadPlayer.contains(playerId)) {
-                    val lock = switchDefermentLock.findLock(playerId)
-                    if (lock != null && !lock.isCancelled && lock.isActive) {
-                        val ok = withTimeoutOrNull(1500) { switchGate.ensure(playerId).await() } != null
-                        if (!ok) {
-                            withContext(Dispatchers.BukkitMain) {
-                                event.player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
-                            }
-                            switchGate.cancel(playerId)
-                            return@withPermit
+            withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = true }
+            if (nettyService.isEnable()) {
+                val lock = switchDefermentLock.findLock(playerId)
+                if (lock != null && !lock.isCancelled && lock.isActive) {
+                    val ok = withTimeoutOrNull(3000) { switchGate.ensure(playerId).await() } != null
+                    if (!ok) {
+                        withContext(Dispatchers.BukkitMain) {
+                            event.player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                         }
+                        switchGate.cancel(playerId)
+                        return@launch
                     }
                 }
+            }
+
+            val gate = preLoadGate[playerId]
+            val preOk = if (gate != null) {
+                withTimeoutOrNull(1000) { gate.await(); true } == true
+            } else true
+            preLoadGate.remove(playerId)
+            if (!preOk) {
+                withContext(Dispatchers.BukkitMain) {
+                    event.player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
+                }
+                return@launch
+            }
+
+            ioGate.withPermit(IOGate.GateType.LOAD) {
                 val repositories = playerRepositoryRegistry.getAll()
-                newSuspendedTransaction(Dispatchers.IO) {
+                newSuspendedTransaction(Dispatchers.IO + CoroutineName("load:${playerId}")) {
                     for (repo in repositories) onLoad(event.player, repo)
                 }
-
-                loadPlayer.remove(event.player.uniqueId)
-                pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
-                withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = false }
             }
+
+            loadPlayer.remove(event.player.uniqueId)
+            pluginManager.callEvent(PlayerRepositoryLoadedEvent(event.player))
+            withContext(Dispatchers.BukkitMain) { event.player.isInvulnerable = false }
         }
     }
 
@@ -316,7 +343,6 @@ class PlayerConnectionPacketHandler(
         val lock = switchDefermentLock.findLock(uniqueId)
         if (lock != null) {
             switchDefermentLock.unlock(uniqueId)
-            loadPlayer.add(uniqueId)
         } else {
             throw IllegalStateException("Player ($uniqueId) not locked.")
         }
