@@ -7,36 +7,19 @@ import kotlin.math.roundToInt
 
 class IOGate(hikariPoolSize: Int, margin: Int) {
     enum class GateType {
-        SAVE, LOAD, PRELOAD
+        SAVE, LOAD
     }
 
     val saveGate: Semaphore
     val loadGate: Semaphore
-    val preloadGate: Semaphore
 
     init {
         val usable = (hikariPoolSize - margin).coerceAtLeast(3)
-        var save = (usable * 0.5).roundToInt().coerceAtLeast(1)
-        var load = (usable * 0.3).roundToInt().coerceAtLeast(1)
-        var preload = usable - save - load
-
-        if (preload < 1) {
-            var deficit = 1 - preload
-            while (deficit > 0) {
-                if (save >= load && save > 1) {
-                    save--
-                    deficit--
-                } else if (load > 1) {
-                    load--
-                    deficit--
-                } else break
-            }
-            preload = 1
-        }
+        var save = (usable * 0.6).roundToInt().coerceAtLeast(1)
+        var load = (usable * 0.4).roundToInt().coerceAtLeast(1)
 
         saveGate = Semaphore(save)
         loadGate = Semaphore(load)
-        preloadGate = Semaphore(preload)
     }
 
     suspend inline fun <T> withPermit(type: GateType, timeout: Long = 800, crossinline action: suspend Semaphore.() -> T): T {
@@ -46,9 +29,6 @@ class IOGate(hikariPoolSize: Int, margin: Int) {
                     it.withPermit { action(it) }
                 }
                 GateType.LOAD -> loadGate.let {
-                    it.withPermit { action(it) }
-                }
-                GateType.PRELOAD -> preloadGate.let {
                     it.withPermit { action(it) }
                 }
             }

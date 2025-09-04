@@ -20,7 +20,6 @@ import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionPacket
 import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
-import kr.hqservice.framework.nms.event.AsyncPlayerDataPreLoadEvent
 import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
@@ -186,6 +185,10 @@ class PlayerConnectionPacketHandler(
                         saveAndClear(player)
                         packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
                     }
+                } else {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        unlock(packet.player.getUniqueId())
+                    }
                 }
             }
 
@@ -240,36 +243,6 @@ class PlayerConnectionPacketHandler(
     }
 
     @Subscribe
-    fun onPreLoad(event: AsyncPlayerDataPreLoadEvent) {
-        val playerId = event.playerId
-
-        playerScopes.scope(playerId).launch(CoroutineName("preLoad")) {
-            if (nettyService.isEnable()) {
-                val lock = switchDefermentLock.findLock(playerId)
-                if (lock != null && !lock.isCancelled && lock.isActive) {
-                    val ok = withTimeoutOrNull(3000) { switchGate.ensure(playerId).await() } != null
-                    if (!ok) {
-                        withContext(Dispatchers.BukkitMain) { server.getPlayer(event.playerId)?.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.") }
-                        switchGate.cancel(playerId)
-                        return@launch
-                    }
-                }
-            }
-            ioGate.withPermit(IOGate.GateType.PRELOAD) {
-                ensurePreload(playerId)
-                val repositories = playerRepositoryRegistry.getAll()
-                try {
-                    newSuspendedTransaction(Dispatchers.IO + CoroutineName("preload:${playerId}")) { for (repo in repositories) onPreLoad(playerId, repo) }
-                    completePreload(playerId)
-                } catch (e: Exception) {
-                    failPreload(playerId, e)
-                    throw e
-                }
-            }
-        }
-    }
-
-    @Subscribe
     fun onLoad(event: PlayerDataPreLoadEvent) {
         val playerId = event.player.uniqueId
         loadPlayer.add(playerId)
@@ -286,20 +259,8 @@ class PlayerConnectionPacketHandler(
                         }
                         switchGate.cancel(playerId)
                         return@launch
-                    }
+                    } else delay(1)
                 }
-            }
-
-            val gate = preLoadGate[playerId]
-            val preOk = if (gate != null) {
-                withTimeoutOrNull(1000) { gate.await(); true } == true
-            } else true
-            preLoadGate.remove(playerId)
-            if (!preOk) {
-                withContext(Dispatchers.BukkitMain) {
-                    event.player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
-                }
-                return@launch
             }
 
             ioGate.withPermit(IOGate.GateType.LOAD) {
@@ -329,7 +290,7 @@ class PlayerConnectionPacketHandler(
     private suspend fun lock(uniqueId: UUID) {
         val lock = switchDefermentLock.findLock(uniqueId)
         if (lock != null) {
-            throw IllegalStateException("Player ($uniqueId) is already locked.")
+            //throw IllegalStateException("Player ($uniqueId) is already locked.")
         } else {
             switchDefermentLock.tryLock(uniqueId) {
                 withContext(Dispatchers.BukkitMain) {
@@ -344,7 +305,7 @@ class PlayerConnectionPacketHandler(
         if (lock != null) {
             switchDefermentLock.unlock(uniqueId)
         } else {
-            throw IllegalStateException("Player ($uniqueId) not locked.")
+            //throw IllegalStateException("Player ($uniqueId) not locked.")
         }
     }
 }
