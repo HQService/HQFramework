@@ -8,6 +8,8 @@ import kr.hqservice.framework.nms.virtual.message.VirtualMessageImpl
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.v21.wrapper.container.ContainerWrapperImpl
+import kr.hqservice.framework.nms.virtual.container.VirtualPaperAnvilContainer
+import kr.hqservice.framework.nms.virtual.container.VirtualPaperContainer
 import net.minecraft.network.chat.Component
 import net.minecraft.network.protocol.game.ClientboundOpenScreenPacket
 import net.minecraft.world.inventory.MenuType
@@ -59,7 +61,8 @@ class VirtualContainerMessageFactoryImpl(
             ClientboundOpenScreenPacket(
                 container.containerId,
                 virtualContainerType,
-                baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
+                if (virtualContainer is VirtualPaperContainer) baseComponentService.wrapFromAdventure(virtualContainer.adventure).getUnwrappedInstance() as Component
+                else baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
             )
         )
     }
@@ -70,7 +73,8 @@ class VirtualContainerMessageFactoryImpl(
         return VirtualMessageImpl(ClientboundOpenScreenPacket(
             container.getContainerId(),
             MenuType.ANVIL,
-            baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
+            if (virtualContainer is VirtualPaperAnvilContainer) baseComponentService.wrapFromAdventure(virtualContainer.adventure).getUnwrappedInstance() as Component
+            else baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
         ))
     }
 }

@@ -5,6 +5,7 @@ import kr.hqservice.framework.nms.handler.FunctionType
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
+import net.kyori.adventure.text.Component
 import kotlin.reflect.KClass
 
 class LegacyNmsBaseComponentService(
@@ -43,6 +44,10 @@ class LegacyNmsBaseComponentService(
             serializeFromJsonFunction.call(json)
                 ?: throw UnsupportedOperationException("cannot called ChatSerializer#fromJson(String) function")
         )
+    }
+
+    override fun wrapFromAdventure(adventure: Component): BaseComponentWrapper {
+        throw UnsupportedOperationException("Not supported in LegacyNmsBaseComponentService")
     }
 
     override fun unwrap(wrapper: BaseComponentWrapper): String {

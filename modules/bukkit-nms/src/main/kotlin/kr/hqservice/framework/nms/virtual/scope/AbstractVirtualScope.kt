@@ -9,6 +9,7 @@ import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.virtual.world.VirtualWorldBorder
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
+import net.kyori.adventure.text.Component
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.TextComponent
 import org.bukkit.Bukkit
@@ -46,44 +47,58 @@ abstract class AbstractVirtualScope(
         }
     }
 
+    private suspend fun anvilLogic(player: Player, containerFactory: VirtualAnvilContainerScope, anvilFactoryScope: VirtualAnvilContainerScope.() -> Unit) {
+        containerFactory.anvilFactoryScope()
+        reflectionWrapper.sendPacket(player, *containerFactory.getMessages())
+        val dummyListener = anvilHandlerFactory.createListener(player, lazyPlugin)
+
+        lazyPlugin.server.pluginManager.registerEvent(InventoryClickEvent::class.java, dummyListener, EventPriority.LOWEST, { _, event ->
+            event as InventoryClickEvent
+            if (event.whoClicked.uniqueId == player.uniqueId) {
+                event.isCancelled = true
+                event.setCursor(null)
+            }
+        }, lazyPlugin)
+
+        handlerRegistry.register(player.uniqueId, anvilHandlerFactory.createHandler(reflectionWrapper, { text ->
+            val resultItem = containerFactory.getResultItem(text)
+            reflectionWrapper.sendPacket(player, resultItem)
+        }, { text -> if (containerFactory.confirm(text)) {
+            lazyPlugin.getScheduler().runTask {
+                player.closeInventory()
+                player.updateInventory()
+            }
+            true
+        } else false }, { slot, text -> if (containerFactory.button(slot, text)) {
+            lazyPlugin.getScheduler().runTask {
+                player.closeInventory()
+                player.updateInventory()
+            }
+            true
+        } else false }, {
+            reflectionWrapper.sendPacket(player, *containerFactory.getBaseItem().toTypedArray())
+        }, dummyListener, { text ->
+            containerFactory.close(text)
+        }))
+    }
+
+    suspend fun anvil(
+        title: Component,
+        anvilFactoryScope: VirtualAnvilContainerScope.() -> Unit
+    ) {
+        viewers.forEach {
+            val containerFactory = VirtualAnvilContainerScope(it, title)
+            anvilLogic(it, containerFactory, anvilFactoryScope)
+        }
+    }
+
     suspend fun anvil(
         title: BaseComponent = TextComponent(""),
         anvilFactoryScope: VirtualAnvilContainerScope.() -> Unit
     ) {
         viewers.forEach {
             val containerFactory = VirtualAnvilContainerScope(it, title)
-            containerFactory.anvilFactoryScope()
-            reflectionWrapper.sendPacket(it, *containerFactory.getMessages())
-            val dummyListener = anvilHandlerFactory.createListener(it, lazyPlugin)
-
-            lazyPlugin.server.pluginManager.registerEvent(InventoryClickEvent::class.java, dummyListener, EventPriority.LOWEST, { _, event ->
-                event as InventoryClickEvent
-                if (event.whoClicked.uniqueId == it.uniqueId) {
-                    event.isCancelled = true
-                    event.setCursor(null)
-                }
-            }, lazyPlugin)
-
-            handlerRegistry.register(it.uniqueId, anvilHandlerFactory.createHandler(reflectionWrapper, { text ->
-                val resultItem = containerFactory.getResultItem(text)
-                reflectionWrapper.sendPacket(it, resultItem)
-            }, { text -> if (containerFactory.confirm(text)) {
-                lazyPlugin.getScheduler().runTask {
-                    it.closeInventory()
-                    it.updateInventory()
-                }
-                true
-            } else false }, { slot, text -> if (containerFactory.button(slot, text)) {
-                lazyPlugin.getScheduler().runTask {
-                    it.closeInventory()
-                    it.updateInventory()
-                }
-                true
-            } else false }, {
-                reflectionWrapper.sendPacket(it, *containerFactory.getBaseItem().toTypedArray())
-            }, dummyListener, { text ->
-                containerFactory.close(text)
-            }))
+            anvilLogic(it, containerFactory, anvilFactoryScope)
         }
     }
 

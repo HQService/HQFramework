@@ -1,21 +1,19 @@
 package kr.hqservice.framework.nms.virtual.scope
 
-import kr.hqservice.framework.bukkit.core.extension.editMeta
 import kr.hqservice.framework.nms.extension.nms
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualAnvilContainer
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
+import kr.hqservice.framework.nms.virtual.container.VirtualPaperAnvilContainer
 import kr.hqservice.framework.nms.virtual.item.VirtualItem
+import net.kyori.adventure.text.Component
 import net.md_5.bungee.api.chat.BaseComponent
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import java.util.*
 
-class VirtualAnvilContainerScope(
-    private val receiver: Player,
-    title: BaseComponent
-)  {
+class VirtualAnvilContainerScope {
     companion object {
         private val defaultBaseItems: (Player) -> List<VirtualItem> = {
             listOf(
@@ -38,13 +36,26 @@ class VirtualAnvilContainerScope(
         }
     }
 
+    private val receiver: Player
+    private var anvilPacket: VirtualContainer
     private var baseItem: List<VirtualItem>? = null
     private var resultItem: VirtualItem? = null
     private var virtualResultSlotHandler: ((String) -> ItemStack)? = null
     private var virtualConfirmHandler: ((String) -> Boolean)? = null
     private var virtualButtonHandler: ((Int, String) -> Boolean)? = null
     private var closeHandler: ((String) -> Unit)? = null
-    private var anvilPacket: VirtualContainer = VirtualAnvilContainer(receiver, title)
+
+    constructor(player: Player, title: BaseComponent) {
+        receiver = player
+        anvilPacket = VirtualAnvilContainer(receiver, title)
+    }
+
+    constructor(player: Player, title: Component) {
+        receiver = player
+        anvilPacket = VirtualPaperAnvilContainer(receiver, title)
+    }
+
+
 
     fun setBaseItem(itemStack: ItemStack?) {
         baseItem = if (itemStack == null || itemStack.type.isAir) {

@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.v20_6.service.chat
 
+import io.papermc.paper.adventure.PaperAdventure
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
 import net.minecraft.core.RegistryAccess
@@ -16,6 +17,13 @@ class NmsBaseComponentServiceImpl : NmsBaseComponentService {
 
     override fun wrapFromJson(json: String): BaseComponentWrapper {
         return wrap(json)
+    }
+
+    override fun wrapFromAdventure(adventure: net.kyori.adventure.text.Component): BaseComponentWrapper {
+        return BaseComponentWrapper(
+            adventure.toString(),
+            PaperAdventure.asVanilla(adventure)
+        )
     }
 
     override fun unwrap(wrapper: BaseComponentWrapper): String {
