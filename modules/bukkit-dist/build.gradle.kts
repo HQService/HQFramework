@@ -29,7 +29,8 @@ bukkitResourceGenerator {
         libs.configurate.yaml,
         libs.byte.buddy.core,
         libs.byte.buddy.agent,
-        libs.quartz
+        libs.quartz,
+        libs.adventure.text.serializer.legacy,
     )
 }
 

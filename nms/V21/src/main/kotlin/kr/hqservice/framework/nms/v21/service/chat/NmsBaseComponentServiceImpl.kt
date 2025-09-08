@@ -2,15 +2,15 @@ package kr.hqservice.framework.nms.v21.service.chat
 
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.wrapper.chat.BaseComponentWrapper
-import net.minecraft.core.RegistryAccess
 import net.minecraft.network.chat.Component
+import org.bukkit.craftbukkit.util.CraftChatMessage
 import kotlin.reflect.KClass
 
 class NmsBaseComponentServiceImpl : NmsBaseComponentService {
     override fun wrap(target: String): BaseComponentWrapper {
         return BaseComponentWrapper(
             target,
-            Component.Serializer.fromJsonLenient(target, RegistryAccess.EMPTY)!!
+            CraftChatMessage.fromJSON(target)
         )
     }
 
