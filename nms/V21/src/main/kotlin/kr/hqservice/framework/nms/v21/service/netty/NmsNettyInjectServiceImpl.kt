@@ -5,6 +5,7 @@ import kr.hqservice.framework.nms.handler.PacketHandler
 import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
+import net.minecraft.network.HandlerNames
 import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
@@ -43,7 +44,7 @@ class NmsNettyInjectServiceImpl(
 
         if (pipeline.get("hq_packet_handler") == null) {
             pipeline.addBefore(
-                "packet_handler",
+                HandlerNames.PACKET_HANDLER,
                 "hq_packet_handler",
                 PacketHandler(player, plugin, virtualHandlerRegistry)
             )
