@@ -67,7 +67,7 @@ class NettyChannelRegistryImpl(
         Thread {
             val players = mutableListOf<NettyPlayer>()
             ProxyServer.getInstance().players.forEach {
-                try {
+                if (it.server.info.address.port == port) try {
                     players.add(
                         NettyPlayerImpl(
                             it.name,

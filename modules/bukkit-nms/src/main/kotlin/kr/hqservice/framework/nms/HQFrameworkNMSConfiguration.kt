@@ -5,7 +5,6 @@ import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Singleton
-import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.service.entity.NmsArmorStandService
@@ -44,7 +43,7 @@ class HQFrameworkNMSConfiguration(
     }
     private val version = Version.majorVersionOf(majorVersion)
     private val fullVersion = try {
-        Version.valueOf("V_${majorVersion}_${minorVersion}").print("HQFramework- ServerVersion: ")
+        Version.valueOf("V_${majorVersion}_${minorVersion}")
     } catch (e: Exception) {
         version
     }
