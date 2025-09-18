@@ -10,4 +10,6 @@ interface VirtualHandler {
     fun unregisterCondition(message: Any): Boolean
 
     fun handle(message: Any)
+
+    fun cancelParent(message: Any): Any? = null
 }

@@ -6,21 +6,30 @@ import io.netty.channel.ChannelPromise
 import kr.hqservice.framework.nms.event.PlayerDataPreLoadEvent
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
+import java.util.UUID
 
 class PacketHandler(
-    private val player: Player,
+    private val uniqueId: UUID,
     private val plugin: Plugin,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : ChannelDuplexHandler() {
-    private val uniqueId = player.uniqueId
     private var first = false
 
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
+        val result = write0(context, message, promise)
+        if (result.isNotEmpty()) {
+            result.forEach { super.write(context, it, promise) }
+        } else super.write(context, message, promise)
+    }
+
+    fun write0(context: ChannelHandlerContext, message: Any, promise: ChannelPromise): List<Any> {
         if (!first) {
-            first = true
-            plugin.server.pluginManager.callEvent(PlayerDataPreLoadEvent(player))
+            val player = plugin.server.getPlayer(uniqueId)
+            if (player != null) {
+                first = true
+                plugin.server.pluginManager.callEvent(PlayerDataPreLoadEvent(player))
+            }
         }
 
         virtualHandlerRegistry
@@ -31,14 +40,23 @@ class PacketHandler(
                         && it.unregisterCondition(message)
             }.forEach { virtualHandlerRegistry.unregister(uniqueId, it) }
 
-        virtualHandlerRegistry
+        return virtualHandlerRegistry
             .getHandlers(uniqueId)
             .filter { it.checkCondition(message) }
-            .forEach { it.handle(message) }
-        super.write(context, message, promise)
+            .let {
+                it.forEach { handler -> handler.handle(message) }
+                it.mapNotNull { handler -> handler.cancelParent(message) }
+            }
     }
 
     override fun channelRead(context: ChannelHandlerContext, message: Any) {
+        val result = channelRead0(context, message)
+        if (result.isNotEmpty()) {
+            result.forEach { super.channelRead(context, it) }
+        } else super.channelRead(context, message)
+    }
+
+    fun channelRead0(context: ChannelHandlerContext, message: Any): List<Any> {
         virtualHandlerRegistry
             .getHandlers(uniqueId)
             .filter {
@@ -47,11 +65,13 @@ class PacketHandler(
                         && it.unregisterCondition(message)
             }.forEach { virtualHandlerRegistry.unregister(uniqueId, it) }
 
-        virtualHandlerRegistry
+        return virtualHandlerRegistry
             .getHandlers(uniqueId)
             .filter { it.checkCondition(message) }
-            .forEach { it.handle(message) }
-        super.channelRead(context, message)
+            .let {
+                it.forEach { handler -> handler.handle(message) }
+                it.mapNotNull { handler -> handler.cancelParent(message) }
+            }
     }
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
