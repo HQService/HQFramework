@@ -29,8 +29,6 @@ class VirtualAnvilHandlerFactoryImpl : VirtualAnvilHandlerFactory {
         dummyListener: AnvilDummyListener,
         closeScope: suspend (String) -> Unit
     ): VirtualHandler {
-        reflectionWrapper as NmsReflectionWrapperImpl
-
         return object : VirtualHandler {
             private var currentText = ""
             private var unregistered = false
