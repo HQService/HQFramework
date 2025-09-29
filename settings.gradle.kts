@@ -41,7 +41,9 @@ dependencyResolutionManagement {
         maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
         maven("https://maven.hqservice.kr/repository/maven-public/")
-        maven("https://jitpack.io")
+        maven("https://jitpack.io/")
+        maven("https://oss.sonatype.org/content/repositories/snapshots/")
+        mavenLocal()
     }
 
     versionCatalogs {

@@ -1,6 +1,7 @@
 package kr.hqservice.framework.bukkit.core.coroutine
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +16,15 @@ class PlayerScopes(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
     private val scopes = ConcurrentHashMap<UUID, CoroutineScope>()
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        throwable.printStackTrace()
+    }
 
     fun scope(id: UUID): CoroutineScope =
         scopes.computeIfAbsent(id) {
             CoroutineScope(
                 parent.coroutineContext +
+                        exceptionHandler +
                         SupervisorJob(parent.coroutineContext[Job]) +
                         dispatcher.limitedParallelism(1) +
                         CoroutineName("player:$id")
