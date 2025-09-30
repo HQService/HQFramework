@@ -25,7 +25,6 @@ class PlayerScopes(
             CoroutineScope(
                 parent.coroutineContext +
                         exceptionHandler +
-                        SupervisorJob(parent.coroutineContext[Job]) +
                         dispatcher.limitedParallelism(1) +
                         CoroutineName("player:$id")
             )
