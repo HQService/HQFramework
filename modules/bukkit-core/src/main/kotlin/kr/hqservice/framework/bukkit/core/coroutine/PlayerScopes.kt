@@ -24,6 +24,7 @@ class PlayerScopes(
         scopes.computeIfAbsent(id) {
             CoroutineScope(
                 parent.coroutineContext +
+                        SupervisorJob(parent.coroutineContext[Job]) +
                         exceptionHandler +
                         dispatcher.limitedParallelism(1) +
                         CoroutineName("player:$id")

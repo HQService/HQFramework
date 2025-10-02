@@ -10,6 +10,12 @@ import java.util.concurrent.ConcurrentHashMap
 @Bean
 class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
     private val handlers = ConcurrentHashMap<UUID, ConcurrentSet<VirtualHandler>>()
+    private var loadHandler: (suspend (UUID) -> Unit)? = null
+
+    fun setLoadHandler(handler: suspend (UUID) -> Unit) {
+        this.loadHandler = handler
+    }
+
     override fun register(uniqueId: UUID, handler: VirtualHandler) {
         handlers.computeIfAbsent(uniqueId) { ConcurrentSet() }
             .add(handler)
@@ -26,4 +32,6 @@ class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
     override fun getHandlers(uniqueId: UUID): Set<VirtualHandler> {
         return handlers[uniqueId] ?: emptySet()
     }
+
+    fun findLoadHandler(): (suspend (UUID) -> Unit)? = loadHandler
 }
