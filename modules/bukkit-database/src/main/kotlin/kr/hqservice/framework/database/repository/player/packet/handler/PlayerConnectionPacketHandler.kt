@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.component.module.Module
 import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
-import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
@@ -176,15 +176,10 @@ class PlayerConnectionPacketHandler(
                         lock(packet.player.getUniqueId())
                     }
                 } else if (packet.player.getChannel()?.getPort() == server.port) {
-                    /*val player =
-                        server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
+                    val player = server.getPlayer(packet.player.getUniqueId()) ?: throw NullPointerException("player not found")
                     playerScopes.scope(player.uniqueId).launch(TeardownOptionCoroutineContextElement(false)) {
                         saveAndClear(player)
-                        packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player))
-                    }*/
-                } else {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        unlock(packet.player.getUniqueId())
+                        packetSender.sendPacket(nextChannel.getPort(), PlayerDataSavedPacket(packet.player.getUniqueId()))
                     }
                 }
             }
@@ -211,10 +206,8 @@ class PlayerConnectionPacketHandler(
         if (!nettyService.isEnable()) return
         switchGate.cancel(event.player.uniqueId)
         loadPlayer.remove(event.player.uniqueId)
-        val player = event.player
-
         playerScopes.scope(event.player.uniqueId).launch(CoroutineName("save")) {
-            /*val lock = disconnectDefermentLock.findLock(event.player.uniqueId)
+            val lock = disconnectDefermentLock.findLock(event.player.uniqueId)
             if (lock != null) {
                 saveAndClear(event.player)
                 disconnectDefermentLock.unlock(event.player.uniqueId)
@@ -222,13 +215,13 @@ class PlayerConnectionPacketHandler(
                 var timedOut = false
                 disconnectDefermentLock.tryLock(event.player, 1000L) { timedOut = true }.join()
                 if (!timedOut) saveAndClear(event.player)
-            }*/
-
-            saveAndClear(player)
-            packetSender.sendPacketAll(PlayerDataSavedPacket(event.player.uniqueId))
+            }
 
             //playerScopes.cancel(event.player.uniqueId)
         }
+        /*saveAndClear(player)
+            packetSender.sendPacketAll(PlayerDataSavedPacket(event.player.uniqueId))
+            */
     }
 
     // non proxied server
@@ -238,7 +231,6 @@ class PlayerConnectionPacketHandler(
 
         playerScopes.scope(event.player.uniqueId).launch(CoroutineName("save")) {
             saveAndClear(event.player)
-
             playerScopes.cancel(event.player.uniqueId)
         }
     }
@@ -264,15 +256,17 @@ class PlayerConnectionPacketHandler(
                 }
             }
 
-            val repositories = playerRepositoryRegistry.getAll()
-            newSuspendedTransaction(Dispatchers.IO + CoroutineName("load:${playerId}")) {
-                for (repo in repositories) onLoad(player, repo)
+            delay(5)
+            server.getPlayer(playerId)?.let { currentPlayer ->
+                val repositories = playerRepositoryRegistry.getAll()
+                newSuspendedTransaction(Dispatchers.IO + CoroutineName("load:${playerId}")) {
+                    for (repo in repositories) onLoad(currentPlayer, repo)
+                }
             }
+            delay(5)
 
+            server.getPlayer(playerId)?.let { pluginManager.callEvent(PlayerRepositoryLoadedEvent(it)) }
             loadPlayer.remove(player.uniqueId)
-            withContext(Dispatchers.BukkitAsync) {
-                server.getPlayer(playerId)?.let { pluginManager.callEvent(PlayerRepositoryLoadedEvent(it)) }
-            }
         }
     }
 

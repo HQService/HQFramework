@@ -46,7 +46,8 @@ open class RegisteredCommandTree(
         }.sortedBy {
             it.priority
         }.flatMap {
-            it.aliases + it.label
+            it.aliases +
+            listOf(it.label)
         }
     }
 
