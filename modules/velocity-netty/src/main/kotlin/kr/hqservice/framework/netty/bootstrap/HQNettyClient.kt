@@ -4,6 +4,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import kr.hqservice.framework.netty.HQChannelInitializer
@@ -29,7 +30,7 @@ import java.util.logging.Logger
 class HQNettyClient(
     private val logger: Logger,
     private val config: HQYamlConfiguration,
-    private val group: NioEventLoopGroup
+    private val group: EventLoopGroup
 ) : KoinComponent {
     private val container: ChannelContainer by inject()
 

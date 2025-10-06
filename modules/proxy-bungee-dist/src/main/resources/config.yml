@@ -1,4 +1,6 @@
 netty:
+  # 0 을 적으면 사용가능한 코어의 x 2
+  thread: 0
   enabled: false
   host: 127.0.0.1
   port: 11286

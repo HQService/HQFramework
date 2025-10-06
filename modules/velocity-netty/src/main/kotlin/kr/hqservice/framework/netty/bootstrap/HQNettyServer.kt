@@ -4,6 +4,7 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import kr.hqservice.framework.netty.HQChannelInitializer
@@ -22,9 +23,9 @@ import java.util.logging.Logger
 class HQNettyServer(
     private val logger: Logger,
     private val config: HQYamlConfiguration,
-    private val group: NioEventLoopGroup
+    private val group: EventLoopGroup,
+    private val workerGroup: EventLoopGroup
 ) {
-
     fun start(): CompletableFuture<Channel> {
         Direction.INBOUND.registerPacket(RelayingPacket::class)
         Direction.OUTBOUND.registerPacket(ShutdownPacket::class)
@@ -38,11 +39,12 @@ class HQNettyServer(
 
         val future = CompletableFuture<Channel>()
         val bootstrap = ServerBootstrap()
-        bootstrap.channel(NioServerSocketChannel::class.java)
+        bootstrap
+            .group(group, workerGroup)
+            .channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_REUSEADDR, true)
             .childHandler(HQChannelInitializer(logger, true))
             .localAddress(config.getString("netty.host"), config.getInt("netty.port"))
-            .group(group)
             .bind()
             .addListener(ChannelFutureListener {
                 if (it.isSuccess)
@@ -51,5 +53,4 @@ class HQNettyServer(
             })
         return future
     }
-
 }

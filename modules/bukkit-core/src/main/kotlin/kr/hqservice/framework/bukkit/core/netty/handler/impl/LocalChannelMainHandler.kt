@@ -16,7 +16,7 @@ import net.md_5.bungee.api.chat.BaseComponent
 class LocalChannelMainHandler(private val plugin: HQBukkitPlugin) : ChannelMainHandler {
     private var proxyChannel: ChannelWrapper? = null
 
-    override fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
+    override suspend fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
         channel.handler.connectionState = ConnectionState.CONNECTED
         this.proxyChannel = channel.handler.channel
         plugin.launch {

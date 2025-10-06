@@ -1,9 +1,10 @@
-config-version: 1.2
+config-version: 2.1.0
 
 lang: ko_kr
 
 netty:
   enabled: false
+  thread: 2
   host: 127.0.0.1
   port: 11286
 
