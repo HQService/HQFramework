@@ -34,11 +34,11 @@ class EarlyPacketHandler(
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
         val uniqueId = uniqueId
 
-        if (uniqueId != null && !first &&
-            (message::class.simpleName == "ClientboundSetDefaultSpawnPositionPacket" || message::class.simpleName == "PacketPlayOutSpawnPosition")) {
+        if (uniqueId != null && !first) {
             plugin as HQBukkitPlugin
             val player = plugin.server.getPlayer(uniqueId)
-            if (player != null) {
+            if (player != null && player.uniqueId == uniqueId && !first) {
+                first = true
                 plugin.launch(Dispatchers.Default) {
                     val handler = (virtualHandlerRegistry as VirtualHandlerRegistryImpl).findLoadHandler()
                     runCatching {
@@ -47,7 +47,6 @@ class EarlyPacketHandler(
                         promise.tryFailureOnEventLoop(context, it)
                     }
 
-                    first = true
                     context.ensureOnEventLoop {
                         super.write(context, message, promise)
                     }

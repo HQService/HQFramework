@@ -34,7 +34,9 @@ class SuspendEventExecutor(
     private fun invokeHandlerMethod(event: Event) {
         try {
             if (suspend) {
-                runBlocking {
+                if (event::class.simpleName == "PlayerRepositoryLoadedEvent") runBlocking {
+                    method.callSuspend(listenerInstance, event)
+                } else runBlocking {
                     val dispatcher = coroutineContext[CoroutineDispatcher.Key]!!
                     CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(dispatcher) {
                         method.callSuspend(listenerInstance, event)
