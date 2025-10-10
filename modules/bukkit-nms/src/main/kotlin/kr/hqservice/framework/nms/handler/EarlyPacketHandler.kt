@@ -3,9 +3,8 @@ package kr.hqservice.framework.nms.handler
 import io.netty.channel.ChannelDuplexHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelPromise
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
@@ -39,7 +38,8 @@ class EarlyPacketHandler(
             val player = plugin.server.getPlayer(uniqueId)
             if (player != null && player.uniqueId == uniqueId && !first) {
                 first = true
-                plugin.launch(Dispatchers.Default) {
+
+                plugin.launch(context.channel().eventLoop().asCoroutineDispatcher()) {
                     val handler = (virtualHandlerRegistry as VirtualHandlerRegistryImpl).findLoadHandler()
                     runCatching {
                         handler?.invoke(uniqueId)

@@ -33,17 +33,18 @@ class NMSServiceManagerV21(
 
     override fun initialize() {
         ChannelInitializeListenerHolder.addListener(Key.key("hqservice:early-pipeline-hook")) { ch ->
-            val pipeline = ch.pipeline()
-            if (pipeline.get("hq_packet_handler") == null) {
-                pipeline.addBefore(
-                    "packet_handler", "hq_packet_handler",
-                    EarlyPacketHandler(plugin, virtualHandlerRegistry) {
-                        if (it is ServerboundHelloPacket) {
-                            if (plugin.server.onlineMode || GlobalConfiguration.get().proxies.velocity.enabled) it.profileId
-                            else UUIDUtil.createOfflinePlayerUUID(it.name)
-                        } else null
-                    }
-                )
+            if (ch.pipeline().get("hq_packet_handler") == null) {
+                ch.eventLoop().execute {
+                    ch.pipeline().addBefore(
+                        "packet_handler", "hq_packet_handler",
+                        EarlyPacketHandler(plugin, virtualHandlerRegistry) {
+                            if (it is ServerboundHelloPacket) {
+                                if (plugin.server.onlineMode || GlobalConfiguration.get().proxies.velocity.enabled) it.profileId
+                                else UUIDUtil.createOfflinePlayerUUID(it.name)
+                            } else null
+                        }
+                    )
+                }
             }
         }
 
