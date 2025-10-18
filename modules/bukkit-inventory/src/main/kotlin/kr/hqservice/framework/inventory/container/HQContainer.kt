@@ -71,6 +71,8 @@ open class HQContainer(
             val prevHolder = player.openInventory.topInventory.holder
             if (prevHolder == this) continue
             if (prevHolder is HQContainer) {
+                player.closeInventory()
+
                 if (plugin == null) plugin = Bukkit.getPluginManager().getPlugin("HQFramework")
                 val plugin = plugin!!
                 plugin.getScheduler().runTaskLater(1) { open(player) }

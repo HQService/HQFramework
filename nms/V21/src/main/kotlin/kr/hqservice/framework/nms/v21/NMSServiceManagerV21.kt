@@ -1,7 +1,6 @@
 package kr.hqservice.framework.nms.v21
 
 import io.papermc.paper.configuration.GlobalConfiguration
-import io.papermc.paper.network.ChannelInitializeListener
 import io.papermc.paper.network.ChannelInitializeListenerHolder
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.nms.NMSServiceManager
@@ -14,7 +13,6 @@ import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import net.kyori.adventure.key.Key
 import net.minecraft.core.UUIDUtil
-import net.minecraft.network.protocol.game.ClientboundLoginPacket
 import net.minecraft.network.protocol.login.ServerboundHelloPacket
 import org.bukkit.plugin.Plugin
 

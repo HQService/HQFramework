@@ -6,6 +6,7 @@ import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
 import kr.hqservice.framework.database.repository.player.lock.SwitchGate
+import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavePacket
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.netty.api.NettyServer
 import org.jetbrains.exposed.sql.Database
@@ -23,6 +24,9 @@ class DatabaseModule(
     fun registerPackets() {
         nettyServer.registerInnerPacket(PlayerDataSavedPacket::class) { packet, _ -> }
         nettyServer.registerOuterPacket(PlayerDataSavedPacket::class)
+
+        nettyServer.registerInnerPacket(PlayerDataSavePacket::class) { packet, _ -> }
+        nettyServer.registerOuterPacket(PlayerDataSavePacket::class)
     }
 
     @Teardown

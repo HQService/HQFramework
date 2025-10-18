@@ -5,7 +5,6 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
-import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import kr.hqservice.framework.netty.HQChannelInitializer
 import kr.hqservice.framework.netty.api.NettyChannel
@@ -62,25 +61,11 @@ class HQNettyClient(
             }
 
             Direction.INBOUND.addListener(ChannelListPacket::class) { packet, _ ->
-                /*println("ChannelListPacket Received Log -> ")
-                println("channels: ${packet.getChannels().map { it.getName() + "-" + it.getPort() }}")
-                println("players: ${packet.getPlayers().map { it.getName() + "-" + it.getChannel()?.getPort() }}")*/
                 packet.getChannels().forEach(container::registerChannel)
                 packet.getPlayers().forEach(container::addPlayer)
             }
 
             Direction.INBOUND.addListener(PlayerConnectionPacket::class) { packet, _ ->
-                /*println("PlayerConnectionPacket Received Log -> ")
-                println("packet state: " + packet.state.name)
-                println("packet source: (")
-                println("   player: ")
-                println("       name: ${packet.player.getName()}")
-                println("       uuid: ${packet.player.getUniqueId()}")
-                print("       channel: ")
-                packet.player.getChannel().printLog(true)
-                print("   channel: ")
-                packet.sourceChannel.printLog(false)
-                println(")")*/
                 when (packet.state) {
                     PlayerConnectionState.CONNECTED,
                     PlayerConnectionState.SWITCHED_CHANNEL ->
