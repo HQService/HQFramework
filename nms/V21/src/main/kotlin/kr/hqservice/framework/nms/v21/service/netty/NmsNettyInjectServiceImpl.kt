@@ -45,7 +45,7 @@ class NmsNettyInjectServiceImpl(
             pipeline.addBefore(
                 "packet_handler",
                 "hq_packet_handler",
-                PacketHandler(player, plugin, virtualHandlerRegistry)
+                PacketHandler(player.uniqueId, plugin, virtualHandlerRegistry)
             )
         }
     }

@@ -1,9 +1,8 @@
 package kr.hqservice.framework.nms.legacy.service.netty
 
 import io.netty.channel.Channel
-import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.handler.PacketHandler
+import kr.hqservice.framework.nms.handler.EarlyPacketHandler
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
@@ -69,11 +68,17 @@ class LegacyNmsNettyInjectService(
         val channel = getPlayerChannel(player)
         val pipeline = channel.pipeline()
 
+
+
         if (pipeline.get("hq_packet_handler") == null) {
-            pipeline.addBefore(
+            /*pipeline.addBefore(
                 "packet_handler",
                 "hq_packet_handler",
-                PacketHandler(player, plugin, virtualHandlerRegistry)
+                PacketHandler(player.uniqueId, plugin, virtualHandlerRegistry)
+            )*/
+            pipeline.addBefore(
+                "packet_handler", "hq_packet_handler",
+                EarlyPacketHandler(plugin, virtualHandlerRegistry, true) { player.uniqueId }
             )
         }
     }

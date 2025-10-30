@@ -209,7 +209,7 @@ class CommandAnnotationHandler(
 
             val arguments: MutableList<Any?> = mutableListOf()
             plugin.launch(Dispatchers.Default) commandLaunch@{
-                executor.function.parameters.forEach forEach@{ kParameter ->
+                executor.function.parameters.forEach forEach@ { kParameter ->
                     val index = kParameter.index
                     val argumentLabel = findArgumentLabel(kParameter)
                     val argument: String? = args.getOrNull(index - 2 + (treeKey.size + 1))

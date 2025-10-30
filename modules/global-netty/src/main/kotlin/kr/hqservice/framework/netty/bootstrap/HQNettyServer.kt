@@ -4,6 +4,7 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
+import io.netty.channel.EventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import kr.hqservice.framework.netty.HQChannelInitializer
@@ -22,7 +23,7 @@ import java.util.logging.Logger
 class HQNettyServer(
     private val logger: Logger,
     private val config: HQYamlConfiguration,
-    private val group: NioEventLoopGroup
+    private val group: EventLoopGroup
 ) {
 
     fun start(): CompletableFuture<Channel> {

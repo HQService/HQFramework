@@ -43,9 +43,9 @@ enum class Direction {
         packetMap[packetClass.qualifiedName!!] = PacketWrapper(packetClass, codecClass, primaryConstructor)
     }
 
-    fun <T : Packet> addListener(packetClass: KClass<T>, packetHandler: (packet: T, channel: ChannelWrapper) -> Unit) {
+    fun <T : Packet> addListener(packetClass: KClass<T>, packetHandler: suspend (packet: T, channel: ChannelWrapper) -> Unit) {
         val handler = object : PacketHandler<T> {
-            override fun onPacketReceive(packet: T, channel: ChannelWrapper) {
+            override suspend fun onPacketReceive(packet: T, channel: ChannelWrapper) {
                 packetHandler(packet, channel)
             }
         }
@@ -68,7 +68,7 @@ enum class Direction {
     }
 
     @Suppress("unchecked_cast")
-    fun <T : Packet> onPacketReceived(packet: T, channel: ChannelWrapper): Boolean {
+    suspend fun <T : Packet> onPacketReceived(packet: T, channel: ChannelWrapper): Boolean {
         val handlers = this.handlers[packet::class.qualifiedName!!] ?: return false
         for (listener in handlers) {
             listener as PacketHandler<T>

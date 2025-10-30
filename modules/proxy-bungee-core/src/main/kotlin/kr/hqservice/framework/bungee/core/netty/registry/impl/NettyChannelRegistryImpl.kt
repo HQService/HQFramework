@@ -23,6 +23,7 @@ import net.md_5.bungee.api.ProxyServer
 @Component
 @Singleton(binds = [NettyChannelRegistry::class])
 class NettyChannelRegistryImpl(
+    private val proxyServer: ProxyServer,
     private val config: HQYamlConfiguration
 ) : NettyChannelRegistry, HQSimpleComponent {
     private val portChannelContainer = mutableMapOf<Int, ChannelWrapper>()
@@ -75,8 +76,15 @@ class NettyChannelRegistryImpl(
                             it.uniqueId,
                             connectedChannels.firstOrNull { channel -> channel.getPort() == it.server.address.port })
                     )
-                } catch (_: Exception) {
-                    it.disconnect("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
+                } catch (e: Exception) {
+                    runCatching {
+                        proxyServer.servers["lobby"]?.let { ch ->
+                            it.connect(ch)
+                        }
+                    }.onFailure { exception ->
+                        e.printStackTrace()
+                        //it.disconnect("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
+                    }
                 }
             }
             wrapper.sendPacket(ChannelListPacket(connectedChannels, players))

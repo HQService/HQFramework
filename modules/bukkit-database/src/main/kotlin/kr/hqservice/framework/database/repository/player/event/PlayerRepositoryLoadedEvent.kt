@@ -1,12 +1,13 @@
 package kr.hqservice.framework.database.repository.player.event
 
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
 class PlayerRepositoryLoadedEvent(
     val player: Player
-) : Event(true) {
+) : Event(!Bukkit.isPrimaryThread()) {
     companion object {
         @JvmStatic
         val HANDLER_LIST = HandlerList()

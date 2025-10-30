@@ -7,14 +7,12 @@ import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.dao.DaoEntityID
 import org.jetbrains.exposed.dao.Entity
 import org.jetbrains.exposed.dao.EntityClass
-import org.jetbrains.exposed.dao.entityCache
 import org.jetbrains.exposed.dao.exceptions.EntityNotFoundException
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SizedIterable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder
 import org.jetbrains.exposed.sql.statements.api.ExposedBlob
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.vendors.ForUpdateOption
 
 fun ByteArray.toExposedBlob(): ExposedBlob {
@@ -45,7 +43,6 @@ fun <ID : Comparable<ID>, E : Entity<ID>> EntityClass<ID, E>.findForUpdate(
     forUpdateOption: ForUpdateOption = ForUpdateOption.ForUpdate,
     op: SqlExpressionBuilder.() -> Op<Boolean>,
 ): SizedIterable<E> {
-    TransactionManager.current().entityCache
     val query = searchQuery(Op.build(op)).forUpdate(forUpdateOption)
     return wrapRows(query)
 }

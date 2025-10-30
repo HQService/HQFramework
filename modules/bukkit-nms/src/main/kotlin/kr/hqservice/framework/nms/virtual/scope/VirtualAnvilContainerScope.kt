@@ -55,8 +55,6 @@ class VirtualAnvilContainerScope {
         anvilPacket = VirtualPaperAnvilContainer(receiver, title)
     }
 
-
-
     fun setBaseItem(itemStack: ItemStack?) {
         baseItem = if (itemStack == null || itemStack.type.isAir) {
             null
