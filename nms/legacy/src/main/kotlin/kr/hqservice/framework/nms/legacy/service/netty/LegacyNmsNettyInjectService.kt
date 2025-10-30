@@ -80,7 +80,7 @@ class LegacyNmsNettyInjectService(
                 "packet_handler", "hq_packet_handler",
                 EarlyPacketHandler(plugin, virtualHandlerRegistry, true) { player.uniqueId }
             )
-        } else println("hihi")
+        }
     }
 
     override fun removeHandler(player: Player) {
