@@ -20,8 +20,6 @@ class VirtualItemHandlerFactoryImpl : VirtualItemHandlerFactory {
         filter: (Int, ItemStack) -> Boolean,
         item: (index: Int, itemStack: ItemStack) -> Unit
     ): VirtualHandler {
-        reflectionWrapper as NmsReflectionWrapperImpl
-
         return object : VirtualHandler {
             override fun getNmsSimpleNames(): List<String> {
                 return emptyList()
