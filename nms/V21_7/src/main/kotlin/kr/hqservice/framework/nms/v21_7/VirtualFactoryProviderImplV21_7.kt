@@ -3,7 +3,7 @@ package kr.hqservice.framework.nms.v21_7
 import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.v21.virtual.entity.HQBillboardFactoryImpl
 import kr.hqservice.framework.nms.v21.virtual.entity.VirtualSignFactoryImpl
-import kr.hqservice.framework.nms.v21.virtual.handler.VirtualItemHandlerFactoryImpl
+import kr.hqservice.framework.nms.v21_5.virtual.handler.VirtualItemHandlerFactoryImpl
 import kr.hqservice.framework.nms.v21.virtual.handler.VirtualSignHandlerFactoryImpl
 import kr.hqservice.framework.nms.v21.virtual.item.VirtualItemMessageFactoryImpl
 import kr.hqservice.framework.nms.v21_7.virtual.entity.VirtualCameraFactoryImpl
