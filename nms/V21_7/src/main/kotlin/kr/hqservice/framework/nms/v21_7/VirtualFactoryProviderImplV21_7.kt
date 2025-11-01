@@ -8,7 +8,7 @@ import kr.hqservice.framework.nms.v21.virtual.handler.VirtualSignHandlerFactoryI
 import kr.hqservice.framework.nms.v21.virtual.item.VirtualItemMessageFactoryImpl
 import kr.hqservice.framework.nms.v21_7.virtual.entity.VirtualCameraFactoryImpl
 import kr.hqservice.framework.nms.v21_5.virtual.classes.VirtualEntityClassesImpl
-import kr.hqservice.framework.nms.v21_5.virtual.container.VirtualContainerMessageFactoryImpl
+import kr.hqservice.framework.nms.v21_7.virtual.container.VirtualContainerMessageFactoryImpl
 import kr.hqservice.framework.nms.v21_5.virtual.handler.VirtualAnvilHandlerFactoryImpl
 import kr.hqservice.framework.nms.v21_7.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
