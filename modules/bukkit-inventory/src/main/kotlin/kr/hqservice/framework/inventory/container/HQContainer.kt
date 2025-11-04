@@ -12,6 +12,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.Plugin
+import org.bukkit.plugin.java.JavaPlugin
 
 open class HQContainer(
     private val size: Int,
@@ -71,9 +72,11 @@ open class HQContainer(
             val prevHolder = player.openInventory.topInventory.holder
             if (prevHolder == this) continue
             if (prevHolder is HQContainer) {
-                /*if (plugin == null) plugin = Bukkit.getPluginManager().getPlugin("HQFramework")
+                if (prevHolder::class.isInstance(this)) return
+
+                if (plugin == null) plugin = JavaPlugin.getProvidingPlugin(this::class.java)
                 val plugin = plugin!!
-                plugin.getScheduler().runTaskLater(1) { open(player) }*/
+                plugin.getScheduler().runTaskLater(1) { open(player) }
             } else {
                 player.openInventory(inventory)
                 openedPlayers.add(player)
