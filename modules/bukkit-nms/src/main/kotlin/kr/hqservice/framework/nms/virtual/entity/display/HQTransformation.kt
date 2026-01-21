@@ -2,7 +2,9 @@ package kr.hqservice.framework.nms.virtual.entity.display
 
 import kr.hqservice.framework.nms.wrapper.NmsWrapper
 import org.joml.Quaternionf
+import org.joml.Quaternionfc
 import org.joml.Vector3f
+import org.joml.Vector3fc
 
 class HQTransformation(
     private val translation: Vector3f = Vector3f(),
@@ -12,12 +14,21 @@ class HQTransformation(
 ) : NmsWrapper {
     companion object {
         private val transformationClass = Class.forName("com.mojang.math.Transformation")
-        private val transformationConstructor = transformationClass.getConstructor(
-            Vector3f::class.java,
-            Quaternionf::class.java,
-            Vector3f::class.java,
-            Quaternionf::class.java
-        )
+        private val transformationConstructor = try {
+            transformationClass.getConstructor(
+                Vector3f::class.java,
+                Quaternionf::class.java,
+                Vector3f::class.java,
+                Quaternionf::class.java
+            )
+        } catch (e: NoSuchMethodException) {
+            transformationClass.getConstructor(
+                Vector3fc::class.java,
+                Quaternionfc::class.java,
+                Vector3fc::class.java,
+                Quaternionfc::class.java
+            )
+        }
     }
 
     private val instance = transformationConstructor.newInstance(translation, leftRotation, scale, rightRotation)

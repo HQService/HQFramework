@@ -50,11 +50,11 @@ class HQFrameworkNMSConfiguration(
 
     fun setup() {
         if (fullVersion == null)
-            throw UnsupportedOperationException("unsupported version: $versionName")
+            throw UnsupportedOperationException("unsupported version: $versionName [$version($fullVersion)]")
 
         val serviceManagers = plugin.bukkitComponentRegistry.getComponents(NMSServiceManager::class)
         val serviceManager = serviceManagers.find { it.support(fullVersion) }
-            ?: throw UnsupportedOperationException("unsupported version: $versionName")
+            ?: throw UnsupportedOperationException("unsupported version: $versionName [$version($fullVersion)]")
 
         serviceManager.initialize()
         NMSServiceManager.instance = serviceManager
