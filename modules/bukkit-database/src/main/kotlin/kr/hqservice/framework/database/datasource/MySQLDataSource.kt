@@ -9,7 +9,12 @@ class MySQLDataSource(
     database: String,
     user: String,
     password: String,
-    maximumPoolSize: Int
+    maximumPoolSize: Int,
+    maxLifetime: Long,
+    keepaliveTime: Long,
+    connectionTimeout: Long,
+    idleTimeout: Long,
+    minimumIdle: Int,
 ) : HikariDataSource(HikariConfig().apply {
     this.jdbcUrl = "jdbc:mysql://${host}:${port}/${database}?autoReconnect=true&allowMultiQueries=true"
     this.driverClassName = "com.mysql.cj.jdbc.Driver"
@@ -18,6 +23,12 @@ class MySQLDataSource(
     this.connectionTestQuery = "SELECT 1"
     this.poolName = "hqframework"
     this.maximumPoolSize = maximumPoolSize
+    this.maxLifetime = maxLifetime
+    this.keepaliveTime = keepaliveTime
+    this.connectionTimeout = connectionTimeout
+    this.idleTimeout = idleTimeout
+    if (minimumIdle >= 0) this.minimumIdle = minimumIdle
+
     addDataSourceProperty("cachePrepStmts", "true")
     addDataSourceProperty("prepStmtCacheSize", "250")
     addDataSourceProperty("prepStmtCacheSqlLimit", "2048")

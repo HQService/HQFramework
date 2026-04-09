@@ -50,7 +50,18 @@ class DatabaseConfig(
         val password = config.getString("database.mysql.password")
         val database = config.getString("database.mysql.database")
         val maximumPoolSize = config.getInt("database.mysql.maximum-pool-size", 10)
-        return MySQLDataSource(host, port, database, user, password, maximumPoolSize)
+        val maxLifetime = config.getLong("database.mysql.maximum-lifetime", 1800000)
+        val keepaliveTime = config.getLong("database.mysql.keepalive-time", 0L)
+        val connectionTimeout = config.getLong("database.mysql.connection-timeout", 30000)
+        val idleTimeout = config.getLong("database.mysql.idle-timeout", 600000)
+        val minimumIdle = config.getInt("database.mysql.minimum-idle", -1)
+        return MySQLDataSource(host, port, database, user, password,
+            maximumPoolSize,
+            maxLifetime,
+            keepaliveTime,
+            connectionTimeout,
+            idleTimeout, minimumIdle
+        )
     }
 
     private fun buildSQLiteDataSource(): HikariDataSource {

@@ -26,7 +26,13 @@ database:
     user: root
     password: password
     database: hq
+
     maximum-pool-size: 10
+    maximum-lifetime: 1800000
+    keepalive-time: 0
+    connection-timeout: 30000
+    idle-timeout: 600000
+    minimum-idle: -1
 
 scheduler:
   thread-pool:
