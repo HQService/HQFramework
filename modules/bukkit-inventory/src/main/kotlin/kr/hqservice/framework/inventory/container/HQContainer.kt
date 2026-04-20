@@ -72,7 +72,8 @@ open class HQContainer(
             val prevHolder = player.openInventory.topInventory.holder
             if (prevHolder == this) continue
             if (prevHolder is HQContainer) {
-                if (prevHolder::class.isInstance(this)) return
+                // 같은 클래스의 컨테이너는 이미 열려있으므로 스킵
+                if (prevHolder::class == this::class) continue
 
                 if (plugin == null) plugin = JavaPlugin.getProvidingPlugin(this::class.java)
                 val plugin = plugin!!
