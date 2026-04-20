@@ -7,7 +7,6 @@ import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.E
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.HandleResult
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
-import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitAsync
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.coroutine.extension.childrenAll
 import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
@@ -208,22 +207,21 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
                     }.forEach { job ->
                         job.cancel()
                     }
-
-                supervisorJob.childrenAll
-                    .filter { job ->
-                        job.coroutineContext[CoroutineDispatcher.Key] != Dispatchers.BukkitMain && job.coroutineContext[CoroutineDispatcher.Key] != Dispatchers.BukkitAsync
-                    }.filter {
-                        it.job.children.count() == 0
-                    }.toList().forEach { job ->
-                        logger.info("${AnsiColor.CYAN}Disabling...[${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
-                        if (withTimeoutOrNull(1000) { job.join() } == null) {
-                            logger.info("${AnsiColor.CYAN}Timeout-Cancel [${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
-                            job.cancelAndJoin()
-                            logger.info("${AnsiColor.CYAN}Cancel finished. [${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
+                supervisorJob.children.toList().forEach { job ->
+                    val name = job.coroutineContext[CoroutineName]?.name
+                    logger.info("${AnsiColor.CYAN}Disabling...[$name routine]${AnsiColor.RESET}")
+                    if (withTimeoutOrNull(1000) { job.join() } == null) {
+                        logger.info("${AnsiColor.CYAN}Timeout-Cancel [$name routine]${AnsiColor.RESET}")
+                        job.cancel()
+                        if (withTimeoutOrNull(2000) { job.join() } == null) {
+                            logger.warning("${AnsiColor.CYAN}Abandoning [$name routine] - non-cancellable blocking work; server shutdown will proceed${AnsiColor.RESET}")
                         } else {
-                            logger.info("${AnsiColor.CYAN}Finished. [${job.coroutineContext[CoroutineName]?.name} routine]${AnsiColor.RESET}")
+                            logger.info("${AnsiColor.CYAN}Cancel finished. [$name routine]${AnsiColor.RESET}")
                         }
+                    } else {
+                        logger.info("${AnsiColor.CYAN}Finished. [$name routine]${AnsiColor.RESET}")
                     }
+                }
 
                 logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
                 onPreDisable()

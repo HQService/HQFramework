@@ -25,48 +25,25 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
                 if (isAsync) plugin.getScheduler().runTaskAsynchronously { block.run() }
                 else plugin.getScheduler().runTask { block.run() }
             }
-        } catch (_: IllegalPluginAccessException) {}
+        } catch (_: IllegalPluginAccessException) {
+            context[Job]?.cancel(CancellationException("Plugin is disabled, cannot dispatch"))
+        }
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
         val plugin = getPluginByCoroutineContext(continuation.context)
 
-        val task = if (location != null) {
-            if (isAsync) {
-                try {
-                    plugin.getScheduler(location).runTaskLaterAsynchronously(timeMillis / 50) {
-                        with(continuation) {
-                            resumeUndispatched(Unit)
-                        }
-                    }
-                } catch (_: IllegalPluginAccessException) { null }
-            } else {
-                try {
-                    plugin.getScheduler(location).runTaskLater(timeMillis / 50) {
-                        with(continuation) {
-                            resumeUndispatched(Unit)
-                        }
-                    }
-                } catch (_: IllegalPluginAccessException) { null }
+        val task = try {
+            val resumer: () -> Unit = {
+                with(continuation) { resumeUndispatched(Unit) }
             }
-        } else {
-            if (isAsync) {
-                try {
-                    plugin.getScheduler().runTaskLaterAsynchronously(timeMillis / 50) {
-                        with(continuation) {
-                            resumeUndispatched(Unit)
-                        }
-                    }
-                } catch (_: IllegalPluginAccessException) { null }
-            } else {
-                try {
-                    plugin.getScheduler().runTaskLater(timeMillis / 50) {
-                        with(continuation) {
-                            resumeUndispatched(Unit)
-                        }
-                    }
-                } catch (_: IllegalPluginAccessException) { null }
-            }
+            val ticks = timeMillis / 50
+            val scheduler = if (location != null) plugin.getScheduler(location) else plugin.getScheduler()
+            if (isAsync) scheduler.runTaskLaterAsynchronously(ticks, resumer)
+            else scheduler.runTaskLater(ticks, resumer)
+        } catch (_: IllegalPluginAccessException) {
+            continuation.cancel(CancellationException("Plugin is disabled, cannot resume delay"))
+            null
         }
 
         continuation.invokeOnCancellation { task?.cancel() }
