@@ -5,7 +5,8 @@ import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.Visibility
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.implementation.MethodCall
-import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
@@ -13,11 +14,8 @@ enum class Direction {
     INBOUND,
     OUTBOUND;
 
-    private val packetMap =
-        mutableMapOf<String, PacketWrapper<out Packet>>()
-
-    private val handlers =
-        mutableMapOf<String, LinkedList<PacketHandler<out Packet>>>()
+    private val packetMap = ConcurrentHashMap<String, PacketWrapper<out Packet>>()
+    private val handlers = ConcurrentHashMap<String, CopyOnWriteArrayList<PacketHandler<out Packet>>>()
 
     fun <T : Packet> unregisterPacket(packetClass: KClass<T>) {
         packetMap.remove(packetClass.qualifiedName)
@@ -49,11 +47,11 @@ enum class Direction {
                 packetHandler(packet, channel)
             }
         }
-        handlers.computeIfAbsent(packetClass.qualifiedName!!) { LinkedList() }.add(handler)
+        handlers.computeIfAbsent(packetClass.qualifiedName!!) { CopyOnWriteArrayList() }.add(handler)
     }
 
     fun <T : Packet> addListener(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
-        handlers.computeIfAbsent(packetClass.qualifiedName!!) { LinkedList() }.add(packetHandler)
+        handlers.computeIfAbsent(packetClass.qualifiedName!!) { CopyOnWriteArrayList() }.add(packetHandler)
     }
 
     @Suppress("unchecked_cast")

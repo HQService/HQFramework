@@ -12,7 +12,14 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.util.*
+import java.util.logging.Logger
 import kotlin.experimental.and
+
+private val packetLogger: Logger = Logger.getLogger("HQFramework.Packet")
+
+private const val MAX_STRING_CHARS = 32767
+private const val MAX_STRING_BYTES = MAX_STRING_CHARS * 4
+private const val MAX_COLLECTION_SIZE = 65536
 
 fun ByteBuf.writeVarInt(value: Int) {
     var current = value
@@ -39,8 +46,8 @@ fun ByteBuf.readVarInt(maxBytes: Int): Int {
 }
 
 fun ByteBuf.writeString(string: String) {
-    if (string.length > 32767)
-        throw IllegalArgumentException("cannot send string longer than Short.MAX_VALUE (got ${string.length} characters)")
+    if (string.length > MAX_STRING_CHARS)
+        throw IllegalArgumentException("cannot send string longer than $MAX_STRING_CHARS (got ${string.length} characters)")
     val bytes = string.toByteArray(Charsets.UTF_8)
     writeVarInt(bytes.size)
     writeBytes(bytes)
@@ -48,6 +55,12 @@ fun ByteBuf.writeString(string: String) {
 
 fun ByteBuf.readString(): String {
     val length = readVarInt(5)
+    if (length !in 0 .. MAX_STRING_BYTES) {
+        throw IllegalArgumentException("invalid string byte length: $length")
+    }
+    if (length > readableBytes()) {
+        throw IllegalArgumentException("string length $length exceeds remaining buffer (${readableBytes()})")
+    }
     val bytes = ByteArray(length)
     readBytes(bytes)
     return bytes.toString(Charsets.UTF_8)
@@ -60,6 +73,9 @@ fun ByteBuf.writeStringArray(array: Array<String>) {
 
 fun ByteBuf.readStringArray(): Array<String> {
     val length = readVarInt(5)
+    if (length !in 0 .. MAX_COLLECTION_SIZE) {
+        throw IllegalArgumentException("invalid string array size: $length")
+    }
     return Array(length) { readString() }
 }
 
@@ -93,7 +109,11 @@ fun ByteBuf.writeChannels(nettyChannels: List<NettyChannel>) {
 }
 
 fun ByteBuf.readChannels(): List<NettyChannel> {
-    return List(readInt()) { readChannel()!! }
+    val size = readInt()
+    if (size !in 0 .. MAX_COLLECTION_SIZE) {
+        throw IllegalArgumentException("invalid channel list size: $size")
+    }
+    return List(size) { readChannel()!! }
 }
 
 fun ByteBuf.writePlayer(nettyPlayer: NettyPlayer) {
@@ -134,12 +154,17 @@ fun ByteBuf.writePlayers(nettyPlayers: List<NettyPlayer>) {
 
 fun ByteBuf.readPlayers(): List<NettyPlayer> {
     val players = mutableListOf<NettyPlayer>()
+    val remaining = readableBytes()
+    if (remaining == 0) return players
     try {
-        val bytes = ByteArray(readableBytes())
+        val bytes = ByteArray(remaining)
         getBytes(readerIndex(), bytes)
         ByteArrayInputStream(bytes.decompress()).use {
             ObjectInputStream(it).use { ois ->
                 val size = ois.readInt()
+                if (size !in 0 .. MAX_COLLECTION_SIZE) {
+                    throw IllegalArgumentException("invalid player list size: $size")
+                }
                 for (i in 0 until size) {
                     val name = ois.readUTF()
                     val displayName = ois.readUTF()
@@ -151,7 +176,8 @@ fun ByteBuf.readPlayers(): List<NettyPlayer> {
                 }
             }
         }
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        packetLogger.warning("Failed to deserialize player list packet: ${e.javaClass.simpleName}: ${e.message}")
     }
     return players
 }

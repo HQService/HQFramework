@@ -5,7 +5,6 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
-import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import kr.hqservice.framework.netty.HQChannelInitializer
 import kr.hqservice.framework.netty.api.NettyChannel
@@ -62,8 +61,7 @@ class HQNettyClient(
             }
 
             Direction.INBOUND.addListener(ChannelListPacket::class) { packet, _ ->
-                packet.getChannels().forEach(container::registerChannel)
-                packet.getPlayers().forEach(container::addPlayer)
+                container.resetState(packet.getChannels(), packet.getPlayers())
             }
 
             Direction.INBOUND.addListener(PlayerConnectionPacket::class) { packet, _ ->

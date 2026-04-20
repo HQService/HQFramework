@@ -23,6 +23,7 @@ class NettyModule(
     private val nettyService: HQNettyService
 ) {
     private val nettyEnabled: Boolean get() = nettyService.isEnable()
+    private var clientBootstrap: NettyClientBootstrap? = null
 
     @Setup
     fun setup() {
@@ -42,12 +43,14 @@ class NettyModule(
         }
 
         if (nettyEnabled) {
-            NettyClientBootstrap(plugin, logger, config).initializing()
+            clientBootstrap = NettyClientBootstrap(plugin, logger, config).also { it.initializing() }
         }
     }
 
     @Teardown
     fun teardown() {
         channelHandler.disconnect()
+        clientBootstrap?.shutdown()
+        clientBootstrap = null
     }
 }

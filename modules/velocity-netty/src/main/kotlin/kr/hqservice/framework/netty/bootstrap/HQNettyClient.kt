@@ -61,8 +61,7 @@ class HQNettyClient(
             }
 
             Direction.INBOUND.addListener(ChannelListPacket::class) { packet, _ ->
-                packet.getChannels().forEach(container::registerChannel)
-                packet.getPlayers().forEach(container::addPlayer)
+                container.resetState(packet.getChannels(), packet.getPlayers())
             }
 
             Direction.INBOUND.addListener(PlayerConnectionPacket::class) { packet, _ ->

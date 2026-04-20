@@ -5,6 +5,8 @@ import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.extension.readString
 import kr.hqservice.framework.netty.packet.extension.writeString
 
+private const val MAX_RELAY_BYTES = 16 * 1024 * 1024
+
 class RelayingPacket(
     var packet: Packet?,
     var targetServer: String = "-1",
@@ -24,12 +26,16 @@ class RelayingPacket(
     override fun read(buf: ByteBuf) {
         packet = null
         targetServer = buf.readString()
-        val relayAble = ByteArray(buf.readableBytes())
+        val remaining = buf.readableBytes()
+        if (remaining > MAX_RELAY_BYTES) {
+            throw IllegalArgumentException("relay payload too large: $remaining bytes")
+        }
+        val relayAble = ByteArray(remaining)
         buf.readBytes(relayAble)
         relay = relayAble
     }
 
     fun getRelayByte(): ByteArray {
-        return relay!!
+        return relay ?: ByteArray(0)
     }
 }

@@ -51,4 +51,10 @@ class HQNettyBootstrap(
         return HQNettyServer(logger, config, group).start()
     }
 
+    fun shutdown() {
+        if (!group.isShuttingDown && !group.isShutdown) {
+            group.shutdownGracefully()
+        }
+    }
+
 }

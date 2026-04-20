@@ -15,6 +15,7 @@ class ChannelWrapper(
     var port: Int = -1
 ) {
 
+    @Volatile
     private var enabled = true
     val callbackContainer = CallbackContainer()
     val pingCalculator = PingCalculator()

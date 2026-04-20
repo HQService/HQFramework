@@ -65,8 +65,7 @@ class HQNettyClient(
                 /*println("ChannelListPacket Received Log -> ")
                 println("channels: ${packet.getChannels().map { it.getName() + "-" + it.getPort() }}")
                 println("players: ${packet.getPlayers().map { it.getName() + "-" + it.getChannel()?.getPort() }}")*/
-                packet.getChannels().forEach(container::registerChannel)
-                packet.getPlayers().forEach(container::addPlayer)
+                container.resetState(packet.getChannels(), packet.getPlayers())
             }
 
             Direction.INBOUND.addListener(PlayerConnectionPacket::class) { packet, _ ->
