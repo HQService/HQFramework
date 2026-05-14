@@ -207,20 +207,34 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
                     }.forEach { job ->
                         job.cancel()
                     }
-                supervisorJob.children.toList().forEach { job ->
-                    val name = job.coroutineContext[CoroutineName]?.name
-                    logger.info("${AnsiColor.CYAN}Disabling...[$name routine]${AnsiColor.RESET}")
-                    if (withTimeoutOrNull(1000) { job.join() } == null) {
-                        logger.info("${AnsiColor.CYAN}Timeout-Cancel [$name routine]${AnsiColor.RESET}")
-                        job.cancel()
-                        if (withTimeoutOrNull(2000) { job.join() } == null) {
-                            logger.warning("${AnsiColor.CYAN}Abandoning [$name routine] - non-cancellable blocking work; server shutdown will proceed${AnsiColor.RESET}")
-                        } else {
-                            logger.info("${AnsiColor.CYAN}Cancel finished. [$name routine]${AnsiColor.RESET}")
+                val children = supervisorJob.children.toList()
+                if (children.isNotEmpty()) {
+                    logger.info("${AnsiColor.CYAN}Cleaning up ${children.size} coroutine(s)...${AnsiColor.RESET}")
+
+                    withTimeoutOrNull(1000) {
+                        coroutineScope {
+                            children.forEach { job -> launch { job.join() } }
                         }
-                    } else {
-                        logger.info("${AnsiColor.CYAN}Finished. [$name routine]${AnsiColor.RESET}")
                     }
+
+                    val stillActive = children.filter { it.isActive }
+                    if (stillActive.isNotEmpty()) {
+                        stillActive.forEach { it.cancel() }
+                        withTimeoutOrNull(2000) {
+                            coroutineScope {
+                                stillActive.forEach { job -> launch { job.join() } }
+                            }
+                        }
+
+                        val abandoned = children.filter { it.isActive }
+                        abandoned.forEach { job ->
+                            val name = job.coroutineContext[CoroutineName]?.name
+                            logger.warning("${AnsiColor.CYAN}Abandoning [$name routine] - non-cancellable blocking work; server shutdown will proceed${AnsiColor.RESET}")
+                        }
+                    }
+
+                    val finishedCount = children.count { !it.isActive }
+                    logger.info("${AnsiColor.CYAN}Cleaned up $finishedCount/${children.size} coroutine(s)${AnsiColor.RESET}")
                 }
 
                 logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")

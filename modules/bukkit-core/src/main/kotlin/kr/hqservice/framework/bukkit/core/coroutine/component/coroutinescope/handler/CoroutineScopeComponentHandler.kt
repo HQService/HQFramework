@@ -1,6 +1,8 @@
 package kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.handler
 
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
@@ -16,21 +18,35 @@ import java.util.logging.Logger
 @ComponentHandler
 class CoroutineScopeComponentHandler : HQComponentHandler<HQCoroutineScope> {
     private companion object {
-        const val JOIN_TIMEOUT_MS = 2000L
+        const val PHASE_TIMEOUT_MS = 1500L
         val logger: Logger = Logger.getLogger("HQFramework.CoroutineScope")
     }
 
     override fun setup(element: HQCoroutineScope) {}
 
     override fun teardown(element: HQCoroutineScope) {
+        val children = element.getSupervisor().children.toList()
+        if (children.isEmpty()) return
+
         runBlocking {
-            element.getSupervisor().children.toList().forEach { job ->
-                val name = job.coroutineContext[CoroutineName]?.name ?: "unnamed"
-                if (withTimeoutOrNull(JOIN_TIMEOUT_MS) { job.join() } == null) {
-                    job.cancel()
-                    if (withTimeoutOrNull(JOIN_TIMEOUT_MS) { job.join() } == null) {
-                        logger.warning("Abandoning coroutine [$name] during teardown - non-cancellable blocking work detected")
+            withTimeoutOrNull(PHASE_TIMEOUT_MS) {
+                coroutineScope {
+                    children.forEach { job -> launch { job.join() } }
+                }
+            }
+
+            val stillActive = children.filter { it.isActive }
+            if (stillActive.isNotEmpty()) {
+                stillActive.forEach { it.cancel() }
+                withTimeoutOrNull(PHASE_TIMEOUT_MS) {
+                    coroutineScope {
+                        stillActive.forEach { job -> launch { job.join() } }
                     }
+                }
+
+                children.filter { it.isActive }.forEach { job ->
+                    val name = job.coroutineContext[CoroutineName]?.name ?: "unnamed"
+                    logger.warning("Abandoning coroutine [$name] during teardown - non-cancellable blocking work detected")
                 }
             }
         }
