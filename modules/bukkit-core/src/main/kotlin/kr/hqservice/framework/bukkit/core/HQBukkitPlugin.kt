@@ -51,6 +51,9 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
     internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
         private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
 
+        const val GRACE_PERIOD_MS = 5000L
+        const val FORCE_CANCEL_TIMEOUT_MS = 2000L
+
         override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
             exceptionHandlers.add(attachableExceptionHandler)
             exceptionHandlers.sortBy { attachableExceptionHandler.priority }
@@ -211,7 +214,8 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
                 if (children.isNotEmpty()) {
                     logger.info("${AnsiColor.CYAN}Cleaning up ${children.size} coroutine(s)...${AnsiColor.RESET}")
 
-                    withTimeoutOrNull(1000) {
+                    // 자연 종료 대기 (5초). DB 트랜잭션 / HTTP 등
+                    withTimeoutOrNull(GRACE_PERIOD_MS) {
                         coroutineScope {
                             children.forEach { job -> launch { job.join() } }
                         }
@@ -220,7 +224,7 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
                     val stillActive = children.filter { it.isActive }
                     if (stillActive.isNotEmpty()) {
                         stillActive.forEach { it.cancel() }
-                        withTimeoutOrNull(2000) {
+                        withTimeoutOrNull(FORCE_CANCEL_TIMEOUT_MS) {
                             coroutineScope {
                                 stillActive.forEach { job -> launch { job.join() } }
                             }

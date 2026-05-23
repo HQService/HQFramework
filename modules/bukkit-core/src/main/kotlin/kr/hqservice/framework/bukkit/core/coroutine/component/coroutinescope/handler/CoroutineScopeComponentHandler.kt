@@ -6,6 +6,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
+import kr.hqservice.framework.bukkit.core.coroutine.extension.childrenAll
 import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
 import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
@@ -18,18 +20,27 @@ import java.util.logging.Logger
 @ComponentHandler
 class CoroutineScopeComponentHandler : HQComponentHandler<HQCoroutineScope> {
     private companion object {
-        const val PHASE_TIMEOUT_MS = 1500L
+        const val GRACE_PERIOD_MS = 5000L
+        const val FORCE_CANCEL_TIMEOUT_MS = 2000L
         val logger: Logger = Logger.getLogger("HQFramework.CoroutineScope")
     }
 
     override fun setup(element: HQCoroutineScope) {}
 
     override fun teardown(element: HQCoroutineScope) {
-        val children = element.getSupervisor().children.toList()
+        val supervisor = element.getSupervisor()
+
+        // opt-in 잡 즉시 cancel
+        supervisor.childrenAll
+            .filter { job ->
+                job.coroutineContext[TeardownOptionCoroutineContextElement.Key]?.cancelWhenPluginTeardown == true
+            }.forEach { it.cancel() }
+
+        val children = supervisor.children.toList()
         if (children.isEmpty()) return
 
         runBlocking {
-            withTimeoutOrNull(PHASE_TIMEOUT_MS) {
+            withTimeoutOrNull(GRACE_PERIOD_MS) {
                 coroutineScope {
                     children.forEach { job -> launch { job.join() } }
                 }
@@ -38,7 +49,7 @@ class CoroutineScopeComponentHandler : HQComponentHandler<HQCoroutineScope> {
             val stillActive = children.filter { it.isActive }
             if (stillActive.isNotEmpty()) {
                 stillActive.forEach { it.cancel() }
-                withTimeoutOrNull(PHASE_TIMEOUT_MS) {
+                withTimeoutOrNull(FORCE_CANCEL_TIMEOUT_MS) {
                     coroutineScope {
                         stillActive.forEach { job -> launch { job.join() } }
                     }
