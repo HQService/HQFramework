@@ -32,6 +32,8 @@ enum class Version(
     V_21_7,
     V_21_8,
     V_21_11,
+    V_26_1(26),
+    V_26_2,
 
     // forge
     V_17_FORGE(parent= V_17),

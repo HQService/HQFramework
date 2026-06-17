@@ -35,9 +35,12 @@ class HQFrameworkNMSConfiguration(
     serviceManager: NMSServiceManager
 ) : NMSServiceProvider, NMSVirtualFactoryProvider {
     private val versionName: String = server.minecraftVersion.split("-")[0]
-    private val majorVersion = versionName.split(".")[1].toInt()
+    private val versionParts = versionName.split(".")
+    // Mojang naming change after 1.21.11: switched to year-based "<major>.<minor>.<patch>" starting from 26.1.
+    private val isNewNaming = versionParts[0].toInt() >= 26
+    private val majorVersion = if (isNewNaming) versionParts[0].toInt() else versionParts[1].toInt()
     private val minorVersion = try {
-        versionName.split(".")[2].toInt()
+        if (isNewNaming) versionParts[1].toInt() else versionParts[2].toInt()
     } catch (e: Exception) {
         0
     }
