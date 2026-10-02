@@ -31,6 +31,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.Level
 
 @Listener
 class PlayerConnectionPacketHandler(
@@ -103,8 +104,10 @@ class PlayerConnectionPacketHandler(
         }
     }
 
-    private suspend fun <T : Any> onSave(player: Player, repository: PlayerRepository<T>) {
-        val value = repository[player.uniqueId] ?: return
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun onSave(player: Player, repository: PlayerRepository<*>, snapshot: Any?) {
+        val value = snapshot ?: return
+        repository as PlayerRepository<Any>
         val tx = TransactionManager.currentOrNull()
         if (tx != null) repository.save(player, value)
         else newSuspendedTransaction(Dispatchers.IO) {
@@ -114,24 +117,29 @@ class PlayerConnectionPacketHandler(
 
     private suspend fun saveAndClear(player: Player) = coroutineScope {
         val playerRepositories = playerRepositoryRegistry.getAll()
-        val exceptionHandler = coroutineContext[CoroutineExceptionHandler]
+        val values = playerRepositories.associateWith { it[player.uniqueId] }
         runCatching {
             newSuspendedTransaction(Dispatchers.IO + CoroutineName("save:${player.uniqueId}")) {
                 for (repo in playerRepositories) {
                     withContext(CoroutineName("save:${player.uniqueId}:${repo::class.simpleName}")) {
-                        onSave(player, repo)
+                        onSave(player, repo, values[repo])
                     }
                 }
             }
 
             for (repo in playerRepositories) {
                 repo.removePreLoad(player.uniqueId)
-                repo.remove(player.uniqueId)
+                removeIfUnchanged(repo, player.uniqueId, values[repo])
             }
         }.onFailure {
-            exceptionHandler?.handleException(coroutineContext, it)
-            it.printStackTrace()
+            if (it is CancellationException) throw it
+            plugin.logger.log(Level.SEVERE, "failed to save player data for ${player.uniqueId}", it)
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun removeIfUnchanged(repository: PlayerRepository<*>, id: UUID, snapshot: Any?) {
+        if (snapshot != null) (repository as PlayerRepository<Any>).remove(id, snapshot)
     }
 
     // proxied server
@@ -156,6 +164,7 @@ class PlayerConnectionPacketHandler(
         val playerId = player.uniqueId
         plugin.launch(Dispatchers.Default) {
             loadPlayer.add(playerId)
+            playerScopes.awaitIdle(playerId)
             delay(50)
 
             if (nettyService.isEnable()) {
@@ -225,7 +234,7 @@ class PlayerConnectionPacketHandler(
         playerScopes.scope(player.uniqueId).launch(TeardownOptionCoroutineContextElement(false)) {
             saveAndClear(player)
             packetSender.sendPacketAll(PlayerDataSavedPacket(player.uniqueId))
-        }
+        }.invokeOnCompletion { playerScopes.releaseIfIdle(player.uniqueId) }
     }
 
     // non proxied server
@@ -234,8 +243,7 @@ class PlayerConnectionPacketHandler(
         if (nettyService.isEnable()) return
         playerScopes.scope(event.player.uniqueId).launch(CoroutineName("save")) {
             saveAndClear(event.player)
-            playerScopes.cancel(event.player.uniqueId)
-        }
+        }.invokeOnCompletion { playerScopes.releaseIfIdle(event.player.uniqueId) }
     }
 
     @Subscribe
