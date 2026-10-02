@@ -26,6 +26,6 @@ class LanguageRegistry(
     }
 
     fun getLocalizeValue(descriptionKey: String): String? {
-        return languageMap[Locale(config.getString("lang"))]?.get(descriptionKey)
+        return languageMap[Locale(config.getString("lang", "ko_kr"))]?.get(descriptionKey)
     }
 }

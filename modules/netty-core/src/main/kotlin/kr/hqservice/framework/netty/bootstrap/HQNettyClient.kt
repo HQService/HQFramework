@@ -49,7 +49,7 @@ class HQNettyClient(
             .option(ChannelOption.SO_KEEPALIVE, true)
             .handler(HQChannelInitializer(logger, blockingDispatcher))
             .group(group)
-            .connect(InetSocketAddress(config.getString("netty.host"), config.getInt("netty.port")))
+            .connect(InetSocketAddress(config.getString("netty.host", "127.0.0.1"), config.getInt("netty.port", 11286)))
             .addListener(ChannelFutureListener {
                 if (it.isSuccess) {
                     future.complete(it.channel())

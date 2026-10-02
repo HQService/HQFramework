@@ -39,7 +39,7 @@ class HQNettyServer(
         bootstrap.channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_REUSEADDR, true)
             .childHandler(HQChannelInitializer(logger, blockingDispatcher, true, config.getString("netty.secret", "")))
-            .localAddress(config.getString("netty.host"), config.getInt("netty.port"))
+            .localAddress(config.getString("netty.host", "127.0.0.1"), config.getInt("netty.port", 11286))
             .group(group)
             .bind()
             .addListener(ChannelFutureListener {
