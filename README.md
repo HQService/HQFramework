@@ -545,10 +545,17 @@ redis:
   data-ttl-seconds: 3600
 ```
 
-`redis.uri`를 비워 두면 Redis를 전혀 쓰지 않습니다. `backend: redis`인데 `redis.uri`가 비어 있으면 기동에 실패합니다.
+`redis.uri`를 비워 두면 Redis를 전혀 쓰지 않습니다. `backend: redis`인데 `redis.uri`가 비어 있으면 기동에 실패합니다. 단일 Redis(또는 Sentinel 뒤의 마스터)만 지원하며 **Redis Cluster는 지원하지 않습니다**(소유권 갱신 스크립트가 여러 플레이어 키를 한 번에 다룹니다).
+
+`backend`를 `database`에서 `redis`로(또는 반대로) 바꾸는 절차:
+1. 네트워크의 모든 서버를 정지합니다.
+2. 공유 DB의 `hqframework_player_data_backend` 테이블 행의 `backend` 값을 새 값으로 바꿉니다.
+3. 모든 서버의 `config.yml`에서 `player-data.backend`(와 `redis.uri`)를 바꿉니다.
+4. 서버를 기동합니다.
 
 바뀌는 것:
-- **소유권 조율이 Redis로 이동**합니다(`<key-prefix>:session:<uuid>` 키, Lua 스크립트로 원자적 처리). 영속 저장은 여전히 `database` 설정의 MySQL/H2/SQLite입니다.
+- **소유권 조율이 Redis로 이동**합니다(`<key-prefix>:session:<uuid>` 해시, Lua 스크립트로 원자적 처리). 소유권을 놓아도 저장 버전은 남으며, 키는 마지막 기록 후 30일 뒤 자동 삭제됩니다. 영속 저장은 여전히 `database` 설정의 MySQL/H2/SQLite입니다.
+- **소유권을 잃은 서버가 MySQL에 한 번 쓸 수 있습니다.** 저장 직전에 소유권을 확인하지만 확인과 저장 사이에 다른 서버가 소유권을 가져가면 그 저장은 MySQL에 반영된 뒤 커밋 단계에서 거부됩니다. Redis가 최신 데이터의 기준이므로 새 소유 서버의 다음 영속 저장이 이를 덮어씁니다. Redis 사본 쓰기는 Redis에 기록된 소유자가 이 서버일 때만 반영됩니다.
 - **소유권 해제 알림이 즉시 전달**됩니다. 이전 서버가 소유권을 놓으면 Redis pub/sub으로 알려 새 서버가 `retry-interval-millis`를 기다리지 않고 바로 재시도합니다. 프록시 연결이 없어도 됩니다.
 - **`CachedPlayerRepository`는 최신 데이터를 Redis에** 둡니다. `update {}`/`set`으로 바뀐 값은 곧바로 Redis에 쓰이고, MySQL에는 `SavePolicy`에 따라 주기적으로 저장됩니다. 서버를 옮기면 새 서버는 MySQL 대신 Redis 사본을 읽습니다.
 
@@ -568,8 +575,9 @@ class PointRepository : CachedPlayerRepository<PointData>(PointData.serializer()
 - `redis.uri`가 비어 있으면 `PlayerRepository`와 완전히 같게 동작하며 직렬화는 호출되지 않습니다. `redis.uri`가 있으면 `backend`가 `database`여도 Redis 캐시를 씁니다.
 - Redis 키는 `<key-prefix>:data:<cacheName>:<uuid>`입니다. `cacheName` 기본값은 클래스 FQCN이라 패키지나 클래스 이름을 바꾸면 키가 바뀌어 기존 사본을 못 읽습니다. `override val cacheName = "point"`처럼 고정하는 것을 권장합니다.
 - `peek(uuid)`는 Redis 사본을 먼저 보고, 없으면 `loadOffline`으로 DB를 읽습니다.
-- 접속 시에도 Redis 사본이 있으면 `load` 대신 그것을 씁니다. 없으면 `load` 결과를 Redis에 기록합니다.
-- 퇴장 후 DB 저장이 끝나면 Redis 사본은 `redis.data-ttl-seconds` 뒤 만료됩니다. 그 사이에 MySQL을 직접 고쳐도 다음 접속에서는 Redis 사본이 우선합니다.
+- 접속 시에도 Redis 사본이 있으면 `load` 대신 그것을 쓰고 만료 시간을 없앱니다. 없으면 `load` 결과를 Redis에 기록합니다.
+- DB 저장이 끝날 때마다 저장한 값으로 Redis 사본을 갱신합니다. 퇴장 후 저장이면 사본은 `redis.data-ttl-seconds` 뒤 만료됩니다. 그 사이에 MySQL을 직접 고쳐도 다음 접속에서는 Redis 사본이 우선합니다.
+- **값은 반드시 `update {}`나 `set`으로만 수정하세요.** `repository[uuid]!!.point = 10`처럼 직접 고친 값은 다음 전체 저장 때 MySQL과 Redis에 함께 반영되지만, 그 전에 플레이어가 다른 서버로 옮기거나 재접속하면 Redis의 이전 값이 보입니다.
 - 역직렬화에 실패한 사본은 경고를 남기고 무시한 뒤 `load`로 읽습니다.
 - Redis에 접속할 수 없으면 플레이어 접속이 로딩 상태로 보류되고, 회복되지 않으면 킥됩니다. DB로 자동 전환하지 않습니다.
 - Redis가 유실되면 마지막 DB 저장 이후의 변경이 사라집니다. Redis에 AOF(`appendfsync everysec`)를 켜 두세요.
@@ -632,7 +640,7 @@ class PartyModule(private val messenger: RedisMessenger, private val redis: Redi
 
     fun invite(partyId: String, target: String) {
         messenger.publish("party-invite", PartyInvite.serializer(), PartyInvite(partyId, target))
-        redis.connection().sync().expire("myplugin:party:$partyId", 3600)
+        redis.connection().async().expire("myplugin:party:$partyId", 3600)
     }
 }
 ```
@@ -641,13 +649,13 @@ class PartyModule(private val messenger: RedisMessenger, private val redis: Redi
 - `publish(channel, serializer, value)`: 값을 JSON으로 직렬화해 보냅니다. 비동기로 보내고 기다리지 않습니다.
 - `subscribe(channel, serializer) { value -> }`: `Subscription`(`AutoCloseable`)을 돌려줍니다. 더 받지 않으려면 `close()`합니다(예: `@Teardown`에서).
 - 실제 Redis 채널 이름은 `<key-prefix>:msg:<channel>`(기본 `hq:msg:<channel>`)입니다. 보낸 서버 자신도 구독 중이면 메시지를 받습니다.
-- 핸들러는 Lettuce의 이벤트 루프 스레드에서 실행됩니다. 블로킹하지 말고, Bukkit API는 `plugin.launch { }`나 `withContext(Dispatchers.BukkitMain)`으로 메인 스레드에 넘긴 뒤 쓰세요.
+- 핸들러는 프레임워크 전용 단일 스레드(`hq-redis-pubsub`)에서 차례로 실행됩니다. 오래 블로킹하면 다른 메시지가 밀리므로 피하고, Bukkit API는 `plugin.launch { }`나 `withContext(Dispatchers.BukkitMain)`으로 메인 스레드에 넘긴 뒤 쓰세요. 핸들러가 던진 예외는 경고로 기록되고 다른 핸들러에는 영향을 주지 않습니다.
 - 역직렬화에 실패한 메시지는 경고를 남기고 버립니다.
 
 **`RedisProvider`**
 - `enabled`: `redis.uri`가 설정되어 있는지 확인합니다. 선택 기능이라면 이 값으로 분기하세요.
-- `connection()`: Lettuce `StatefulRedisConnection<String, ByteArray>`를 돌려줍니다. 모든 플러그인이 공유하는 연결이므로 `close()`하지 마세요. 파티 해시에 TTL을 거는 것처럼 Lettuce API(`sync()`, `async()`, `reactive()`)를 직접 씁니다. 값 코덱이 `ByteArray`이므로 문자열 값은 `toByteArray()`로 넣습니다.
-- `redis.uri`가 비어 있으면 `connection()`과 `RedisMessenger`의 `publish`/`subscribe`는 `IllegalStateException`을 던집니다.
+- `connection()`: Lettuce `StatefulRedisConnection<String, ByteArray>`를 돌려줍니다. 처음 호출할 때 연결하며 연결과 명령 타임아웃은 3초입니다. 메인 스레드에서 `sync()`를 쓰면 그만큼 멈출 수 있으니 `async()`를 쓰세요. 모든 플러그인이 공유하는 연결이므로 `close()`하지 마세요. 파티 해시에 TTL을 거는 것처럼 Lettuce API(`sync()`, `async()`, `reactive()`)를 직접 씁니다. 값 코덱이 `ByteArray`이므로 문자열 값은 `toByteArray()`로 넣습니다.
+- `redis.uri`가 비어 있으면 `connection()`과 `RedisMessenger`의 `publish`/`subscribe`는 `IllegalStateException`을 던집니다. `redis.uri` 형식이 잘못되면 기동에 실패합니다.
 - 키는 플러그인 고유 접두어(예: `myplugin:`)를 쓰세요. `key-prefix`(기본 `hq`)는 프레임워크가 씁니다.
 
 ---
