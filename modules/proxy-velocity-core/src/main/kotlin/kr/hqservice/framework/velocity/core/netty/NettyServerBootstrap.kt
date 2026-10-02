@@ -7,6 +7,7 @@ import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
 import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
+import kr.hqservice.framework.netty.packet.server.RelayPolicy
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.RelayingResult
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
@@ -51,7 +52,11 @@ class NettyServerBootstrap(
             wrapper.channel.pipeline().addFirst("timeout-handler", TimeOutHandler(5L, TimeUnit.SECONDS))
         }
 
-        Direction.INBOUND.addListener(RelayingPacket::class) { packet, _ ->
+        Direction.INBOUND.addListener(RelayingPacket::class) { packet, wrapper ->
+            if (!RelayPolicy.isRelayable(packet.getRelayByte())) {
+                logger.warning("dropped relay of a server-only packet from port ${wrapper.port}")
+                return@addListener
+            }
             try {
                 try {
                     val port = packet.targetServer.toInt()
