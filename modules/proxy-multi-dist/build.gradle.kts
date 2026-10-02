@@ -19,3 +19,8 @@ dependencies {
         implementation(libs.kotlinx.serialization.json)
     }
 }
+
+configurations.runtimeClasspath.configure {
+    exclude(libs.netty.get().group, libs.netty.get().name)
+    exclude(libs.guava.get().group, libs.guava.get().name)
+}
