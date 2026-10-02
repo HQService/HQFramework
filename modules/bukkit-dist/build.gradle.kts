@@ -35,6 +35,7 @@ bukkitResourceGenerator {
         libs.byte.buddy.agent,
         libs.quartz,
         libs.adventure.text.serializer.legacy,
+        libs.lettuce.core,
     )
 }
 

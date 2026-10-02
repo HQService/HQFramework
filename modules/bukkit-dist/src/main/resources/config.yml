@@ -46,6 +46,13 @@ player-data:
   dirty-flush-seconds: 5
   full-flush-seconds: 60
 
+redis:
+  # 비워 두면 Redis 를 사용하지 않습니다. 예: redis://:password@127.0.0.1:6379/0
+  uri: ""
+  key-prefix: hq
+  # CachedPlayerRepository 가 MySQL 저장을 마친 플레이어 데이터를 Redis 에 남겨 두는 시간
+  data-ttl-seconds: 3600
+
 scheduler:
   # Quartz 클러스터 인스턴스 ID. 비워두면 "호스트명:포트" 를 사용합니다.
   instance-id: ""

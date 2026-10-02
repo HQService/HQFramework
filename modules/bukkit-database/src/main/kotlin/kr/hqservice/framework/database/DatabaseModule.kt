@@ -6,6 +6,7 @@ import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.database.dao.TimestampEntityHooks
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
+import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.repository.player.lifecycle.PlayerDataLifecycle
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.netty.api.NettyServer
@@ -21,6 +22,7 @@ class DatabaseModule(
     private val databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
     private val dataSource: HikariDataSource,
     private val playerDataLifecycle: PlayerDataLifecycle,
+    private val redisProvider: RedisProvider,
     private val logger: Logger
 ) {
     @Setup
@@ -43,7 +45,11 @@ class DatabaseModule(
             }
             TransactionManager.closeAndUnregister(database)
         } finally {
-            dataSource.close()
+            try {
+                dataSource.close()
+            } finally {
+                redisProvider.close()
+            }
         }
     }
 }

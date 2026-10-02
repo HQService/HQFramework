@@ -78,6 +78,7 @@ dependencyResolutionManagement {
             library("sqlite", "org.xerial:sqlite-jdbc:${getProperty("sqliteVersion")}")
             library("h2", "com.h2database:h2:${getProperty("h2Version")}")
             library("mysql-connector", "com.mysql:mysql-connector-j:${getProperty("mysqlConnectorVersion")}")
+            library("lettuce-core", "io.lettuce:lettuce-core:${getProperty("lettuceVersion")}")
 
             library("mockK", "io.mockk:mockk:${getProperty("mockKVersion")}")
             library("mockBukkit", "com.github.seeseemelk:MockBukkit-v1.20:${getProperty("mockBukkitVersion")}")
