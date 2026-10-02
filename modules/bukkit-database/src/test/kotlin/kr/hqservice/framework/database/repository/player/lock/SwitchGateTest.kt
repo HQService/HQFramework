@@ -24,13 +24,24 @@ class SwitchGateTest {
     }
 
     @Test
-    fun `release then ensure returns a fresh gate`() {
+    fun `reset discards a stale completed gate`() {
         val gate = SwitchGate()
         val id = UUID.randomUUID()
         gate.ensure(id)
         gate.signal(id)
-        gate.release(id)
+        gate.reset(id)
         assertFalse(gate.ensure(id).isCompleted)
+    }
+
+    @Test
+    fun `signal after reset completes the new gate`() {
+        val gate = SwitchGate()
+        val id = UUID.randomUUID()
+        gate.ensure(id)
+        gate.signal(id)
+        gate.reset(id)
+        gate.signal(id)
+        assertTrue(gate.ensure(id).isCompleted)
     }
 
     @Test

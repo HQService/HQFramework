@@ -176,11 +176,9 @@ class PlayerConnectionPacketHandler(
                         }
                         switchGate.release(playerId)
                         return@launch
-                    } else {
-                        switchGate.release(playerId)
-                        delay(1)
-                    }
+                    } else delay(1)
                 }
+                switchGate.release(playerId)
             }
 
             delay(5)
@@ -250,15 +248,14 @@ class PlayerConnectionPacketHandler(
 
     @Subscribe
     fun playerDataPacketHandle(event: AsyncNettyPacketReceivedEvent) {
-        val packet = event.packet
-        when (packet) {
-            is PlayerDataSavePacket -> coroutineScope.launch {
-                lock(packet.id)
-                switchGate.ensure(packet.id)
+        when (val packet = event.packet) {
+            is PlayerDataSavePacket -> {
+                switchGate.reset(packet.id)
+                playerScopes.scope(packet.id).launch { lock(packet.id) }
             }
-            is PlayerDataSavedPacket -> coroutineScope.launch {
-                unlock(packet.id)
+            is PlayerDataSavedPacket -> {
                 switchGate.signal(packet.id)
+                playerScopes.scope(packet.id).launch { unlock(packet.id) }
             }
         }
     }

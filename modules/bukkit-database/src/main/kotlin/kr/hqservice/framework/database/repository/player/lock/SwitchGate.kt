@@ -15,6 +15,10 @@ class SwitchGate {
         ensure(id).complete(Unit)
     }
 
+    fun reset(id: UUID) {
+        waiters[id] = CompletableDeferred()
+    }
+
     fun release(id: UUID) {
         waiters.remove(id)
     }
