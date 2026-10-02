@@ -9,10 +9,15 @@ import org.bukkit.plugin.IllegalPluginAccessException
 import org.bukkit.plugin.Plugin
 import kotlin.coroutines.CoroutineContext
 
+internal fun ticksFor(timeMillis: Long): Long = maxOf(1L, timeMillis / 50)
+
 @OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 class BukkitDispatcher(private val isAsync: Boolean, private val location: Location?) : MainCoroutineDispatcher(), Delay {
     override val immediate: MainCoroutineDispatcher
         get() = BukkitMainDispatcherImmediate()
+
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+        isAsync || location != null || !Bukkit.isPrimaryThread()
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val plugin = getPluginByCoroutineContext(context)
@@ -27,6 +32,7 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
             }
         } catch (_: IllegalPluginAccessException) {
             context[Job]?.cancel(CancellationException("Plugin is disabled, cannot dispatch"))
+            Dispatchers.IO.dispatch(context, block)
         }
     }
 
@@ -37,7 +43,7 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
             val resumer: () -> Unit = {
                 with(continuation) { resumeUndispatched(Unit) }
             }
-            val ticks = timeMillis / 50
+            val ticks = ticksFor(timeMillis)
             val scheduler = if (location != null) plugin.getScheduler(location) else plugin.getScheduler()
             if (isAsync) scheduler.runTaskLaterAsynchronously(ticks, resumer)
             else scheduler.runTaskLater(ticks, resumer)
