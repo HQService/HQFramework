@@ -82,6 +82,7 @@ class FlushSchedulerTest {
         override val serverId: String = "test"
         val commits: MutableList<Pair<UUID, Long>> = Collections.synchronizedList(mutableListOf())
         val renewals: MutableList<List<UUID>> = Collections.synchronizedList(mutableListOf())
+        val releases: MutableList<UUID> = Collections.synchronizedList(mutableListOf())
 
         override suspend fun acquire(uuid: UUID): AcquireResult = AcquireResult.Acquired(0)
 
@@ -94,7 +95,10 @@ class FlushSchedulerTest {
             return expectedVersion + 1
         }
 
-        override suspend fun release(uuid: UUID): Boolean = true
+        override suspend fun release(uuid: UUID): Boolean {
+            releases += uuid
+            return true
+        }
     }
 
     private val settings = PlayerDataSettings(
@@ -130,7 +134,10 @@ class FlushSchedulerTest {
         onOwnershipLost: suspend (PlayerSession) -> Unit = {},
     ) = FlushScheduler(registry, { repositories.toList() }, coordinator, settings, playerScopes, logger, onOwnershipLost)
 
-    private fun player(uuid: UUID): Player = mockk<Player>(relaxed = true).also { every { it.uniqueId } returns uuid }
+    private fun player(uuid: UUID, online: Boolean = true): Player = mockk<Player>(relaxed = true).also {
+        every { it.uniqueId } returns uuid
+        every { it.isOnline } returns online
+    }
 
     private fun addSessions(count: Int, vararg repositories: PlayerRepository<Counter>): List<PlayerSession> =
         List(count) {
@@ -245,6 +252,34 @@ class FlushSchedulerTest {
         assertSame(session, lost.single())
         assertNull(registry.get(uuid))
         assertFalse(repository.contains(uuid))
+    }
+
+    @Test
+    fun `successful save of an offline player releases ownership and clears it`() = runBlocking {
+        val repository = CounterRepository()
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        registry.put(PlayerSession(uuid, player(uuid, online = false), 0))
+        repository.update(uuid) { it.n++ }
+
+        assertTrue(scheduler(repository).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
+
+        assertEquals(listOf(uuid), coordinator.releases.toList())
+        assertNull(registry.get(uuid))
+        assertFalse(repository.contains(uuid))
+    }
+
+    @Test
+    fun `successful save of an online player keeps ownership`() = runBlocking {
+        val repository = CounterRepository()
+        val session = addSessions(1, repository).single()
+        repository.update(session.uuid) { it.n++ }
+
+        assertTrue(scheduler(repository).flushPlayer(session.uuid, listOf(repository), FlushReason.DIRTY))
+
+        assertTrue(coordinator.releases.isEmpty())
+        assertSame(session, registry.get(session.uuid))
+        assertTrue(repository.contains(session.uuid))
     }
 
     @Test

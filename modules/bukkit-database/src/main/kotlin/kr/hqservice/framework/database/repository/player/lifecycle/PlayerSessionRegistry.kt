@@ -1,8 +1,10 @@
 package kr.hqservice.framework.database.repository.player.lifecycle
 
+import kr.hqservice.framework.global.core.component.Bean
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
+@Bean
 class PlayerSessionRegistry {
     private val sessions = ConcurrentHashMap<UUID, PlayerSession>()
 

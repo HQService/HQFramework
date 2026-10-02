@@ -95,6 +95,7 @@ class FlushScheduler(
             session.version = next
             selected.forEach { it.markSaved(uuid) }
             session.failures.set(0)
+            if (!session.player.isOnline) releaseOffline(session)
             true
         } catch (e: OwnershipLostException) {
             sessions.remove(uuid)
@@ -110,6 +111,12 @@ class FlushScheduler(
             logger.log(level, "failed to save player data of $uuid ($failures consecutive failures)", e)
             false
         }
+    }
+
+    private suspend fun releaseOffline(session: PlayerSession) {
+        coordinator.release(session.uuid)
+        sessions.remove(session.uuid)
+        repositories().forEach { it.remove(session.uuid) }
     }
 
     internal suspend fun renewAll() {
