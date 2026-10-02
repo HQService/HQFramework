@@ -1,9 +1,6 @@
 package kr.hqservice.framework.command
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.Multimap
 import org.bukkit.command.CommandSender
-import kotlin.reflect.KClassifier
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
 
@@ -18,12 +15,6 @@ internal class CommandContextImpl(
     private val arguments: Map<ContextData, String> = parameterMap.map { (argument, kParameter) ->
         ContextData(getContextKey(kParameter), argument.second) to argument.first
     }.toMap()
-
-    private val argumentsByType: Multimap<KClassifier, String> = ArrayListMultimap.create<KClassifier, String>().apply {
-        parameterMap.forEach { (key, kParameter) ->
-            this.put(kParameter.type.classifier, arguments[ContextData(getContextKey(kParameter), key.second)])
-        }
-    }
 
     private fun getContextKey(kParameter: KParameter): String {
         return kParameter.findAnnotation<ContextKey>()?.key ?: kParameter.name!!
@@ -51,9 +42,5 @@ internal class CommandContextImpl(
 
     override fun getArguments(): Collection<String> {
         return arguments.values
-    }
-
-    override fun getArgumentsByType(kClassifier: KClassifier): Collection<String> {
-        return argumentsByType.get(kClassifier)
     }
 }

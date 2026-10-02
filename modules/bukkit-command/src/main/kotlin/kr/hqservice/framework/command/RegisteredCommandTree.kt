@@ -73,7 +73,7 @@ open class RegisteredCommandTree(
         }
     }
 
-    private fun getTextComponents(
+    internal fun getTextComponents(
         sender: CommandSender,
         padding: String = "",
         pointer: String = ""
@@ -82,8 +82,11 @@ open class RegisteredCommandTree(
         val filteredExecutors = commandExecutors.values.filter {
             it.validateSuggestion(sender, true)
         }
+        val filteredTrees = commandTrees.values.filter {
+            it.validateSuggestion(sender, true)
+        }
         for ((i, executor) in filteredExecutors.sortedBy { it.priority }.withIndex()) {
-            val lastNode = (i + 1 == filteredExecutors.size) && commandTrees.isEmpty()
+            val lastNode = (i + 1 == filteredExecutors.size) && filteredTrees.isEmpty()
             val prefix = if (lastNode) " §7┗━§f" else " §7┣━§f"
             val parameters = executor.function.valueParameters
                 .toMutableList()
@@ -111,8 +114,8 @@ open class RegisteredCommandTree(
 
             result.add(component)
         }
-        for ((i, child) in commandTrees.values.sortedBy { it.priority }.withIndex()) {
-            val lastTree = i + 1 == commandTrees.size
+        for ((i, child) in filteredTrees.sortedBy { it.priority }.withIndex()) {
+            val lastTree = i + 1 == filteredTrees.size
             val component = TextComponent(padding + (if (lastTree) " §7┗━§f" else " §7┣━§f") + child.label)
             component.clickEvent = ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "$pointer${child.label} ")
             component.hoverEvent = HoverEvent(HoverEvent.Action.SHOW_TEXT, Text("클릭 시, 명령어를 입력합니다."))
@@ -129,26 +132,44 @@ open class RegisteredCommandTree(
         return result
     }
 
-    protected fun findTreeAll(): MutableSet<RegisteredCommandTree> {
-        val result = mutableSetOf<RegisteredCommandTree>()
-        findTreeAll(this@RegisteredCommandTree, result)
-        return result
-    }
-
-    protected fun findTreeAll(tree: RegisteredCommandTree, result: MutableSet<RegisteredCommandTree>) {
-        result.add(tree)
-        for (child in tree.commandTrees.values) {
-            findTreeAll(child, result)
+    internal fun findTreePath(arguments: Array<String>): List<RegisteredCommandTree>? {
+        val path = mutableListOf(this)
+        arguments.forEach { argument ->
+            val tree = path.last()
+            path += tree.commandTrees[argument]
+                ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) } ?: return@findTreePath null
         }
+        return path
     }
 
     fun findTreeExact(arguments: Array<String>): RegisteredCommandTree? {
-        var tree: RegisteredCommandTree = this
-        arguments.forEach { argument ->
-            tree = tree.commandTrees[argument]
-                ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) } ?: return@findTreeExact null
+        return findTreePath(arguments)?.last()
+    }
+
+    internal fun canUsePath(sender: CommandSender, treeKey: Array<String>): Boolean {
+        return findTreePath(treeKey)?.all { it.canUse(sender) } ?: false
+    }
+
+    internal fun findTreeKeyApproximate(arguments: Array<String>): Array<String> {
+        var treeKey = arguments.toList()
+        while (findTreeExact(treeKey.toTypedArray()) == null) {
+            treeKey = treeKey.dropLast(1)
         }
-        return tree
+        return treeKey.toTypedArray()
+    }
+
+    internal fun resolveExecutor(sender: CommandSender, arguments: Array<String>): CommandResolution {
+        val treeKey = findTreeKeyApproximate(arguments)
+        if (!canUsePath(sender, treeKey)) {
+            return CommandResolution.Denied
+        }
+        val tree = findTreeExact(treeKey)!!
+        val executorKey = arguments.getOrNull(treeKey.size) ?: treeKey.last()
+        val executor = tree.findExecutor(executorKey) ?: return CommandResolution.Usage(treeKey, tree)
+        if (!executor.canUse(sender)) {
+            return CommandResolution.Denied
+        }
+        return CommandResolution.Found(treeKey, executor)
     }
 
     fun findTreeApproximate(arguments: Array<String>): RegisteredCommandTree {
@@ -160,18 +181,13 @@ open class RegisteredCommandTree(
         return tree
     }
 
-    fun findTreeApproximateIndexed(arguments: Array<String>): Pair<Int, RegisteredCommandTree> {
-        var tree: RegisteredCommandTree = this
-        var index = 0
-        arguments.forEach { argument ->
-            index++
-            tree = tree.commandTrees[argument] ?: tree.commandTrees.values.firstOrNull { it.aliases.contains(argument) }
-                    ?: return index to tree
-        }
-        return index to tree
-    }
-
     private companion object {
         val koreanRegex = Regex(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*")
     }
+}
+
+internal sealed interface CommandResolution {
+    data object Denied : CommandResolution
+    class Usage(val treeKey: Array<String>, val tree: RegisteredCommandTree) : CommandResolution
+    class Found(val treeKey: Array<String>, val executor: RegisteredCommandExecutor) : CommandResolution
 }

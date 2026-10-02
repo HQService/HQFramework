@@ -15,20 +15,20 @@ import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
 import org.bukkit.Location
-import org.bukkit.command.CommandMap
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.command.defaults.BukkitCommand
+import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.plugin.PluginManager
 import org.bukkit.plugin.SimplePluginManager
+import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Logger
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.*
-import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.jvmErasure
 
 @AnnotationHandler
@@ -44,6 +44,8 @@ class CommandAnnotationHandler(
         true
     } catch (_: ClassNotFoundException) { false }
 
+    private val registeredCommands = ConcurrentHashMap<KClass<*>, HQBukkitCommand>()
+
     override fun setup(instance: Any, annotation: Command) {
         val plugin = PluginScopeFinder.get(instance::class)
         if (!hasParent(annotation)) {
@@ -58,8 +60,17 @@ class CommandAnnotationHandler(
         }
 
         if (paperUse) {
-            tabCompletionHandler.initialize(plugin)
+            tabCompletionHandler.initialize()
         }
+    }
+
+    override fun teardown(instance: Any, annotation: Command) {
+        if (hasParent(annotation)) return
+        val hqCommand = registeredCommands.remove(instance::class) ?: return
+        tabCompletionHandler.unregisterTabCompletion(hqCommand)
+        val commandMap = hqCommand.plugin.server.commandMap
+        hqCommand.unregister(commandMap)
+        commandMap.knownCommands.values.removeIf { it === hqCommand }
     }
 
     private fun hasParent(annotation: Command): Boolean {
@@ -122,12 +133,8 @@ class CommandAnnotationHandler(
         )
         hqCommand.permission = if (root.isOp) "op" else root.permission
 
-        val commandMap = SimplePluginManager::class
-            .declaredMemberProperties
-            .first { it.name == "commandMap" }
-            .apply { isAccessible = true }
-            .get(pluginManager) as CommandMap
-        commandMap.register("hq", hqCommand)
+        plugin.server.commandMap.register("hq", hqCommand)
+        registeredCommands[rootClass] = hqCommand
 
         plugin.launch {
             bukkitDelay(1)
@@ -153,15 +160,16 @@ class CommandAnnotationHandler(
         label: String,
         alias: List<String>,
         private val paperUse: Boolean,
-        private val plugin: HQBukkitPlugin,
+        internal val plugin: HQBukkitPlugin,
         private val hqCommandRoot: RegisteredCommandRoot,
         private val registry: CommandArgumentProviderRegistry,
         private val exceptionHandlerRegistry: CommandArgumentExceptionHandlerRegistry
     ) : BukkitCommand(label, "", "", alias) {
+        private val providerTabCompleteCache = ConcurrentHashMap<String, Pair<String, List<String>>>()
 
         @Suppress("DuplicatedCode") // 실제로 겹친 두 코드의 한쪽은 suspend fun 이기 때문에 다른 코드이다.
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
-            if (!hqCommandRoot.validateSuggestion(sender)) {
+            if (!hqCommandRoot.canUse(sender)) {
                 sendPermissionDeclinedMessage(sender)
                 return true
             }
@@ -169,24 +177,19 @@ class CommandAnnotationHandler(
                 hqCommandRoot.sendUsageMessages(sender, arrayOf(commandLabel), plugin.name)
                 return true
             }
-            val treeKey = findTreeKeyApproximate(args)
-
-            val executorKey = if (args.size != treeKey.size) {
-                args[treeKey.size]
-            } else {
-                args[treeKey.size - 1]
+            val resolution = when (val resolved = hqCommandRoot.resolveExecutor(sender, args)) {
+                CommandResolution.Denied -> {
+                    sendPermissionDeclinedMessage(sender)
+                    return true
+                }
+                is CommandResolution.Usage -> {
+                    resolved.tree.sendUsageMessages(sender, arrayOf(commandLabel, *resolved.treeKey), plugin.name)
+                    return true
+                }
+                is CommandResolution.Found -> resolved
             }
-            val tree = hqCommandRoot.findTreeExact(treeKey)
-            val executor = tree?.findExecutor(executorKey)
-            if (executor == null) {
-                val approximateTree = hqCommandRoot.findTreeApproximate(treeKey)
-                approximateTree.sendUsageMessages(sender, arrayOf(commandLabel, *treeKey), plugin.name)
-                return true
-            }
-            if (!executor.validateSuggestion(sender)) {
-                sendPermissionDeclinedMessage(sender)
-                return true
-            }
+            val treeKey = resolution.treeKey
+            val executor = resolution.executor
 
             val senderInstance = when (executor.getCommandSenderType().jvmErasure) {
                 CommandSender::class -> sender
@@ -207,7 +210,7 @@ class CommandAnnotationHandler(
                 else -> throw IllegalArgumentException("not command sender")
             }
 
-            val arguments: MutableList<Any?> = mutableListOf()
+            val arguments: MutableMap<KParameter, Any?> = mutableMapOf()
             plugin.launch(Dispatchers.Default) commandLaunch@{
                 executor.function.parameters.forEach forEach@ { kParameter ->
                     val index = kParameter.index
@@ -216,9 +219,12 @@ class CommandAnnotationHandler(
                     if (index in 0..1) {
                         return@forEach
                     }
+                    if (argument == null && kParameter.isOptional) {
+                        return@forEach
+                    }
                     // 함수 인자가 nullable 이면 생략한다.
                     if (kParameter.type.isMarkedNullable && argument == null) {
-                        arguments.add(null)
+                        arguments[kParameter] = null
                         return@forEach
                     }
                     val parameterMap = executor.function.valueParameters
@@ -248,30 +254,25 @@ class CommandAnnotationHandler(
                             isFailed = true
                             return@withContext
                         }
-                        arguments.add(casted)
+                        arguments[kParameter] = casted
                     }
                     if (isFailed) {
                         return@commandLaunch
                     }
                 }
 
-                if (executor.isOp && !sender.isOp && sender !is ConsoleCommandSender) {
-                    sendPermissionDeclinedMessage(sender)
-                    return@commandLaunch
-                }
-
                 val function = executor.function
+                val callArguments = arguments + mapOf(
+                    function.instanceParameter!! to executor.executorInstance,
+                    function.valueParameters.first() to senderInstance
+                )
                 if (function.isSuspend) {
                     withContext(Dispatchers.BukkitAsync) {
-                        executor.function.callSuspend(
-                            executor.executorInstance,
-                            senderInstance,
-                            *arguments.toTypedArray()
-                        )
+                        function.callSuspendBy(callArguments)
                     }
                 } else {
                     withContext(Dispatchers.BukkitMain) {
-                        executor.function.call(executor.executorInstance, senderInstance, *arguments.toTypedArray())
+                        function.callBy(callArguments)
                     }
                 }
             }
@@ -289,15 +290,43 @@ class CommandAnnotationHandler(
             location: Location?
         ): List<String> {
             if (paperUse) return emptyList()
-            return hqTabComplete(sender, alias, args, location)
+            return completeTabs(sender, args) { kParameter, context ->
+                val senderKey = (sender as? Entity)?.uniqueId?.toString() ?: sender.name
+                val argumentsKey = args.dropLast(1).joinToString(" ")
+                plugin.launch(Dispatchers.IO) {
+                    providerTabCompleteCache[senderKey] =
+                        argumentsKey to getArgumentProvider(kParameter).getTabComplete(context, location)
+                }
+                providerTabCompleteCache[senderKey]
+                    ?.takeIf { it.first == argumentsKey }
+                    ?.second
+                    ?.filter { it.startsWith(args.last()) }
+                    ?: emptyList()
+            }
         }
 
-        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
         fun hqTabComplete(
             sender: CommandSender,
             alias: String,
             args: Array<String>,
             location: Location?
+        ): List<String> {
+            return completeTabs(sender, args) { kParameter, context ->
+                runBlocking {
+                    plugin.async(Dispatchers.IO) {
+                        getArgumentProvider(kParameter)
+                            .getTabComplete(context, location)
+                            .filter { it.startsWith(args.last()) }
+                    }.await()
+                }
+            }
+        }
+
+        @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
+        private fun completeTabs(
+            sender: CommandSender,
+            args: Array<String>,
+            completeArgument: (KParameter, CommandContext) -> List<String>
         ): List<String> {
             if (!hqCommandRoot.validateSuggestion(sender, true)) {
                 return emptyList()
@@ -305,7 +334,10 @@ class CommandAnnotationHandler(
             if (args.first().length == 0) {
                 return hqCommandRoot.getSuggestions(sender).filter { it.startsWith(args.last()) }
             }
-            val treeKey = findTreeKeyApproximate(args)
+            val treeKey = hqCommandRoot.findTreeKeyApproximate(args)
+            if (!hqCommandRoot.canUsePath(sender, treeKey)) {
+                return emptyList()
+            }
             val tree = hqCommandRoot.findTreeExact(treeKey)
             val treeKeyAfter = if (args.size != treeKey.size) {
                 args[treeKey.size]
@@ -332,30 +364,12 @@ class CommandAnnotationHandler(
                             (argument to index) to executor.function.valueParameters[index + 1]
                         }.toMap()
                     val context = CommandContextImpl(sender, findArgumentLabel(kParameter) ?: kParameter.name!!, parameterMap)
-                    return runBlocking {
-                        plugin.async(Dispatchers.IO) {
-                            getArgumentProvider(kParameter)
-                                .getTabComplete(context, location)
-                                .filter { it.startsWith(args.last()) }
-                        }.await()
-                    }
+                    return completeArgument(kParameter, context)
                 } else {
                     return tree.getSuggestions(sender).filter { it.startsWith(args.last()) }
                 }
             }
             return emptyList()
-        }
-
-        private fun findTreeKeyApproximate(arguments: Array<String>): Array<String> {
-            return if (hqCommandRoot.findTreeExact(arguments) != null) {
-                arguments
-            } else {
-                val mutableArguments = arguments.toMutableList()
-                while (hqCommandRoot.findTreeExact(mutableArguments.toTypedArray()) == null) {
-                    mutableArguments.removeLast()
-                }
-                mutableArguments.toTypedArray()
-            }
         }
 
         private fun getArgumentProvider(parameter: KParameter): CommandArgumentProvider<*> {
