@@ -15,7 +15,7 @@ import java.util.*
 import kotlin.reflect.KClass
 
 @Bean
-class ProxyNettyServer(
+open class ProxyNettyServer(
     private val proxy: ProxyServer
 ) : NettyServer {
 

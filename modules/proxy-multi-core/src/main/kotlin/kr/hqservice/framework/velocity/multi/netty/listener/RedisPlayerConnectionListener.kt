@@ -1,4 +1,4 @@
-package kr.hqservice.framework.velocity.core.netty.listener
+package kr.hqservice.framework.velocity.multi.netty.listener
 
 import com.google.gson.Gson
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI
@@ -15,7 +15,7 @@ import kr.hqservice.framework.netty.packet.player.PlayerConnectionState
 import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import java.util.UUID
 
-class PlayerConnectionListener(
+class RedisPlayerConnectionListener(
     private val channelContainer: NettyChannelRegistry
 ) {
     private val absRedis = RedisBungeeAPI.getAbstractRedisBungeeAPI()

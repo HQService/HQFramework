@@ -26,7 +26,7 @@ import kotlin.jvm.optionals.getOrNull
 
 @Component
 @Singleton(binds = [NettyChannelRegistry::class])
-class NettyChannelRegistryImpl(
+open class NettyChannelRegistryImpl(
     private val plugin: HQVelocityPlugin,
     private val config: HQYamlConfiguration,
     private val proxyServer: ProxyServer
@@ -88,39 +88,7 @@ class NettyChannelRegistryImpl(
         }
 
         server.scheduler.buildTask(plugin, Runnable {
-            val players = mutableListOf<NettyPlayer>()
-            runCatching {
-                server.allPlayers.forEach {
-                    try {
-                        players.add(
-                            NettyPlayerImpl(
-                                it.username,
-                                it.username,
-                                it.uniqueId,
-                                connectedChannels.firstOrNull { channel -> channel.getPort() == it.currentServer.getOrNull()?.serverInfo?.address?.port }
-                            )
-                        )
-                    } catch (e: Exception) {
-                        runCatching {
-                            if (it.currentServer.getOrNull()?.serverInfo?.name != "lobby") {
-                                proxyServer.getServer("lobby").ifPresent { ch ->
-                                    runCatching {
-                                        it.createConnectionRequest(ch).connect()
-                                    }.onFailure { _ ->
-                                        it.disconnect(
-                                            LegacyComponentSerializer.legacySection().deserialize("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
-                                        )
-                                    }
-                                }
-                            } else {
-                                it.disconnect(
-                                    LegacyComponentSerializer.legacySection().deserialize("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
-                                )
-                            }
-                        }.onFailure { ex -> e.printStackTrace() }
-                    }
-                }
-            }
+            val players = collectPlayers(connectedChannels)
 
             wrapper.channel.eventLoop().execute {
                 if (wrapper.channel.isActive) {
@@ -128,6 +96,43 @@ class NettyChannelRegistryImpl(
                 }
             }
         }).schedule()
+    }
+
+    protected open fun collectPlayers(connectedChannels: List<NettyChannel>): MutableList<NettyPlayer> {
+        val players = mutableListOf<NettyPlayer>()
+        runCatching {
+            server.allPlayers.forEach {
+                try {
+                    players.add(
+                        NettyPlayerImpl(
+                            it.username,
+                            it.username,
+                            it.uniqueId,
+                            connectedChannels.firstOrNull { channel -> channel.getPort() == it.currentServer.getOrNull()?.serverInfo?.address?.port }
+                        )
+                    )
+                } catch (e: Exception) {
+                    runCatching {
+                        if (it.currentServer.getOrNull()?.serverInfo?.name != "lobby") {
+                            proxyServer.getServer("lobby").ifPresent { ch ->
+                                runCatching {
+                                    it.createConnectionRequest(ch).connect()
+                                }.onFailure { _ ->
+                                    it.disconnect(
+                                        LegacyComponentSerializer.legacySection().deserialize("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
+                                    )
+                                }
+                            }
+                        } else {
+                            it.disconnect(
+                                LegacyComponentSerializer.legacySection().deserialize("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
+                            )
+                        }
+                    }.onFailure { ex -> e.printStackTrace() }
+                }
+            }
+        }
+        return players
     }
 
     override fun loopChannels(block: (ChannelWrapper) -> Unit) {

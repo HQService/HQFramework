@@ -7,6 +7,7 @@ dependencies {
     apiModule("global", "core")
     apiModule("global", "yaml")
     apiModule("proxy", "core")
+    apiModule("proxy", "velocity-core")
     apiModule("velocity", "netty")
 
     compileOnly(libs.velocity.api)

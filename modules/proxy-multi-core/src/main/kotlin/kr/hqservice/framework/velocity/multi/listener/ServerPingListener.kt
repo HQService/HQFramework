@@ -1,4 +1,4 @@
-package kr.hqservice.framework.velocity.core.listener
+package kr.hqservice.framework.velocity.multi.listener
 
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI
 import com.velocitypowered.api.event.Subscribe
