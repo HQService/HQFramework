@@ -33,6 +33,8 @@ class VirtualAnvilHandlerFactoryImpl : VirtualAnvilHandlerFactory {
             private var currentText = ""
             @Volatile
             private var unregistered = false
+            @Volatile
+            private var resolving = false
 
             override fun getNmsSimpleNames(): List<String> = emptyList()
 
@@ -69,20 +71,32 @@ class VirtualAnvilHandlerFactoryImpl : VirtualAnvilHandlerFactory {
                     is ServerboundContainerClickPacket -> {
                         val slotNum = message.slotNum
                         if (slotNum == 2.toShort()) {
+                            if (resolving) return
+                            resolving = true
                             val text = currentText
                             launchVirtualCallback {
-                                if (confirmScope(text)) {
-                                    unregistered = true
-                                } else if (buttonScope(2, text)) {
-                                    unregistered = true
+                                try {
+                                    if (confirmScope(text)) {
+                                        unregistered = true
+                                    } else if (buttonScope(2, text)) {
+                                        unregistered = true
+                                    }
+                                } finally {
+                                    if (!unregistered) resolving = false
                                 }
                             }
                         } else if (slotNum in 0..1) {
+                            if (resolving) return
+                            resolving = true
                             val text = currentText
                             launchVirtualCallback {
-                                if (buttonScope(slotNum.toInt(), text)) {
-                                    unregistered = true
-                                } else otherSlotClickScope()
+                                try {
+                                    if (buttonScope(slotNum.toInt(), text)) {
+                                        unregistered = true
+                                    } else otherSlotClickScope()
+                                } finally {
+                                    if (!unregistered) resolving = false
+                                }
                             }
                         }
                     }
