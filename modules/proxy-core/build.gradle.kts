@@ -4,7 +4,9 @@ plugins {
 }
 
 dependencies {
+    api(project(":modules:netty-core"))
     apiModule("global", "core")
+    apiModule("global", "yaml")
     api(libs.kotlinx.coroutines.core)
     api(libs.netty)
     api(libs.koin.core)
