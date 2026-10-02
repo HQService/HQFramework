@@ -1,4 +1,4 @@
-config-version: 2.2.0
+config-version: 2.3.0
 
 lang: ko_kr
 
@@ -35,6 +35,16 @@ database:
     connection-timeout: 30000
     idle-timeout: 600000
     minimum-idle: -1
+
+player-data:
+  # database 만 지원. redis 는 다음 버전에서 추가됩니다.
+  backend: database
+  lease-seconds: 30
+  renew-seconds: 10
+  join-timeout-seconds: 5
+  retry-interval-millis: 200
+  dirty-flush-seconds: 5
+  full-flush-seconds: 60
 
 scheduler:
   # Quartz 클러스터 인스턴스 ID. 비워두면 "호스트명:포트" 를 사용합니다.

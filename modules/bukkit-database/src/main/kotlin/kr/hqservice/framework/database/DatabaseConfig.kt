@@ -5,11 +5,15 @@ import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.database.datasource.H2DataSource
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import kr.hqservice.framework.database.datasource.SQLiteDataSource
+import kr.hqservice.framework.database.repository.player.PlayerDataSettings
+import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import org.bukkit.Server
 import org.jetbrains.exposed.sql.Database
 import java.io.File
 import java.io.IOException
@@ -29,6 +33,13 @@ class DatabaseConfig(
             logger.info("${AnsiColor.CYAN}${type.uppercase()} Database initialized.${AnsiColor.RESET}")
         }
     }
+
+    @Bean
+    fun providePlayerDataSettings(): PlayerDataSettings = PlayerDataSettings.from(config)
+
+    @Bean
+    fun provideSessionCoordinator(database: Database, settings: PlayerDataSettings, server: Server): SessionCoordinator =
+        DatabaseSessionCoordinator(database, server.port.toString(), settings.lease)
 
     @Singleton(binds = [HikariDataSource::class, DataSource::class])
     @Bean
