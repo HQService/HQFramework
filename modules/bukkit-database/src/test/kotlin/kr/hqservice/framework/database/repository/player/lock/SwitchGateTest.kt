@@ -1,6 +1,5 @@
 package kr.hqservice.framework.database.repository.player.lock
 
-import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -8,22 +7,30 @@ import java.util.UUID
 
 class SwitchGateTest {
     @Test
-    fun `ensure after signal returns a fresh gate`() = runTest {
+    fun `signal before ensure is remembered`() {
         val gate = SwitchGate()
         val id = UUID.randomUUID()
-        gate.ensure(id)
         gate.signal(id)
-        val second = gate.ensure(id)
-        assertFalse(second.isCompleted)
+        assertTrue(gate.ensure(id).isCompleted)
     }
 
     @Test
-    fun `signal completes the waiting gate`() = runTest {
+    fun `ensure then signal completes the waiting gate`() {
         val gate = SwitchGate()
         val id = UUID.randomUUID()
         val waiting = gate.ensure(id)
         gate.signal(id)
         assertTrue(waiting.isCompleted)
+    }
+
+    @Test
+    fun `release then ensure returns a fresh gate`() {
+        val gate = SwitchGate()
+        val id = UUID.randomUUID()
+        gate.ensure(id)
+        gate.signal(id)
+        gate.release(id)
+        assertFalse(gate.ensure(id).isCompleted)
     }
 
     @Test

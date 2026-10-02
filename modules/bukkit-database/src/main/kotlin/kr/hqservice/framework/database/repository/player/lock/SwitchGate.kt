@@ -9,11 +9,10 @@ import java.util.concurrent.ConcurrentHashMap
 class SwitchGate {
     private val waiters = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
 
-    fun ensure(id: UUID): CompletableDeferred<Unit> =
-        waiters.compute(id) { _, existing -> existing?.takeIf { !it.isCompleted } ?: CompletableDeferred() }!!
+    fun ensure(id: UUID): CompletableDeferred<Unit> = waiters.computeIfAbsent(id) { CompletableDeferred() }
 
     fun signal(id: UUID) {
-        waiters[id]?.complete(Unit)
+        ensure(id).complete(Unit)
     }
 
     fun release(id: UUID) {

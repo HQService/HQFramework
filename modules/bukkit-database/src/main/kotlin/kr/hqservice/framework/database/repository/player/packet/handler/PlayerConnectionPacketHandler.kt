@@ -174,7 +174,7 @@ class PlayerConnectionPacketHandler(
                         withContext(Dispatchers.BukkitMain) {
                             player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                         }
-                        switchGate.cancel(playerId)
+                        switchGate.release(playerId)
                         return@launch
                     } else {
                         switchGate.release(playerId)
