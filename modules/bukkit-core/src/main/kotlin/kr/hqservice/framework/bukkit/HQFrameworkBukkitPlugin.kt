@@ -5,7 +5,6 @@ import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComp
 import kr.hqservice.framework.bukkit.core.component.registry.registry.InstanceFactoryRegistry
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
-import net.bytebuddy.agent.ByteBuddyAgent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
@@ -26,10 +25,6 @@ abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
     ) : super(loader, description, dataFolder, file)
 
     final override fun onPreLoad() {
-        try {
-            ByteBuddyAgent.install()
-        } catch (_: Exception) {
-        }
         startKoin()
     }
 

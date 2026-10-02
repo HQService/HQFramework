@@ -16,7 +16,8 @@ import java.io.ByteArrayOutputStream
 inline fun <reified T : ItemMeta> ItemStack.meta(
     block: T.() -> Unit,
 ): ItemStack = apply {
-    itemMeta = (itemMeta as? T)?.apply(block)
+    val meta = itemMeta as? T ?: return@apply
+    itemMeta = meta.apply(block)
 }
 
 fun itemStack(material: Material, amount: Int = 1): ItemStack {

@@ -5,6 +5,7 @@ import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.*
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import kr.hqservice.framework.global.core.component.handler.AnnotationHandler
 import kr.hqservice.framework.global.core.component.handler.HQAnnotationHandler
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
@@ -38,7 +39,7 @@ class CoroutineScopeAdviceAnnotationHandler(private val owningPlugin: HQBukkitPl
                     it.type.jvmErasure.isSubclassOf(Exception::class) || it.type.jvmErasure.isSubclassOf(Throwable::class)
                 }
                     ?: throw IllegalStateException("ExceptionHandler 의 value parameter 에는 Exception 이 들어와야합니다. function name: ${function.name}, value parameters: ${function.valueParameters}")
-                if (throwable::class.starProjectedType == exceptionClass.type) {
+                if (matches(exceptionClass.type.jvmErasure, throwable::class)) {
                     function.call(obj, throwable)
                     if (function.hasAnnotation<MustBeStored>()) {
                         return HandleResult.HANDLED_MUST_STORE
@@ -48,6 +49,12 @@ class CoroutineScopeAdviceAnnotationHandler(private val owningPlugin: HQBukkitPl
                 }
                 return HandleResult.UNHANDLED
             }
+        }
+    }
+
+    internal companion object {
+        fun matches(declared: KClass<*>, thrown: KClass<*>): Boolean {
+            return thrown.isSubclassOf(declared)
         }
     }
 }

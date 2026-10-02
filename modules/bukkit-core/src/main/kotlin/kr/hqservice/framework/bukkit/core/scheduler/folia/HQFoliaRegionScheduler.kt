@@ -1,14 +1,13 @@
 package kr.hqservice.framework.bukkit.core.scheduler.folia
 
-import kotlinx.coroutines.runBlocking
-import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.scheduler.HQScheduler
 import kr.hqservice.framework.bukkit.core.scheduler.HQTask
 import org.bukkit.Location
+import org.bukkit.plugin.Plugin
 import java.util.concurrent.TimeUnit
 
 class HQFoliaRegionScheduler(
-    private val plugin: HQBukkitPlugin,
+    private val plugin: Plugin,
     private val location: Location
 ) : HQScheduler {
     private val regionScheduler = plugin.server.regionScheduler
@@ -22,9 +21,7 @@ class HQFoliaRegionScheduler(
 
     override fun runTaskLater(delay: Long, runnable: () -> Unit): HQTask {
         val task = regionScheduler.runDelayed(plugin, location, {
-            runBlocking {
-                runnable.invoke()
-            }
+            runnable.invoke()
         }, delay)
 
         return HQFoliaTask(task)

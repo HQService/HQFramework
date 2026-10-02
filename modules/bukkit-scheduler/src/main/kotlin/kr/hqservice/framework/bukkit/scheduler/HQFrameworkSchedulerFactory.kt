@@ -8,6 +8,7 @@ import kr.hqservice.framework.database.exception.DataSourceClosedException
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.util.AnsiColor
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.Server
 import org.quartz.Scheduler
 import org.quartz.SchedulerException
@@ -36,7 +37,8 @@ class HQFrameworkSchedulerFactory(
     private val databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
     private val server: Server,
     private val plugin: HQBukkitPlugin,
-    private val hikariDataSource: HikariDataSource
+    private val hikariDataSource: HikariDataSource,
+    private val config: HQYamlConfiguration
 ) : SchedulerFactory {
     private var initialized = false
 
@@ -54,7 +56,7 @@ class HQFrameworkSchedulerFactory(
             throw DataSourceClosedException(hikariDataSource)
         }
         val schedulerName = SCHEDULER_NAME
-        val schedulerInstanceId = server.port.toString()
+        val schedulerInstanceId = resolveSchedulerInstanceId(config, server)
         val schedulerPluginMap: Map<String, SchedulerPlugin> = mapOf()
 
         threadPool.setInstanceName(schedulerName)

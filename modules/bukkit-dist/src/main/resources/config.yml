@@ -37,6 +37,9 @@ database:
     minimum-idle: -1
 
 scheduler:
+  # Quartz 클러스터 인스턴스 ID. 비워두면 "호스트명:포트" 를 사용합니다.
+  instance-id: ""
+
   thread-pool:
     thread-count: 10
     thread-priority: 5

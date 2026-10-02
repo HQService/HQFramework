@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bukkit.scheduler.database
 
+import kr.hqservice.framework.bukkit.scheduler.resolveSchedulerInstanceId
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
@@ -44,13 +45,9 @@ class HQFrameworkJobStore(
         tablePrefix = TABLE_PREFIX
         this.dataSource = DATASOURCE_NAME
         dbRetryInterval = 15000
-        instanceId = getSchedulerInstanceId(server)
+        instanceId = resolveSchedulerInstanceId(config, server)
         isThreadsInheritInitializersClassLoadContext = true
         setUseProperties(config.getBoolean("scheduler.job-store.use-properties", true).toString())
         setIsClustered(config.getBoolean("scheduler.job-store.is-clustered", true))
-    }
-
-    private fun getSchedulerInstanceId(server: Server): String {
-        return server.port.toString()
     }
 }

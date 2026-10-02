@@ -11,7 +11,6 @@ dependencies {
     api(libs.kotlin.reflect)
     api(libs.kotlinx.coroutines.core)
     api(libs.koin.core)
-    implementation(libs.byte.buddy.agent)
     api(libs.kotlinx.serialization.json)
     implementation(libs.netty)
 
