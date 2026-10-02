@@ -25,7 +25,7 @@ class TableAnnotationHandler(
         transaction(database) {
             try {
                 if (instance.exists()) {
-                    SchemaUtils.addMissingColumnsStatements(instance, withLogs = false)
+                    SchemaUtils.addMissingColumnsStatements(instance, withLogs = false).forEach { exec(it) }
                 } else {
                     SchemaUtils.create(instance).also {
                         if (annotation.withLogs) {
@@ -34,7 +34,7 @@ class TableAnnotationHandler(
                     }
                 }
             } catch (exception: SQLSyntaxErrorException) {
-                logger.info("${instance.tableName} table may initialized not properly due to Mariadb internal issues.")
+                logger.warning("${instance.tableName} schema update failed: ${exception.message}")
             }
         }
     }
