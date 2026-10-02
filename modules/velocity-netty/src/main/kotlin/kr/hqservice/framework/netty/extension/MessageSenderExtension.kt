@@ -6,7 +6,7 @@ import kr.hqservice.framework.netty.api.PacketSender
 import net.kyori.adventure.text.Component
 import org.koin.java.KoinJavaComponent.getKoin
 
-private val packetSender: PacketSender by getKoin().inject()
+private val packetSender: PacketSender by lazy { getKoin().get() }
 
 @Deprecated("sendMessage(BaseComponent)")
 fun NettyPlayer.sendMessage(message: String, logging: Boolean = true) {

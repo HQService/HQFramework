@@ -45,6 +45,7 @@ dependencies {
     implementationModule("bukkit", "command")
     runtimeOnlyModule("global", "core")
     runtimeOnlyModule("global", "netty")
+    runtimeOnly(project(":modules:netty-core"))
     runtimeOnlyModule("global", "yaml")
     runtimeOnlyModule("bukkit", "inventory")
     runtimeOnlyModule("bukkit", "region")

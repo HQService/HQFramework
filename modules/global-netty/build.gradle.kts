@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
+    api(project(":modules:netty-core"))
     apiModule("global", "core")
     apiModule("global", "yaml")
-    implementation(libs.byte.buddy.core)
     compileOnly(libs.bungeecord.api)
 
     api(libs.koin.core)
@@ -21,4 +21,5 @@ dependencies {
     testImplementation(libs.kotlin.reflect)
     testImplementation(libs.netty)
     testImplementation(libs.bungeecord.api)
+    testImplementation(libs.byte.buddy.core)
 }
