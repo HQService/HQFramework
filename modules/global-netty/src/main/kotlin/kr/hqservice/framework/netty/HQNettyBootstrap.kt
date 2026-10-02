@@ -3,10 +3,6 @@ package kr.hqservice.framework.netty
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import io.netty.channel.Channel
 import io.netty.channel.EventLoopGroup
-import io.netty.channel.epoll.Epoll
-import io.netty.channel.epoll.EpollEventLoopGroup
-import io.netty.channel.kqueue.KQueue
-import io.netty.channel.kqueue.KQueueEventLoopGroup
 import io.netty.channel.nio.NioEventLoopGroup
 import kr.hqservice.framework.netty.bootstrap.HQNettyClient
 import kr.hqservice.framework.netty.bootstrap.HQNettyServer
@@ -28,11 +24,8 @@ class HQNettyBootstrap(
     }.let {
         max(1, min(Runtime.getRuntime().availableProcessors(), it))
     }
-    private val group: EventLoopGroup = when {
-        Epoll.isAvailable() -> EpollEventLoopGroup(ioThreads, ThreadFactoryBuilder().setNameFormat("HQ-epoll-%d").build())
-        KQueue.isAvailable() -> KQueueEventLoopGroup(ioThreads, ThreadFactoryBuilder().setNameFormat("HQ-kqueue-%d").build())
-        else -> NioEventLoopGroup(ioThreads, ThreadFactoryBuilder().setNameFormat("HQ-nio-%d").build())
-    }
+    private val group: EventLoopGroup =
+        NioEventLoopGroup(ioThreads, ThreadFactoryBuilder().setNameFormat("HQ-nio-%d").build())
 
     private fun init() {
         Direction.INBOUND.registerPacket(HandShakePacket::class)

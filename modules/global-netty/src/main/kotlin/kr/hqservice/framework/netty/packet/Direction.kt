@@ -65,6 +65,8 @@ enum class Direction {
         return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>
     }
 
+    fun findPacketByName(name: String): PacketWrapper<out Packet>? = packetMap[name]
+
     @Suppress("unchecked_cast")
     suspend fun <T : Packet> onPacketReceived(packet: T, channel: ChannelWrapper): Boolean {
         val handlers = this.handlers[packet::class.qualifiedName!!] ?: return false

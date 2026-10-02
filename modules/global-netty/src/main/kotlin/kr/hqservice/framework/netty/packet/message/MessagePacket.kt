@@ -7,6 +7,7 @@ import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.extension.readPlayers
 import kr.hqservice.framework.netty.packet.extension.writePlayers
+import kr.hqservice.framework.netty.pipeline.MAX_FRAME_BYTES
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
 
@@ -28,7 +29,9 @@ class MessagePacket(
     }
 
     override fun read(buf: ByteBuf) {
-        val bytes = ByteArray(buf.readInt())
+        val size = buf.readInt()
+        require(size in 0..MAX_FRAME_BYTES) { "message payload too large: $size" }
+        val bytes = ByteArray(size)
         buf.readBytes(bytes)
         message = ComponentSerializer.parse(
             bytes.decompress().toString(Charsets.UTF_8)
