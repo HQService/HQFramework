@@ -24,6 +24,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import java.util.logging.Logger
 
@@ -38,9 +39,11 @@ class ComponentHandlerTest : KoinComponent {
     @Suppress("DEPRECATION", "removal")
     @BeforeEach
     fun setup() {
+        startKoin { }
         val server = MockBukkit.mock()
         every { plugin.logger } returns Logger.getLogger("TEST")
         every { plugin.config } returns mockk()
+        every { plugin.getHQConfig() } returns mockk()
         every { plugin.server } returns server
         every { plugin.isEnabled } returns true
         every { plugin.name } returns "HQTestPlugin"

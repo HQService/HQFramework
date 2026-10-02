@@ -3,9 +3,12 @@ package kr.hqservice.framework.global.core.component.registry
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Configuration
+import kr.hqservice.framework.global.core.component.HQComponent
 import kr.hqservice.framework.global.core.component.Primary
 import kr.hqservice.framework.global.core.component.Qualifier
 import kr.hqservice.framework.global.core.component.Service
+import kr.hqservice.framework.global.core.component.handler.ComponentHandler
+import kr.hqservice.framework.global.core.component.handler.HQComponentHandler
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -21,8 +24,13 @@ import org.koin.core.qualifier.named
 import kotlin.reflect.KClass
 
 class ComponentRegistryQueueTest {
-    private class TestRegistry(private val classes: List<Class<*>>) : AbstractComponentRegistry() {
+    private class TestRegistry(
+        private val classes: List<Class<*>>,
+        private val parent: AbstractComponentRegistry? = null
+    ) : AbstractComponentRegistry() {
         override fun getAllComponentsToScan(): Collection<Class<*>> = classes
+
+        override fun findParentRegistry(): AbstractComponentRegistry? = parent
 
         override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> = mutableMapOf()
 
@@ -77,16 +85,30 @@ class ComponentRegistryQueueTest {
     @Component
     class Optional(val missing: Missing?)
 
+    interface Handled : HQComponent
+
+    @Component
+    class HandledComponent : Handled
+
+    @ComponentHandler
+    class HandledComponentHandler : HQComponentHandler<Handled> {
+        override fun setup(element: Handled) {
+            handledCount++
+        }
+    }
+
     @Component
     class Standalone
 
     companion object {
         var instantiations = 0
+        var handledCount = 0
     }
 
     @BeforeEach
     fun setup() {
         instantiations = 0
+        handledCount = 0
         startKoin { }
     }
 
@@ -152,5 +174,22 @@ class ComponentRegistryQueueTest {
         registry.teardown()
 
         assertNull(koin().getOrNull<Standalone>())
+    }
+
+    @Test
+    fun `handlers of one registry do not apply to another registry`() {
+        TestRegistry(listOf(HandledComponentHandler::class.java)).setup()
+        TestRegistry(listOf(HandledComponent::class.java)).setup()
+
+        assertEquals(0, handledCount)
+    }
+
+    @Test
+    fun `child registry applies handlers inherited from its parent`() {
+        val parent = TestRegistry(listOf(HandledComponentHandler::class.java))
+        parent.setup()
+        TestRegistry(listOf(HandledComponent::class.java), parent).setup()
+
+        assertEquals(1, handledCount)
     }
 }

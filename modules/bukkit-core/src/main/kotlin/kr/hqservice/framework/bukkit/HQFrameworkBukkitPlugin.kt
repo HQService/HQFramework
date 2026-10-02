@@ -10,6 +10,7 @@ import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -39,13 +40,14 @@ abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
                 single<HQPlugin>(named("hqframework")) { this@HQFrameworkBukkitPlugin }
                 single<HQBukkitPlugin>(named("hqframework")) { this@HQFrameworkBukkitPlugin }
                 single<HQFrameworkBukkitPlugin> { this@HQFrameworkBukkitPlugin }
-                single { this@HQFrameworkBukkitPlugin.bukkitComponentRegistry } binds arrayOf(
-                    InstanceFactoryRegistry::class,
-                    ComponentRegistry::class
-                )
                 factory<BukkitComponentRegistry> { BukkitComponentRegistry(it.get()) }
+                single<ComponentRegistry> { this@HQFrameworkBukkitPlugin.bukkitComponentRegistry } binds arrayOf(InstanceFactoryRegistry::class)
             }
             modules(module)
         }
+    }
+
+    override fun onPostDisable() {
+        stopKoin()
     }
 }

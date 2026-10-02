@@ -6,9 +6,11 @@ import io.mockk.spyk
 import kr.hqservice.framework.bukkit.HQFrameworkBukkitPlugin
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
+import org.koin.core.context.stopKoin
 import java.io.File
 import java.util.logging.Logger
 import kotlin.reflect.KClass
@@ -33,14 +35,20 @@ open class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
                 "HQFramework", "1.0.0",
                 HQFrameworkBukkitMock::class.java.name
             )
-            val instance = MockBukkit.getMock()!!.pluginManager.loadPlugin(
-                HQFrameworkBukkitMock::class.java,
-                description,
-                emptyArray<Any>()
-            )
-            MockBukkit.getMock()!!.pluginManager.enablePlugin(instance)
-            plugin = instance as HQFrameworkBukkitMock
-            return plugin!!
+            try {
+                val instance = MockBukkit.getMock()!!.pluginManager.loadPlugin(
+                    HQFrameworkBukkitMock::class.java,
+                    description,
+                    emptyArray<Any>()
+                )
+                MockBukkit.getMock()!!.pluginManager.enablePlugin(instance)
+                plugin = instance as HQFrameworkBukkitMock
+                return plugin!!
+            } catch (throwable: Throwable) {
+                plugin = null
+                stopKoin()
+                throw throwable
+            }
         }
 
         fun unmock() {
@@ -78,6 +86,7 @@ open class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
             put(this::class, this@HQFrameworkBukkitMock)
             put(HQBukkitPlugin::class, this@HQFrameworkBukkitMock)
             put(Logger::class, this@HQFrameworkBukkitMock.logger)
+            put(HQYamlConfiguration::class, this@HQFrameworkBukkitMock.getHQConfig())
         }
     }
 

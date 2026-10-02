@@ -16,9 +16,7 @@ import kotlin.reflect.jvm.jvmErasure
 class BukkitComponentRegistry(
     private val plugin: HQBukkitPlugin
 ) : JarBasedComponentRegistry(), InstanceFactoryRegistry {
-    private companion object {
-        val registeredInstanceFactories: MutableMap<KClass<*>, HQInstanceFactory<*>> = mutableMapOf()
-    }
+    private val registeredInstanceFactories: MutableMap<KClass<*>, HQInstanceFactory<*>> = mutableMapOf()
 
     override fun getComponentScope(): String {
         return plugin::class.java.packageName
@@ -44,7 +42,9 @@ class BukkitComponentRegistry(
     }
 
     override fun getProvidedInstances(): MutableMap<KClass<*>, out Any> {
-        return BukkitPluginScopedInstanceProvider.provideInstance(plugin)
+        return BukkitPluginScopedInstanceProvider.provideInstance(plugin).apply {
+            put(InstanceFactoryRegistry::class, this@BukkitComponentRegistry)
+        }
     }
 
     override fun injectProxy(
@@ -52,12 +52,16 @@ class BukkitComponentRegistry(
         qualifier: Qualifier?,
         scopeQualifier: Qualifier?
     ): Any? {
-        for ((type, factory) in registeredInstanceFactories) {
-            if (type.starProjectedType.classifier == kParameter.type.classifier) {
-                return factory.createInstance(plugin, kParameter, qualifier, scopeQualifier)
-            }
-        }
-        return null
+        val factory = findInstanceFactory(kParameter)
+            ?: (findParentRegistry() as? BukkitComponentRegistry)?.findInstanceFactory(kParameter)
+            ?: return null
+        return factory.createInstance(plugin, kParameter, qualifier, scopeQualifier)
+    }
+
+    private fun findInstanceFactory(kParameter: KParameter): HQInstanceFactory<*>? {
+        return registeredInstanceFactories.entries
+            .firstOrNull { (type, _) -> type.starProjectedType.classifier == kParameter.type.classifier }
+            ?.value
     }
 
     override fun getConfiguration(): HQYamlConfiguration {
@@ -71,5 +75,9 @@ class BukkitComponentRegistry(
             .first()
             .type!!.jvmErasure
         registeredInstanceFactories[factoryType] = instanceFactory
+    }
+
+    override fun <T> unregisterInstanceFactory(instanceFactory: HQInstanceFactory<T>) {
+        registeredInstanceFactories.values.removeIf { it === instanceFactory }
     }
 }

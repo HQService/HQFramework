@@ -2,6 +2,7 @@ package kr.hqservice.framework.global.core.component.registry
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.*
 import kr.hqservice.framework.global.core.component.error.ConstructorConflictException
 import kr.hqservice.framework.global.core.component.error.IllegalDependException
@@ -16,6 +17,7 @@ import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.component.KoinComponent
+import org.koin.core.context.GlobalContext
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Definition
 import org.koin.core.definition.Kind
@@ -28,6 +30,7 @@ import org.koin.core.instance.SingleInstanceFactory
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.StringQualifier
+import org.koin.core.qualifier.named
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
@@ -38,12 +41,9 @@ import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
 abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
-    private companion object {
-        val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
-        val annotationHandlers: MutableMap<KClass<HQAnnotationHandler<*>>, HQAnnotationHandler<*>> = mutableMapOf()
-        val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
-    }
-
+    private val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+    private val annotationHandlers: MutableMap<KClass<HQAnnotationHandler<*>>, HQAnnotationHandler<*>> = mutableMapOf()
+    private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
     private val annotationProcessNeededInstancesMap: Multimap<KClass<out Annotation>, Any> = ArrayListMultimap.create()
     private val primaryIndexKeys: MutableSet<String> = mutableSetOf()
@@ -53,8 +53,21 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
     abstract fun getConfiguration(): HQYamlConfiguration
 
+    protected open fun findParentRegistry(): AbstractComponentRegistry? {
+        return GlobalContext.getOrNull()
+            ?.getOrNull<HQPlugin>(named("hqframework"))
+            ?.getComponentRegistry() as? AbstractComponentRegistry
+    }
+
+    fun inheritHandlersFrom(parent: AbstractComponentRegistry) {
+        componentHandlers.putAll(parent.componentHandlers)
+        annotationHandlers.putAll(parent.annotationHandlers)
+        qualifierProviders.putAll(parent.qualifierProviders)
+    }
+
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
+        findParentRegistry()?.takeIf { it !== this }?.let { inheritHandlersFrom(it) }
         val componentClasses = mutableListOf<Class<*>>()
         val beanClasses = mutableListOf<Class<*>>()
         val configurationClasses = mutableListOf<Class<*>>()
@@ -181,7 +194,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
 
         val annotationHandlersQueue: ConcurrentLinkedQueue<KClass<HQAnnotationHandler<*>>> =
-            ConcurrentLinkedQueue(unsortedAnnotationHandlers.values.toMutableList() + annotationHandlers.keys)
+            ConcurrentLinkedQueue((unsortedAnnotationHandlers.values + annotationHandlers.keys).distinct())
+        annotationHandlers.clear()
 
         var previousHandlerQueueSize = annotationHandlersQueue.size
         var handlerExceptionCatchingStack = 0
@@ -217,7 +231,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
 
         val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> =
-            ConcurrentLinkedQueue(unsortedComponentHandlers.values.toMutableList() + componentHandlers.keys)
+            ConcurrentLinkedQueue((unsortedComponentHandlers.values + componentHandlers.keys).distinct())
+        componentHandlers.clear()
         previousHandlerQueueSize = componentHandlersQueue.size
         resetThrowStack()
 

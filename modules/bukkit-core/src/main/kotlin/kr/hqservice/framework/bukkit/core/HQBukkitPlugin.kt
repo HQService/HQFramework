@@ -51,15 +51,19 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     private lateinit var globalScheduler: HQScheduler
     private var hasRegionScheduler = false
 
-    internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
-        private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
+    internal companion object GlobalExceptionHandlerRegistry {
+        private val exceptionHandlers: MutableList<Pair<HQBukkitPlugin, AttachableExceptionHandler>> = mutableListOf()
 
         const val GRACE_PERIOD_MS = 5000L
         const val FORCE_CANCEL_TIMEOUT_MS = 2000L
 
-        override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
-            exceptionHandlers.add(attachableExceptionHandler)
-            exceptionHandlers.sortBy { attachableExceptionHandler.priority }
+        fun attachExceptionHandler(plugin: HQBukkitPlugin, attachableExceptionHandler: AttachableExceptionHandler) {
+            exceptionHandlers.add(plugin to attachableExceptionHandler)
+            exceptionHandlers.sortBy { it.second.priority }
+        }
+
+        fun detachExceptionHandlers(plugin: HQBukkitPlugin) {
+            exceptionHandlers.removeIf { it.first === plugin }
         }
     }
 
@@ -68,7 +72,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     private val pluginCoroutineContextElement get() = PluginCoroutineContextElement(this)
     private val coroutineExceptionHandler = CoroutineExceptionHandler handler@{ coroutineContext, throwable ->
         val exceptionHandlers = listOf(
-            *GlobalExceptionHandlerRegistry.exceptionHandlers.toTypedArray(),
+            *GlobalExceptionHandlerRegistry.exceptionHandlers.map { it.second }.toTypedArray(),
             *this.exceptionHandlers.toTypedArray()
         )
 
@@ -152,7 +156,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
     override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
         exceptionHandlers.add(attachableExceptionHandler)
-        exceptionHandlers.sortBy { attachableExceptionHandler.priority }
+        exceptionHandlers.sortBy { it.priority }
     }
 
     override val coroutineContext: CoroutineContext
@@ -256,6 +260,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
                 onPreDisable()
                 bukkitComponentRegistry.teardown()
                 onPostDisable()
+                GlobalExceptionHandlerRegistry.detachExceptionHandlers(this@HQBukkitPlugin)
                 logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
             }.join()
         }

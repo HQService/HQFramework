@@ -10,7 +10,7 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
 @AnnotationHandler
-class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScopeAdvice> {
+class CoroutineScopeAdviceAnnotationHandler(private val owningPlugin: HQBukkitPlugin) : HQAnnotationHandler<CoroutineScopeAdvice> {
     override fun setup(instance: Any, annotation: CoroutineScopeAdvice) {
         instance::class.memberFunctions
             .filterIsInstance<KFunction<Unit>>()
@@ -19,7 +19,7 @@ class CoroutineScopeAdviceAnnotationHandler : HQAnnotationHandler<CoroutineScope
                 val exceptionHandler = function.findAnnotation<ExceptionHandler>()!!
                 val bakedHandler = bakeAttachableExceptionHandler(exceptionHandler, function, instance)
                 when (annotation.type) {
-                    AdviceType.GLOBAL -> HQBukkitPlugin.GlobalExceptionHandlerRegistry.attachExceptionHandler(bakedHandler)
+                    AdviceType.GLOBAL -> HQBukkitPlugin.GlobalExceptionHandlerRegistry.attachExceptionHandler(owningPlugin, bakedHandler)
                     AdviceType.PLUGIN -> {
                         val plugin = PluginScopeFinder.get(instance::class)
                         plugin.attachExceptionHandler(bakedHandler)
