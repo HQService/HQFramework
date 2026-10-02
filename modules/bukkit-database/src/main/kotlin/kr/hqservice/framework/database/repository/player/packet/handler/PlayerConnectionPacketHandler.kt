@@ -89,7 +89,7 @@ class PlayerConnectionPacketHandler(
         repository.save(player, value)
     }
 
-    private suspend fun saveAndClear(player: Player) = coroutineScope {
+    private suspend fun saveAndClear(player: Player) {
         val playerRepositories = playerRepositoryRegistry.getAll()
         val values = playerRepositories.associateWith { it[player.uniqueId] }
         runCatching {
@@ -137,6 +137,7 @@ class PlayerConnectionPacketHandler(
         val playerId = player.uniqueId
         plugin.launch(Dispatchers.Default) {
             loadPlayer.add(playerId)
+            var gate: CompletableDeferred<Unit>? = null
             try {
                 playerScopes.awaitIdle(playerId)
                 delay(50)
@@ -144,16 +145,15 @@ class PlayerConnectionPacketHandler(
                 if (nettyService.isEnable()) {
                     val lock = switchDefermentLock.findLock(playerId)
                     if (lock != null && !lock.isCancelled && lock.isActive) {
-                        val ok = withTimeoutOrNull(3000) { switchGate.ensure(playerId).await() } != null
+                        val ensured = switchGate.ensure(playerId).also { gate = it }
+                        val ok = withTimeoutOrNull(3000) { ensured.await() } != null
                         if (!ok) {
                             withContext(Dispatchers.BukkitMain) {
                                 player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                             }
-                            switchGate.release(playerId)
                             return@launch
                         } else delay(1)
                     }
-                    switchGate.release(playerId)
                 }
 
                 delay(5)
@@ -188,12 +188,17 @@ class PlayerConnectionPacketHandler(
                 }
 
                 if (exactLoadedCount == loaded) {
-                    server.getPlayer(playerId)?.let { pluginManager.callEvent(PlayerRepositoryLoadedEvent(it)) }
+                    server.getPlayer(playerId)?.let {
+                        withContext(Dispatchers.BukkitMain) { pluginManager.callEvent(PlayerRepositoryLoadedEvent(it)) }
+                    }
                 } else {
                     server.getPlayer(playerId)?.let { withContext(Dispatchers.BukkitMain) { it.kick() } }
                 }
             } finally {
                 loadPlayer.remove(playerId)
+                if (nettyService.isEnable()) {
+                    gate?.let { switchGate.release(playerId, it) } ?: switchGate.release(playerId)
+                }
             }
         }
     }
@@ -204,19 +209,19 @@ class PlayerConnectionPacketHandler(
         val player = event.player
         packetSender.sendPacketAll(PlayerDataSavePacket(player.uniqueId))
 
-        playerScopes.scope(player.uniqueId).launch(TeardownOptionCoroutineContextElement(false)) {
+        playerScopes.launch(player.uniqueId, TeardownOptionCoroutineContextElement(false)) {
             saveAndClear(player)
             packetSender.sendPacketAll(PlayerDataSavedPacket(player.uniqueId))
-        }.invokeOnCompletion { playerScopes.releaseIfIdle(player.uniqueId) }
+        }
     }
 
     // non proxied server
     @Subscribe
     fun onPlayerQuit(event: PlayerQuitEvent) {
         if (nettyService.isEnable()) return
-        playerScopes.scope(event.player.uniqueId).launch(CoroutineName("save")) {
+        playerScopes.launch(event.player.uniqueId, CoroutineName("save")) {
             saveAndClear(event.player)
-        }.invokeOnCompletion { playerScopes.releaseIfIdle(event.player.uniqueId) }
+        }
     }
 
     @Subscribe
@@ -224,11 +229,11 @@ class PlayerConnectionPacketHandler(
         when (val packet = event.packet) {
             is PlayerDataSavePacket -> {
                 switchGate.reset(packet.id)
-                playerScopes.scope(packet.id).launch { lock(packet.id) }
+                playerScopes.launch(packet.id) { lock(packet.id) }
             }
             is PlayerDataSavedPacket -> {
                 switchGate.signal(packet.id)
-                playerScopes.scope(packet.id).launch { unlock(packet.id) }
+                playerScopes.launch(packet.id) { unlock(packet.id) }
             }
         }
     }

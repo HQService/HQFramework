@@ -5,11 +5,16 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -32,7 +37,7 @@ class PlayerScopesTest {
         val parent = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val scopes = PlayerScopes(parent)
         val id = UUID.randomUUID()
-        val job = scopes.scope(id).launch { delay(200) }
+        val job = scopes.launch(id) { delay(200) }
         scopes.releaseIfIdle(id)
         assertTrue(scopes.contains(id))
         job.join()
@@ -54,12 +59,21 @@ class PlayerScopesTest {
         val parent = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val scopes = PlayerScopes(parent)
         val id = UUID.randomUUID()
-        val released = CompletableDeferred<Unit>()
-        scopes.scope(id).launch { delay(50) }.invokeOnCompletion {
-            scopes.releaseIfIdle(id)
-            released.complete(Unit)
-        }
-        released.await()
+        scopes.launch(id) { delay(50) }.join()
+        assertFalse(scopes.contains(id))
+    }
+
+    @Test
+    fun `launch from many threads for the same id never loses a job`() = runBlocking {
+        val parent = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val scopes = PlayerScopes(parent)
+        val id = UUID.randomUUID()
+        val counter = AtomicInteger()
+        val jobs = (1..200).map {
+            async(Dispatchers.Default) { scopes.launch(id) { counter.incrementAndGet() } }
+        }.awaitAll()
+        jobs.joinAll()
+        assertEquals(200, counter.get())
         assertFalse(scopes.contains(id))
     }
 

@@ -1,6 +1,7 @@
 package kr.hqservice.framework.database.repository.player.lock
 
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.UUID
@@ -51,6 +52,17 @@ class SwitchGateTest {
         gate.ensure(id)
         gate.release(id)
         assertTrue(gate.isEmpty())
+    }
+
+    @Test
+    fun `release with a stale gate keeps the current one`() {
+        val gate = SwitchGate()
+        val id = UUID.randomUUID()
+        val stale = gate.ensure(id)
+        gate.reset(id)
+        val current = gate.ensure(id)
+        gate.release(id, stale)
+        assertSame(current, gate.ensure(id))
     }
 
     @Test

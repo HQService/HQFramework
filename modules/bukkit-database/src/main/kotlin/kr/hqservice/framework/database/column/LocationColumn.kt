@@ -8,6 +8,8 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import kotlin.reflect.KProperty
 
+private const val LOCATION_FORMAT_PREFIX = "L2;"
+
 fun Table.location(name: String): Column<String> = varchar(name, 255)
 
 fun Entity<*>.location(column: Column<String>): ExposedPropertyDelegate<Location> = object : ExposedPropertyDelegate<Location> {
@@ -49,12 +51,12 @@ fun Entity<*>.location(column: Column<String?>): ExposedPropertyDelegate<Locatio
 
 internal fun serializeLocation(location: Location): String {
     val world = requireNotNull(location.world) { "Location with nullable world can't be stored in database" }
-    return location.run { "$x;$y;$z;$yaw;$pitch;${world.name}" }
+    return location.run { "$LOCATION_FORMAT_PREFIX$x;$y;$z;$yaw;$pitch;${world.name}" }
 }
 
 internal fun parseLocation(data: String): Location {
-    if (data.substringBefore(";").toDoubleOrNull() == null) return parseLegacyLocation(data)
-    val slices = data.split(";", limit = 6)
+    if (!data.startsWith(LOCATION_FORMAT_PREFIX)) return parseLegacyLocation(data)
+    val slices = data.removePrefix(LOCATION_FORMAT_PREFIX).split(";", limit = 6)
     return Location(
         Bukkit.getWorld(slices[5]),
         slices[0].toDouble(),

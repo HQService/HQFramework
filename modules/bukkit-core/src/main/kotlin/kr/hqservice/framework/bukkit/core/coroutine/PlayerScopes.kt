@@ -8,8 +8,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 class PlayerScopes(
     private val parent: CoroutineScope,
@@ -17,15 +20,26 @@ class PlayerScopes(
 ) {
     private val scopes = ConcurrentHashMap<UUID, CoroutineScope>()
 
-    fun scope(id: UUID): CoroutineScope =
-        scopes.computeIfAbsent(id) {
-            CoroutineScope(
-                parent.coroutineContext +
-                        SupervisorJob(parent.coroutineContext[Job]) +
-                        dispatcher.limitedParallelism(1) +
-                        CoroutineName("player:$id")
-            )
+    fun scope(id: UUID): CoroutineScope = scopes.computeIfAbsent(id, ::createScope)
+
+    fun launch(id: UUID, context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job {
+        lateinit var job: Job
+        scopes.compute(id) { _, existing ->
+            val scope = existing ?: createScope(id)
+            job = scope.launch(context, block = block)
+            scope
         }
+        job.invokeOnCompletion { releaseIfIdle(id) }
+        return job
+    }
+
+    private fun createScope(id: UUID): CoroutineScope =
+        CoroutineScope(
+            parent.coroutineContext +
+                    SupervisorJob(parent.coroutineContext[Job]) +
+                    dispatcher.limitedParallelism(1) +
+                    CoroutineName("player:$id")
+        )
 
     suspend fun awaitIdle(id: UUID) {
         scopes[id]?.coroutineContext?.get(Job)?.children?.toList()?.joinAll()

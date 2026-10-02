@@ -37,4 +37,17 @@ class TableAnnotationHandlerTest {
             }
         }
     }
+
+    @Test
+    fun `failing schema update is logged instead of thrown`() {
+        val db = Database.connect("jdbc:h2:mem:migrate_fail;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
+        transaction(db) {
+            SchemaUtils.create(V1)
+            V1.insert { it[id] = 1 }
+        }
+
+        assertDoesNotThrow {
+            TableAnnotationHandler(db, Logger.getAnonymousLogger()).setup(V2, V2::class.findAnnotation<Table>()!!)
+        }
+    }
 }

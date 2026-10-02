@@ -9,7 +9,8 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.exists
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.koin.core.component.KoinComponent
-import java.sql.SQLSyntaxErrorException
+import java.sql.SQLException
+import java.util.logging.Level
 import java.util.logging.Logger
 
 @AnnotationHandler
@@ -33,8 +34,8 @@ class TableAnnotationHandler(
                         }
                     }
                 }
-            } catch (exception: SQLSyntaxErrorException) {
-                logger.warning("${instance.tableName} schema update failed: ${exception.message}")
+            } catch (exception: SQLException) {
+                logger.log(Level.WARNING, "${instance.tableName} schema update failed", exception)
             }
         }
     }

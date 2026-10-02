@@ -29,7 +29,7 @@ class LocationColumnTest {
         val serialized = serializeLocation(location)
         val parsed = parseLocation(serialized)
 
-        assertEquals("1.5;64.0;-3.25;90.0;45.0;a;b", serialized)
+        assertEquals("L2;1.5;64.0;-3.25;90.0;45.0;a;b", serialized)
         assertEquals(location, parsed)
     }
 
@@ -38,6 +38,15 @@ class LocationColumnTest {
         val world = server.addSimpleWorld("legacy")
 
         val parsed = parseLocation("legacy;1.5;64.0;-3.25;90.0;45.0")
+
+        assertEquals(Location(world, 1.5, 64.0, -3.25, 90f, 45f), parsed)
+    }
+
+    @Test
+    fun `legacy row with a numeric world name is parsed as legacy`() {
+        val world = server.addSimpleWorld("2024")
+
+        val parsed = parseLocation("2024;1.5;64.0;-3.25;90.0;45.0")
 
         assertEquals(Location(world, 1.5, 64.0, -3.25, 90f, 45f), parsed)
     }

@@ -1,7 +1,9 @@
 package kr.hqservice.framework.database.repository.player.handler
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.global.core.component.handler.ComponentHandler
@@ -24,20 +26,22 @@ class PlayerRepositoryComponentHandler(
 
     override fun teardown(element: PlayerRepository<*>) {
         runBlocking {
-            runCatching {
-                newSuspendedTransaction(Dispatchers.IO) {
-                    server.onlinePlayers.forEach { player -> saveIfLoaded(element, player) }
-                }
-            }.onFailure { logger.log(Level.SEVERE, "failed to save online players for ${element::class.simpleName}", it) }
+            withTimeoutOrNull(5_000) {
+                server.onlinePlayers.forEach { player -> saveIfLoaded(element, player) }
+            } ?: logger.warning("saving online players for ${element::class.simpleName} timed out")
         }
         playerRepositoryRegistry.unregister(element)
     }
 
     @Suppress("UNCHECKED_CAST")
-    private suspend fun saveIfLoaded(repository: PlayerRepository<*>, player: Player) {
-        val typed = repository as PlayerRepository<Any>
-        val value = typed[player.uniqueId] ?: return
-        typed.save(player, value)
-        typed.remove(player.uniqueId)
+    private suspend fun saveIfLoaded(element: PlayerRepository<*>, player: Player) {
+        val repository = element as PlayerRepository<Any>
+        val value = repository[player.uniqueId] ?: return
+        runCatching { newSuspendedTransaction(Dispatchers.IO) { repository.save(player, value) } }
+            .onSuccess { repository.remove(player.uniqueId, value) }
+            .onFailure {
+                if (it is CancellationException) throw it
+                logger.log(Level.SEVERE, "failed to save ${player.uniqueId} for ${element::class.simpleName}", it)
+            }
     }
 }

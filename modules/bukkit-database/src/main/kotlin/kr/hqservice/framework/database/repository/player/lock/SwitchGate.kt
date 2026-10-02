@@ -23,7 +23,7 @@ class SwitchGate {
         waiters.remove(id)
     }
 
-    fun cancel(id: UUID) = waiters.remove(id)?.cancel()
+    fun release(id: UUID, gate: CompletableDeferred<Unit>) = waiters.remove(id, gate)
 
     fun clear() {
         waiters.values.forEach(CompletableDeferred<*>::cancel)
