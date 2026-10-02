@@ -32,6 +32,8 @@ class DatabaseSessionCoordinator(
     override val serverId: String,
     private val lease: Duration
 ) : SessionCoordinator {
+    override val commitsInsideTransaction: Boolean = true
+
     override suspend fun acquire(uuid: UUID): AcquireResult = inTransaction {
         tryAcquire(uuid) ?: run {
             val current = findSession(uuid)

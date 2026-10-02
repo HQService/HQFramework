@@ -15,7 +15,7 @@ class RedisConfig {
     fun provideRedisProvider(settings: RedisSettings, logger: Logger): RedisProvider = RedisProvider(settings, logger)
 
     @Bean
-    fun providePubSubTransport(provider: RedisProvider): PubSubTransport = LettucePubSubTransport(provider)
+    fun providePubSubTransport(provider: RedisProvider, logger: Logger): PubSubTransport = LettucePubSubTransport(provider, logger)
 
     @Bean
     fun provideRedisMessenger(transport: PubSubTransport, settings: RedisSettings, json: Json, logger: Logger): RedisMessenger =

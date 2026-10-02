@@ -10,6 +10,8 @@ sealed interface AcquireResult {
 interface SessionCoordinator {
     val serverId: String
 
+    val commitsInsideTransaction: Boolean
+
     suspend fun acquire(uuid: UUID): AcquireResult
 
     suspend fun renew(uuids: Collection<UUID>)

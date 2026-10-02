@@ -16,6 +16,8 @@ import kotlinx.coroutines.withTimeout
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.TestPlugin
+import kr.hqservice.framework.database.redis.PubSubTransport
+import kr.hqservice.framework.database.redis.RedisSettings
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
@@ -23,7 +25,9 @@ import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedP
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
 import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.PlayerSessionTable
+import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.redis.InMemorySessionStore
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Packet
 import org.bukkit.entity.Player
@@ -567,5 +571,28 @@ class PlayerDataLifecycleTest {
 
         assertFalse(saved)
         awaitUntil { !player.isOnline }
+    }
+
+    @Test
+    fun `lifecycle is created even when subscribing to release notifications fails`() {
+        val unreachable = object : PubSubTransport {
+            override fun publish(channel: String, payload: ByteArray) {}
+
+            override fun subscribe(channel: String, listener: (ByteArray) -> Unit): AutoCloseable =
+                throw IllegalStateException("redis unreachable")
+        }
+        val coordinator = RedisSessionCoordinator(
+            InMemorySessionStore(),
+            RedisSettings("redis://localhost", "hq", Duration.ofSeconds(60)),
+            settings.lease,
+            "25565",
+            unreachable,
+        )
+
+        val a = Node("25565", coordinator = coordinator)
+        joined(a)
+
+        assertNotNull(a.repo[uuid])
+        a.lifecycle.shutdown()
     }
 }

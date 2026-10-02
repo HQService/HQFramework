@@ -31,6 +31,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -93,6 +94,7 @@ class FlushSchedulerTest {
 
     class FakeCoordinator : SessionCoordinator {
         override val serverId: String = "test"
+        override val commitsInsideTransaction: Boolean = true
         val commits: MutableList<Pair<UUID, Long>> = Collections.synchronizedList(mutableListOf())
         val renewals: MutableList<List<UUID>> = Collections.synchronizedList(mutableListOf())
         val releases: MutableList<UUID> = Collections.synchronizedList(mutableListOf())
@@ -114,6 +116,39 @@ class FlushSchedulerTest {
             if (failRelease) throw IllegalStateException("release failed")
             releases += uuid
             return true
+        }
+    }
+
+    class OutsideTransactionCoordinator(
+        private val events: MutableList<String>,
+        private val result: (Long) -> Long? = { it + 1 },
+    ) : SessionCoordinator {
+        override val serverId: String = "test"
+        override val commitsInsideTransaction: Boolean = false
+        val commits: MutableList<Long> = Collections.synchronizedList(mutableListOf())
+
+        override suspend fun acquire(uuid: UUID): AcquireResult = AcquireResult.Acquired(0)
+
+        override suspend fun renew(uuids: Collection<UUID>) {}
+
+        override suspend fun commit(uuid: UUID, expectedVersion: Long): Long? {
+            events += if (TransactionManager.currentOrNull() == null) "commit" else "commit inside transaction"
+            commits += expectedVersion
+            return result(expectedVersion)
+        }
+
+        override suspend fun release(uuid: UUID): Boolean = true
+    }
+
+    class RecordingRepository(
+        private val events: MutableList<String>,
+        @Volatile var failSave: Boolean = false,
+    ) : PlayerRepository<Counter>() {
+        override suspend fun load(player: Player): Counter = Counter(0)
+
+        override suspend fun save(player: Player, value: Counter) {
+            if (failSave) throw IllegalStateException("db down")
+            events += if (TransactionManager.currentOrNull() != null) "save" else "save outside transaction"
         }
     }
 
@@ -537,5 +572,60 @@ class FlushSchedulerTest {
         assertEquals(1L, session.version)
         assertSame(session, registry.get(uuid))
         verify { logger.log(Level.WARNING, match<String> { it.contains("release") }, any<Throwable>()) }
+    }
+
+    @Test
+    fun `coordinator committing outside the transaction commits after the saves are committed`() = runBlocking {
+        val events = Collections.synchronizedList(mutableListOf<String>())
+        val outside = OutsideTransactionCoordinator(events)
+        val repository = RecordingRepository(events)
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        repository.update(uuid) { it.n++ }
+        val session = PlayerSession(uuid, player(uuid), 4).also(registry::put)
+
+        assertTrue(scheduler(repository, coordinator = outside).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
+
+        assertEquals(listOf("save", "commit"), events.toList())
+        assertEquals(listOf(4L), outside.commits.toList())
+        assertEquals(5L, session.version)
+        assertFalse(repository.isDirty(uuid))
+    }
+
+    @Test
+    fun `database failure with an outside coordinator never commits`() = runBlocking {
+        val events = Collections.synchronizedList(mutableListOf<String>())
+        val outside = OutsideTransactionCoordinator(events)
+        val repository = RecordingRepository(events, failSave = true)
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        repository.update(uuid) { it.n++ }
+        val session = PlayerSession(uuid, player(uuid), 4).also(registry::put)
+
+        assertFalse(scheduler(repository, coordinator = outside).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
+
+        assertTrue(outside.commits.isEmpty())
+        assertEquals(4L, session.version)
+        assertTrue(repository.isDirty(uuid))
+        assertEquals(1, session.failures.get())
+    }
+
+    @Test
+    fun `outside commit rejected after a successful save drops ownership`() = runBlocking {
+        val events = Collections.synchronizedList(mutableListOf<String>())
+        val outside = OutsideTransactionCoordinator(events) { null }
+        val repository = RecordingRepository(events)
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        repository.update(uuid) { it.n++ }
+        val session = PlayerSession(uuid, player(uuid), 4).also(registry::put)
+        val lost = mutableListOf<PlayerSession>()
+
+        assertFalse(scheduler(repository, coordinator = outside, onOwnershipLost = { lost += it }).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
+
+        assertEquals(listOf("save", "commit"), events.toList())
+        assertSame(session, lost.single())
+        assertNull(registry.get(uuid))
+        assertFalse(repository.contains(uuid))
     }
 }

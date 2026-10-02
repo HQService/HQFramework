@@ -100,11 +100,7 @@ class FlushScheduler(
             return true
         }
         try {
-            val next = newSuspendedTransaction(Dispatchers.IO, database) {
-                selected.forEach { it.save(session.player) }
-                coordinator.commit(uuid, session.version) ?: throw OwnershipLostException(uuid)
-            }
-            session.version = next
+            session.version = saveAndCommit(uuid, session, selected)
             selected.forEach { it.markSaved(uuid) }
             session.failures.set(0)
         } catch (e: OwnershipLostException) {
@@ -124,6 +120,20 @@ class FlushScheduler(
         if (!session.player.isOnline) releaseOffline(session)
         return true
     }
+
+    private suspend fun saveAndCommit(uuid: UUID, session: PlayerSession, selected: List<Selected<*>>): Long {
+        if (coordinator.commitsInsideTransaction) {
+            return newSuspendedTransaction(Dispatchers.IO, database) {
+                selected.forEach { it.save(session.player) }
+                commitOrThrow(uuid, session.version)
+            }
+        }
+        newSuspendedTransaction(Dispatchers.IO, database) { selected.forEach { it.save(session.player) } }
+        return commitOrThrow(uuid, session.version)
+    }
+
+    private suspend fun commitOrThrow(uuid: UUID, version: Long): Long =
+        coordinator.commit(uuid, version) ?: throw OwnershipLostException(uuid)
 
     private suspend fun releaseOffline(session: PlayerSession) {
         val repositories = repositories()

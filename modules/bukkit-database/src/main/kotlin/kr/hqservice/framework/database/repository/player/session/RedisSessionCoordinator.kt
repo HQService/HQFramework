@@ -13,6 +13,7 @@ class RedisSessionCoordinator(
     override val serverId: String,
     private val transport: PubSubTransport,
 ) : SessionCoordinator {
+    override val commitsInsideTransaction: Boolean = false
     private val leaseMillis = lease.toMillis()
     private val releasedChannel = settings.key("session-released")
 

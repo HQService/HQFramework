@@ -62,7 +62,11 @@ class PlayerDataLifecycle(
 
     init {
         repositories.getAll().forEach(::attach)
-        releasedSubscription = coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) }
+        releasedSubscription = runCatching { coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) } }
+            .getOrElse {
+                logger.log(Level.WARNING, "failed to subscribe to player data release notifications; falling back to polling", it)
+                AutoCloseable { }
+            }
     }
 
     fun attach(repository: PlayerRepository<*>) {

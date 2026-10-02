@@ -50,7 +50,7 @@ class RedisIntegrationTest {
 
     @Test
     fun `messenger round trips over lettuce`() {
-        val messenger = RedisMessenger(LettucePubSubTransport(provider), settings, Json, mockk(relaxed = true))
+        val messenger = RedisMessenger(LettucePubSubTransport(provider, mockk(relaxed = true)), settings, Json, mockk(relaxed = true))
         val received = CompletableFuture<Ping>()
         val subscription = messenger.subscribe("ping", Ping.serializer()) { received.complete(it) }
         try {
