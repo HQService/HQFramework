@@ -39,6 +39,10 @@ bukkitResourceGenerator {
     )
 }
 
+tasks.named("generateBukkitResource") {
+    inputs.property("libraries", provider { bukkitResourceGenerator.libraries.orEmpty().map { it.get().run { "$module:${versionConstraint.requiredVersion}" } } })
+}
+
 dependencies {
     compileOnly(libs.spigot.api)
 
