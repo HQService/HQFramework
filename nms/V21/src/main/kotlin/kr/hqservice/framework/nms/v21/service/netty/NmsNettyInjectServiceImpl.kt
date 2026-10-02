@@ -3,14 +3,14 @@ package kr.hqservice.framework.nms.v21.service.netty
 import io.netty.channel.Channel
 import kr.hqservice.framework.nms.handler.PacketHandler
 import kr.hqservice.framework.nms.util.NmsNettyInjectService
-import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
+import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsEntityPlayerAccessor
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
 
 class NmsNettyInjectServiceImpl(
     private val plugin: Plugin,
-    private val reflectionWrapper: NmsReflectionWrapperImpl,
+    private val reflectionWrapper: NmsEntityPlayerAccessor,
     private val virtualHandlerRegistry: VirtualHandlerRegistry
 ) : NmsNettyInjectService {
     override fun getPlayerChannel(player: Player): Channel {

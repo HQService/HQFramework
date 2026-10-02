@@ -24,7 +24,7 @@ import kr.hqservice.framework.nms.v21.service.math.NmsVector3fServiceImpl
 import kr.hqservice.framework.nms.v21.service.netty.NmsNettyInjectServiceImpl
 import kr.hqservice.framework.nms.v21.service.world.NmsWorldBoardServiceImpl
 import kr.hqservice.framework.nms.v21.service.world.NmsWorldServiceImpl
-import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
+import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsEntityPlayerAccessor
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.plugin.Plugin
@@ -33,7 +33,7 @@ open class NMSServiceProviderImpl(
     plugin: Plugin,
     languageRegistry: LanguageRegistry,
     virtualHandlerRegistry: VirtualHandlerRegistry,
-    private val reflectionWrapper: NmsReflectionWrapperImpl
+    private val reflectionWrapper: NmsEntityPlayerAccessor
 ) : NMSServiceProvider {
     private val baseComponentService = NmsBaseComponentServiceImpl()
     private val containerService = NmsContainerServiceImpl(reflectionWrapper)

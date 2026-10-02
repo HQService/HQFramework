@@ -2,14 +2,14 @@ package kr.hqservice.framework.nms.v21.service.container
 
 import kr.hqservice.framework.nms.service.container.NmsContainerService
 import kr.hqservice.framework.nms.v21.wrapper.container.ContainerWrapperImpl
-import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
+import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsEntityPlayerAccessor
 import kr.hqservice.framework.nms.wrapper.ContainerWrapper
 import net.minecraft.world.inventory.AbstractContainerMenu
 import org.bukkit.entity.Player
 import kotlin.reflect.KClass
 
 class NmsContainerServiceImpl(
-    private val reflectionWrapper: NmsReflectionWrapperImpl
+    private val reflectionWrapper: NmsEntityPlayerAccessor
 ) : NmsContainerService {
     override fun wrap(target: Player): ContainerWrapper {
         val nmsPlayer = reflectionWrapper.getEntityPlayer(target)

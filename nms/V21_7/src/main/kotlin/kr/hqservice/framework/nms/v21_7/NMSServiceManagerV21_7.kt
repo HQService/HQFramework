@@ -9,6 +9,7 @@ import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.registry.LanguageRegistry
+import kr.hqservice.framework.nms.v21.NMSServiceProviderImpl
 import kr.hqservice.framework.nms.v21_7.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import net.minecraft.core.UUIDUtil
@@ -21,7 +22,7 @@ class NMSServiceManagerV21_7(
     private val languageRegistry: LanguageRegistry,
     private val virtualHandlerRegistry: VirtualHandlerRegistry,
 ) : NMSServiceManager {
-    private lateinit var serviceProvider: NMSServiceProviderImplV21_7
+    private lateinit var serviceProvider: NMSServiceProviderImpl
     private lateinit var virtualFactoryProvider: VirtualFactoryProviderImplV21_7
 
     override fun support(version: Version): Boolean {
@@ -41,7 +42,7 @@ class NMSServiceManagerV21_7(
         }
 
         val reflectionWrapper = NmsReflectionWrapperImpl()
-        serviceProvider = NMSServiceProviderImplV21_7(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
+        serviceProvider = NMSServiceProviderImpl(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
         virtualFactoryProvider = VirtualFactoryProviderImplV21_7(reflectionWrapper, serviceProvider)
     }
 

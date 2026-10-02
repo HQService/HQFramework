@@ -4,14 +4,14 @@ import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.entity.VirtualEntityFactory
 import kr.hqservice.framework.nms.virtual.message.VirtualListMessage
-import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
+import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsEntityPlayerAccessor
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket
 import net.minecraft.network.protocol.game.ClientboundSetCameraPacket
 import net.minecraft.world.entity.Entity
 import org.bukkit.entity.Player
 
 class VirtualCameraFactoryImpl(
-    private val reflectionWrapper: NmsReflectionWrapperImpl
+    private val reflectionWrapper: NmsEntityPlayerAccessor
 ) : VirtualEntityFactory {
     override fun create(player: Player, virtualEntity: AbstractVirtualEntity?): VirtualMessage {
         val stateChangePacket: Any

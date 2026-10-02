@@ -4,11 +4,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
+import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsEntityPlayerAccessor
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
 import kr.hqservice.framework.nms.virtual.message.VirtualFunc
-import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import net.minecraft.network.protocol.Packet
 import net.minecraft.server.dedicated.DedicatedServer
 import net.minecraft.server.level.ServerPlayer
@@ -17,8 +17,8 @@ import org.bukkit.craftbukkit.CraftServer
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
 
-class NmsReflectionWrapperImpl : NmsReflectionWrapper, HQSimpleComponent {
-    fun getEntityPlayer(player: Player): ServerPlayer {
+class NmsReflectionWrapperImpl : NmsEntityPlayerAccessor, HQSimpleComponent {
+    override fun getEntityPlayer(player: Player): ServerPlayer {
         return (player as CraftPlayer).handle
     }
 

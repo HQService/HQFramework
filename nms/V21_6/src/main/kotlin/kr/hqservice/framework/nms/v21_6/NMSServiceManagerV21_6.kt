@@ -9,7 +9,9 @@ import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.registry.LanguageRegistry
+import kr.hqservice.framework.nms.v21.NMSServiceProviderImpl
 import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
+import kr.hqservice.framework.nms.v21_5.VirtualFactoryProviderImplV21_5
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.protocol.login.ServerboundHelloPacket
@@ -21,8 +23,8 @@ class NMSServiceManagerV21_6(
     private val languageRegistry: LanguageRegistry,
     private val virtualHandlerRegistry: VirtualHandlerRegistry,
 ) : NMSServiceManager {
-    private lateinit var serviceProvider: NMSServiceProviderImplV21_6
-    private lateinit var virtualFactoryProvider: VirtualFactoryProviderImplV21_6
+    private lateinit var serviceProvider: NMSServiceProviderImpl
+    private lateinit var virtualFactoryProvider: VirtualFactoryProviderImplV21_5
 
     override fun support(version: Version): Boolean {
         return version.ordinal in Version.V_21_6.ordinal .. Version.V_21_6.ordinal
@@ -41,8 +43,8 @@ class NMSServiceManagerV21_6(
         }
 
         val reflectionWrapper = NmsReflectionWrapperImpl()
-        serviceProvider = NMSServiceProviderImplV21_6(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
-        virtualFactoryProvider = VirtualFactoryProviderImplV21_6(reflectionWrapper, serviceProvider)
+        serviceProvider = NMSServiceProviderImpl(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
+        virtualFactoryProvider = VirtualFactoryProviderImplV21_5(reflectionWrapper, serviceProvider)
     }
 
     override fun getServiceProvider(): NMSServiceProvider {

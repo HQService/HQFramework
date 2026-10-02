@@ -11,6 +11,7 @@ dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
     apiModule("bukkit", "nms")
+    api(project(":nms:V21_11"))
 
     api(libs.paper.api)
     api(libs.kotlinx.coroutines.core)

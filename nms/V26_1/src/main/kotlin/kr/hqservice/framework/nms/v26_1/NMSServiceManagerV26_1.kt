@@ -9,7 +9,9 @@ import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.registry.LanguageRegistry
-import kr.hqservice.framework.nms.v26_1.wrapper.reflect.NmsReflectionWrapperImpl
+import kr.hqservice.framework.nms.v21_11.NMSServiceProviderImpl
+import kr.hqservice.framework.nms.v21_11.VirtualFactoryProviderImpl
+import kr.hqservice.framework.nms.v21_11.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.protocol.login.ServerboundHelloPacket

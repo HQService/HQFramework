@@ -13,7 +13,6 @@ dependencies {
     apiModule("bukkit", "nms")
     api(project(":nms:V21"))
     api(project(":nms:V21_5"))
-    api(project(":nms:V21_6"))
 
     api(libs.paper.api)
     api(libs.kotlinx.coroutines.core)
