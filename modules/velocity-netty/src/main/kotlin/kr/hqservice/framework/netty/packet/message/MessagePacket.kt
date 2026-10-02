@@ -7,8 +7,9 @@ import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.extension.readPlayers
 import kr.hqservice.framework.netty.packet.extension.writePlayers
+import kr.hqservice.framework.netty.pipeline.MAX_FRAME_BYTES
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 
 class MessagePacket(
     var message: Component,
@@ -16,7 +17,7 @@ class MessagePacket(
     var receivers: List<NettyPlayer>,
 ) : Packet() {
     override fun write(buf: ByteBuf) {
-        val byteArray = LegacyComponentSerializer.legacySection().serialize(message).toByteArray().compress()
+        val byteArray = GsonComponentSerializer.gson().serialize(message).toByteArray().compress()
         buf.writeInt(byteArray.size)
         buf.writeBytes(byteArray)
         buf.writeBoolean(logging)
@@ -24,9 +25,11 @@ class MessagePacket(
     }
 
     override fun read(buf: ByteBuf) {
-        val bytes = ByteArray(buf.readInt())
+        val size = buf.readInt()
+        require(size in 0..MAX_FRAME_BYTES) { "message payload too large: $size" }
+        val bytes = ByteArray(size)
         buf.readBytes(bytes)
-        message = LegacyComponentSerializer.legacySection().deserialize(
+        message = GsonComponentSerializer.gson().deserialize(
             bytes.decompress().toString(Charsets.UTF_8)
         )
         logging = buf.readBoolean()

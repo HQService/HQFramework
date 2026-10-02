@@ -17,7 +17,7 @@ class BroadcastPacket(
     var targetChannel: NettyChannel?
 ) : Packet() {
     override fun write(buf: ByteBuf) {
-        val byteArray = BaseComponent.toPlainText(message).toByteArray().compress()
+        val byteArray = ComponentSerializer.toString(message).toByteArray().compress()
         buf.writeInt(byteArray.size)
         buf.writeBytes(byteArray)
         buf.writeBoolean(logging)
