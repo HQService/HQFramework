@@ -16,6 +16,8 @@ import net.md_5.bungee.api.chat.TextComponent
 import net.md_5.bungee.chat.ComponentSerializer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -69,5 +71,23 @@ class MessagePacketRoundTripTest {
         val component = redHelloWorld()
         val decoded = pipeline().roundTrip<BroadcastPacket>(BroadcastPacket(component, false, null))
         assertEquals(ComponentSerializer.toString(component), ComponentSerializer.toString(decoded.message))
+    }
+
+    private fun truncatedPayload() = Unpooled.buffer().writeInt(1_000_000).writeBytes(byteArrayOf(1, 2, 3))
+
+    @Test
+    fun `message packet rejects a size larger than the remaining bytes`() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            MessagePacket(redHelloWorld(), false, emptyList()).read(truncatedPayload())
+        }
+        assertTrue(error.message!!.contains("truncated"))
+    }
+
+    @Test
+    fun `broadcast packet rejects a size larger than the remaining bytes`() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            BroadcastPacket(redHelloWorld(), false, null).read(truncatedPayload())
+        }
+        assertTrue(error.message!!.contains("truncated"))
     }
 }

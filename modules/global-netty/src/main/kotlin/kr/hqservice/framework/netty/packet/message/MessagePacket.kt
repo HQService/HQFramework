@@ -31,6 +31,7 @@ class MessagePacket(
     override fun read(buf: ByteBuf) {
         val size = buf.readInt()
         require(size in 0..MAX_FRAME_BYTES) { "message payload too large: $size" }
+        require(size <= buf.readableBytes()) { "message payload truncated: $size > ${buf.readableBytes()}" }
         val bytes = ByteArray(size)
         buf.readBytes(bytes)
         message = ComponentSerializer.parse(

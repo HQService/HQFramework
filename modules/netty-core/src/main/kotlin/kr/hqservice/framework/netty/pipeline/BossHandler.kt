@@ -29,11 +29,6 @@ class BossHandler(
     private val expectedSecret: String?,
     private val blockingDispatcher: CoroutineDispatcher
 ) : ChannelInboundHandlerAdapter() {
-    private companion object {
-        const val PAUSE_ABOVE_PENDING = 256
-        const val RESUME_BELOW_PENDING = 64
-    }
-
     private lateinit var channelScope: ChannelScope
     private lateinit var serialized: CoroutineDispatcher
     private val pending = AtomicInteger()
@@ -83,7 +78,11 @@ class BossHandler(
         }
 
         val packet = msg as Packet
-        if (pending.incrementAndGet() > PAUSE_ABOVE_PENDING) ctx.channel().config().isAutoRead = false
+        val pendingNow = pending.incrementAndGet()
+        if (pendingNow > BACKPRESSURE_PAUSE_PENDING && ctx.channel().config().isAutoRead) {
+            ctx.channel().config().isAutoRead = false
+            logger.warning("channel ${ctx.channel().id()} paused reading: $pendingNow packets pending")
+        }
         channelScope.scope.launch(serialized) {
             try {
                 preprocessHandler?.preprocess(packet, channel)
@@ -91,7 +90,7 @@ class BossHandler(
 
                 Direction.INBOUND.onPacketReceived(packet, channel)
             } finally {
-                if (pending.decrementAndGet() < RESUME_BELOW_PENDING) resumeReading(ctx)
+                if (pending.decrementAndGet() < BACKPRESSURE_RESUME_PENDING) resumeReading(ctx)
             }
         }
     }
@@ -103,7 +102,7 @@ class BossHandler(
     }
 
     private fun enableAutoRead(ctx: ChannelHandlerContext) {
-        if (pending.get() < RESUME_BELOW_PENDING) ctx.channel().config().isAutoRead = true
+        if (pending.get() < BACKPRESSURE_RESUME_PENDING) ctx.channel().config().isAutoRead = true
     }
 
     private fun secretAccepted(secret: String) =

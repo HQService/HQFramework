@@ -12,6 +12,7 @@ import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.ConnectionState
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.function.ThrowingSupplier
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CyclicBarrier
 import java.util.logging.Logger
 
 class PingLike(var n: Int) : Packet() {
@@ -81,5 +84,32 @@ class CallbackContainerTest {
         container.addOnQueue(wrapper, PingLike(1), PingLike::class, callback { })
 
         assertFalse(container.complete(PingLike(1).apply { setCallbackResult(true) }))
+    }
+
+    @Test
+    fun `concurrent callbacks are completed in the order their packets were written`() {
+        val wrapper = wrapperIn(ConnectionState.CONNECTED)
+        val container = wrapper.callbackContainer
+        val channel = wrapper.channel as EmbeddedChannel
+        val received = ConcurrentHashMap<Int, Int>()
+        val barrier = CyclicBarrier(2)
+
+        val threads = (0 until 2).map { thread ->
+            Thread {
+                barrier.await()
+                repeat(100) { i ->
+                    val marker = thread * 1000 + i
+                    container.addOnQueue(wrapper, PingLike(marker), PingLike::class, callback { received[marker] = it.n })
+                }
+            }.apply { start() }
+        }
+        threads.forEach { it.join() }
+
+        val written = generateSequence { channel.readOutbound<PingLike>() }.map { it.n }.toList()
+        assertEquals(200, written.size)
+        written.forEach { container.complete(PingLike(it).apply { setCallbackResult(true) }) }
+
+        assertEquals(200, received.size)
+        received.forEach { (marker, reply) -> assertEquals(marker, reply) }
     }
 }

@@ -34,7 +34,11 @@ class BossHandlerBackpressureTest {
         })
         handler.connectionState = ConnectionState.CONNECTED
 
-        repeat(300) { channel.writeInbound(PingLike(it)) }
+        repeat(1000) { channel.writeInbound(PingLike(it)) }
+
+        assertTrue(channel.config().isAutoRead)
+
+        repeat(100) { channel.writeInbound(PingLike(it)) }
 
         assertFalse(channel.config().isAutoRead)
 

@@ -1,6 +1,7 @@
 package kr.hqservice.framework.netty.channel
 
 import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
 import kr.hqservice.framework.netty.math.PingCalculator
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.pipeline.BossHandler
@@ -17,7 +18,7 @@ class ChannelWrapper(
 
     @Volatile
     private var enabled = true
-    val callbackContainer = CallbackContainer()
+    val callbackContainer = CallbackContainer(logger)
     val pingCalculator = PingCalculator()
 
     fun setEnabled(enabled: Boolean) {
@@ -33,13 +34,14 @@ class ChannelWrapper(
         callbackContainer.addOnQueue(this, packet, type, handler)
     }
 
-    fun sendPacket(packet: Packet): Boolean {
-        if (!enabled) return false
+    fun sendPacket(packet: Packet): Boolean = writePacket(packet) != null
+
+    internal fun writePacket(packet: Packet): ChannelFuture? {
+        if (!enabled) return null
         if (handler.connectionState != ConnectionState.CONNECTED) {
             logger.severe("Some logic tried to send packet before connection established or disconnected. (Packet: ${packet::class.simpleName})")
-            return false
+            return null
         }
-        channel.writeAndFlush(packet)
-        return true
+        return channel.writeAndFlush(packet)
     }
 }

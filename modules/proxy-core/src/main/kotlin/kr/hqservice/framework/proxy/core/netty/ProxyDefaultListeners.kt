@@ -13,6 +13,10 @@ import java.util.logging.Logger
 object ProxyDefaultListeners {
     fun registerCoreListeners(channelRegistry: NettyChannelRegistry, logger: Logger) {
         Direction.INBOUND.addListener(HandShakePacket::class) { packet, wrapper ->
+            if (wrapper.channel.pipeline().get("timeout-handler") != null) {
+                logger.warning("ignoring repeated handshake from port ${wrapper.port}")
+                return@addListener
+            }
             wrapper.port = packet.port
             wrapper.channel.writeAndFlush(HandShakePacket(-1))
             channelRegistry.registerActiveChannel(packet.port, wrapper)
