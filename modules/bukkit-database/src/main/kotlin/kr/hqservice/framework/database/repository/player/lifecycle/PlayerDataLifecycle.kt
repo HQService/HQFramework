@@ -3,12 +3,15 @@ package kr.hqservice.framework.database.repository.player.lifecycle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
+import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.Listener
@@ -34,6 +37,7 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.coroutines.EmptyCoroutineContext
 
 @Listener
 class PlayerDataLifecycle(
@@ -68,11 +72,38 @@ class PlayerDataLifecycle(
         schedulerJob.cancel()
     }
 
+    suspend fun flushRepositoryForTeardown(repository: PlayerRepository<*>) {
+        val owner = currentCoroutineContext()[PluginCoroutineContextElement] ?: EmptyCoroutineContext
+        sessions.all().forEach { session ->
+            playerScopes.launch(session.uuid, owner) {
+                scheduler.flushPlayer(session.uuid, listOf(repository), FlushReason.TEARDOWN)
+            }.join()
+        }
+    }
+
+    fun shutdown() {
+        stop()
+        runBlocking {
+            withTimeoutOrNull(5_000) {
+                sessions.all().forEach { session ->
+                    try {
+                        coordinator.release(session.uuid)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        logger.log(Level.WARNING, "failed to release player data ownership of ${session.uuid} on shutdown", e)
+                    }
+                    sessions.remove(session.uuid)
+                }
+            } ?: logger.warning("releasing player data ownership on shutdown timed out")
+        }
+    }
+
     @Subscribe
     fun onJoin(event: PlayerJoinEvent) {
         val player = event.player
         val uuid = player.uniqueId
-        loading.add(uuid)
+        val token = loading.begin(uuid)
         plugin.launch(Dispatchers.Default) {
             try {
                 playerScopes.awaitIdle(uuid)
@@ -100,7 +131,7 @@ class PlayerDataLifecycle(
                 runCatching { coordinator.release(uuid) }
                 kick(player, "데이터를 불러오지 못했습니다")
             } finally {
-                loading.remove(uuid)
+                loading.end(uuid, token)
                 hints.remove(uuid)
             }
         }

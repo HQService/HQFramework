@@ -80,6 +80,9 @@ class FlushScheduler(
                 plan.getOrPut(it.uuid, ::mutableMapOf)[repository] = FlushReason.FULL
             }
         }
+        all.filterNot { it.player.isOnline }.forEach { session ->
+            plan[session.uuid] = repositories().associateWithTo(mutableMapOf()) { FlushReason.QUIT }
+        }
         return plan.map { (uuid, targets) -> playerScopes.launch(uuid) { flushPlayer(uuid, targets) } }
     }
 
@@ -120,7 +123,7 @@ class FlushScheduler(
     }
 
     internal suspend fun renewAll() {
-        sessions.all().map { it.uuid }.chunked(500).forEach { chunk ->
+        sessions.all().filter { it.player.isOnline }.map { it.uuid }.chunked(500).forEach { chunk ->
             try {
                 coordinator.renew(chunk)
             } catch (e: CancellationException) {

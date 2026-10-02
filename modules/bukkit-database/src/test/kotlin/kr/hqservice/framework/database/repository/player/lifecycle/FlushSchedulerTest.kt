@@ -285,11 +285,50 @@ class FlushSchedulerTest {
     @Test
     fun `renew is chunked by 500`() = runBlocking {
         val shared = mockk<Player>(relaxed = true)
+        every { shared.isOnline } returns true
         repeat(1200) { registry.put(PlayerSession(UUID.randomUUID(), shared, 0)) }
 
         scheduler().renewAll()
 
         assertEquals(listOf(500, 500, 200), coordinator.renewals.map { it.size })
+    }
+
+    @Test
+    fun `offline session is not renewed`() = runBlocking {
+        val online = addSessions(1).single()
+        val offlineId = UUID.randomUUID()
+        registry.put(PlayerSession(offlineId, player(offlineId, online = false), 0))
+
+        scheduler().renewAll()
+
+        assertEquals(listOf(online.uuid), coordinator.renewals.flatten())
+    }
+
+    @Test
+    fun `offline session is retried with quit every tick and released after a successful retry`() = runBlocking {
+        val quitOnly = CounterRepository(SavePolicy.onQuitOnly(), failuresLeft = 2)
+        val periodic = CounterRepository()
+        val uuid = UUID.randomUUID()
+        quitOnly.put(uuid, Counter(0))
+        periodic.put(uuid, Counter(0))
+        registry.put(PlayerSession(uuid, player(uuid, online = false), 0))
+        val scheduler = scheduler(quitOnly, periodic)
+
+        repeat(2) {
+            scheduler.tick().joinAll()
+            assertTrue(coordinator.releases.isEmpty())
+            assertTrue(quitOnly.contains(uuid))
+        }
+        assertEquals(0, quitOnly.saveCount(uuid))
+
+        scheduler.tick().joinAll()
+
+        assertEquals(1, quitOnly.saveCount(uuid))
+        assertEquals(1, periodic.saveCount(uuid))
+        assertEquals(listOf(uuid), coordinator.releases.toList())
+        assertNull(registry.get(uuid))
+        assertFalse(quitOnly.contains(uuid))
+        assertFalse(periodic.contains(uuid))
     }
 
     @Test

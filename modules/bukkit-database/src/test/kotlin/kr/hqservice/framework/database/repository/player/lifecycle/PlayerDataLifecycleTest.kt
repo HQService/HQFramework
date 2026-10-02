@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.TestPlugin
@@ -360,6 +361,21 @@ class PlayerDataLifecycleTest {
         assertNull(a.sessions.get(uuid))
         assertFalse(a.repo.contains(uuid))
         assertNull(owner())
+    }
+
+    @Test
+    fun `teardown flush saves the repository and shutdown releases ownership`() {
+        val a = Node("25565")
+        joined(a)
+        a.repo.update(uuid) { it.n = 11 }
+
+        runBlocking { a.lifecycle.flushRepositoryForTeardown(a.repo) }
+        assertEquals(11, storedPoints())
+        assertEquals("25565", owner())
+
+        a.lifecycle.shutdown()
+        assertNull(owner())
+        assertNull(a.sessions.get(uuid))
     }
 
     @Test

@@ -6,8 +6,7 @@ import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.database.dao.TimestampEntityHooks
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
-import kr.hqservice.framework.database.repository.player.lock.SwitchGate
-import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavePacket
+import kr.hqservice.framework.database.repository.player.lifecycle.PlayerDataLifecycle
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.netty.api.NettyServer
 import org.jetbrains.exposed.sql.Database
@@ -21,21 +20,21 @@ class DatabaseModule(
     private val database: Database,
     private val databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
     private val dataSource: HikariDataSource,
-    private val switchGate: SwitchGate,
+    private val playerDataLifecycle: PlayerDataLifecycle,
     private val logger: Logger
 ) {
     @Setup
     fun registerPackets() {
         nettyServer.registerInnerPacket(PlayerDataSavedPacket::class) { packet, _ -> }
         nettyServer.registerOuterPacket(PlayerDataSavedPacket::class)
-
-        nettyServer.registerInnerPacket(PlayerDataSavePacket::class) { packet, _ -> }
-        nettyServer.registerOuterPacket(PlayerDataSavePacket::class)
     }
 
     @Teardown
     fun closeDatabase() {
         try {
+            runCatching { playerDataLifecycle.shutdown() }.onFailure {
+                logger.log(Level.SEVERE, "failed to release player data ownership on shutdown", it)
+            }
             TimestampEntityHooks.unsubscribeAll()
             databaseShutdownHookRegistry.getHooks().forEach { hook ->
                 runCatching { hook.shutdown(dataSource) }.onFailure {
@@ -45,7 +44,6 @@ class DatabaseModule(
             TransactionManager.closeAndUnregister(database)
         } finally {
             dataSource.close()
-            switchGate.clear()
         }
     }
 }
