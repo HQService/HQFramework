@@ -22,7 +22,9 @@ import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.extension.yaml
 import org.bukkit.Location
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
@@ -33,13 +35,14 @@ import java.time.LocalDateTime
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
-abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
-    /*internal constructor(
+abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
+    constructor() : super()
+    protected constructor(
         loader: JavaPluginLoader,
         description: PluginDescriptionFile,
         dataFolder: File,
         file: File
-    ) : super(loader, description, dataFolder, file)*/
+    ) : super(loader, description, dataFolder, file)
 
     open val bukkitComponentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
     private val config = File(dataFolder, "config.yml").yaml()
