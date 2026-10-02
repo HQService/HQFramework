@@ -4,6 +4,10 @@ plugins {
     id("kr.hqservice.resource-generator.bukkit")
 }
 
+java {
+    disableAutoTargetJvm()
+}
+
 bukkitResourceGenerator {
     main = "kr.hqservice.framework.HQFrameworkBukkit"
     name = "HQFramework"
