@@ -13,13 +13,18 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.TestPlugin
 import kr.hqservice.framework.database.redis.PubSubTransport
+import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.redis.RedisSettings
+import kr.hqservice.framework.database.repository.player.CachedPlayerRepository
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
+import kr.hqservice.framework.database.repository.player.cache.InMemoryPlayerDataCache
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
@@ -108,11 +113,23 @@ class PlayerDataLifecycleTest {
         }
     }
 
+    @Serializable
+    data class Wallet(var coins: Int)
+
+    class WalletRepository : CachedPlayerRepository<Wallet>(Wallet.serializer()) {
+        val loads = AtomicInteger()
+
+        override suspend fun load(player: Player): Wallet = Wallet(100).also { loads.incrementAndGet() }
+
+        override suspend fun save(player: Player, value: Wallet) {}
+    }
+
     inner class Node(
         serverId: String,
         settings: PlayerDataSettings = this@PlayerDataLifecycleTest.settings,
         val repo: TestPointRepository = TestPointRepository(),
         val coordinator: SessionCoordinator = DatabaseSessionCoordinator(db, serverId, settings.lease),
+        redisSettings: RedisSettings = disabledRedis,
     ) {
         val registry = PlayerRepositoryRegistryImpl().also { it.register(repo) }
         val sessions = PlayerSessionRegistry()
@@ -133,6 +150,9 @@ class PlayerDataLifecycleTest {
             packetSender,
             mockk<HQNettyService>().also { every { it.isEnable() } returns true },
             logger,
+            redisSettings,
+            RedisProvider(redisSettings, logger),
+            Json,
         ).also(lifecycles::add)
     }
 
@@ -170,6 +190,8 @@ class PlayerDataLifecycleTest {
         )
 
     private val settings = settings()
+    private val disabledRedis = RedisSettings("", "hq", Duration.ofSeconds(60))
+    private val enabledRedis = RedisSettings("redis://localhost:1", "hq", Duration.ofSeconds(60))
     private val logger = Logger.getLogger("PlayerDataLifecycleTest")
     private val lifecycles = mutableListOf<PlayerDataLifecycle>()
     private val background = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -594,5 +616,73 @@ class PlayerDataLifecycleTest {
 
         assertNotNull(a.repo[uuid])
         a.lifecycle.shutdown()
+    }
+
+    private fun cachedNode(memory: InMemoryPlayerDataCache, wallet: WalletRepository, redisSettings: RedisSettings = enabledRedis): Node =
+        Node("25565", redisSettings = redisSettings).also { node ->
+            node.lifecycle.cacheFactory = { memory }
+            node.registry.register(wallet)
+            node.lifecycle.attach(wallet)
+        }
+
+    private fun walletKey(wallet: WalletRepository): String = "hq:data:${wallet.cacheName}:$uuid"
+
+    @Test
+    fun `join uses the cached value instead of loading from the database`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet)
+        memory.values[walletKey(wallet)] = """{"coins":7}""".toByteArray()
+
+        joined(a)
+
+        assertEquals(Wallet(7), wallet[uuid])
+        assertEquals(0, wallet.loads.get())
+    }
+
+    @Test
+    fun `join without a cached value loads from the database and populates the cache`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet)
+
+        joined(a)
+
+        assertEquals(Wallet(100), wallet[uuid])
+        assertEquals(1, wallet.loads.get())
+        assertEquals("""{"coins":100}""", memory.text(walletKey(wallet)))
+    }
+
+    @Test
+    fun `updates are written to the cache and quit sets the data ttl`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet)
+        joined(a)
+
+        wallet.update(uuid) { it.coins = 42 }
+        awaitUntil { memory.text(walletKey(wallet)) == """{"coins":42}""" }
+        assertNull(memory.ttls[walletKey(wallet)])
+
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { a.sent.isNotEmpty() }
+
+        assertEquals(enabledRedis.dataTtl, memory.ttls[walletKey(wallet)])
+        assertEquals("""{"coins":42}""", memory.text(walletKey(wallet)))
+    }
+
+    @Test
+    fun `cache is not attached when redis is disabled`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet, disabledRedis)
+
+        joined(a)
+        wallet.update(uuid) { it.coins = 42 }
+        tickFor(100)
+
+        assertFalse(wallet.cacheEnabled)
+        assertEquals(1, wallet.loads.get())
+        assertTrue(memory.values.isEmpty())
     }
 }

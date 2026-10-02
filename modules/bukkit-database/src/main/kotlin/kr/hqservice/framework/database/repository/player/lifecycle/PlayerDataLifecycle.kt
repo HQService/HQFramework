@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.Json
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
@@ -18,9 +19,14 @@ import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
+import kr.hqservice.framework.database.redis.RedisProvider
+import kr.hqservice.framework.database.redis.RedisSettings
+import kr.hqservice.framework.database.repository.player.CachedPlayerRepository
 import kr.hqservice.framework.database.repository.player.FlushRequester
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
+import kr.hqservice.framework.database.repository.player.cache.LettucePlayerDataCache
+import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
@@ -53,9 +59,14 @@ class PlayerDataLifecycle(
     private val packetSender: PacketSender,
     private val nettyService: HQNettyService,
     private val logger: Logger,
+    private val redisSettings: RedisSettings,
+    private val redisProvider: RedisProvider,
+    private val json: Json,
 ) {
     private val playerScopes = PlayerScopes(plugin, Dispatchers.IO)
     private val hints = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
+    internal var cacheFactory: () -> PlayerDataCache = { LettucePlayerDataCache(redisProvider) }
+    private val cache: PlayerDataCache by lazy { cacheFactory() }
     private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost)
     private val schedulerJob = scheduler.start(plugin)
     private val releasedSubscription: AutoCloseable
@@ -75,6 +86,13 @@ class PlayerDataLifecycle(
             var saved = false
             playerScopes.launch(uuid) { saved = scheduler.flushPlayer(uuid, listOf(target), FlushReason.EXPLICIT) }.join()
             saved
+        }
+        if (repository is CachedPlayerRepository<*> && redisSettings.enabled) {
+            repository.cache = cache
+            repository.cacheSettings = redisSettings
+            repository.json = json
+            repository.logger = logger
+            repository.cacheWriter = { uuid, block -> playerScopes.launch(uuid) { block() } }
         }
     }
 
@@ -250,8 +268,13 @@ class PlayerDataLifecycle(
     }
 
     private suspend fun <V : Any> load(repository: PlayerRepository<V>, player: Player, token: Long) {
-        val value = repository.load(player)
-        if (loading.isCurrent(player.uniqueId, token)) repository.put(player.uniqueId, value)
+        val uuid = player.uniqueId
+        val cached = (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled }
+        val hot = cached?.readCached(uuid)
+        val value = hot ?: repository.load(player)
+        if (!loading.isCurrent(uuid, token)) return
+        if (cached != null && hot == null) cached.writeCached(uuid, value)
+        repository.put(uuid, value)
     }
 
     private fun onOwnershipLost(session: PlayerSession) {

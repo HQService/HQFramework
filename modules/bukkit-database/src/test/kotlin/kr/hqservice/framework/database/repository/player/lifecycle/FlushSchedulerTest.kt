@@ -144,11 +144,17 @@ class FlushSchedulerTest {
         private val events: MutableList<String>,
         @Volatile var failSave: Boolean = false,
     ) : PlayerRepository<Counter>() {
+        val persisted: MutableList<Pair<UUID, Boolean>> = Collections.synchronizedList(mutableListOf())
+
         override suspend fun load(player: Player): Counter = Counter(0)
 
         override suspend fun save(player: Player, value: Counter) {
             if (failSave) throw IllegalStateException("db down")
             events += if (TransactionManager.currentOrNull() != null) "save" else "save outside transaction"
+        }
+
+        override suspend fun afterPersisted(uuid: UUID, offline: Boolean) {
+            persisted += uuid to offline
         }
     }
 
@@ -627,5 +633,37 @@ class FlushSchedulerTest {
         assertSame(session, lost.single())
         assertNull(registry.get(uuid))
         assertFalse(repository.contains(uuid))
+    }
+
+    @Test
+    fun `persisted repositories are told whether the player is offline`() = runBlocking {
+        val repository = RecordingRepository(mutableListOf())
+        val online = UUID.randomUUID()
+        val offline = UUID.randomUUID()
+        val quitting = UUID.randomUUID()
+        listOf(online, offline, quitting).forEach { repository.put(it, Counter(0)); repository.update(it) { counter -> counter.n++ } }
+        registry.put(PlayerSession(online, player(online), 0))
+        registry.put(PlayerSession(offline, player(offline, online = false), 0))
+        registry.put(PlayerSession(quitting, player(quitting), 0))
+        val scheduler = scheduler(repository)
+
+        assertTrue(scheduler.flushPlayer(online, listOf(repository), FlushReason.DIRTY))
+        assertTrue(scheduler.flushPlayer(offline, listOf(repository), FlushReason.DIRTY))
+        assertTrue(scheduler.flushPlayer(quitting, listOf(repository), FlushReason.QUIT))
+
+        assertEquals(listOf(online to false, offline to true, quitting to true), repository.persisted.toList())
+    }
+
+    @Test
+    fun `failed save does not report the repository as persisted`() = runBlocking {
+        val repository = RecordingRepository(mutableListOf(), failSave = true)
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        repository.update(uuid) { it.n++ }
+        registry.put(PlayerSession(uuid, player(uuid, online = false), 0))
+
+        assertFalse(scheduler(repository).flushPlayer(uuid, listOf(repository), FlushReason.QUIT))
+
+        assertTrue(repository.persisted.isEmpty())
     }
 }

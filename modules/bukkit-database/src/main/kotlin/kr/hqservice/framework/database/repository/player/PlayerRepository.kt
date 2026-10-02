@@ -36,10 +36,12 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
     operator fun get(uuid: UUID): V? = entries[uuid]?.value
 
     operator fun set(uuid: UUID, value: V) {
-        withEntryLock(uuid, Unit) { entry ->
+        val updated = withEntryLock(uuid, false) { entry ->
             entry.value = value
             entry.dirtyGeneration++
+            true
         }
+        if (updated) onMutated(uuid)
     }
 
     fun update(uuid: UUID, immediate: Boolean = false, block: (V) -> Unit): Boolean {
@@ -48,6 +50,7 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
             entry.dirtyGeneration++
             true
         }
+        if (updated) onMutated(uuid)
         if (updated && immediate) {
             flushScope?.launch { flushRequester?.flush(uuid, this@PlayerRepository) }
         }
@@ -56,7 +59,7 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
 
     suspend fun flush(uuid: UUID): Boolean = flushRequester?.flush(uuid, this) ?: false
 
-    suspend fun peek(uuid: UUID): V? = newSuspendedTransaction(Dispatchers.IO) { loadOffline(uuid) }
+    open suspend fun peek(uuid: UUID): V? = newSuspendedTransaction(Dispatchers.IO) { loadOffline(uuid) }
 
     fun remove(uuid: UUID): V? {
         val removed = withLock(uuid) { entries.remove(uuid) }
@@ -85,6 +88,12 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
         val fingerprint = fingerprint(entry.value)
         PendingSave(entry.value, entry.dirtyGeneration, fingerprint, fingerprint != null && fingerprint != entry.lastFingerprint)
     }
+
+    internal fun <R> withValue(uuid: UUID, action: (V) -> R): R? = withEntryLock(uuid, null) { action(it.value) }
+
+    internal open fun onMutated(uuid: UUID) {}
+
+    internal open suspend fun afterPersisted(uuid: UUID, offline: Boolean) {}
 
     internal fun markSaved(uuid: UUID, saved: PendingSave<V>) {
         withEntryLock(uuid, Unit) { entry ->

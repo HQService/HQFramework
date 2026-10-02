@@ -4,6 +4,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
+import kr.hqservice.framework.database.repository.player.cache.LettucePlayerDataCache
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
 import kr.hqservice.framework.database.repository.player.session.redis.LettuceSessionStore
 import kotlinx.serialization.json.Json
@@ -90,5 +91,25 @@ class RedisIntegrationTest {
 
         assertEquals(AcquireResult.Acquired(0), store.acquire(key, "b", 30_000))
         assertTrue(store.release(key, "b"))
+    }
+
+    @Test
+    fun `lettuce player data cache writes reads expires and deletes`() = runBlocking {
+        val cache = LettucePlayerDataCache(provider)
+        val key = settings.key("data", "test", UUID.randomUUID().toString())
+
+        cache.write(key, "first".toByteArray())
+        assertEquals("first", cache.read(key)?.decodeToString())
+        assertEquals(-1L, provider.connection().sync().pttl(key))
+
+        cache.expire(key, Duration.ofSeconds(30))
+        assertTrue(provider.connection().sync().pttl(key) in 1..30_000)
+
+        cache.write(key, "second".toByteArray())
+        assertEquals("second", cache.read(key)?.decodeToString())
+        assertEquals(-1L, provider.connection().sync().pttl(key))
+
+        cache.delete(key)
+        assertNull(cache.read(key))
     }
 }

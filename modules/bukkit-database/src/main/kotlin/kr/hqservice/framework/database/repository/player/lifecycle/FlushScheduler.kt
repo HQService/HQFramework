@@ -44,6 +44,8 @@ class FlushScheduler(
         suspend fun save(player: Player) = repository.save(player, snapshot.value)
 
         fun markSaved(uuid: UUID) = repository.markSaved(uuid, snapshot)
+
+        suspend fun afterPersisted(uuid: UUID, offline: Boolean) = repository.afterPersisted(uuid, offline)
     }
 
     private val states = ConcurrentHashMap<PlayerRepository<*>, RepositoryState>()
@@ -117,6 +119,8 @@ class FlushScheduler(
             logger.log(level, "failed to save player data of $uuid ($failures consecutive failures)", e)
             return false
         }
+        val offline = !session.player.isOnline || plan.values.any { it == FlushReason.QUIT || it == FlushReason.TEARDOWN }
+        selected.forEach { it.afterPersisted(uuid, offline) }
         if (!session.player.isOnline) releaseOffline(session)
         return true
     }
