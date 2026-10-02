@@ -41,7 +41,7 @@ class HQNettyServer(
         val bootstrap = ServerBootstrap()
         bootstrap.channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_REUSEADDR, true)
-            .childHandler(HQChannelInitializer(logger, true))
+            .childHandler(HQChannelInitializer(logger, true, config.getString("netty.secret", "")))
             .localAddress(config.getString("netty.host"), config.getInt("netty.port"))
             .group(group)
             .bind()

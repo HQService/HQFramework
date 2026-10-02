@@ -4,6 +4,8 @@ netty:
   thread: 0
   host: 127.0.0.1
   port: 11286
+  # 프록시와 백엔드가 공유하는 인증 비밀값. 양쪽에 같은 값을 넣어야 연결됩니다.
+  secret: ""
   shutdown-servers: true
 
 # 마지막으로 나간 서버 기록

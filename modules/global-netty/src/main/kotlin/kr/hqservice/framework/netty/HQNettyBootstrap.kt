@@ -41,6 +41,9 @@ class HQNettyBootstrap(
 
     fun initServer(): CompletableFuture<Channel> {
         init()
+        if (config.getString("netty.secret", "").isBlank()) {
+            logger.warning("netty.secret is empty; any client that can reach the port can register as a backend")
+        }
         return HQNettyServer(logger, config, group).start()
     }
 

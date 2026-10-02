@@ -21,20 +21,26 @@ import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import java.io.IOException
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 
 class BossHandler(
     channel: Channel,
-    private val logger: Logger
+    private val logger: Logger,
+    private val expectedSecret: String? = null
 ) : ChannelInboundHandlerAdapter() {
     private lateinit var channelScope: ChannelScope
     private lateinit var serialized: CoroutineDispatcher
 
+    @Volatile
     private var preprocessHandler: PacketPreprocessHandler? = null
+    @Volatile
     private var disconnectHandler: DisconnectHandler? = null
 
     val channel: ChannelWrapper = ChannelWrapper(logger, this, channel)
+    @Volatile
     var connectionState: ConnectionState = ConnectionState.IDLE
         set(value) {
             field = value
@@ -58,6 +64,15 @@ class BossHandler(
     }
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
+        if (msg is HandShakePacket && connectionState != ConnectionState.CONNECTED) {
+            if (!secretAccepted(msg.secret)) {
+                logger.warning("rejected handshake from ${ctx.channel().remoteAddress()}: bad secret")
+                ctx.close()
+                return
+            }
+            connectionState = ConnectionState.CONNECTED
+        }
+
         if (connectionState != ConnectionState.CONNECTED && msg !is HandShakePacket) {
             logger.severe("received packet before handshake. received packet dropped")
             return
@@ -73,6 +88,9 @@ class BossHandler(
             }
         }
     }
+
+    private fun secretAccepted(secret: String) =
+        expectedSecret == null || MessageDigest.isEqual(expectedSecret.toByteArray(), secret.toByteArray())
 
     @Deprecated("")
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
@@ -91,6 +109,12 @@ class BossHandler(
     override fun channelActive(ctx: ChannelHandlerContext) {
         channelScope = ChannelScope(ctx, logger)
         serialized = blockingDispatcher.limitedParallelism(1)
+        ctx.executor().schedule({
+            if (connectionState != ConnectionState.CONNECTED && ctx.channel().isOpen) {
+                logger.warning("closing ${ctx.channel().remoteAddress()}: no handshake within 10s")
+                ctx.close()
+            }
+        }, 10, TimeUnit.SECONDS)
         super.channelActive(ctx)
     }
 

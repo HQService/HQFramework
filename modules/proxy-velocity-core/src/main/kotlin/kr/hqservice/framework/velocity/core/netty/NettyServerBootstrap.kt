@@ -9,7 +9,6 @@ import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.RelayingResult
-import kr.hqservice.framework.netty.pipeline.ConnectionState
 import kr.hqservice.framework.netty.pipeline.TimeOutHandler
 import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
@@ -45,7 +44,6 @@ class NettyServerBootstrap(
     private fun registerDefaultListeners() {
         Direction.INBOUND.addListener(HandShakePacket::class) { packet, wrapper ->
             wrapper.port = packet.port
-            wrapper.handler.connectionState = ConnectionState.CONNECTED
             wrapper.channel.writeAndFlush(HandShakePacket(-1))
             channelRegistry.registerActiveChannel(packet.port, wrapper)
             logger.info("registered channel ${channelRegistry.getChannelNameByPort(packet.port)}")

@@ -14,7 +14,8 @@ import java.util.logging.Logger
 
 class HQChannelInitializer(
     private val logger: Logger,
-    private val server: Boolean = false
+    private val server: Boolean = false,
+    private val expectedSecret: String? = null
 ) : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
         ch.config().setOption(ChannelOption.TCP_NODELAY, true)
@@ -23,6 +24,6 @@ class HQChannelInitializer(
             .addLast("decode-filter", LengthFieldBasedFrameDecoder(MAX_FRAME_BYTES, 0, 8, 0, 8))
             .addLast("packet-decoder", PacketDecoder())
             .addLast("packet-encoder", PacketEncoder())
-            .addLast("handler-boss", BossHandler(ch, logger))
+            .addLast("handler-boss", BossHandler(ch, logger, expectedSecret))
     }
 }

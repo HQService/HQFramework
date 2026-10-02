@@ -12,7 +12,8 @@ import java.util.logging.Logger
 
 class HQChannelInitializer(
     private val logger: Logger,
-    private val server: Boolean = false
+    private val server: Boolean = false,
+    private val expectedSecret: String? = null
 ) : ChannelInitializer<NioSocketChannel>() {
     override fun initChannel(ch: NioSocketChannel) {
         if (server) ch.config()
@@ -22,6 +23,6 @@ class HQChannelInitializer(
             .addLast("decode-filter", LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 0, 8, 0, 8))
             .addLast("packet-decoder", PacketDecoder())
             .addLast("packet-encoder", PacketEncoder())
-            .addLast("handler-boss", BossHandler(ch, logger))
+            .addLast("handler-boss", BossHandler(ch, logger, expectedSecret))
     }
 }
