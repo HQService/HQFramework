@@ -3,6 +3,7 @@ package kr.hqservice.framework.yaml
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.extension.yaml
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -51,5 +52,17 @@ class HQYamlDefaultTest {
         config.reload()
 
         assertEquals(3, config.getInt("a"))
+    }
+
+    @Test
+    fun readingMissingKeyWithDefaultDoesNotMutateTree() {
+        val config = config()
+        assertEquals(7, config.getInt("missing", 7))
+        assertEquals("x", config.getString("missing", "x"))
+
+        val saved = File(dir, "saved.yml")
+        config.save(saved)
+
+        assertFalse(saved.readText().contains("missing"))
     }
 }
