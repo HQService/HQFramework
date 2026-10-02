@@ -53,6 +53,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Collections
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 
 class PlayerDataLifecycleTest {
@@ -79,6 +80,22 @@ class PlayerDataLifecycleTest {
                 it[uuid] = player.uniqueId
                 it[n] = value.n
             }
+        }
+    }
+
+    class FlakyRepository : PlayerRepository<Points>() {
+        @Volatile var failSave = false
+        @Volatile var lastSaved: Int? = null
+        val loads = AtomicInteger()
+
+        override suspend fun load(player: Player): Points {
+            loads.incrementAndGet()
+            return Points(0)
+        }
+
+        override suspend fun save(player: Player, value: Points) {
+            if (failSave) throw IllegalStateException("db down")
+            lastSaved = value.n
         }
     }
 
@@ -376,6 +393,35 @@ class PlayerDataLifecycleTest {
         a.lifecycle.shutdown()
         assertNull(owner())
         assertNull(a.sessions.get(uuid))
+    }
+
+    @Test
+    fun `rejoin after a failed quit save keeps the unsaved cache`() {
+        val flaky = FlakyRepository()
+        val a = Node("25565")
+        a.registry.register(flaky)
+        a.lifecycle.attach(flaky)
+        joined(a)
+        flaky.update(uuid) { it.n = 5 }
+        flaky.failSave = true
+
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        tickFor(300)
+        assertEquals("25565", owner())
+        val retained = a.sessions.get(uuid)
+        assertNotNull(retained)
+
+        flaky.failSave = false
+        a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        awaitUntil { uuid !in a.loading }
+
+        assertEquals(5, flaky[uuid]!!.n)
+        assertEquals(1, flaky.loads.get())
+        assertTrue(retained === a.sessions.get(uuid))
+        runBlocking { flaky.flush(uuid) }
+        assertEquals(5, flaky.lastSaved)
+        assertEquals(1L, version())
+        assertEquals("25565", owner())
     }
 
     @Test

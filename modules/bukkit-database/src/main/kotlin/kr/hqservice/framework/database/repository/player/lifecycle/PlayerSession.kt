@@ -4,6 +4,6 @@ import org.bukkit.entity.Player
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
-class PlayerSession(val uuid: UUID, val player: Player, @Volatile var version: Long) {
+class PlayerSession(val uuid: UUID, @Volatile var player: Player, @Volatile var version: Long) {
     val failures = AtomicInteger()
 }

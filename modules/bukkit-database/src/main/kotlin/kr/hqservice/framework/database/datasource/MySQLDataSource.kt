@@ -16,7 +16,7 @@ class MySQLDataSource(
     idleTimeout: Long,
     minimumIdle: Int,
 ) : HikariDataSource(HikariConfig().apply {
-    this.jdbcUrl = "jdbc:mysql://${host}:${port}/${database}?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true"
+    this.jdbcUrl = "jdbc:mysql://${host}:${port}/${database}"
     this.driverClassName = "com.mysql.cj.jdbc.Driver"
     this.username = user
     this.password = password

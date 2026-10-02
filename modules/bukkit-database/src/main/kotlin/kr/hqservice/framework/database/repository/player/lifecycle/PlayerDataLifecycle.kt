@@ -104,18 +104,23 @@ class PlayerDataLifecycle(
         val player = event.player
         val uuid = player.uniqueId
         val token = loading.begin(uuid)
+        sessions.get(uuid)?.player = player
         plugin.launch(Dispatchers.Default) {
+            var retained: PlayerSession? = null
             try {
                 playerScopes.awaitIdle(uuid)
                 val version = acquireWithRetry(uuid)
+                retained = sessions.get(uuid)
                 if (!isStillJoining(player)) {
-                    coordinator.release(uuid)
+                    if (retained == null) coordinator.release(uuid)
                     return@launch
                 }
-                loadAll(player)
-                if (!register(PlayerSession(uuid, player, version))) {
-                    repositories.getAll().forEach { it.remove(uuid) }
-                    coordinator.release(uuid)
+                loadAll(player, onlyMissing = retained != null)
+                if (!register(retained ?: PlayerSession(uuid, player, version), keepOnFailure = retained != null)) {
+                    if (retained == null) {
+                        repositories.getAll().forEach { it.remove(uuid) }
+                        coordinator.release(uuid)
+                    }
                     return@launch
                 }
                 withContext(Dispatchers.BukkitMain) { pluginManager.callEvent(PlayerRepositoryLoadedEvent(player)) }
@@ -126,13 +131,14 @@ class PlayerDataLifecycle(
                 throw e
             } catch (e: Exception) {
                 logger.log(Level.SEVERE, "failed to load player data of $uuid", e)
-                sessions.remove(uuid)
-                repositories.getAll().forEach { it.remove(uuid) }
-                runCatching { coordinator.release(uuid) }
+                if (retained == null) {
+                    sessions.remove(uuid)
+                    repositories.getAll().forEach { it.remove(uuid) }
+                    runCatching { coordinator.release(uuid) }
+                }
                 kick(player, "데이터를 불러오지 못했습니다")
             } finally {
                 loading.end(uuid, token)
-                hints.remove(uuid)
             }
         }
     }
@@ -170,56 +176,64 @@ class PlayerDataLifecycle(
 
     private fun isStillJoining(player: Player): Boolean = player.uniqueId in loading && player.isOnline
 
-    private suspend fun register(session: PlayerSession): Boolean {
+    private suspend fun register(session: PlayerSession, keepOnFailure: Boolean): Boolean {
         var registered = false
         playerScopes.launch(session.uuid) {
             sessions.put(session)
             registered = isStillJoining(session.player)
-            if (!registered) sessions.remove(session.uuid)
+            if (!registered && !keepOnFailure) sessions.remove(session.uuid)
         }.join()
         return registered
     }
 
     private suspend fun acquireWithRetry(uuid: UUID): Long {
         var lastError: Exception? = null
-        return withTimeoutOrNull(settings.joinTimeout.toMillis()) {
-            var version: Long? = null
-            while (version == null) {
-                version = try {
-                    (coordinator.acquire(uuid) as? AcquireResult.Acquired)?.version
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    lastError = e
-                    null
+        var hint: CompletableDeferred<Unit>? = null
+        try {
+            return withTimeoutOrNull(settings.joinTimeout.toMillis()) {
+                var version: Long? = null
+                while (version == null) {
+                    version = try {
+                        (coordinator.acquire(uuid) as? AcquireResult.Acquired)?.version
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        lastError = e
+                        null
+                    }
+                    if (version == null) hint = awaitRetry(uuid)
                 }
-                if (version == null) awaitRetry(uuid)
-            }
-            version
-        } ?: throw OwnershipTimeoutException(uuid, lastError)
+                version
+            } ?: throw OwnershipTimeoutException(uuid, lastError)
+        } finally {
+            hint?.let { hints.remove(uuid, it) }
+        }
     }
 
-    private suspend fun awaitRetry(uuid: UUID) {
+    private suspend fun awaitRetry(uuid: UUID): CompletableDeferred<Unit> {
         val hint = hints.computeIfAbsent(uuid) { CompletableDeferred() }
         withTimeoutOrNull(settings.retryInterval.toMillis()) { hint.await() }
         if (hint.isCompleted) hints.remove(uuid, hint)
+        return hint
     }
 
-    private suspend fun loadAll(player: Player) {
+    private suspend fun loadAll(player: Player, onlyMissing: Boolean) {
         try {
-            loadOnce(player)
+            loadOnce(player, onlyMissing)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             logger.log(Level.WARNING, "failed to load player data of ${player.uniqueId}, retrying once", e)
             delay(250)
-            loadOnce(player)
+            loadOnce(player, onlyMissing)
         }
     }
 
-    private suspend fun loadOnce(player: Player) {
+    private suspend fun loadOnce(player: Player, onlyMissing: Boolean) {
         newSuspendedTransaction(Dispatchers.IO) {
-            repositories.getAll().forEach { load(it, player) }
+            repositories.getAll()
+                .filterNot { onlyMissing && it.contains(player.uniqueId) }
+                .forEach { load(it, player) }
         }
     }
 

@@ -3,6 +3,8 @@ package kr.hqservice.framework.database.repository.player.session
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.QueryBuilder
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -17,6 +19,10 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.vendors.H2Dialect
+import org.jetbrains.exposed.sql.vendors.MysqlDialect
+import org.jetbrains.exposed.sql.vendors.SQLiteDialect
+import org.jetbrains.exposed.sql.vendors.currentDialect
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -41,7 +47,7 @@ class DatabaseSessionCoordinator(
     override suspend fun renew(uuids: Collection<UUID>) {
         if (uuids.isEmpty()) return
         inTransaction {
-            val until = leaseFromNow()
+            val until = leaseExpiry()
             PlayerSessionTable.update({ (PlayerSessionTable.uuid inList uuids) and (PlayerSessionTable.owner eq serverId) }) {
                 it[leaseUntil] = until
             }
@@ -49,7 +55,7 @@ class DatabaseSessionCoordinator(
     }
 
     override suspend fun commit(uuid: UUID, expectedVersion: Long): Long? = inTransaction {
-        val until = leaseFromNow()
+        val until = leaseExpiry()
         val updated = PlayerSessionTable.update({
             (PlayerSessionTable.uuid eq uuid) and (PlayerSessionTable.owner eq serverId) and (PlayerSessionTable.version eq expectedVersion)
         }) {
@@ -66,7 +72,7 @@ class DatabaseSessionCoordinator(
     }
 
     private fun Transaction.tryAcquire(uuid: UUID): AcquireResult.Acquired? {
-        val until = leaseFromNow()
+        val until = leaseExpiry()
         val updated = PlayerSessionTable.update({
             (PlayerSessionTable.uuid eq uuid) and (
                 PlayerSessionTable.owner.isNull() or
@@ -88,7 +94,7 @@ class DatabaseSessionCoordinator(
                 it[PlayerSessionTable.uuid] = uuid
                 it[owner] = serverId
                 it[version] = 0
-                it[leaseUntil] = leaseFromNow()
+                it[leaseUntil] = leaseExpiry()
             }
         } catch (e: ExposedSQLException) {
             if (findSession(uuid) == null) throw e
@@ -98,12 +104,20 @@ class DatabaseSessionCoordinator(
     private fun findSession(uuid: UUID): ResultRow? =
         PlayerSessionTable.selectAll().where { PlayerSessionTable.uuid eq uuid }.singleOrNull()
 
-    private fun Transaction.leaseFromNow(): Instant = dbNow().plus(lease)
-
-    private fun Transaction.dbNow(): Instant = exec("SELECT CURRENT_TIMESTAMP") { rs ->
-        rs.next()
-        rs.getTimestamp(1).toInstant()
-    }!!
+    private fun leaseExpiry(): Expression<Instant?> {
+        val seconds = lease.seconds
+        val sql = when (val dialect = currentDialect) {
+            is MysqlDialect -> "DATE_ADD(CURRENT_TIMESTAMP, INTERVAL $seconds SECOND)"
+            is H2Dialect -> "DATEADD('SECOND', $seconds, CURRENT_TIMESTAMP)"
+            is SQLiteDialect -> "DATETIME('now', '+$seconds seconds')"
+            else -> throw IllegalStateException("player session lease is not supported on ${dialect.name}")
+        }
+        return object : Expression<Instant?>() {
+            override fun toQueryBuilder(queryBuilder: QueryBuilder) {
+                queryBuilder.append(sql)
+            }
+        }
+    }
 
     private suspend fun <T> inTransaction(block: Transaction.() -> T): T {
         val current = TransactionManager.currentOrNull()
