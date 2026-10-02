@@ -351,7 +351,7 @@ class WorkerScope(plugin: HQBukkitPlugin) : HQCoroutineScope(plugin, Dispatchers
 }
 ```
 
-플레이어별 직렬 실행이 필요하면 `PlayerScopes`를 씁니다. 같은 UUID의 작업은 순서대로 하나씩 실행되고, 작업이 끝나 비면 스코프가 자동 해제됩니다.
+플레이어별 직렬 실행이 필요하면 `PlayerScopes`를 씁니다. 같은 UUID의 `launch` 작업은 suspend 중에도 겹치지 않고 호출 순서대로 하나씩 실행되며, 작업이 끝나 비면 스코프가 자동 해제됩니다. 한 작업 안에서 같은 UUID로 `launch`한 작업을 `join`하면 앞 작업이 끝나기를 서로 기다려 교착되므로 하지 마세요. `scope(id)`로 직접 띄운 코루틴은 이 순서 보장 밖입니다.
 
 ```kotlin
 private val playerScopes = PlayerScopes(plugin, Dispatchers.IO)
@@ -484,14 +484,21 @@ class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
 | 호출 | 동작 |
 |---|---|
 | `repo[uuid]` | 캐시의 값을 그대로 반환. 이 서버가 소유하지 않으면 `null` |
-| `repo[uuid] = value` | 값을 교체하고 dirty 표시 |
+| `repo[uuid] = value` | 값을 교체하고 dirty 표시. 소유하지 않은 플레이어에는 set이 무시됩니다 |
 | `repo.update(uuid) { it.point += 10 }` | 플레이어별 락 안에서 블록을 실행하고 dirty 표시. 호출한 스레드에서 바로 실행되며 suspend하지 않음. 캐시에 없으면 `false` |
 | `repo.update(uuid, immediate = true) { }` | 위와 같고, 플레이어 큐에 즉시 저장을 예약 |
-| `repo.flush(uuid)` (suspend) | dirty 여부와 무관하게 즉시 저장하고 완료를 기다림 |
-| `repo.peek(uuid)` (suspend) | `loadOffline`으로 DB의 마지막 저장본을 읽음. 캐시와 소유권은 건드리지 않음(읽기 전용) |
+| `repo.flush(uuid)` (suspend) | dirty 여부와 무관하게 즉시 저장하고 완료를 기다림. flush는 저장이 커밋되면 `true`, 실패·소유권 상실·미등록이면 `false` |
+| `repo.peek(uuid)` (suspend) | `loadOffline`으로 DB의 마지막 저장본을 읽음. 캐시와 소유권은 건드리지 않음(읽기 전용). 기본 Database(`TransactionManager.defaultDatabase`)의 트랜잭션에서 실행 |
 
 - 접속 시 모든 리포지토리의 load가 끝나면 `PlayerRepositoryLoadedEvent`가 메인 스레드에서 발생합니다. 로딩 중에는 이동, 클릭, 명령, 줍기, 버리기가 차단됩니다. load가 두 번 실패하면 플레이어를 킥합니다.
 - 퇴장 시 모든 리포지토리를 한 트랜잭션으로 저장한 뒤 소유권을 놓고 캐시를 비웁니다. 플러그인 disable이나 서버 종료 시에도 접속 중인 플레이어를 저장합니다(메인 스레드 블로킹, 리포지토리당 5초 상한).
+
+#### 주의사항
+
+- 같은 플레이어의 저장·로드는 플레이어 큐에서 한 번에 하나씩 실행됩니다. `save`/`load`/`loadOffline` 안에서 같은 플레이어의 `flush`/`update(immediate = true)`를 호출하면 교착되므로 금지합니다(`flush`는 자기 뒤에 줄 선 저장을 기다리게 됩니다).
+- 저장에 넘어가는 스냅샷은 복사본이 아니라 캐시의 객체 그대로입니다. `update {}` 밖에서 객체를 바꾸지 마세요. 저장 중에 `update`로 바뀐 내용은 dirty로 남아 다음 주기에 다시 저장됩니다.
+- 리포지토리별 `dirtyInterval`은 전역 `dirty-flush-seconds`의 배수로 반올림됩니다(예: 전역 5초에 7초를 주면 5초, 8초를 주면 10초).
+- `join-timeout-seconds`(기본 5초)가 `lease-seconds`(기본 30초)보다 짧으므로, 소유 서버가 크래시한 뒤 lease가 만료될 때까지 최대 30초 동안은 그 플레이어의 접속이 거부될 수 있습니다.
 
 #### 소유권
 
@@ -523,7 +530,7 @@ player-data:
   full-flush-seconds: 60
 ```
 
-`backend`는 현재 `database`만 지원하며 다른 값이면 기동에 실패합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
+`backend`는 현재 `database`만 지원하며 다른 값이면 기동에 실패합니다. `lease-seconds > renew-seconds > 0`, `dirty-flush-seconds > 0`, `full-flush-seconds >= dirty-flush-seconds`, `join-timeout-seconds > 0`, `retry-interval-millis > 0`을 만족하지 않아도 기동에 실패하며 오류 메시지에 해당 키가 나옵니다. `SavePolicy.periodic`의 간격과 `batchSize`도 양수여야 합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
 
 ### 일반 리포지토리
 
