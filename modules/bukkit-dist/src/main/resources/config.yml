@@ -37,20 +37,33 @@ database:
     minimum-idle: -1
 
 player-data:
-  # database 만 지원. redis 는 다음 버전에서 추가됩니다.
+  # 플레이어 데이터 소유권 조율 백엔드. database 또는 redis.
+  # 네트워크의 모든 서버가 같은 값을 써야 합니다. 다르면 기동이 거부됩니다.
+  # redis 를 쓰면 소유권 조율과 CachedPlayerRepository 의 최신 데이터는 Redis 에,
+  # 영속 저장은 여전히 아래 database 설정의 MySQL/H2/SQLite 에 주기적으로 기록됩니다.
   backend: database
+  # 소유권 유지 시간(초). renew-seconds 의 3배 이상을 권장합니다.
   lease-seconds: 30
+  # 소유권 갱신 주기(초)
   renew-seconds: 10
+  # 접속 시 이전 서버의 저장 완료를 기다리는 최대 시간(초). 넘으면 킥됩니다.
   join-timeout-seconds: 5
+  # 소유권 재시도 간격(밀리초)
   retry-interval-millis: 200
+  # update {} 로 바뀐 데이터를 DB 에 쓰는 주기(초)
   dirty-flush-seconds: 5
+  # 모든 접속자의 데이터를 한 바퀴 저장하는 주기(초). 이 시간 동안 나눠서 저장합니다.
   full-flush-seconds: 60
 
 redis:
   # 비워 두면 Redis 를 사용하지 않습니다. 예: redis://:password@127.0.0.1:6379/0
+  # player-data.backend 가 redis 면 반드시 채워야 합니다. 채우면 backend 와 관계없이 CachedPlayerRepository 가 Redis 를 사용합니다.
+  # Redis 를 쓸 때는 AOF(appendfsync everysec) 를 켜 두세요. Redis 가 유실되면 마지막 DB 저장 이후의 변경이 사라집니다.
+  # Redis 에 접속할 수 없으면 플레이어 접속이 보류되고, 회복되지 않으면 킥됩니다. DB 로 자동 전환하지 않습니다.
   uri: ""
+  # 프레임워크 키 접두어. 플러그인은 자기 접두어를 쓰세요.
   key-prefix: hq
-  # CachedPlayerRepository 가 MySQL 저장을 마친 플레이어 데이터를 Redis 에 남겨 두는 시간
+  # CachedPlayerRepository 가 MySQL 저장을 마친 플레이어 데이터를 Redis 에 남겨 두는 시간(초)
   data-ttl-seconds: 3600
 
 scheduler:
