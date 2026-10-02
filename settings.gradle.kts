@@ -76,7 +76,7 @@ dependencyResolutionManagement {
             library("mysql-connector", "com.mysql:mysql-connector-j:${getProperty("mysqlConnectorVersion")}")
 
             library("mockK", "io.mockk:mockk:${getProperty("mockKVersion")}")
-            library("mockBukkit", "com.github.seeseemelk:MockBukkit-v1.19:${getProperty("mockBukkitVersion")}")
+            library("mockBukkit", "com.github.seeseemelk:MockBukkit-v1.20:${getProperty("mockBukkitVersion")}")
             library("junit-parameterizedTest", "org.junit.jupiter:junit-jupiter-params:${getProperty("jUnitVersion")}")
             library("netty", "io.netty:netty-all:${getProperty("nettyVersion")}")
             library("guava", "com.google.guava:guava:${getProperty("guavaVersion")}")
