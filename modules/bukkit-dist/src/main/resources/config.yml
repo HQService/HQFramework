@@ -60,7 +60,7 @@ redis:
   # player-data.backend 가 redis 면 반드시 채워야 합니다. 채우면 backend 와 관계없이 CachedPlayerRepository 가 Redis 를 사용합니다.
   # Redis 를 쓸 때는 AOF(appendfsync everysec) 를 켜 두세요. Redis 가 유실되면 마지막 DB 저장 이후의 변경이 사라집니다.
   # Redis 에 접속할 수 없으면 플레이어 접속이 보류되고, 회복되지 않으면 킥됩니다. DB 로 자동 전환하지 않습니다.
-  # Redis Cluster 는 지원하지 않습니다.
+  # Redis Cluster 는 지원하지 않습니다. Redis 5 이상이 필요합니다.
   uri: ""
   # 프레임워크 키 접두어. 플러그인은 자기 접두어를 쓰세요.
   key-prefix: hq

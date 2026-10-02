@@ -545,7 +545,7 @@ redis:
   data-ttl-seconds: 3600
 ```
 
-`redis.uri`를 비워 두면 Redis를 전혀 쓰지 않습니다. `backend: redis`인데 `redis.uri`가 비어 있으면 기동에 실패합니다. 단일 Redis(또는 Sentinel 뒤의 마스터)만 지원하며 **Redis Cluster는 지원하지 않습니다**(소유권 갱신 스크립트가 여러 플레이어 키를 한 번에 다룹니다).
+`redis.uri`를 비워 두면 Redis를 전혀 쓰지 않습니다. `backend: redis`인데 `redis.uri`가 비어 있으면 기동에 실패합니다. 단일 Redis(또는 Sentinel 뒤의 마스터)만 지원하며 **Redis 5 이상이 필요하고 Redis Cluster는 지원하지 않습니다**(소유권 갱신 스크립트가 여러 플레이어 키를 한 번에 다룹니다).
 
 `backend`를 `database`에서 `redis`로(또는 반대로) 바꾸는 절차:
 1. 네트워크의 모든 서버를 정지합니다.
