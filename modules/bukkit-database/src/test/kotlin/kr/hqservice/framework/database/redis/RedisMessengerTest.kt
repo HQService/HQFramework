@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Duration
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -16,20 +15,7 @@ class RedisMessengerTest {
     @Serializable
     data class Party(val id: String, val members: List<String>)
 
-    private class InMemoryTransport : PubSubTransport {
-        val listeners = mutableMapOf<String, CopyOnWriteArrayList<(ByteArray) -> Unit>>()
-
-        override fun publish(channel: String, payload: ByteArray) {
-            listeners[channel]?.forEach { it(payload) }
-        }
-
-        override fun subscribe(channel: String, listener: (ByteArray) -> Unit): AutoCloseable {
-            listeners.getOrPut(channel) { CopyOnWriteArrayList() }.add(listener)
-            return AutoCloseable { listeners[channel]?.remove(listener) }
-        }
-    }
-
-    private val transport = InMemoryTransport()
+    private val transport = InMemoryPubSubTransport()
     private val logger = mockk<Logger>(relaxed = true)
     private val messenger = RedisMessenger(transport, RedisSettings("", "hq", Duration.ofSeconds(3600)), Json, logger)
 

@@ -5,9 +5,15 @@ import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.database.datasource.H2DataSource
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import kr.hqservice.framework.database.datasource.SQLiteDataSource
+import kr.hqservice.framework.database.redis.PubSubTransport
+import kr.hqservice.framework.database.redis.RedisProvider
+import kr.hqservice.framework.database.redis.RedisSettings
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.PlayerDataBackendMarker
+import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.redis.LettuceSessionStore
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Singleton
@@ -38,8 +44,22 @@ class DatabaseConfig(
     fun providePlayerDataSettings(): PlayerDataSettings = PlayerDataSettings.from(config)
 
     @Bean
-    fun provideSessionCoordinator(database: Database, settings: PlayerDataSettings, server: Server): SessionCoordinator =
-        DatabaseSessionCoordinator(database, server.port.toString(), settings.lease)
+    fun provideSessionCoordinator(
+        database: Database,
+        settings: PlayerDataSettings,
+        server: Server,
+        redisSettings: RedisSettings,
+        redisProvider: RedisProvider,
+        transport: PubSubTransport,
+    ): SessionCoordinator {
+        val serverId = server.port.toString()
+        if (settings.backend == "redis") check(redisSettings.enabled) { "player-data.backend is redis but redis.uri is empty" }
+        PlayerDataBackendMarker.ensure(database, settings.backend)
+        return when (settings.backend) {
+            "redis" -> RedisSessionCoordinator(LettuceSessionStore(redisProvider), redisSettings, settings.lease, serverId, transport)
+            else -> DatabaseSessionCoordinator(database, serverId, settings.lease)
+        }
+    }
 
     @Singleton(binds = [HikariDataSource::class, DataSource::class])
     @Bean

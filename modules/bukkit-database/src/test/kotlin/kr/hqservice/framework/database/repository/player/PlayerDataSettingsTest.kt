@@ -30,8 +30,13 @@ class PlayerDataSettingsTest {
     @Test
     fun `unsupported backend fails`() {
         assertThrows<IllegalStateException> {
-            PlayerDataSettings.from(config("player-data:\n  backend: redis\n"))
+            PlayerDataSettings.from(config("player-data:\n  backend: mongo\n"))
         }
+    }
+
+    @Test
+    fun `redis backend is accepted`() {
+        assertEquals("redis", PlayerDataSettings.from(config("player-data:\n  backend: redis\n")).backend)
     }
 
     @Test

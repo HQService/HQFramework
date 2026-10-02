@@ -15,7 +15,7 @@ class PlayerDataSettings(
     companion object {
         fun from(config: HQYamlConfiguration): PlayerDataSettings {
             val backend = config.getString("player-data.backend", "database")
-            if (backend != "database") {
+            if (backend !in setOf("database", "redis")) {
                 throw IllegalStateException("player-data.backend '$backend' is not supported in this version")
             }
             return PlayerDataSettings(

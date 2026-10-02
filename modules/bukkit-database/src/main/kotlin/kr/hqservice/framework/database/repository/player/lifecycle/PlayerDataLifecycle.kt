@@ -58,9 +58,11 @@ class PlayerDataLifecycle(
     private val hints = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
     private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost)
     private val schedulerJob = scheduler.start(plugin)
+    private val releasedSubscription: AutoCloseable
 
     init {
         repositories.getAll().forEach(::attach)
+        releasedSubscription = coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) }
     }
 
     fun attach(repository: PlayerRepository<*>) {
@@ -87,6 +89,7 @@ class PlayerDataLifecycle(
 
     fun shutdown() {
         stop()
+        releasedSubscription.close()
         runBlocking {
             withTimeoutOrNull(5_000) {
                 sessions.all().forEach { session ->

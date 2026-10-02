@@ -17,4 +17,6 @@ interface SessionCoordinator {
     suspend fun commit(uuid: UUID, expectedVersion: Long): Long?
 
     suspend fun release(uuid: UUID): Boolean
+
+    fun onReleased(listener: (UUID) -> Unit): AutoCloseable = AutoCloseable { }
 }

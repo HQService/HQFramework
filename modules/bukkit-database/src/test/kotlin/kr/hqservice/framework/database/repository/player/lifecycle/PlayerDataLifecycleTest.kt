@@ -23,6 +23,7 @@ import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedP
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
 import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.PlayerSessionTable
+import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
 import kr.hqservice.framework.netty.api.PacketSender
 import kr.hqservice.framework.netty.packet.Packet
 import org.bukkit.entity.Player
@@ -54,6 +55,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Collections
 import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 
@@ -106,6 +108,7 @@ class PlayerDataLifecycleTest {
         serverId: String,
         settings: PlayerDataSettings = this@PlayerDataLifecycleTest.settings,
         val repo: TestPointRepository = TestPointRepository(),
+        val coordinator: SessionCoordinator = DatabaseSessionCoordinator(db, serverId, settings.lease),
     ) {
         val registry = PlayerRepositoryRegistryImpl().also { it.register(repo) }
         val sessions = PlayerSessionRegistry()
@@ -118,7 +121,7 @@ class PlayerDataLifecycleTest {
             plugin,
             registry,
             sessions,
-            DatabaseSessionCoordinator(db, serverId, settings.lease),
+            coordinator,
             db,
             settings,
             loading,
@@ -127,6 +130,19 @@ class PlayerDataLifecycleTest {
             mockk<HQNettyService>().also { every { it.isEnable() } returns true },
             logger,
         ).also(lifecycles::add)
+    }
+
+    class NotifyingCoordinator(private val delegate: SessionCoordinator) : SessionCoordinator by delegate {
+        private val listeners = CopyOnWriteArrayList<(UUID) -> Unit>()
+
+        override fun onReleased(listener: (UUID) -> Unit): AutoCloseable {
+            listeners += listener
+            return AutoCloseable { listeners -= listener }
+        }
+
+        fun fireReleased(uuid: UUID) = listeners.forEach { it(uuid) }
+
+        fun listenerCount(): Int = listeners.size
     }
 
     inner class LoadedListener : Listener {
@@ -292,6 +308,38 @@ class PlayerDataLifecycleTest {
         awaitUntil(500) { b.sessions.get(uuid) != null }
 
         assertEquals(9, b.repo[uuid]!!.n)
+    }
+
+    @Test
+    fun `coordinator release notification retries acquire before the next poll`() {
+        val a = Node("25565")
+        val slow = settings(joinTimeout = Duration.ofSeconds(10), retryInterval = Duration.ofSeconds(2))
+        val notifying = NotifyingCoordinator(DatabaseSessionCoordinator(db, "25566", slow.lease))
+        val b = Node("25566", slow, coordinator = notifying)
+        joined(a)
+        a.repo.update(uuid) { it.n = 4 }
+
+        b.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        tickFor(100)
+        assertFalse(b.repo.contains(uuid))
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { a.sent.isNotEmpty() }
+
+        notifying.fireReleased(uuid)
+        awaitUntil(500) { b.sessions.get(uuid) != null }
+
+        assertEquals(4, b.repo[uuid]!!.n)
+    }
+
+    @Test
+    fun `shutdown closes the release notification subscription`() {
+        val notifying = NotifyingCoordinator(DatabaseSessionCoordinator(db, "25565", settings.lease))
+        val a = Node("25565", coordinator = notifying)
+        assertEquals(1, notifying.listenerCount())
+
+        a.lifecycle.shutdown()
+
+        assertEquals(0, notifying.listenerCount())
     }
 
     @Test
