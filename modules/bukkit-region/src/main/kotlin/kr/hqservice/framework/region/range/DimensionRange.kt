@@ -5,7 +5,7 @@ import kr.hqservice.framework.region.location.impl.BlockLocationImpl
 import kr.hqservice.framework.region.range.enums.Offset
 import kr.hqservice.framework.region.range.enums.PlaneAxis
 
-class DimensionRange(
+class DimensionRange internal constructor(
     minPosition: BlockLocation,
     maxPosition: BlockLocation
 ) : Range(minPosition, maxPosition) {

@@ -8,7 +8,7 @@ import org.bukkit.World
 import org.bukkit.block.Block
 
 data class LazyBlockLocation(
-    private val worldName: String,
+    internal val worldName: String,
     private val vector3I: Point,
 ) : BlockLocation {
     constructor(worldName: String, x: Int, y: Int, z: Int) : this(worldName, Point(x, y, z))
@@ -56,10 +56,12 @@ data class LazyBlockLocation(
     }
 
     override fun equals(other: Any?): Boolean {
-        return when (other) {
-            null -> false
-            !is BlockLocation -> false
-            else -> hashCode() == other.hashCode()
-        }
+        if (this === other) return true
+        if (other !is BlockLocation) return false
+        return vector3I == other.getPoint() && worldName == other.worldName()
     }
+}
+
+internal fun BlockLocation.worldName(): String {
+    return if (this is LazyBlockLocation) worldName else getWorld().name
 }
