@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 25
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '25'
         distribution: 'temurin'
@@ -28,5 +28,7 @@ jobs:
         gradle-version: '9.4.1'
     - name: Make gradlew executable
       run: chmod +x ./gradlew
+    - name: Run tests
+      run: ./gradlew test --no-daemon --console=plain
     - name: Publish to Sonatype Repository
-      run: gradle publishAllPublicationsToMavenRepository
+      run: ./gradlew publishAllPublicationsToMavenRepository --no-daemon --console=plain

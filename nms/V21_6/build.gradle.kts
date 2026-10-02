@@ -3,6 +3,10 @@ plugins {
     id("io.papermc.paperweight.userdev")
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")

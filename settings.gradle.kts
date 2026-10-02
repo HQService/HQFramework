@@ -27,6 +27,10 @@ pluginManagement {
     }
 }
 
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
 file(rootProject.projectDir.path + "/credentials.gradle.kts").let {
     if (it.exists()) {
         apply(it.path)

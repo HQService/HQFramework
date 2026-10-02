@@ -8,6 +8,10 @@ group = projectGroup
 val projectVersion: String by project
 version = projectVersion
 
+kotlin {
+    jvmToolchain(17)
+}
+
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
