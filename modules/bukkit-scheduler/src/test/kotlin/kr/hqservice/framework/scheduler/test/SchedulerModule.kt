@@ -3,7 +3,7 @@ package kr.hqservice.framework.scheduler.test
 import be.seeseemelk.mockbukkit.MockBukkit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kr.hqservice.framework.database.datasource.MySQLDataSource
+import kr.hqservice.framework.database.datasource.H2DataSource
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -19,7 +19,7 @@ import javax.sql.DataSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SchedulerModule {
-    private val testDataSource = MySQLDataSource("hqservice.kr", 3306, "hq", "test", "testpassword@")
+    private val testDataSource = H2DataSource("hq-scheduler-test", inMemory = true)
     lateinit var schedulerFactory: SchedulerFactory
 
     @BeforeEach
