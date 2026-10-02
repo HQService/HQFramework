@@ -14,7 +14,7 @@ class ComponentInstanceMap : MutableMap<KClass<*>, HQComponent> by mutableMapOf(
 
     @Suppress("UNCHECKED_CAST")
     fun <T : HQComponent> getComponent(key: KClass<T>): T {
-        return get(key) as T
+        return (get(key) ?: throw IllegalArgumentException("component ${key.simpleName} not registered")) as T
     }
 
     @Suppress("UNCHECKED_CAST")
