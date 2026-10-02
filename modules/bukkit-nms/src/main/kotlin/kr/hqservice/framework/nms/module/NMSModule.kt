@@ -6,7 +6,9 @@ import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.bukkit.core.coroutine.component.coroutinescope.HQCoroutineScope
 import kr.hqservice.framework.global.core.component.Qualifier
+import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.registry.LanguageRegistry
+import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import org.bukkit.plugin.Plugin
 import java.io.File
 import java.util.*
@@ -15,6 +17,7 @@ import java.util.*
 class NMSModule(
     private val plugin: Plugin,
     private val languageRegistry: LanguageRegistry,
+    private val nettyInjectService: NmsNettyInjectService,
     @Qualifier("virtual") private val virtualScope: HQCoroutineScope
 ) {
     @Setup
@@ -32,5 +35,9 @@ class NMSModule(
     @Teardown
     fun teardown() {
         virtualScope.cancel()
+        EarlyHookInstaller.uninstall()
+        plugin.server.onlinePlayers.forEach { player ->
+            runCatching { nettyInjectService.removeHandler(player) }
+        }
     }
 }

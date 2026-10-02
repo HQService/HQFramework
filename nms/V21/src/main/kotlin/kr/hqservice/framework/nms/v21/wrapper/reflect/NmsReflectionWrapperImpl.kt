@@ -1,5 +1,8 @@
 package kr.hqservice.framework.nms.v21.wrapper.reflect
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.nms.virtual.AbstractVirtualEntity
 import kr.hqservice.framework.nms.virtual.Virtual
@@ -31,7 +34,7 @@ class NmsReflectionWrapperImpl : NmsReflectionWrapper, HQSimpleComponent {
                 virtual.send { packet ->
                     if (packet is Packet<*>) connection.sendPacket(packet)
                     else if (packet is VirtualFunc) packet.invoke(player)
-                    if (it is VirtualContainer) player.updateInventory()
+                    if (it is VirtualContainer) withContext(Dispatchers.BukkitMain) { player.updateInventory() }
                 }
             }
         }

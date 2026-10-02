@@ -105,28 +105,30 @@ abstract class AbstractVirtualScope(
     suspend fun sign(
         signFactoryScope: VirtualSignScope.() -> Unit
     ) {
-        viewers.forEach { player ->
-            val containerFactory = VirtualSignScope(player, signFactory)
-            containerFactory.signFactoryScope()
+        viewers.forEach { player -> openSign(player, signFactoryScope) }
+    }
 
-            val server = player.server
-            val location = player.location
-            val blockData = server.createBlockData(Material.OAK_SIGN)
-            player.sendBlockChange(location, blockData)
-            reflectionWrapper.sendPacket(player, *containerFactory.getMessages())
+    private suspend fun openSign(player: Player, signFactoryScope: VirtualSignScope.() -> Unit) {
+        val containerFactory = VirtualSignScope(player, signFactory)
+        containerFactory.signFactoryScope()
 
-            val virtualSignHandler = signHandlerFactory.createHandler(reflectionWrapper) { texts ->
-                if (containerFactory.confirm(texts)) {
-                    val airBlockData = server.createBlockData(Material.AIR)
-                    player.sendBlockChange(location, airBlockData)
-                    true
-                } else {
-                    sign(signFactoryScope)
-                    false
-                }
+        val server = player.server
+        val location = player.location
+        val blockData = server.createBlockData(Material.OAK_SIGN)
+        player.sendBlockChange(location, blockData)
+        reflectionWrapper.sendPacket(player, *containerFactory.getMessages())
+
+        val virtualSignHandler = signHandlerFactory.createHandler(reflectionWrapper) { texts ->
+            if (containerFactory.confirm(texts)) {
+                val airBlockData = server.createBlockData(Material.AIR)
+                player.sendBlockChange(location, airBlockData)
+                true
+            } else {
+                openSign(player, signFactoryScope)
+                false
             }
-            handlerRegistry.register(player.uniqueId, virtualSignHandler)
         }
+        handlerRegistry.register(player.uniqueId, virtualSignHandler)
     }
 
     open suspend fun updateEntity(virtualEntity: AbstractVirtualEntity) {

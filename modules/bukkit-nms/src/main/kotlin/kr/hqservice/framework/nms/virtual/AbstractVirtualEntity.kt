@@ -94,8 +94,7 @@ abstract class AbstractVirtualEntity(
 
     fun setEquipmentItems(items: List<Pair<EquipmentSlot, ItemStack>>) {
         itemContainer = items.map {
-            val slot =
-                virtualEntityClasses.getEnumItemSlot(if (it.first == EquipmentSlot.HAND) "mainhand" else it.first.name)
+            val slot = virtualEntityClasses.getEnumItemSlot(it.first)
             virtualEntityClasses.createBukkitPair(
                 slot,
                 it.second.getNmsItemStack().getUnwrappedInstance()

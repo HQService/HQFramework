@@ -6,10 +6,8 @@ import kr.hqservice.framework.nms.handler.EarlyPacketHandler
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
-import java.util.*
 import kotlin.reflect.jvm.isAccessible
 
 class LegacyNmsNettyInjectService(
@@ -35,33 +33,6 @@ class LegacyNmsNettyInjectService(
 
         channelField.isAccessible = true
         return channelField.call(connection) as Channel
-    }
-
-    override fun getServerChannels(server: Server): List<Channel> {
-        val nmsServer = reflectionWrapper.getNmsServer(server)
-        val mcServerClass = reflectionWrapper.getNmsClass("MinecraftServer", Version.V_17.handle("server"))
-        val serverConnectionListener = reflectionWrapper.getNmsClass("ServerConnection", Version.V_17.handle("server.network"))
-        val listenerField = reflectionWrapper.getField(mcServerClass, serverConnectionListener)
-        listenerField.isAccessible = true
-        val listener = listenerField.call(nmsServer)
-
-        val connectionField = reflectionWrapper.getField(serverConnectionListener, "connections",
-            Version.V_17.handle("g"),
-            Version.V_17_FORGE.handle("f_9704_")
-        )
-        connectionField.isAccessible = true
-
-        val connectionType = reflectionWrapper.getNmsClass("NetworkManager", Version.V_17.handle("network"))
-        val connections = connectionField.call(listener) as List<*>
-
-        val output = LinkedList<Channel>()
-        val channelField = reflectionWrapper.getField(connectionType, Channel::class)
-
-        connections.forEach {
-            output.add(channelField.call(it) as Channel)
-        }
-
-        return Collections.unmodifiableList(output)
     }
 
     override fun injectHandler(player: Player) {

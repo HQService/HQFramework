@@ -1,6 +1,9 @@
 package kr.hqservice.framework.nms.v26_1.virtual.container
 
 import com.mojang.math.Transformation
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.container.VirtualAnvilContainer
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
@@ -71,17 +74,18 @@ class VirtualContainerMessageFactoryImpl(
 
     private fun createAnvil(virtualContainer: VirtualAnvilContainer): VirtualMessage {
         val handle = (virtualContainer.player as CraftPlayer).handle
+        val title = if (virtualContainer is VirtualPaperAnvilContainer) baseComponentService.wrapFromAdventure(virtualContainer.adventure).getUnwrappedInstance() as Component
+            else baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
 
-        val anvil = MenuType.ANVIL.create(handle.nextContainerCounter(), handle.inventory)
-        handle.containerMenu = anvil
-
-        return VirtualMessageImpl(
-            ClientboundOpenScreenPacket(
-                anvil.containerId,
-                anvil.type,
-                if (virtualContainer is VirtualPaperAnvilContainer) baseComponentService.wrapFromAdventure(virtualContainer.adventure).getUnwrappedInstance() as Component
-                else baseComponentService.wrap(virtualContainer.title).getUnwrappedInstance() as Component
-            )
-        )
+        return object : VirtualMessage {
+            override suspend fun send(block: suspend (packet: Any) -> Unit) {
+                val anvil = withContext(Dispatchers.BukkitMain) {
+                    if (handle.containerMenu !== handle.inventoryMenu) handle.closeContainer()
+                    MenuType.ANVIL.create(handle.nextContainerCounter(), handle.inventory)
+                        .also { handle.containerMenu = it }
+                }
+                block(ClientboundOpenScreenPacket(anvil.containerId, anvil.type, title))
+            }
+        }
     }
 }

@@ -1,5 +1,8 @@
 package kr.hqservice.framework.nms.legacy.wrapper.reflect
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.handler.FunctionType
@@ -147,7 +150,7 @@ class LegacyNmsReflectionWrapperImpl(
                 it.createVirtualMessage()?.also { virtual ->
                     virtual.send { packet ->
                         sendPacket.call(connection, packet)
-                        if (it is VirtualContainer) player.updateInventory()
+                        if (it is VirtualContainer) withContext(Dispatchers.BukkitMain) { player.updateInventory() }
                     }
                 }
             }
@@ -211,9 +214,8 @@ class LegacyNmsReflectionWrapperImpl(
         functionType: FunctionType,
         vararg handlers: VersionHandler,
     ): KCallable<*> {
-        val key = "${clazz.simpleName}#" + functionType.getName()
-        return if (callableMap.contains(key)) callableMap[key]!!
-        else {
+        val key = "${clazz.qualifiedName}#${functionType.getName()}#${functionType.getParameterClasses(clazz).map { it.qualifiedName }}"
+        return callableMap[key] ?: run {
             val type = sortHandlers(*handlers)
                 .filter { it.getVersion().support(version, minorVersion) }
                 .run {
@@ -221,11 +223,13 @@ class LegacyNmsReflectionWrapperImpl(
                     else maxBy { it.getVersion().ordinal }
                 } ?: CallableVersionHandler(version, functionType)
 
-            try {
+            val callable = try {
                 functions.first { callable -> type.isMatched(clazz, callable) }
             } catch (e: Exception) {
                 throw NoSuchElementException("${clazz.simpleName}.${type.getName()} 메소드를 찾을 수 업습니다.\n", e)
             }
+            callableMap[key] = callable
+            callable
         }
     }
 

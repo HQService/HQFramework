@@ -7,12 +7,11 @@ import kr.hqservice.framework.nms.NMSServiceManager
 import kr.hqservice.framework.nms.NMSServiceProvider
 import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.handler.EarlyPacketHandler
+import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.registry.LanguageRegistry
 import kr.hqservice.framework.nms.v26_1.VirtualFactoryProviderImpl
 import kr.hqservice.framework.nms.v26_1.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import net.kyori.adventure.key.Key
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.protocol.login.ServerboundHelloPacket
 import org.bukkit.plugin.Plugin
@@ -31,19 +30,15 @@ class NMSServiceManagerV26_2(
     }
 
     override fun initialize() {
-        ChannelInitializeListenerHolder.addListener(Key.key("hqservice:early-pipeline-hook")) { ch ->
-            val pipeline = ch.pipeline()
-            if (pipeline.get("hq_packet_handler") == null) {
-                pipeline.addBefore(
-                    "packet_handler", "hq_packet_handler",
-                    EarlyPacketHandler(plugin, virtualHandlerRegistry) {
-                        if (it is ServerboundHelloPacket) {
-                            if (plugin.server.onlineMode || GlobalConfiguration.get().proxies.velocity.enabled) it.profileId
-                            else UUIDUtil.createOfflinePlayerUUID(it.name)
-                        } else null
-                    }
-                )
-            }
+        EarlyHookInstaller.install(
+            plugin, virtualHandlerRegistry,
+            { key, initializer -> ChannelInitializeListenerHolder.addListener(key) { initializer(it) } },
+            { key -> ChannelInitializeListenerHolder.removeListener(key) }
+        ) {
+            if (it is ServerboundHelloPacket) {
+                if (plugin.server.onlineMode || GlobalConfiguration.get().proxies.velocity.enabled) it.profileId
+                else UUIDUtil.createOfflinePlayerUUID(it.name)
+            } else null
         }
 
         val reflectionWrapper = NmsReflectionWrapperImpl()

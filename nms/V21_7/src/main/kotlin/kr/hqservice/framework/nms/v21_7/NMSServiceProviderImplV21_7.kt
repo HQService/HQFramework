@@ -9,7 +9,6 @@ import kr.hqservice.framework.nms.service.entity.NmsDisplayService
 import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
-import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.service.math.NmsVector3fService
 import kr.hqservice.framework.nms.service.world.NmsWorldBorderService
 import kr.hqservice.framework.nms.service.world.NmsWorldService
@@ -18,11 +17,10 @@ import kr.hqservice.framework.nms.v21.service.entity.NmsDisplayServiceImpl
 import kr.hqservice.framework.nms.v21.service.entity.NmsTextDisplayServiceImpl
 import kr.hqservice.framework.nms.v21.service.item.NmsItemServiceImpl
 import kr.hqservice.framework.nms.v21.service.item.NmsItemStackServiceImpl
-import kr.hqservice.framework.nms.v21.service.item.NmsNBTTagCompoundServiceImpl
 import kr.hqservice.framework.nms.v21.service.math.NmsVector3fServiceImpl
 import kr.hqservice.framework.nms.v21.service.world.NmsWorldBoardServiceImpl
 import kr.hqservice.framework.nms.v21.service.world.NmsWorldServiceImpl
-import kr.hqservice.framework.nms.v21_8.service.chat.NmsBaseComponentServiceImpl
+import kr.hqservice.framework.nms.v21_6.service.chat.NmsBaseComponentServiceImpl
 import kr.hqservice.framework.nms.v21_7.service.container.NmsContainerServiceImpl
 import kr.hqservice.framework.nms.v21_7.service.netty.NmsNettyInjectServiceImpl
 import kr.hqservice.framework.nms.v21_5.service.entity.NmsArmorStandServiceImpl
@@ -43,7 +41,6 @@ open class NMSServiceProviderImplV21_7(
     private val worldService = NmsWorldServiceImpl()
     private val worldBorderService = NmsWorldBoardServiceImpl(worldService)
     private val armorStandService = NmsArmorStandServiceImpl(vector3fService)
-    private val nbtTagService = NmsNBTTagCompoundServiceImpl()
     private val itemService = NmsItemServiceImpl(languageRegistry)
     private val itemStackService = NmsItemStackServiceImpl(languageRegistry)
     private val nettyInjectService = NmsNettyInjectServiceImpl(plugin, reflectionWrapper, virtualHandlerRegistry)
@@ -68,10 +65,6 @@ open class NMSServiceProviderImplV21_7(
 
     override fun provideItemStackService(): NmsItemStackService {
         return itemStackService
-    }
-
-    override fun provideNBTTagService(): NmsNBTTagCompoundService {
-        return nbtTagService
     }
 
     override fun provideVector3fService(): NmsVector3fService {

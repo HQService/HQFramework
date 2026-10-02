@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.v21.virtual.classes
 
+import com.google.gson.JsonPrimitive
 import com.mojang.datafixers.util.Pair
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
@@ -69,7 +70,7 @@ class VirtualEntityClassesImpl(
 
     override fun setCustomName(name: String, entity: Any) {
         entity as Entity
-        entity.customName = componentWrapper.wrap("{\"text\":\"$name\"}").getUnwrappedInstance() as net.minecraft.network.chat.Component
+        entity.customName = componentWrapper.wrap("{\"text\":${JsonPrimitive(name)}}").getUnwrappedInstance() as net.minecraft.network.chat.Component
     }
 
     override fun setCustomName(name: BaseComponent, entity: Any) {
@@ -98,11 +99,11 @@ class VirtualEntityClassesImpl(
     }
 
     override fun getEnumItemSlot(enumItemSlot: String): net.minecraft.world.entity.EquipmentSlot {
-        return net.minecraft.world.entity.EquipmentSlot.byName(enumItemSlot.lowercase())
+        return net.minecraft.world.entity.EquipmentSlot.byName(VirtualEntityClasses.toNmsSlotName(enumItemSlot))
     }
 
     override fun getEnumItemSlot(enumItemSlot: EquipmentSlot): net.minecraft.world.entity.EquipmentSlot {
-        return net.minecraft.world.entity.EquipmentSlot.byName(enumItemSlot.name)
+        return net.minecraft.world.entity.EquipmentSlot.byName(VirtualEntityClasses.toNmsSlotName(enumItemSlot.name))
     }
 
     override fun createBukkitPair(first: Any, second: Any): Any {

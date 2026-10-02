@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.v21_8
+package kr.hqservice.framework.nms.v21_6
 
 import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.v21.virtual.entity.HQBillboardFactoryImpl

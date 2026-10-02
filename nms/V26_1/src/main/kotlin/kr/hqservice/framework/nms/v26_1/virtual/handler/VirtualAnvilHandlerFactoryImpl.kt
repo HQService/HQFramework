@@ -1,11 +1,11 @@
 package kr.hqservice.framework.nms.v26_1.virtual.handler
 
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.nms.v26_1.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.handler.AnvilDummyListener
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
+import kr.hqservice.framework.nms.virtual.handler.launchVirtualCallback
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import net.minecraft.network.protocol.game.ServerboundContainerClickPacket
 import net.minecraft.network.protocol.game.ServerboundContainerClosePacket
@@ -32,6 +32,7 @@ class VirtualAnvilHandlerFactoryImpl : VirtualAnvilHandlerFactory {
 
         return object : VirtualHandler {
             private var currentText = ""
+            @Volatile
             private var unregistered = false
 
             override fun getNmsSimpleNames(): List<String> = emptyList()
@@ -46,34 +47,41 @@ class VirtualAnvilHandlerFactoryImpl : VirtualAnvilHandlerFactory {
 
             override fun unregisterCondition(message: Any): Boolean {
                 if (unregistered || message is ServerboundContainerClosePacket) {
-                    runBlocking { closeScope.invoke(currentText) }
+                    val text = currentText
+                    launchVirtualCallback { closeScope(text) }
                     dummyListener.close()
                     return true
                 }
                 return false
             }
 
+            override fun close() {
+                dummyListener.close()
+            }
+
             override fun handle(message: Any) {
                 when (message) {
                     is ServerboundRenameItemPacket -> {
                         val name = message.name
-                        runBlocking { textScope(name) }
+                        launchVirtualCallback { textScope(name) }
                         currentText = name
                     }
 
                     is ServerboundContainerClickPacket -> {
                         val slotNum = message.slotNum.toInt()
                         if (slotNum == 2) {
-                            runBlocking {
-                                if (confirmScope(currentText)) {
+                            val text = currentText
+                            launchVirtualCallback {
+                                if (confirmScope(text)) {
                                     unregistered = true
-                                } else if (buttonScope(2, currentText)) {
+                                } else if (buttonScope(2, text)) {
                                     unregistered = true
                                 }
                             }
                         } else if (slotNum in 0..1) {
-                            runBlocking {
-                                if (buttonScope(slotNum, currentText)) {
+                            val text = currentText
+                            launchVirtualCallback {
+                                if (buttonScope(slotNum, text)) {
                                     unregistered = true
                                 } else otherSlotClickScope()
                             }

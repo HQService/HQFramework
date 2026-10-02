@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.legacy.virtual.classes
 
+import com.google.gson.JsonPrimitive
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.classes.VirtualEntityClasses
@@ -58,7 +59,7 @@ class LegacyVirtualEntityClasses(
         entityEquipmentPacketConstructor.newInstance(it.getEntityId(), it.itemContainer ?: emptyList<Any>())
     }
 
-    private val listMetadata = Version.V_19.support(reflectionWrapper.getVersion())
+    private val listMetadata = reflectionWrapper.getFullVersion().ordinal >= Version.V_19_3.ordinal
     private val entityMetadataPacket = if (!listMetadata) {
         reflectionWrapper.getNmsClass("PacketPlayOutEntityMetadata",
             Version.V_17.handle("network.protocol.game")
@@ -168,7 +169,7 @@ class LegacyVirtualEntityClasses(
     }
 
     override fun setCustomName(name: String, entity: Any) {
-        setCustomNameFunction.call(entity, componentWrapper.wrap("{\"text\":\"$name\"}").getUnwrappedInstance())
+        setCustomNameFunction.call(entity, componentWrapper.wrap("{\"text\":${JsonPrimitive(name)}}").getUnwrappedInstance())
     }
 
     override fun setCustomName(name: BaseComponent, entity: Any) {
@@ -192,11 +193,11 @@ class LegacyVirtualEntityClasses(
     }
 
     override fun getEnumItemSlot(enumItemSlot: String): Any {
-        return enumItemSlotValueOfFunction.call(enumItemSlot.lowercase()) ?: throw NoSuchElementException()
+        return enumItemSlotValueOfFunction.call(VirtualEntityClasses.toNmsSlotName(enumItemSlot)) ?: throw NoSuchElementException()
     }
 
     override fun getEnumItemSlot(enumItemSlot: EquipmentSlot): Any {
-        return enumItemSlotValueOfFunction.call(enumItemSlot.name.lowercase()) ?: throw NoSuchElementException()
+        return enumItemSlotValueOfFunction.call(VirtualEntityClasses.toNmsSlotName(enumItemSlot.name)) ?: throw NoSuchElementException()
     }
 
     override fun createBukkitPair(first: Any, second: Any): Any {

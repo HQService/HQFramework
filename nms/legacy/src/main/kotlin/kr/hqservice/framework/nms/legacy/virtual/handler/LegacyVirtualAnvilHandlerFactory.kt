@@ -1,6 +1,5 @@
 package kr.hqservice.framework.nms.legacy.virtual.handler
 
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
@@ -8,6 +7,7 @@ import kr.hqservice.framework.nms.virtual.handler.AnvilDummyListener
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualAnvilHandlerFactory
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
+import kr.hqservice.framework.nms.virtual.handler.launchVirtualCallback
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
@@ -31,6 +31,7 @@ class LegacyVirtualAnvilHandlerFactory : VirtualAnvilHandlerFactory {
 
         return object : VirtualHandler {
             private var currentText = ""
+            @Volatile
             private var unregistered = false
 
             override fun getNmsSimpleNames(): List<String> {
@@ -47,11 +48,16 @@ class LegacyVirtualAnvilHandlerFactory : VirtualAnvilHandlerFactory {
 
             override fun unregisterCondition(message: Any): Boolean {
                 if (unregistered || message::class.simpleName == "PacketPlayInCloseWindow") {
-                    runBlocking { closeScope.invoke(currentText) }
+                    val text = currentText
+                    launchVirtualCallback { closeScope(text) }
                     dummyListener.close()
                     return true
                 }
                 return false
+            }
+
+            override fun close() {
+                dummyListener.close()
             }
 
             override fun handle(message: Any) {
@@ -64,7 +70,7 @@ class LegacyVirtualAnvilHandlerFactory : VirtualAnvilHandlerFactory {
                             Version.V_17_FORGE.handle("f_134393_")
                         )
                         val name = nameField.callAccess<String>(message)
-                        runBlocking { textScope(name) }
+                        launchVirtualCallback { textScope(name) }
                         currentText = name
                     }
 
@@ -76,16 +82,18 @@ class LegacyVirtualAnvilHandlerFactory : VirtualAnvilHandlerFactory {
                         )
                         val slotNum = slotNumField.callAccess<Int>(message)
                         if (slotNum == 2) {
-                            runBlocking {
-                                if (confirmScope(currentText)) {
+                            val text = currentText
+                            launchVirtualCallback {
+                                if (confirmScope(text)) {
                                     unregistered = true
-                                } else if (buttonScope(2, currentText)) {
+                                } else if (buttonScope(2, text)) {
                                     unregistered = true
                                 }
                             }
                         } else if (slotNum in 0..1) {
-                            runBlocking {
-                                if (buttonScope(slotNum, currentText)) {
+                            val text = currentText
+                            launchVirtualCallback {
+                                if (buttonScope(slotNum, text)) {
                                     unregistered = true
                                 } else otherSlotClickScope()
                             }

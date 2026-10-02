@@ -1,4 +1,4 @@
-package kr.hqservice.framework.nms.v21_8.service.chat
+package kr.hqservice.framework.nms.v21_6.service.chat
 
 import io.papermc.paper.adventure.PaperAdventure
 import kr.hqservice.framework.nms.service.chat.NmsBaseComponentService

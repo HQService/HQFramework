@@ -1,12 +1,12 @@
 package kr.hqservice.framework.nms.legacy.virtual.handler
 
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.extension.callAccess
 import kr.hqservice.framework.nms.legacy.wrapper.LegacyNmsReflectionWrapper
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
+import kr.hqservice.framework.nms.virtual.handler.launchVirtualCallback
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 
 class LegacyVirtualSignHandlerFactory : VirtualSignHandlerFactory {
@@ -36,7 +36,7 @@ class LegacyVirtualSignHandlerFactory : VirtualSignHandlerFactory {
                         Version.V_17_FORGE.handle("f_134646_")
                     )
                     val texts = linesField.callAccess<Array<String>>(message).toList()
-                    runBlocking { confirmHandler(texts) }
+                    launchVirtualCallback { confirmHandler(texts) }
                     return true
                 }
                 return false

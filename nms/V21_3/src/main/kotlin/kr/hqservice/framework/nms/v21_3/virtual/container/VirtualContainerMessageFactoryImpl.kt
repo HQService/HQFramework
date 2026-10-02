@@ -1,5 +1,8 @@
 package kr.hqservice.framework.nms.v21_3.virtual.container
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.nms.virtual.VirtualMessage
 import kr.hqservice.framework.nms.virtual.container.VirtualAnvilContainer
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
@@ -87,7 +90,7 @@ class VirtualContainerMessageFactoryImpl(
                 ),
                 VirtualFunc {
                     val player = (it as CraftPlayer).handle
-                    player.containerMenu = anvilContainer
+                    withContext(Dispatchers.BukkitMain) { player.containerMenu = anvilContainer }
                 }
             )
         )

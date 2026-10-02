@@ -1,5 +1,6 @@
 package kr.hqservice.framework.nms.virtual.scope
 
+import com.google.gson.JsonPrimitive
 import kr.hqservice.framework.bukkit.core.extension.colorize
 import kr.hqservice.framework.nms.virtual.Virtual
 import kr.hqservice.framework.nms.virtual.container.VirtualContainer
@@ -27,7 +28,7 @@ class VirtualContainerScope(
     }
 
     fun setTitle(title: String) {
-        titlePacket = VirtualContainer(receiver, "{\"text\": \"§f$${title.colorize()}\"}")
+        titlePacket = VirtualContainer(receiver, "{\"text\": ${JsonPrimitive("§f${title.colorize()}")}}")
     }
 
     fun setTitle(title: BaseComponent) {
