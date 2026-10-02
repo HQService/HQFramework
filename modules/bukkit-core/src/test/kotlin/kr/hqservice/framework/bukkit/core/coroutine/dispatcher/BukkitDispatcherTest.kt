@@ -31,6 +31,18 @@ import kotlin.test.assertTrue
 class BukkitDispatcherTest {
     private lateinit var server: ServerMock
 
+    private fun lifecyclePlugin(enabling: Boolean, disabling: Boolean): HQBukkitPlugin {
+        val plugin = mockk<HQBukkitPlugin>()
+        setLifecycleField(plugin, "isEnabling", enabling)
+        setLifecycleField(plugin, "isDisabling", disabling)
+        every { plugin.isLifecycleBlockingMainThread } answers { callOriginal() }
+        return plugin
+    }
+
+    private fun setLifecycleField(plugin: HQBukkitPlugin, name: String, value: Boolean) {
+        HQBukkitPlugin::class.java.getDeclaredField(name).apply { isAccessible = true }.setBoolean(plugin, value)
+    }
+
     @BeforeEach
     fun setup() {
         server = MockBukkit.mock()
@@ -69,9 +81,19 @@ class BukkitDispatcherTest {
 
     @Test
     fun `main dispatch from the main thread runs inline while the plugin is enabling`() {
-        val enablingPlugin = mockk<HQBukkitPlugin>()
-        every { enablingPlugin.isEnabling } returns true
+        val enablingPlugin = lifecyclePlugin(enabling = true, disabling = false)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(enablingPlugin))
+        var ran = false
+
+        scope.launch { ran = true }
+
+        assertTrue(ran)
+    }
+
+    @Test
+    fun `main dispatch from the main thread runs inline while the plugin is disabling`() {
+        val disablingPlugin = lifecyclePlugin(enabling = false, disabling = true)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(disablingPlugin))
         var ran = false
 
         scope.launch { ran = true }
@@ -84,8 +106,7 @@ class BukkitDispatcherTest {
         val runnable = slot<() -> Unit>()
         val scheduler = mockk<HQScheduler>()
         every { scheduler.runTask(capture(runnable)) } just Runs
-        val enabledPlugin = mockk<HQBukkitPlugin>()
-        every { enabledPlugin.isEnabling } returns false
+        val enabledPlugin = lifecyclePlugin(enabling = false, disabling = false)
         every { enabledPlugin.getScheduler() } returns scheduler
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(enabledPlugin))
         var ran = false

@@ -85,6 +85,12 @@ class ComponentRegistryQueueTest {
     @Component
     class Optional(val missing: Missing?)
 
+    @Component
+    class LateDependency
+
+    @Component
+    class OptionalDependent(val dependency: LateDependency?)
+
     interface Handled : HQComponent
 
     @Component
@@ -163,6 +169,13 @@ class ComponentRegistryQueueTest {
         TestRegistry(listOf(Optional::class.java)).setup()
 
         assertNull(koin().get<Optional>().missing)
+    }
+
+    @Test
+    fun `nullable parameter waits for a dependency scanned later`() {
+        TestRegistry(listOf(OptionalDependent::class.java, LateDependency::class.java)).setup()
+
+        assertNotNull(koin().get<OptionalDependent>().dependency)
     }
 
     @Test

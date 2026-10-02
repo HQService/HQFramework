@@ -68,9 +68,9 @@ class CommandAnnotationHandler(
         if (hasParent(annotation)) return
         val hqCommand = registeredCommands.remove(instance::class) ?: return
         tabCompletionHandler.unregisterTabCompletion(hqCommand)
-        val commandMap = hqCommand.plugin.server.commandMap
+        val commandMap = CommandMapAccess.commandMap(hqCommand.plugin.server) ?: return
         hqCommand.unregister(commandMap)
-        commandMap.knownCommands.values.removeIf { it === hqCommand }
+        CommandMapAccess.knownCommands(commandMap)?.values?.removeIf { it === hqCommand }
     }
 
     private fun hasParent(annotation: Command): Boolean {
@@ -120,6 +120,7 @@ class CommandAnnotationHandler(
             plugin.logger.info("skipping registration while mocking")
             return
         }
+        val commandMap = CommandMapAccess.commandMap(plugin.server) ?: return
         val root = commandRegistry.registerRoot(rootClass)
 
         val hqCommand = HQBukkitCommand(
@@ -133,7 +134,7 @@ class CommandAnnotationHandler(
         )
         hqCommand.permission = if (root.isOp) "op" else root.permission
 
-        plugin.server.commandMap.register("hq", hqCommand)
+        commandMap.register("hq", hqCommand)
         registeredCommands[rootClass] = hqCommand
 
         plugin.launch {

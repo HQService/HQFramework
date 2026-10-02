@@ -33,7 +33,7 @@ class HQFrameworkJobStore(
     }
 
     init {
-        if (config.getString("database.type").uppercase() == "SQLITE") {
+        if (config.getString("database.type", "h2").uppercase() == "SQLITE") {
             driverDelegateClass = SQLiteDriverDelegate::class.qualifiedName
             logger.info("${AnsiColor.CYAN}SQLite DataSource Provided to HQFrameworkJobStore.${AnsiColor.RESET}")
             logger.info("${AnsiColor.CYAN}Set job store driver delegate class to SQLiteDriverDelegate.${AnsiColor.RESET}")
@@ -48,6 +48,6 @@ class HQFrameworkJobStore(
         instanceId = resolveSchedulerInstanceId(config, server)
         isThreadsInheritInitializersClassLoadContext = true
         setUseProperties(config.getBoolean("scheduler.job-store.use-properties", true).toString())
-        setIsClustered(config.getBoolean("scheduler.job-store.is-clustered", true))
+        setIsClustered(config.getBoolean("scheduler.job-store.is-clustered", false))
     }
 }

@@ -18,11 +18,11 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
         get() = BukkitMainDispatcherImmediate()
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        isAsync || location != null || !Bukkit.isPrimaryThread() || !isPluginEnabling(context)
+        isAsync || location != null || !Bukkit.isPrimaryThread() || !isLifecycleBlockingMainThread(context)
 
-    private fun isPluginEnabling(context: CoroutineContext): Boolean {
+    private fun isLifecycleBlockingMainThread(context: CoroutineContext): Boolean {
         val plugin = runCatching { getPluginByCoroutineContext(context) }.getOrNull()
-        return (plugin as? HQBukkitPlugin)?.isEnabling == true
+        return (plugin as? HQBukkitPlugin)?.isLifecycleBlockingMainThread == true
     }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {

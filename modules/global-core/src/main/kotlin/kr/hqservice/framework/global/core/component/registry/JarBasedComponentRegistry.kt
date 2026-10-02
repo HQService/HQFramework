@@ -3,8 +3,11 @@ package kr.hqservice.framework.global.core.component.registry
 import org.koin.core.component.KoinComponent
 import java.io.File
 import java.util.jar.JarFile
+import java.util.logging.Level
+import java.util.logging.Logger
 
 abstract class JarBasedComponentRegistry : AbstractComponentRegistry(), KoinComponent {
+    private val logger = Logger.getLogger(JarBasedComponentRegistry::class.java.name)
 
     /**
      * @return package to scan
@@ -27,16 +30,24 @@ abstract class JarBasedComponentRegistry : AbstractComponentRegistry(), KoinComp
             while (entries.hasMoreElements()) {
                 val name = entries.nextElement().name.replace("/", ".")
                 if (name.startsWith(getComponentScope()) && name.endsWith(".class")) {
+                    val className = name.removeSuffix(".class")
                     try {
-                        val clazz = Class.forName(name.removeSuffix(".class"), false, classLoader)
+                        val clazz = Class.forName(className, false, classLoader)
                         if (filterComponent(clazz)) {
                             classes.add(clazz)
                         }
-                    } catch (_: ClassNotFoundException) {
-                    } catch (_: LinkageError) {}
+                    } catch (exception: ClassNotFoundException) {
+                        logSkippedClass(className, exception)
+                    } catch (error: LinkageError) {
+                        logSkippedClass(className, error)
+                    }
                 }
             }
         }
         return classes
+    }
+
+    private fun logSkippedClass(className: String, throwable: Throwable) {
+        logger.log(Level.FINE, "skipping $className (${throwable::class.java.name})")
     }
 }

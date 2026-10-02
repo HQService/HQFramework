@@ -33,6 +33,7 @@ import java.io.File
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.time.LocalDateTime
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
@@ -53,7 +54,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     private var hasRegionScheduler = false
 
     internal companion object GlobalExceptionHandlerRegistry {
-        private val exceptionHandlers: MutableList<Pair<HQBukkitPlugin, AttachableExceptionHandler>> = mutableListOf()
+        private val exceptionHandlers: MutableList<Pair<HQBukkitPlugin, AttachableExceptionHandler>> = CopyOnWriteArrayList()
 
         fun attachExceptionHandler(plugin: HQBukkitPlugin, attachableExceptionHandler: AttachableExceptionHandler) {
             exceptionHandlers.add(plugin to attachableExceptionHandler)
@@ -179,6 +180,12 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     var isEnabling: Boolean = false
         private set
 
+    var isDisabling: Boolean = false
+        private set
+
+    val isLifecycleBlockingMainThread: Boolean
+        get() = isEnabling || isDisabling
+
     fun getHQConfig(): HQYamlConfiguration {
         return config
     }
@@ -227,22 +234,27 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
     @OptIn(ExperimentalStdlibApi::class)
     final override fun onDisable() {
-        runBlocking(
-            this@HQBukkitPlugin.coroutineContext.minusKey(CoroutineDispatcher).minusKey(Job) + SupervisorJob()
-        ) {
-            logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
-            onPreDisable()
-            supervisorJob.childrenAll
-                .filter { job ->
-                    job.coroutineContext[TeardownOptionCoroutineContextElement.Key]?.cancelWhenPluginTeardown == true
-                }.forEach { job ->
-                    job.cancel()
-                }
-            CoroutineTeardown.awaitChildren(supervisorJob, logger)
-            bukkitComponentRegistry.teardown()
-            onPostDisable()
-            GlobalExceptionHandlerRegistry.detachExceptionHandlers(this@HQBukkitPlugin)
-            logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
+        isDisabling = true
+        try {
+            runBlocking(
+                this@HQBukkitPlugin.coroutineContext.minusKey(CoroutineDispatcher).minusKey(Job) + SupervisorJob()
+            ) {
+                logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
+                onPreDisable()
+                supervisorJob.childrenAll
+                    .filter { job ->
+                        job.coroutineContext[TeardownOptionCoroutineContextElement.Key]?.cancelWhenPluginTeardown == true
+                    }.forEach { job ->
+                        job.cancel()
+                    }
+                CoroutineTeardown.awaitChildren(supervisorJob, logger)
+                bukkitComponentRegistry.teardown()
+                onPostDisable()
+                GlobalExceptionHandlerRegistry.detachExceptionHandlers(this@HQBukkitPlugin)
+                logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
+            }
+        } finally {
+            isDisabling = false
         }
     }
 

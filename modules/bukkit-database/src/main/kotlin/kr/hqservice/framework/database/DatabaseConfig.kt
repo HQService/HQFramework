@@ -25,7 +25,7 @@ class DatabaseConfig(
     @Bean
     fun provideDatabase(dataSource: DataSource): Database {
         return Database.connect(dataSource).also {
-            val type = config.getString("database.type")
+            val type = config.getString("database.type", "h2")
             logger.info("${AnsiColor.CYAN}${type.uppercase()} Database initialized.${AnsiColor.RESET}")
         }
     }
@@ -33,7 +33,7 @@ class DatabaseConfig(
     @Singleton(binds = [HikariDataSource::class, DataSource::class])
     @Bean
     fun provideDataSource(): HikariDataSource {
-        val type = config.getString("database.type")
+        val type = config.getString("database.type", "h2")
         return when(type.uppercase()) {
             "MYSQL" -> buildMySQLDataSource()
             "SQLITE" -> buildSQLiteDataSource()
@@ -46,11 +46,11 @@ class DatabaseConfig(
     }
 
     private fun buildMySQLDataSource(): HikariDataSource {
-        val host = config.getString("database.mysql.host")
-        val port = config.getInt("database.mysql.port")
-        val user = config.getString("database.mysql.user")
-        val password = config.getString("database.mysql.password")
-        val database = config.getString("database.mysql.database")
+        val host = config.getString("database.mysql.host", "localhost")
+        val port = config.getInt("database.mysql.port", 3306)
+        val user = config.getString("database.mysql.user", "root")
+        val password = config.getString("database.mysql.password", "password")
+        val database = config.getString("database.mysql.database", "hq")
         val maximumPoolSize = config.getInt("database.mysql.maximum-pool-size", 10)
         val maxLifetime = config.getLong("database.mysql.maximum-lifetime", 1800000)
         val keepaliveTime = config.getLong("database.mysql.keepalive-time", 0L)
@@ -67,7 +67,7 @@ class DatabaseConfig(
     }
 
     private fun buildSQLiteDataSource(): HikariDataSource {
-        val configuredPath = config.getString("database.sqlite.path").ifEmpty { config.getString("database.file-path") }.run {
+        val configuredPath = config.getString("database.sqlite.path").ifEmpty { config.getString("database.file-path", "hq-database/database") }.run {
             if (endsWith(".db")) this else "$this.db"
         }
         val databaseFile = resolveDatabaseFile(configuredPath) { it }
@@ -81,7 +81,7 @@ class DatabaseConfig(
     }
 
     private fun buildH2DataSource(): HikariDataSource {
-        val configuredPath = config.getString("database.file-path").removeSuffix(".db")
+        val configuredPath = config.getString("database.file-path", "hq-database/database").removeSuffix(".db")
         val databaseFile = resolveDatabaseFile(configuredPath) { File("${it.path}.mv.db") }
         databaseFile.parentFile?.mkdirs()
         return H2DataSource(databaseFile.path)

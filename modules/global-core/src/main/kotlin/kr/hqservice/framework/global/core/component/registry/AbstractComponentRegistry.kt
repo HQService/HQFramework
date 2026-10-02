@@ -48,6 +48,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
     private val annotationProcessNeededInstancesMap: Multimap<KClass<out Annotation>, Any> = ArrayListMultimap.create()
     private val primaryIndexKeys: MutableSet<String> = mutableSetOf()
     private val loadedModules: MutableList<Module> = mutableListOf()
+    private var allowOptionalFallback = true
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
 
@@ -67,6 +68,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
+        allowOptionalFallback = false
         findParentRegistry()?.takeIf { it !== this }?.let { inheritHandlersFrom(it) }
         val componentClasses = mutableListOf<Class<*>>()
         val beanClasses = mutableListOf<Class<*>>()
@@ -115,8 +117,13 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     componentExceptionCatchingStack++
                 }
                 if (componentExceptionCatchingStack == componentClassesQueue.size) {
-                    printFriendlyException(componentClassesQueue.toList())
-                    throw NoBeanDefinitionsFoundException()
+                    if (!allowOptionalFallback) {
+                        allowOptionalFallback = true
+                        componentExceptionCatchingStack = 0
+                    } else {
+                        printFriendlyException(componentClassesQueue.toList())
+                        throw NoBeanDefinitionsFoundException()
+                    }
                 }
                 previousComponentQueueSize = componentClassesQueue.size
             }
@@ -192,6 +199,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentExceptionCatchingStack = 0
             }
         }
+        allowOptionalFallback = true
 
         val annotationHandlersQueue: ConcurrentLinkedQueue<KClass<HQAnnotationHandler<*>>> =
             ConcurrentLinkedQueue((unsortedAnnotationHandlers.values + annotationHandlers.keys).distinct())
@@ -386,7 +394,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val injectedParameters = injectParameters(kFunction, providedInstanceMap)
         val valueParameters = kFunction.valueParameters
         val unresolvedRequired = valueParameters.indices.any { index ->
-            injectedParameters[index] == null && !valueParameters[index].isOptional && !valueParameters[index].type.isMarkedNullable
+            injectedParameters[index] == null && (!allowOptionalFallback || !valueParameters[index].isOptional && !valueParameters[index].type.isMarkedNullable)
         }
         if (unresolvedRequired) {
             return null

@@ -51,12 +51,17 @@ abstract class View(
         coroutineScope {
             viewerIds.addAll(viewer.map { it.uniqueId })
             if (isCreated.compareAndSet(false, true)) {
-                val openContext = Dispatchers.IO + CoroutineName("HQFrameworkViewOpenCoroutine")
-                val createScope = CreateScope(this@View, this + openContext)
-                withContext(openContext) {
-                    createScope.onCreate()
+                try {
+                    val openContext = Dispatchers.IO + CoroutineName("HQFrameworkViewOpenCoroutine")
+                    val createScope = CreateScope(this@View, this + openContext)
+                    withContext(openContext) {
+                        createScope.onCreate()
+                    }
+                    createScope.buttonJobs.joinAll()
+                } catch (throwable: Throwable) {
+                    isCreated.set(false)
+                    throw throwable
                 }
-                createScope.buttonJobs.joinAll()
             }
             viewer.forEach { player ->
                 launch(Dispatchers.IO + CoroutineName("HQFrameworkViewOpenCoroutine")) {

@@ -22,4 +22,5 @@ dependencies {
     testImplementation(libs.mockBukkit)
     testImplementation(libs.kotlin.reflect)
     testImplementation(libs.netty)
+    testImplementation(libs.mockK)
 }
