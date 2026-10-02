@@ -106,7 +106,7 @@ interface PointService {
 @Service
 class PointServiceImpl(private val repository: PointRepository) : PointService {
     override fun add(player: Player, amount: Long) {
-        repository[player.uniqueId] = (repository[player.uniqueId] ?: 0L) + amount
+        repository.update(player.uniqueId) { it.point += amount }
     }
 }
 
@@ -433,6 +433,7 @@ config.reload()
 object PointTable : org.jetbrains.exposed.sql.Table("points") {
     val owner = uuid("owner")
     val point = long("point").default(0)
+    val level = integer("level").default(1)
     val lastLocation = location("last_location").nullable()
     override val primaryKey = PrimaryKey(owner)
 }
@@ -444,30 +445,85 @@ enable 시 테이블이 없으면 생성하고, 있으면 누락된 컬럼과 �
 
 ### PlayerRepository
 
-플레이어 접속/퇴장에 맞춰 자동으로 load/save되는 캐시입니다. `@Component`로 등록해야 합니다.
+플레이어별 데이터를 메모리에 두고 접속 시 load, 주기적으로·퇴장 시 save하는 캐시입니다. `@Component`로 등록해야 합니다.
 
 ```kotlin
+class PointData(var point: Long, var level: Int)
+
 @Component
-class PointRepository : PlayerRepository<Long>() {
-    override suspend fun load(player: Player): Long {
-        return PointTable.selectAll().where { PointTable.owner eq player.uniqueId }
-            .singleOrNull()?.get(PointTable.point) ?: 0L
+class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
+    override suspend fun load(player: Player): PointData {
+        val row = PointTable.selectAll().where { PointTable.owner eq player.uniqueId }.singleOrNull()
+        return PointData(row?.get(PointTable.point) ?: 0L, row?.get(PointTable.level) ?: 1)
     }
 
-    override suspend fun save(player: Player, value: Long) {
+    override suspend fun save(player: Player, value: PointData) {
         PointTable.upsert {
             it[owner] = player.uniqueId
-            it[point] = value
+            it[point] = value.point
+            it[level] = value.level
         }
     }
+
+    override suspend fun loadOffline(uuid: UUID): PointData? {
+        val row = PointTable.selectAll().where { PointTable.owner eq uuid }.singleOrNull() ?: return null
+        return PointData(row[PointTable.point], row[PointTable.level])
+    }
+
+    override fun fingerprint(value: PointData): Any? = value.point to value.level
 }
 ```
 
-- `load`와 `save`는 이미 IO 트랜잭션 안에서 호출됩니다. Exposed DSL을 그대로 씁니다.
-- 캐시는 `MutableMap<UUID, V>`입니다. `repository[uuid]`, `repository[uuid] = value`로 접근합니다.
+- `load`, `save`, `loadOffline`은 이미 IO 트랜잭션 안에서 호출됩니다. Exposed DSL을 그대로 씁니다.
+- 생성자 인자 `SavePolicy`:
+  - `SavePolicy.periodic(dirtyInterval, fullInterval, batchSize)` (기본값): 바뀐(dirty) 항목은 `dirtyInterval`마다, 전체는 `fullInterval` 동안 나눠서 저장합니다. 인자를 생략하면 `player-data.dirty-flush-seconds`, `player-data.full-flush-seconds`를 따르고, `batchSize`는 `접속자 수 / (full / dirty)`로 자동 계산됩니다.
+  - `SavePolicy.onQuitOnly()`: 퇴장, 플러그인 disable, 서버 종료 때만 저장합니다. 소유권 lease 갱신은 계속됩니다.
+- `fingerprint(value)` (선택): 전체 저장 주기에서 지문이 바뀐 항목만 저장합니다. 기본값 `null`이면 전체 저장 주기마다 모두 저장합니다.
+- `loadOffline(uuid)` (선택): `peek`이 사용합니다. 오버라이드하지 않으면 `peek`은 항상 `null`입니다.
+
+| 호출 | 동작 |
+|---|---|
+| `repo[uuid]` | 캐시의 값을 그대로 반환. 이 서버가 소유하지 않으면 `null` |
+| `repo[uuid] = value` | 값을 교체하고 dirty 표시 |
+| `repo.update(uuid) { it.point += 10 }` | 플레이어별 락 안에서 블록을 실행하고 dirty 표시. 호출한 스레드에서 바로 실행되며 suspend하지 않음. 캐시에 없으면 `false` |
+| `repo.update(uuid, immediate = true) { }` | 위와 같고, 플레이어 큐에 즉시 저장을 예약 |
+| `repo.flush(uuid)` (suspend) | dirty 여부와 무관하게 즉시 저장하고 완료를 기다림 |
+| `repo.peek(uuid)` (suspend) | `loadOffline`으로 DB의 마지막 저장본을 읽음. 캐시와 소유권은 건드리지 않음(읽기 전용) |
+
 - 접속 시 모든 리포지토리의 load가 끝나면 `PlayerRepositoryLoadedEvent`가 메인 스레드에서 발생합니다. 로딩 중에는 이동, 클릭, 명령, 줍기, 버리기가 차단됩니다. load가 두 번 실패하면 플레이어를 킥합니다.
-- 퇴장 시 모든 리포지토리를 한 트랜잭션으로 저장하고 캐시를 비웁니다. 플러그인 disable이나 서버 종료 시에도 접속 중인 플레이어를 저장합니다.
-- 프록시 환경(`netty.enabled: true`)에서는 서버 이동 시 이전 서버의 저장이 끝날 때까지 새 서버의 load가 최대 3초 기다립니다. 모든 서버가 같은 DB를 바라봐야 합니다.
+- 퇴장 시 모든 리포지토리를 한 트랜잭션으로 저장한 뒤 소유권을 놓고 캐시를 비웁니다. 플러그인 disable이나 서버 종료 시에도 접속 중인 플레이어를 저장합니다(메인 스레드 블로킹, 리포지토리당 5초 상한).
+
+#### 소유권
+
+한 플레이어의 데이터는 항상 한 서버만 씁니다. 소유권은 DB 테이블 `hqframework_player_session`(자동 생성)에 기록되며 모든 서버가 같은 DB를 바라봐야 합니다.
+
+- 서버를 이동하면 새 서버는 이전 서버가 저장을 끝내고 소유권을 놓을 때까지 기다린 뒤 load합니다. `player-data.join-timeout-seconds` 안에 얻지 못하면 "잠시 후 다시 접속해 주세요"로 킥합니다. 프록시 연결(`netty.enabled: true`)이 있으면 저장 완료 패킷으로 바로 재시도하고, 없어도 `retry-interval-millis`마다 재시도하므로 동작합니다.
+- 서버가 크래시하면 lease(`lease-seconds`)가 만료된 뒤 다음 접속 서버가 마지막 저장본으로 인계받습니다. 손실 범위는 마지막 저장 이후의 변경입니다.
+- 퇴장 저장이 실패하면 소유권과 캐시를 유지한 채 dirty 주기마다 다시 저장하고, 성공하면 그때 소유권을 놓습니다. 끝내 실패하면 lease 만료로 인계됩니다.
+- 다른 서버가 소유권을 가져간 것이 감지되면(버전 불일치) 저장을 버리고 캐시를 지운 뒤 접속 중이면 킥합니다.
+
+#### 기존 코드에서 옮기기
+
+1. **아무것도 하지 않음**: `repo[uuid]`로 얻은 객체를 직접 고치는 기존 코드도 그대로 컴파일되고 동작합니다. 다만 dirty 표시가 되지 않으므로 전체 저장 주기(기본 60초)와 퇴장 때만 저장됩니다.
+2. **`fingerprint` 추가**: 전체 저장 주기에서 실제로 바뀐 플레이어만 저장해 DB 부하를 줄입니다.
+3. **`update { }`로 전환**: 변경이 dirty 주기(기본 5초) 안에 저장됩니다. 중요한 변경(결제, 거래 등)은 `immediate = true`나 `flush(uuid)`를 씁니다.
+
+`PlayerRepository`는 더 이상 `MutableMap`이 아닙니다. `get`/`set`/`remove`만 유지되며 `clear`, `putAll`, 순회 등은 쓸 수 없습니다.
+
+#### 설정
+
+```yaml
+player-data:
+  backend: database
+  lease-seconds: 30
+  renew-seconds: 10
+  join-timeout-seconds: 5
+  retry-interval-millis: 200
+  dirty-flush-seconds: 5
+  full-flush-seconds: 60
+```
+
+`backend`는 현재 `database`만 지원하며 다른 값이면 기동에 실패합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
 
 ### 일반 리포지토리
 
@@ -517,12 +573,12 @@ database:
 class PointCommand(private val repository: PointRepository) {
     @CommandExecutor("show", description = "포인트 확인")
     fun show(player: Player) {
-        player.sendMessage("${repository[player.uniqueId] ?: 0}")
+        player.sendMessage("${repository[player.uniqueId]?.point ?: 0}")
     }
 
     @CommandExecutor("give", description = "포인트 지급", isOp = true)
     suspend fun give(sender: CommandSender, target: Player, @ArgumentLabel("수량") amount: Long?) {
-        repository[target.uniqueId] = (repository[target.uniqueId] ?: 0) + (amount ?: 1)
+        repository.update(target.uniqueId) { it.point += amount ?: 1 }
     }
 }
 
@@ -861,7 +917,7 @@ class JobRegistrar(private val scheduler: Scheduler) {
 
 | 키 | 기본값 | 설명 |
 |---|---|---|
-| `config-version` | 2.2.0 | 바뀌면 누락 키를 자동 병합 |
+| `config-version` | 2.3.0 | 바뀌면 누락 키를 자동 병합 |
 | `lang` | ko_kr | NMS 현지화 언어 (`lang/*.json`) |
 | `netty.enabled` | false | 프록시 통신 |
 | `netty.thread` | 2 | IO 스레드 수 (최대 코어 수) |
@@ -873,6 +929,13 @@ class JobRegistrar(private val scheduler: Scheduler) {
 | `database.type` | h2 | h2, sqlite, mysql |
 | `database.file-path` | hq-database/database | H2/SQLite 파일 경로 (확장자 제외) |
 | `database.mysql.*` | | 접속 정보와 HikariCP 풀 설정 |
+| `player-data.backend` | database | 플레이어 데이터 소유권 백엔드. 현재 `database`만 지원 |
+| `player-data.lease-seconds` | 30 | 소유권 lease. 갱신이 끊기면 이 시간 뒤 다른 서버가 인계 |
+| `player-data.renew-seconds` | 10 | lease 갱신 주기 |
+| `player-data.join-timeout-seconds` | 5 | 접속 시 소유권 대기 상한. 넘으면 킥 |
+| `player-data.retry-interval-millis` | 200 | 소유권 획득 재시도 간격 |
+| `player-data.dirty-flush-seconds` | 5 | dirty 항목 저장 주기 (`SavePolicy.periodic` 기본값) |
+| `player-data.full-flush-seconds` | 60 | 전체 저장을 나눠 끝내는 주기 (`SavePolicy.periodic` 기본값) |
 | `scheduler.instance-id` | "" | Quartz 인스턴스 ID |
 | `scheduler.thread-pool.thread-count` | 10 | Quartz 스레드 수 |
 | `scheduler.job-store.is-clustered` | false | Quartz 클러스터 모드 |
