@@ -93,6 +93,14 @@ class DatabaseSessionCoordinatorTest {
     }
 
     @Test
+    fun `commit inside a transaction of another database uses its own database`() = runBlocking {
+        val other = Database.connect("jdbc:h2:mem:session_other;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
+        a.acquire(playerId)
+        val result = newSuspendedTransaction(db = other) { a.commit(playerId, 0) }
+        assertEquals(1L, result)
+    }
+
+    @Test
     fun `same owner can acquire again`() = runBlocking {
         assertEquals(AcquireResult.Acquired(0), a.acquire(playerId))
         assertEquals(AcquireResult.Acquired(0), a.acquire(playerId))

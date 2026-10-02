@@ -6,11 +6,18 @@ import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
+import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
+import kr.hqservice.framework.database.repository.player.FlushRequester
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.SavePolicy
@@ -37,6 +44,8 @@ import java.time.Duration
 import java.util.Collections
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -48,8 +57,10 @@ class FlushSchedulerTest {
         policy: SavePolicy = SavePolicy.periodic(),
         private val useFingerprint: Boolean = false,
         @Volatile var failuresLeft: Int = 0,
+        private val saveDelayMillis: Long = 0,
     ) : PlayerRepository<Counter>(policy) {
         val saves = ConcurrentHashMap<UUID, AtomicInteger>()
+        val savedValues: MutableList<Int> = Collections.synchronizedList(mutableListOf())
 
         fun saveCount(uuid: UUID): Int = saves[uuid]?.get() ?: 0
 
@@ -60,6 +71,8 @@ class FlushSchedulerTest {
                 failuresLeft--
                 throw IllegalStateException("save failed")
             }
+            if (saveDelayMillis > 0) delay(saveDelayMillis)
+            savedValues += value.n
             saves.computeIfAbsent(player.uniqueId) { AtomicInteger() }.incrementAndGet()
         }
 
@@ -95,7 +108,10 @@ class FlushSchedulerTest {
             return expectedVersion + 1
         }
 
+        @Volatile var failRelease = false
+
         override suspend fun release(uuid: UUID): Boolean {
+            if (failRelease) throw IllegalStateException("release failed")
             releases += uuid
             return true
         }
@@ -131,8 +147,9 @@ class FlushSchedulerTest {
     private fun scheduler(
         vararg repositories: PlayerRepository<*>,
         coordinator: SessionCoordinator = this.coordinator,
+        settings: PlayerDataSettings = this.settings,
         onOwnershipLost: suspend (PlayerSession) -> Unit = {},
-    ) = FlushScheduler(registry, { repositories.toList() }, coordinator, settings, playerScopes, logger, onOwnershipLost)
+    ) = FlushScheduler(registry, { repositories.toList() }, coordinator, db, settings, playerScopes, logger, onOwnershipLost)
 
     private fun player(uuid: UUID, online: Boolean = true): Player = mockk<Player>(relaxed = true).also {
         every { it.uniqueId } returns uuid
@@ -342,5 +359,183 @@ class FlushSchedulerTest {
         assertTrue(job.isCompleted)
         assertTrue(job.children.none())
         scope.cancel()
+    }
+
+    private fun realCoordinator(uuid: UUID): Pair<DatabaseSessionCoordinator, Long> {
+        transaction(db) {
+            SchemaUtils.drop(PlayerSessionTable)
+            SchemaUtils.create(PlayerSessionTable)
+        }
+        val coordinator = DatabaseSessionCoordinator(db, "25565", Duration.ofSeconds(30))
+        val version = runBlocking { (coordinator.acquire(uuid) as AcquireResult.Acquired).version }
+        return coordinator to version
+    }
+
+    @Test
+    fun `concurrent explicit flushes of one player both commit without losing ownership`() = runBlocking {
+        val uuid = UUID.randomUUID()
+        val (real, version) = realCoordinator(uuid)
+        val repoA = CounterRepository(saveDelayMillis = 50)
+        val repoB = CounterRepository(saveDelayMillis = 50)
+        listOf(repoA, repoB).forEach { it.put(uuid, Counter(0)); it.update(uuid) { counter -> counter.n++ } }
+        val session = PlayerSession(uuid, player(uuid), version).also(registry::put)
+        val lost = Collections.synchronizedList(mutableListOf<PlayerSession>())
+        val scheduler = scheduler(repoA, repoB, coordinator = real, onOwnershipLost = { lost += it })
+
+        val results = listOf(repoA, repoB).map { repository ->
+            async(Dispatchers.Default) {
+                var saved = false
+                playerScopes.launch(uuid) { saved = scheduler.flushPlayer(uuid, listOf(repository), FlushReason.EXPLICIT) }.join()
+                saved
+            }
+        }.awaitAll()
+
+        assertEquals(listOf(true, true), results)
+        assertEquals(2L, session.version)
+        assertTrue(lost.isEmpty())
+        assertEquals(1, repoA.saveCount(uuid))
+        assertEquals(1, repoB.saveCount(uuid))
+        assertSame(session, registry.get(uuid))
+    }
+
+    @Test
+    fun `immediate updates from two threads are saved in update order`() = runBlocking {
+        val uuid = UUID.randomUUID()
+        val (real, version) = realCoordinator(uuid)
+        val repository = CounterRepository(saveDelayMillis = 1)
+        repository.put(uuid, Counter(0))
+        val session = PlayerSession(uuid, player(uuid), version).also(registry::put)
+        val scheduler = scheduler(repository, coordinator = real)
+        val flushScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        repository.flushScope = flushScope
+        repository.flushRequester = FlushRequester { id, target ->
+            var saved = false
+            playerScopes.launch(id) { saved = scheduler.flushPlayer(id, listOf(target), FlushReason.EXPLICIT) }.join()
+            saved
+        }
+
+        val pool = Executors.newFixedThreadPool(2)
+        repeat(2) { pool.submit { repeat(50) { repository.update(uuid, immediate = true) { it.n++ } } } }
+        pool.shutdown()
+        assertTrue(pool.awaitTermination(10, TimeUnit.SECONDS))
+        withTimeout(10_000) { flushScope.coroutineContext.job.children.toList().joinAll() }
+        playerScopes.awaitIdle(uuid)
+
+        val saved = repository.savedValues.toList()
+        assertEquals(saved.sorted(), saved)
+        assertEquals(100, saved.last())
+        assertEquals(version + saved.size, session.version)
+        assertSame(session, registry.get(uuid))
+        flushScope.cancel()
+    }
+
+    private val fastSettings = PlayerDataSettings(
+        "database",
+        Duration.ofSeconds(30),
+        Duration.ofMillis(50),
+        Duration.ofSeconds(5),
+        Duration.ofMillis(200),
+        Duration.ofMillis(50),
+        Duration.ofSeconds(60),
+    )
+
+    @Test
+    fun `tick loop survives an exception in one iteration`() = runBlocking {
+        val calls = AtomicInteger()
+        val scheduler = FlushScheduler(
+            registry,
+            { if (calls.incrementAndGet() == 1) throw IllegalStateException("boom") else emptyList() },
+            coordinator, db, fastSettings, playerScopes, logger,
+        )
+        val job = scheduler.start(parent)
+
+        withTimeout(2000) { while (calls.get() < 3) delay(10) }
+
+        job.cancel()
+        verify { logger.log(Level.SEVERE, any<String>(), any<Throwable>()) }
+    }
+
+    @Test
+    fun `renew loop survives an exception in one iteration`() = runBlocking {
+        val uuid = UUID.randomUUID()
+        val flaky = mockk<Player>(relaxed = true)
+        val checks = AtomicInteger()
+        every { flaky.uniqueId } returns uuid
+        every { flaky.isOnline } answers { if (checks.incrementAndGet() <= 2) throw IllegalStateException("boom") else true }
+        registry.put(PlayerSession(uuid, flaky, 0))
+        val job = scheduler(settings = fastSettings).start(parent)
+
+        withTimeout(2000) { while (coordinator.renewals.isEmpty()) delay(10) }
+
+        job.cancel()
+        assertEquals(listOf(uuid), coordinator.renewals.first())
+    }
+
+    @Test
+    fun `started job is cancelled at plugin teardown`() {
+        val job = scheduler().start(parent)
+
+        assertEquals(true, job.coroutineContext[TeardownOptionCoroutineContextElement]?.cancelWhenPluginTeardown)
+        job.cancel()
+    }
+
+    @Test
+    fun `offline session with nothing to save is released on quit`() = runBlocking {
+        val repository = CounterRepository()
+        val uuid = UUID.randomUUID()
+        registry.put(PlayerSession(uuid, player(uuid, online = false), 0))
+
+        assertTrue(scheduler(repository).flushPlayer(uuid, listOf(repository), FlushReason.QUIT))
+
+        assertEquals(listOf(uuid), coordinator.releases.toList())
+        assertNull(registry.get(uuid))
+    }
+
+    @Test
+    fun `offline session is released by tick even when no repository holds it`() = runBlocking {
+        val uuid = UUID.randomUUID()
+        registry.put(PlayerSession(uuid, player(uuid, online = false), 0))
+
+        scheduler(CounterRepository()).tick().joinAll()
+
+        assertEquals(listOf(uuid), coordinator.releases.toList())
+        assertNull(registry.get(uuid))
+    }
+
+    @Test
+    fun `teardown flush of one repository keeps an offline session while another repository is dirty`() = runBlocking {
+        val repoA = CounterRepository()
+        val repoB = CounterRepository()
+        val uuid = UUID.randomUUID()
+        listOf(repoA, repoB).forEach { it.put(uuid, Counter(0)); it.update(uuid) { counter -> counter.n++ } }
+        registry.put(PlayerSession(uuid, player(uuid, online = false), 0))
+        val scheduler = scheduler(repoA, repoB)
+
+        assertTrue(scheduler.flushPlayer(uuid, listOf(repoA), FlushReason.TEARDOWN))
+
+        assertTrue(coordinator.releases.isEmpty())
+        assertTrue(repoB.contains(uuid))
+        assertTrue(repoB.isDirty(uuid))
+
+        assertTrue(scheduler.flushPlayer(uuid, listOf(repoB), FlushReason.TEARDOWN))
+
+        assertEquals(listOf(uuid), coordinator.releases.toList())
+        assertFalse(repoB.contains(uuid))
+    }
+
+    @Test
+    fun `release failure after a committed save is logged without counting as a save failure`() = runBlocking {
+        val repository = CounterRepository()
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        val session = PlayerSession(uuid, player(uuid, online = false), 0).also(registry::put)
+        coordinator.failRelease = true
+
+        assertTrue(scheduler(repository).flushPlayer(uuid, listOf(repository), FlushReason.QUIT))
+
+        assertEquals(0, session.failures.get())
+        assertEquals(1L, session.version)
+        assertSame(session, registry.get(uuid))
+        verify { logger.log(Level.WARNING, match<String> { it.contains("release") }, any<Throwable>()) }
     }
 }

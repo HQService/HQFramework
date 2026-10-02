@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
+import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.database.repository.player.PendingSave
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
@@ -15,7 +16,9 @@ import kr.hqservice.framework.database.repository.player.SavePolicy
 import kr.hqservice.framework.database.repository.player.session.OwnershipLostException
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
 import org.bukkit.entity.Player
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
@@ -26,6 +29,7 @@ class FlushScheduler(
     private val sessions: PlayerSessionRegistry,
     private val repositories: () -> Collection<PlayerRepository<*>>,
     private val coordinator: SessionCoordinator,
+    private val database: Database,
     private val settings: PlayerDataSettings,
     private val playerScopes: PlayerScopes,
     private val logger: Logger,
@@ -44,17 +48,20 @@ class FlushScheduler(
 
     private val states = ConcurrentHashMap<PlayerRepository<*>, RepositoryState>()
 
-    fun start(scope: CoroutineScope): Job = scope.launch(Dispatchers.Default) {
-        launch {
-            while (isActive) {
-                delay(settings.dirtyFlushInterval.toMillis())
-                tick()
-            }
-        }
-        launch {
-            while (isActive) {
-                delay(settings.renewInterval.toMillis())
-                renewAll()
+    fun start(scope: CoroutineScope): Job = scope.launch(Dispatchers.Default + TeardownOptionCoroutineContextElement(true)) {
+        launch { repeatEvery(settings.dirtyFlushInterval, "flush tick") { tick() } }
+        launch { repeatEvery(settings.renewInterval, "lease renewal") { renewAll() } }
+    }
+
+    private suspend fun CoroutineScope.repeatEvery(interval: Duration, name: String, action: suspend () -> Unit) {
+        while (isActive) {
+            delay(interval.toMillis())
+            try {
+                action()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.log(Level.SEVERE, "player data $name failed", e)
             }
         }
     }
@@ -62,14 +69,12 @@ class FlushScheduler(
     suspend fun flushPlayer(uuid: UUID, targets: Collection<PlayerRepository<*>>, reason: FlushReason): Boolean =
         flushPlayer(uuid, targets.associateWith { reason })
 
-    suspend fun flushAll(reason: FlushReason) {
-        sessions.all().forEach { flushPlayer(it.uuid, repositories(), reason) }
-    }
-
     internal fun tick(): List<Job> {
         val plan = mutableMapOf<UUID, MutableMap<PlayerRepository<*>, FlushReason>>()
         val all = sessions.all()
-        for (repository in repositories()) {
+        val current = repositories()
+        states.keys.retainAll(current.toSet())
+        for (repository in current) {
             val policy = repository.savePolicy as? SavePolicy.Periodic ?: continue
             val state = states.computeIfAbsent(repository) { RepositoryState() }
             val dirtyInterval = policy.dirtyInterval ?: settings.dirtyFlushInterval
@@ -81,45 +86,57 @@ class FlushScheduler(
             }
         }
         all.filterNot { it.player.isOnline }.forEach { session ->
-            plan[session.uuid] = repositories().associateWithTo(mutableMapOf()) { FlushReason.QUIT }
+            plan[session.uuid] = current.associateWithTo(mutableMapOf()) { FlushReason.QUIT }
         }
         return plan.map { (uuid, targets) -> playerScopes.launch(uuid) { flushPlayer(uuid, targets) } }
     }
 
     internal suspend fun flushPlayer(uuid: UUID, plan: Map<PlayerRepository<*>, FlushReason>): Boolean {
         val selected = plan.mapNotNull { (repository, reason) -> select(repository, uuid, reason) }
-        if (selected.isEmpty()) return false
         val session = sessions.get(uuid) ?: return false
-        return try {
-            val next = newSuspendedTransaction(Dispatchers.IO) {
+        if (selected.isEmpty()) {
+            if (plan.values.none { it == FlushReason.QUIT || it == FlushReason.TEARDOWN } || session.player.isOnline) return false
+            releaseOffline(session)
+            return true
+        }
+        try {
+            val next = newSuspendedTransaction(Dispatchers.IO, database) {
                 selected.forEach { it.save(session.player) }
                 coordinator.commit(uuid, session.version) ?: throw OwnershipLostException(uuid)
             }
             session.version = next
             selected.forEach { it.markSaved(uuid) }
             session.failures.set(0)
-            if (!session.player.isOnline) releaseOffline(session)
-            true
         } catch (e: OwnershipLostException) {
             sessions.remove(uuid)
             repositories().forEach { it.remove(uuid) }
             logger.severe("player data ownership of $uuid was lost; unsaved changes were discarded")
             onOwnershipLost(session)
-            false
+            return false
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             val failures = session.failures.incrementAndGet()
             val level = if (failures >= 3) Level.SEVERE else Level.WARNING
             logger.log(level, "failed to save player data of $uuid ($failures consecutive failures)", e)
-            false
+            return false
         }
+        if (!session.player.isOnline) releaseOffline(session)
+        return true
     }
 
     private suspend fun releaseOffline(session: PlayerSession) {
-        coordinator.release(session.uuid)
-        sessions.remove(session.uuid)
-        repositories().forEach { it.remove(session.uuid) }
+        val repositories = repositories()
+        if (repositories.any { it.isDirty(session.uuid) }) return
+        try {
+            coordinator.release(session.uuid)
+            sessions.remove(session.uuid)
+            repositories.forEach { it.remove(session.uuid) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "release failed for player data ownership of ${session.uuid}; it is retried on the next tick", e)
+        }
     }
 
     internal suspend fun renewAll() {

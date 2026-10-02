@@ -32,6 +32,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.PluginManager
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -45,6 +46,7 @@ class PlayerDataLifecycle(
     private val repositories: PlayerRepositoryRegistry,
     private val sessions: PlayerSessionRegistry,
     private val coordinator: SessionCoordinator,
+    private val database: Database,
     private val settings: PlayerDataSettings,
     private val loading: LoadingPlayers,
     private val pluginManager: PluginManager,
@@ -54,7 +56,7 @@ class PlayerDataLifecycle(
 ) {
     private val playerScopes = PlayerScopes(plugin, Dispatchers.IO)
     private val hints = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
-    private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, settings, playerScopes, logger, ::onOwnershipLost)
+    private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost)
     private val schedulerJob = scheduler.start(plugin)
 
     init {
@@ -64,7 +66,9 @@ class PlayerDataLifecycle(
     fun attach(repository: PlayerRepository<*>) {
         repository.flushScope = plugin
         repository.flushRequester = FlushRequester { uuid, target ->
-            playerScopes.launch(uuid) { scheduler.flushPlayer(uuid, listOf(target), FlushReason.EXPLICIT) }.join()
+            var saved = false
+            playerScopes.launch(uuid) { saved = scheduler.flushPlayer(uuid, listOf(target), FlushReason.EXPLICIT) }.join()
+            saved
         }
     }
 
@@ -108,16 +112,17 @@ class PlayerDataLifecycle(
         plugin.launch(Dispatchers.Default) {
             var retained: PlayerSession? = null
             try {
-                playerScopes.awaitIdle(uuid)
+                withTimeoutOrNull(settings.joinTimeout.toMillis()) { playerScopes.awaitIdle(uuid) }
+                    ?: throw OwnershipTimeoutException(uuid)
                 val version = acquireWithRetry(uuid)
                 retained = sessions.get(uuid)
-                if (!isStillJoining(player)) {
-                    if (retained == null) coordinator.release(uuid)
+                if (!isStillJoining(player, token)) {
+                    if (retained == null && mayCleanUp(uuid, token)) coordinator.release(uuid)
                     return@launch
                 }
-                loadAll(player, onlyMissing = retained != null)
-                if (!register(retained ?: PlayerSession(uuid, player, version), keepOnFailure = retained != null)) {
-                    if (retained == null) {
+                loadAll(player, token, onlyMissing = retained != null)
+                if (!register(retained ?: PlayerSession(uuid, player, version), token)) {
+                    if (retained == null && mayCleanUp(uuid, token)) {
                         repositories.getAll().forEach { it.remove(uuid) }
                         coordinator.release(uuid)
                     }
@@ -131,8 +136,7 @@ class PlayerDataLifecycle(
                 throw e
             } catch (e: Exception) {
                 logger.log(Level.SEVERE, "failed to load player data of $uuid", e)
-                if (retained == null) {
-                    sessions.remove(uuid)
+                if (retained == null && mayCleanUp(uuid, token)) {
                     repositories.getAll().forEach { it.remove(uuid) }
                     runCatching { coordinator.release(uuid) }
                 }
@@ -174,14 +178,15 @@ class PlayerDataLifecycle(
         (event.packet as? PlayerDataSavedPacket)?.let { hints[it.id]?.complete(Unit) }
     }
 
-    private fun isStillJoining(player: Player): Boolean = player.uniqueId in loading && player.isOnline
+    private fun mayCleanUp(uuid: UUID, token: Long): Boolean = !loading.isSuperseded(uuid, token) && sessions.get(uuid) == null
 
-    private suspend fun register(session: PlayerSession, keepOnFailure: Boolean): Boolean {
+    private fun isStillJoining(player: Player, token: Long): Boolean = loading.isCurrent(player.uniqueId, token) && player.isOnline
+
+    private suspend fun register(session: PlayerSession, token: Long): Boolean {
         var registered = false
         playerScopes.launch(session.uuid) {
-            sessions.put(session)
-            registered = isStillJoining(session.player)
-            if (!registered && !keepOnFailure) sessions.remove(session.uuid)
+            registered = isStillJoining(session.player, token)
+            if (registered) sessions.put(session)
         }.join()
         return registered
     }
@@ -217,32 +222,36 @@ class PlayerDataLifecycle(
         return hint
     }
 
-    private suspend fun loadAll(player: Player, onlyMissing: Boolean) {
+    private suspend fun loadAll(player: Player, token: Long, onlyMissing: Boolean) {
         try {
-            loadOnce(player, onlyMissing)
+            loadOnce(player, token, onlyMissing)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             logger.log(Level.WARNING, "failed to load player data of ${player.uniqueId}, retrying once", e)
             delay(250)
-            loadOnce(player, onlyMissing)
+            loadOnce(player, token, onlyMissing)
         }
     }
 
-    private suspend fun loadOnce(player: Player, onlyMissing: Boolean) {
-        newSuspendedTransaction(Dispatchers.IO) {
+    private suspend fun loadOnce(player: Player, token: Long, onlyMissing: Boolean) {
+        newSuspendedTransaction(Dispatchers.IO, database) {
             repositories.getAll()
                 .filterNot { onlyMissing && it.contains(player.uniqueId) }
-                .forEach { load(it, player) }
+                .forEach { load(it, player, token) }
         }
     }
 
-    private suspend fun <V : Any> load(repository: PlayerRepository<V>, player: Player) {
-        repository.put(player.uniqueId, repository.load(player))
+    private suspend fun <V : Any> load(repository: PlayerRepository<V>, player: Player, token: Long) {
+        val value = repository.load(player)
+        if (loading.isCurrent(player.uniqueId, token)) repository.put(player.uniqueId, value)
     }
 
-    private suspend fun onOwnershipLost(session: PlayerSession) {
-        kick(session.player, "다른 서버가 데이터를 가져갔습니다")
+    private fun onOwnershipLost(session: PlayerSession) {
+        val player = session.player
+        plugin.launch(Dispatchers.BukkitMain) {
+            if (player.isOnline) player.kickPlayer("다른 서버가 데이터를 가져갔습니다")
+        }
     }
 
     private suspend fun kick(player: Player, message: String) {

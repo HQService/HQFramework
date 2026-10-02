@@ -20,5 +20,9 @@ class LoadingPlayers {
         tokens.remove(uuid)
     }
 
+    fun isCurrent(uuid: UUID, token: Long): Boolean = tokens[uuid] == token
+
+    fun isSuperseded(uuid: UUID, token: Long): Boolean = tokens[uuid].let { it != null && it != token }
+
     operator fun contains(uuid: UUID): Boolean = tokens.containsKey(uuid)
 }

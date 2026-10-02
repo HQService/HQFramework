@@ -12,6 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.TestPlugin
@@ -67,12 +68,14 @@ class PlayerDataLifecycleTest {
 
     class TestPointRepository(private val gate: CompletableDeferred<Unit>? = null) : PlayerRepository<Points>() {
         val loadStarted = CompletableDeferred<Unit>()
+        val loads = AtomicInteger()
+        val loadsFinished = AtomicInteger()
 
         override suspend fun load(player: Player): Points {
             loadStarted.complete(Unit)
-            gate?.await()
+            if (loads.incrementAndGet() == 1) gate?.await()
             val row = PointTable.selectAll().where { PointTable.uuid eq player.uniqueId }.singleOrNull()
-            return Points(row?.get(PointTable.n) ?: 0)
+            return Points(row?.get(PointTable.n) ?: 0).also { loadsFinished.incrementAndGet() }
         }
 
         override suspend fun save(player: Player, value: Points) {
@@ -116,6 +119,7 @@ class PlayerDataLifecycleTest {
             registry,
             sessions,
             DatabaseSessionCoordinator(db, serverId, settings.lease),
+            db,
             settings,
             loading,
             server.pluginManager,
@@ -405,11 +409,12 @@ class PlayerDataLifecycleTest {
         flaky.update(uuid) { it.n = 5 }
         flaky.failSave = true
 
+        val retained = a.sessions.get(uuid)!!
+
         a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
-        tickFor(300)
+        awaitUntil { retained.failures.get() >= 1 }
         assertEquals("25565", owner())
-        val retained = a.sessions.get(uuid)
-        assertNotNull(retained)
+        assertTrue(retained === a.sessions.get(uuid))
 
         flaky.failSave = false
         a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
@@ -418,7 +423,7 @@ class PlayerDataLifecycleTest {
         assertEquals(5, flaky[uuid]!!.n)
         assertEquals(1, flaky.loads.get())
         assertTrue(retained === a.sessions.get(uuid))
-        runBlocking { flaky.flush(uuid) }
+        assertTrue(runBlocking { flaky.flush(uuid) })
         assertEquals(5, flaky.lastSaved)
         assertEquals(1L, version())
         assertEquals("25565", owner())
@@ -437,14 +442,82 @@ class PlayerDataLifecycleTest {
         a.registry.register(failing)
         joined(a)
         a.repo.update(uuid) { it.n = 3 }
+        val session = a.sessions.get(uuid)!!
 
         a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
-        tickFor(300)
+        awaitUntil { session.failures.get() >= 1 }
 
         assertEquals("25565", owner())
         assertNotNull(a.sessions.get(uuid))
         assertTrue(a.repo.contains(uuid))
         assertTrue(failing.contains(uuid))
         assertTrue(a.sent.isEmpty())
+    }
+
+    @Test
+    fun `superseded join does not release ownership or overwrite the cache of the newer join`() {
+        val gate = CompletableDeferred<Unit>()
+        val a = Node("25565", repo = TestPointRepository(gate))
+
+        a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        awaitUntil { a.repo.loadStarted.isCompleted }
+        player.disconnect()
+        val rejoined = PlayerMock(server, player.name, uuid).also(server::addPlayer)
+        a.lifecycle.onJoin(PlayerJoinEvent(rejoined, "join"))
+        awaitUntil { a.sessions.get(uuid) != null && uuid !in a.loading }
+        a.repo.update(uuid) { it.n = 8 }
+
+        gate.complete(Unit)
+        awaitUntil { a.repo.loadsFinished.get() == 2 }
+        tickFor(200)
+
+        assertEquals("25565", owner())
+        assertTrue(a.sessions.get(uuid)!!.player === rejoined)
+        assertEquals(8, a.repo[uuid]!!.n)
+        assertEquals(listOf(uuid), loadedListener.loaded.toList())
+    }
+
+    @Test
+    fun `join is kicked when a previous job of the player does not finish within the join timeout`() {
+        val gate = CompletableDeferred<Unit>()
+        val saveStarted = CompletableDeferred<Unit>()
+        val blocking = object : PlayerRepository<Points>() {
+            override suspend fun load(player: Player): Points = Points(0)
+
+            override suspend fun save(player: Player, value: Points) {
+                saveStarted.complete(Unit)
+                gate.await()
+            }
+        }
+        val a = Node("25565")
+        a.registry.register(blocking)
+        joined(a)
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { saveStarted.isCompleted }
+
+        try {
+            a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+            awaitUntil { !player.isOnline }
+        } finally {
+            gate.complete(Unit)
+        }
+    }
+
+    @Test
+    fun `ownership loss during a flush blocking the main thread does not wait for the main thread`() {
+        val a = Node("25565")
+        joined(a)
+        transaction(db) {
+            PlayerSessionTable.update({ PlayerSessionTable.uuid eq uuid }) {
+                it[owner] = "25566"
+                it[version] = version + 1
+            }
+        }
+        a.repo.update(uuid) { it.n = 1 }
+
+        val saved = runBlocking { withTimeout(3000) { a.repo.flush(uuid) } }
+
+        assertFalse(saved)
+        awaitUntil { !player.isOnline }
     }
 }

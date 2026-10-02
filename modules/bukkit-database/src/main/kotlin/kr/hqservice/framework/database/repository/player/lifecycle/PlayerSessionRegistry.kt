@@ -17,6 +17,4 @@ class PlayerSessionRegistry {
     fun remove(uuid: UUID): PlayerSession? = sessions.remove(uuid)
 
     fun all(): List<PlayerSession> = sessions.values.sortedBy { it.uuid }
-
-    fun size(): Int = sessions.size
 }

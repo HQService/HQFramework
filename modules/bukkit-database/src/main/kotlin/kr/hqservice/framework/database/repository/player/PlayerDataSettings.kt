@@ -26,7 +26,16 @@ class PlayerDataSettings(
                 Duration.ofMillis(config.getInt("player-data.retry-interval-millis", 200).toLong()),
                 Duration.ofSeconds(config.getInt("player-data.dirty-flush-seconds", 5).toLong()),
                 Duration.ofSeconds(config.getInt("player-data.full-flush-seconds", 60).toLong()),
-            )
+            ).also(::validate)
+        }
+
+        private fun validate(settings: PlayerDataSettings) = with(settings) {
+            check(renewInterval > Duration.ZERO) { "player-data.renew-seconds must be positive" }
+            check(lease > renewInterval) { "player-data.lease-seconds must be greater than player-data.renew-seconds" }
+            check(dirtyFlushInterval > Duration.ZERO) { "player-data.dirty-flush-seconds must be positive" }
+            check(fullFlushInterval >= dirtyFlushInterval) { "player-data.full-flush-seconds must not be less than player-data.dirty-flush-seconds" }
+            check(joinTimeout > Duration.ZERO) { "player-data.join-timeout-seconds must be positive" }
+            check(retryInterval > Duration.ZERO) { "player-data.retry-interval-millis must be positive" }
         }
     }
 }

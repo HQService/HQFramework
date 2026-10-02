@@ -29,4 +29,30 @@ class LoadingPlayersTest {
 
         assertFalse(uuid in loading)
     }
+
+    @Test
+    fun `only the latest join token is current`() {
+        val first = loading.begin(uuid)
+        assertTrue(loading.isCurrent(uuid, first))
+
+        val second = loading.begin(uuid)
+        assertFalse(loading.isCurrent(uuid, first))
+        assertTrue(loading.isCurrent(uuid, second))
+
+        loading.remove(uuid)
+        assertFalse(loading.isCurrent(uuid, second))
+    }
+
+    @Test
+    fun `a join is superseded only by a newer join, not by a quit`() {
+        val first = loading.begin(uuid)
+        assertFalse(loading.isSuperseded(uuid, first))
+
+        loading.remove(uuid)
+        assertFalse(loading.isSuperseded(uuid, first))
+
+        val second = loading.begin(uuid)
+        assertTrue(loading.isSuperseded(uuid, first))
+        assertFalse(loading.isSuperseded(uuid, second))
+    }
 }

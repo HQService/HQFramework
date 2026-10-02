@@ -120,7 +120,7 @@ class DatabaseSessionCoordinator(
     }
 
     private suspend fun <T> inTransaction(block: Transaction.() -> T): T {
-        val current = TransactionManager.currentOrNull()
+        val current = TransactionManager.currentOrNull()?.takeIf { it.db == database }
         return if (current != null) current.block() else newSuspendedTransaction(Dispatchers.IO, database) { block() }
     }
 }

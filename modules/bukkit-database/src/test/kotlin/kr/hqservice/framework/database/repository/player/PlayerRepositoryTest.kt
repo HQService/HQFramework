@@ -4,6 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.bukkit.entity.Player
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -34,8 +41,9 @@ class PlayerRepositoryTest {
     private class RecordingRequester : FlushRequester {
         val calls = mutableListOf<Pair<UUID, PlayerRepository<*>>>()
 
-        override suspend fun flush(uuid: UUID, repository: PlayerRepository<*>) {
+        override suspend fun flush(uuid: UUID, repository: PlayerRepository<*>): Boolean {
             calls += uuid to repository
+            return true
         }
     }
 
@@ -137,12 +145,43 @@ class PlayerRepositoryTest {
     @Test
     fun `flush delegates to requester and is no-op without one`() = runBlocking {
         val repo = TestRepository()
-        repo.flush(uuid)
+        assertFalse(repo.flush(uuid))
 
         val requester = RecordingRequester()
         repo.flushRequester = requester
-        repo.flush(uuid)
+        assertTrue(repo.flush(uuid))
         assertEquals(listOf<Pair<UUID, PlayerRepository<*>>>(uuid to repo), requester.calls)
+    }
+
+    object PeekTable : Table("peek_counter") {
+        val uuid = uuid("uuid")
+        val n = integer("n")
+    }
+
+    class ExposedRepository : PlayerRepository<Counter>() {
+        override suspend fun load(player: Player): Counter = Counter(0)
+
+        override suspend fun save(player: Player, value: Counter) {}
+
+        override suspend fun loadOffline(uuid: UUID): Counter? =
+            PeekTable.selectAll().where { PeekTable.uuid eq uuid }.singleOrNull()?.let { Counter(it[PeekTable.n]) }
+    }
+
+    @Test
+    fun `peek runs loadOffline inside a transaction`() = runBlocking {
+        val db = Database.connect("jdbc:h2:mem:peek;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
+        transaction(db) {
+            SchemaUtils.drop(PeekTable)
+            SchemaUtils.create(PeekTable)
+            PeekTable.insert {
+                it[PeekTable.uuid] = this@PlayerRepositoryTest.uuid
+                it[n] = 42
+            }
+        }
+        val repo = ExposedRepository()
+
+        assertEquals(42, repo.peek(uuid)?.n)
+        assertFalse(repo.contains(uuid))
     }
 
     @Test
@@ -165,8 +204,9 @@ class PlayerRepositoryTest {
 
         val other = UUID.randomUUID()
         repo[other] = Counter(2)
-        assertTrue(repo.isDirty(other))
-        assertEquals(setOf(uuid, other), repo.loadedPlayers())
+        assertFalse(repo.contains(other))
+        assertFalse(repo.isDirty(other))
+        assertEquals(setOf(uuid), repo.loadedPlayers())
 
         assertFalse(repo.remove(uuid, Counter(1)))
         assertTrue(repo.contains(uuid))
