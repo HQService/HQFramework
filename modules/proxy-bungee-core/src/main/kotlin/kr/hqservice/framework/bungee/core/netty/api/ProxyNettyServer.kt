@@ -11,6 +11,7 @@ import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.PacketHandler
 import net.md_5.bungee.api.ProxyServer
+import java.net.InetSocketAddress
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -32,7 +33,10 @@ class ProxyNettyServer(
     }
 
     override fun getPlayers(): List<NettyPlayer> {
-        return proxy.players.map { NettyPlayerImpl(it.name, it.displayName, it.uniqueId, getChannel(it.server.address.port)) }
+        return proxy.players.mapNotNull { player ->
+            val serverAddress = player.server?.info?.socketAddress as? InetSocketAddress ?: return@mapNotNull null
+            NettyPlayerImpl(player.name, player.displayName, player.uniqueId, getChannel(serverAddress.port))
+        }
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {

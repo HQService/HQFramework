@@ -15,6 +15,7 @@ import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.PingPongPacket
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 import kotlin.math.max
 import kotlin.math.min
@@ -66,6 +67,17 @@ class HQNettyBootstrap(
             logger.warning("netty.secret is empty; any client that can reach the port can register as a backend")
         }
         return HQNettyServer(logger, config, bossGroup, workerGroup).start()
+    }
+
+    fun shutdown() {
+        shutdownIfRunning(workerGroup)
+        shutdownIfRunning(bossGroup)
+    }
+
+    private fun shutdownIfRunning(group: EventLoopGroup) {
+        if (!group.isShuttingDown && !group.isShutdown) {
+            group.shutdownGracefully(0, 2, TimeUnit.SECONDS)
+        }
     }
 
 }

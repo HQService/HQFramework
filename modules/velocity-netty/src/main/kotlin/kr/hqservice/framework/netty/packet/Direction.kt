@@ -23,8 +23,9 @@ enum class Direction {
     }
 
     fun <T : Packet> registerPacket(packetClass: KClass<T>) {
-        if (packetMap.containsKey(packetClass.qualifiedName!!))
-            throw IllegalArgumentException("packet duplicated ${packetClass.qualifiedName!!}")
+        val existing = packetMap[packetClass.qualifiedName!!]
+        if (existing != null && existing.clazz.java === packetClass.java)
+            return
 
         val codecClass: Class<*> = ByteBuddy()
             .redefine(packetClass.java)
@@ -64,6 +65,8 @@ enum class Direction {
     fun <T : Packet> findPacketByClass(clazz: KClass<T>): PacketWrapper<T>? {
         return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>
     }
+
+    fun findPacketByName(name: String): PacketWrapper<out Packet>? = packetMap[name]
 
     @Suppress("unchecked_cast")
     suspend fun <T : Packet> onPacketReceived(packet: T, channel: ChannelWrapper): Boolean {

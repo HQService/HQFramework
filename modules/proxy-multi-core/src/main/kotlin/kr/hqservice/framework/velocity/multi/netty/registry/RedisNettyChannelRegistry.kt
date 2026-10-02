@@ -1,7 +1,6 @@
 package kr.hqservice.framework.velocity.multi.netty.registry
 
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI
-import com.velocitypowered.api.proxy.ProxyServer
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.netty.api.NettyChannel
@@ -16,9 +15,8 @@ import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 @Singleton(binds = [NettyChannelRegistry::class])
 class RedisNettyChannelRegistry(
     plugin: HQVelocityPlugin,
-    config: HQYamlConfiguration,
-    proxyServer: ProxyServer
-) : NettyChannelRegistryImpl(plugin, config, proxyServer) {
+    config: HQYamlConfiguration
+) : NettyChannelRegistryImpl(plugin, config) {
     override fun collectPlayers(connectedChannels: List<NettyChannel>): MutableList<NettyPlayer> {
         val players = mutableListOf<NettyPlayer>()
         val redisAbs = RedisBungeeAPI.getAbstractRedisBungeeAPI()

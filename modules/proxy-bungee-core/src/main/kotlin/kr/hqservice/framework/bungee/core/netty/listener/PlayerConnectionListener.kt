@@ -100,27 +100,17 @@ class PlayerConnectionListener(
         val packet = PlayerConnectionPacket(
             nettyPlayer,
             PlayerConnectionState.DISCONNECT,
-            getChannelByAddress(event.player.pendingConnection.address)
+            (event.player.server?.info?.socketAddress as? InetSocketAddress)?.let { getChannelByAddress(it) }
         )
         channelContainer.loopChannels { it.sendPacket(packet) }
     }
 
     private fun getChannelByAddress(address: InetSocketAddress): NettyChannel? {
-        return try {
-            val port = address.port
-            val name = channelContainer.getChannelNameByPort(port)
-            NettyChannelImpl(port, name)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
+        return getChannelByPort(address.port)
     }
 
     private fun getChannelByPort(port: Int): NettyChannel? {
-        return try {
-            val name = channelContainer.getChannelNameByPort(port)
-            NettyChannelImpl(port, name)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
+        if (channelContainer.getChannels().none { it.port == port }) return null
+        return NettyChannelImpl(port, channelContainer.getChannelNameByPort(port))
     }
 }

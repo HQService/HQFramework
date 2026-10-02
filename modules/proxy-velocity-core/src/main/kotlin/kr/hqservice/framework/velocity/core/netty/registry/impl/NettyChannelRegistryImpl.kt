@@ -1,6 +1,5 @@
 package kr.hqservice.framework.velocity.core.netty.registry.impl
 
-import com.velocitypowered.api.proxy.ProxyServer
 import kr.hqservice.framework.global.core.component.Component
 import kr.hqservice.framework.global.core.component.HQSimpleComponent
 import kr.hqservice.framework.global.core.component.Singleton
@@ -20,7 +19,6 @@ import kr.hqservice.framework.velocity.core.netty.event.NettyClientDisconnectedE
 import kr.hqservice.framework.velocity.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.velocity.core.netty.registry.NettyChannelRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.jvm.optionals.getOrNull
 
@@ -28,8 +26,7 @@ import kotlin.jvm.optionals.getOrNull
 @Singleton(binds = [NettyChannelRegistry::class])
 open class NettyChannelRegistryImpl(
     private val plugin: HQVelocityPlugin,
-    private val config: HQYamlConfiguration,
-    private val proxyServer: ProxyServer
+    private val config: HQYamlConfiguration
 ) : NettyChannelRegistry, HQSimpleComponent {
     private val server = plugin.getProxyServer()
     private val portChannelContainer = ConcurrentHashMap<Int, ChannelWrapper>()
@@ -40,6 +37,7 @@ open class NettyChannelRegistryImpl(
         val name = server.allServers.firstOrNull { it.serverInfo.address.port == port }?.serverInfo?.name
             ?: "Unknown-${unknownClientId.getAndIncrement()}"
 
+        evictPreviousChannel(port, wrapper)
         portChannelContainer[port] = wrapper
         nameChannelContainer[name] = wrapper
 
@@ -99,40 +97,22 @@ open class NettyChannelRegistryImpl(
     }
 
     protected open fun collectPlayers(connectedChannels: List<NettyChannel>): MutableList<NettyPlayer> {
-        val players = mutableListOf<NettyPlayer>()
-        runCatching {
-            server.allPlayers.forEach {
-                try {
-                    players.add(
-                        NettyPlayerImpl(
-                            it.username,
-                            it.username,
-                            it.uniqueId,
-                            connectedChannels.firstOrNull { channel -> channel.getPort() == it.currentServer.getOrNull()?.serverInfo?.address?.port }
-                        )
-                    )
-                } catch (e: Exception) {
-                    runCatching {
-                        if (it.currentServer.getOrNull()?.serverInfo?.name != "lobby") {
-                            proxyServer.getServer("lobby").ifPresent { ch ->
-                                runCatching {
-                                    it.createConnectionRequest(ch).connect()
-                                }.onFailure { _ ->
-                                    it.disconnect(
-                                        LegacyComponentSerializer.legacySection().deserialize("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
-                                    )
-                                }
-                            }
-                        } else {
-                            it.disconnect(
-                                LegacyComponentSerializer.legacySection().deserialize("§c서버가 로드중입니다.\n§c잠시 후 다시 접속해주세요!")
-                            )
-                        }
-                    }.onFailure { ex -> e.printStackTrace() }
-                }
-            }
+        return server.allPlayers.mapTo(mutableListOf()) {
+            NettyPlayerImpl(
+                it.username,
+                it.username,
+                it.uniqueId,
+                connectedChannels.firstOrNull { channel -> channel.getPort() == it.currentServer.getOrNull()?.serverInfo?.address?.port }
+            )
         }
-        return players
+    }
+
+    private fun evictPreviousChannel(port: Int, wrapper: ChannelWrapper) {
+        val previous = portChannelContainer[port] ?: return
+        if (previous === wrapper) return
+        portChannelContainer.remove(port, previous)
+        nameChannelContainer.entries.removeIf { it.value === previous }
+        previous.channel.close()
     }
 
     override fun loopChannels(block: (ChannelWrapper) -> Unit) {
@@ -149,6 +129,10 @@ open class NettyChannelRegistryImpl(
     }
 
     private fun onChannelInactive(wrapper: ChannelWrapper) {
+        val name = nameChannelContainer.entries.firstOrNull { it.value === wrapper }?.key
+        if (!portChannelContainer.remove(wrapper.port, wrapper)) return
+        if (name != null) nameChannelContainer.remove(name, wrapper)
+
         server.scheduler.buildTask(plugin, Runnable {
             try {
                 server.eventManager.fire(
@@ -162,16 +146,11 @@ open class NettyChannelRegistryImpl(
             }
         }).schedule()
 
-        runCatching {
-            val name = getChannelNameByPort(wrapper.port)
-            portChannelContainer.remove(wrapper.port)
-            nameChannelContainer.remove(name)
-            val channelVO = NettyChannelImpl(wrapper.port, name)
-            val packet = ChannelDisconnectedPacket(channelVO)
-            portChannelContainer.values.forEach { ch ->
-                ch.channel.eventLoop().execute {
-                    if (ch.channel.isActive) ch.sendPacket(packet)
-                }
+        val channelVO = NettyChannelImpl(wrapper.port, name ?: "Unknown-${wrapper.port}")
+        val packet = ChannelDisconnectedPacket(channelVO)
+        portChannelContainer.values.forEach { ch ->
+            ch.channel.eventLoop().execute {
+                if (ch.channel.isActive) ch.sendPacket(packet)
             }
         }
     }

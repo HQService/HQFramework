@@ -29,6 +29,8 @@ abstract class HQFrameworkVelocityPlugin : HQVelocityPlugin() {
         }
     }
 
+    final override fun disablesAfterOtherPlugins(): Boolean = true
+
     final override fun onPostDisable() {
         stopKoin()
     }

@@ -28,8 +28,11 @@ class NettyServerBootstrap(
     private val packetSender: PacketSender
 ) : KoinComponent, HQSimpleComponent {
 
+    private var bootstrap: HQNettyBootstrap? = null
+
     fun initializing() {
-        val future = HQNettyBootstrap(logger, config).initServer()
+        val bootstrap = HQNettyBootstrap(logger, config).also { this.bootstrap = it }
+        val future = bootstrap.initServer()
         future.whenCompleteAsync { _, throwable ->
             if (throwable != null) {
                 logger.severe("failed to bootup successfully.")
@@ -44,6 +47,8 @@ class NettyServerBootstrap(
 
     fun shutdown() {
         channelRegistry.shutdown()
+        bootstrap?.shutdown()
+        bootstrap = null
     }
 
     private fun registerDefaultListeners() {

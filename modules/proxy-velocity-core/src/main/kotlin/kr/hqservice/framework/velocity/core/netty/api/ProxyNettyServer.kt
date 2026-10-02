@@ -32,7 +32,10 @@ open class ProxyNettyServer(
     }
 
     override fun getPlayers(): List<NettyPlayer> {
-        return proxy.allPlayers.map { NettyPlayerImpl(it.username, it.username, it.uniqueId, getChannel(it.currentServer.get().serverInfo.address.port)) }
+        return proxy.allPlayers.mapNotNull { player ->
+            val server = player.currentServer.orElse(null) ?: return@mapNotNull null
+            NettyPlayerImpl(player.username, player.username, player.uniqueId, getChannel(server.serverInfo.address.port))
+        }
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {
