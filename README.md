@@ -954,4 +954,45 @@ class JobRegistrar(private val scheduler: Scheduler) {
 
 ## 변경 사항
 
-2.2.0의 하위 호환성 변경, 와이어 포맷 변경, 설정 변경 목록은 [docs/release-notes/2.2.0-hardening.md](docs/release-notes/2.2.0-hardening.md)를 참고하세요. 프록시와 백엔드는 반드시 함께 업그레이드해야 합니다.
+### 2.2.0 → 2.3.0 (하드닝 + 플레이어 데이터 소유권)
+
+**함께 올려야 하는 것**
+- 프록시와 모든 백엔드를 동시에 업그레이드해야 합니다. 핸드셰이크·플레이어 목록·채널 null 표기·채팅 메시지의 와이어 포맷이 바뀌어 신·구 버전은 연결되지 않습니다.
+- `netty.secret`을 프록시와 백엔드에 같은 값으로 넣으세요. 비우면 경고가 뜨고 누구나 백엔드로 등록할 수 있습니다.
+- 모든 백엔드가 같은 DB를 바라봐야 합니다. `hqframework_player_session` 테이블이 자동 생성됩니다.
+
+**설정**
+- 신설: `netty.secret`, `scheduler.instance-id`, `player-data.*`(backend, lease-seconds, renew-seconds, join-timeout-seconds, retry-interval-millis, dirty-flush-seconds, full-flush-seconds)
+- 기본값 변경: 프록시 `netty.shutdown-servers` `true` → `false`(신규 설치만)
+- `config-version` 2.1.0 → 2.3.0. 키가 없을 때 코드 기본값이 실제로 적용되도록 YAML getter 버그를 고쳤고, 코드 기본값은 번들 config와 같게 맞췄습니다.
+
+**와이어 포맷**
+- `HandShakePacket`에 `secret` 추가. 채널 null 표기는 boolean 플래그. 플레이어 목록은 `count` + 인라인 인코딩(직렬화·deflate 제거). `MessagePacket`/`BroadcastPacket` 본문은 JSON 컴포넌트.
+- 상한: 프레임 32MB, relay 16MB, inflate 32MB. 핸드셰이크 전 패킷과 알 수 없는 패킷 이름은 드롭. 프레임워크 서버 전용 패킷은 relay 거부.
+
+**런타임**
+- 공통 모듈은 Java 17 바이트코드(1.20.6~1.21.x NMS는 21, 26.x는 25). 한 jar로 1.17~26.x 서버에서 동작합니다.
+- NIO 전송 전용(Epoll/KQueue 제거).
+
+**모듈 구조**
+- `netty-core` 신설(global-netty와 velocity-netty가 공유). `multi-netty` 삭제. `proxy-multi-core`는 `proxy-velocity-core`를 확장하고 RedisBungee 전용 클래스만 남음. `proxy-core`에 공용 채널 레지스트리·하트비트·기본 리스너.
+- nms: `V26_1`이 `V21_11`을 상속, `V21_5/6/7`은 V21 provider 상속. `v21_8` 패키지 → `v21_6`.
+
+**하위 플러그인 호환성 파괴 (주요)**
+- `PlayerRepository`가 `MutableMap`이 아님. `get`/`set`/`remove`만 유지, `update`/`flush`/`peek` 추가, 생성자 `SavePolicy`. `preLoad` API, `SwitchGate`, `DefermentLock`, `PlayerDataSavePacket`, `PlayerConnectionPacketHandler` 삭제. 소유하지 않은 플레이어에 대한 `set`은 무시.
+- `HQBukkitPlugin.reload()` 삭제. `Range`는 `List`가 아니라 `Collection`. `View._childLifecycles` → 읽기 전용 `childLifecycles`.
+- 컴포넌트 레지스트리: 서드파티 플러그인의 `@ComponentHandler`/`@AnnotationHandler`는 다른 플러그인에 공유되지 않음(프레임워크 핸들러만 상속). `@Primary`가 실제로 우선. `@Configuration` 1회 생성.
+- suspend `@Subscribe` 리스너는 이벤트 스레드에서 시작해 메인 스레드에서 재개. 첫 suspend 전의 `isCancelled` 변경만 반영.
+- 명령어: op 자동 우회 없음(`permission`과 `isOp` 모두 만족해야 함). 트리 경로 권한 검사. `findRoot`, `findProvider`, `getArgumentsByType`, `findTreeAll` 삭제. `CommandTabCompletionHandler.initialize()`로 변경.
+- netty: `ChannelWrapper.sendPacket(): Boolean`, `HandShakePacket(Int, String)`, `BossHandler`/`HQChannelInitializer`/`HQNettyClient`/`HQNettyServer` 생성자 변경, 최상위 `blockingGroup` 제거, backing field 없는 패킷 파라미터는 등록 시 거부.
+- 프록시: `PingPongManagementThread` 삭제(→ `Heartbeat`), Velocity `NettyChannelRegistryImpl` 생성자에서 `ProxyServer` 제거, multi-core 클래스 이름 변경(`RedisNettyModule`, `RedisNettyChannelRegistry`, `RedisProxyNettyServer`, `RedisPlayerConnectionListener`).
+- nms: `provideNBTTagService`, `getServerChannels`, `Version.majorVersionOf`, preload 이벤트 삭제. 미정의 마이너 버전은 가장 가까운 하위 구현으로 폴백, 1.20.5는 미지원.
+- DB: `@Table` 마이그레이션이 실제로 ALTER 실행. MySQL URL에서 `allowMultiQueries`·`autoReconnect` 제거. 상대 파일 경로는 플러그인 dataFolder 기준(기존 위치 파일이 있으면 경고 후 사용). Location 컬럼 새 포맷 `L2;...`(구 포맷 읽기 가능).
+- 의존성 노출: `global-yaml`이 coroutines를, `global-netty`가 adventure-legacy·byte-buddy-agent를 transitive로 노출하지 않음.
+
+**라이브 서버에서 확인이 필요한 것**
+- secret 설정/미설정에서 Bukkit(1.20.4, 1.20.6, 1.21.x, 26.x) ↔ Bungee/Velocity/Multi 핸드셰이크·재접속·종료.
+- Velocity 실제 서버 이동 지연과 소유권 인계, 두 서버 동시 접속 경쟁, 소유 서버 크래시 후 lease 만료 인계.
+- MySQL의 lease SQL(`DATE_ADD`)은 코드 리뷰로만 검증됨(H2·SQLite는 테스트 있음). 모든 서버의 MySQL 세션 time_zone이 같아야 함.
+- Bungee IP-forwarding과 Velocity modern forwarding에서 모루·표지판 virtual handler, 모루 더블클릭.
+- Linux에서 NIO 전송, Folia 스케줄러.
