@@ -21,6 +21,7 @@ Bukkit(Paper)과 Proxy(BungeeCord, Velocity) 플러그인을 위한 프레임워
   - [스케줄러와 Folia](#스케줄러와-folia)
 - [YAML 설정](#yaml-설정)
 - [데이터베이스](#데이터베이스)
+- [Redis 메시징과 임시 저장소](#redis-메시징과-임시-저장소)
 - [명령어](#명령어)
 - [인벤토리 UI](#인벤토리-ui)
 - [리전](#리전)
@@ -502,7 +503,7 @@ class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
 
 #### 소유권
 
-한 플레이어의 데이터는 항상 한 서버만 씁니다. 소유권은 DB 테이블 `hqframework_player_session`(자동 생성)에 기록되며 모든 서버가 같은 DB를 바라봐야 합니다.
+한 플레이어의 데이터는 항상 한 서버만 씁니다. 소유권은 DB 테이블 `hqframework_player_session`(자동 생성)에 기록되며 모든 서버가 같은 DB를 바라봐야 합니다. `player-data.backend: redis`면 소유권은 Redis에 기록됩니다([Redis (선택)](#redis-선택) 참고).
 
 - 서버를 이동하면 새 서버는 이전 서버가 저장을 끝내고 소유권을 놓을 때까지 기다린 뒤 load합니다. `player-data.join-timeout-seconds` 안에 얻지 못하면 "잠시 후 다시 접속해 주세요"로 킥합니다. 프록시 연결(`netty.enabled: true`)이 있으면 저장 완료 패킷으로 바로 재시도하고, 없어도 `retry-interval-millis`마다 재시도하므로 동작합니다.
 - 서버가 크래시하면 lease(`lease-seconds`)가 만료된 뒤 다음 접속 서버가 마지막 저장본으로 인계받습니다. 손실 범위는 마지막 저장 이후의 변경입니다.
@@ -530,7 +531,48 @@ player-data:
   full-flush-seconds: 60
 ```
 
-`backend`는 현재 `database`만 지원하며 다른 값이면 기동에 실패합니다. `lease-seconds > renew-seconds > 0`, `dirty-flush-seconds > 0`, `full-flush-seconds >= dirty-flush-seconds`, `join-timeout-seconds > 0`, `retry-interval-millis > 0`을 만족하지 않아도 기동에 실패하며 오류 메시지에 해당 키가 나옵니다. `SavePolicy.periodic`의 간격과 `batchSize`도 양수여야 합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
+`backend`는 `database` 또는 `redis`이며 그 외 값이면 기동에 실패합니다. 네트워크의 모든 서버가 같은 값을 써야 합니다. 처음 기동한 서버의 값이 DB 테이블 `hqframework_player_data_backend`에 기록되고, 이후 다른 값으로 기동하면 거부됩니다. `lease-seconds > renew-seconds > 0`, `dirty-flush-seconds > 0`, `full-flush-seconds >= dirty-flush-seconds`, `join-timeout-seconds > 0`, `retry-interval-millis > 0`을 만족하지 않아도 기동에 실패하며 오류 메시지에 해당 키가 나옵니다. `SavePolicy.periodic`의 간격과 `batchSize`도 양수여야 합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
+
+### Redis (선택)
+
+```yaml
+player-data:
+  backend: redis
+
+redis:
+  uri: "redis://:password@127.0.0.1:6379/0"
+  key-prefix: hq
+  data-ttl-seconds: 3600
+```
+
+`redis.uri`를 비워 두면 Redis를 전혀 쓰지 않습니다. `backend: redis`인데 `redis.uri`가 비어 있으면 기동에 실패합니다.
+
+바뀌는 것:
+- **소유권 조율이 Redis로 이동**합니다(`<key-prefix>:session:<uuid>` 키, Lua 스크립트로 원자적 처리). 영속 저장은 여전히 `database` 설정의 MySQL/H2/SQLite입니다.
+- **소유권 해제 알림이 즉시 전달**됩니다. 이전 서버가 소유권을 놓으면 Redis pub/sub으로 알려 새 서버가 `retry-interval-millis`를 기다리지 않고 바로 재시도합니다. 프록시 연결이 없어도 됩니다.
+- **`CachedPlayerRepository`는 최신 데이터를 Redis에** 둡니다. `update {}`/`set`으로 바뀐 값은 곧바로 Redis에 쓰이고, MySQL에는 `SavePolicy`에 따라 주기적으로 저장됩니다. 서버를 옮기면 새 서버는 MySQL 대신 Redis 사본을 읽습니다.
+
+```kotlin
+@Serializable
+data class PointData(var point: Long, var level: Int)
+
+@Component
+class PointRepository : CachedPlayerRepository<PointData>(PointData.serializer()) {
+    override suspend fun load(player: Player): PointData { ... }
+    override suspend fun save(player: Player, value: PointData) { ... }
+}
+```
+
+- 패키지: `kr.hqservice.framework.database.repository.player`. 생성자의 두 번째 인자로 `SavePolicy`를 줄 수 있고, 나머지 API는 `PlayerRepository`와 같습니다.
+- `V`는 `@Serializable`이어야 합니다. Redis에는 kotlinx.serialization JSON으로 저장됩니다.
+- `redis.uri`가 비어 있으면 `PlayerRepository`와 완전히 같게 동작하며 직렬화는 호출되지 않습니다. `redis.uri`가 있으면 `backend`가 `database`여도 Redis 캐시를 씁니다.
+- Redis 키는 `<key-prefix>:data:<cacheName>:<uuid>`입니다. `cacheName` 기본값은 클래스 FQCN이라 패키지나 클래스 이름을 바꾸면 키가 바뀌어 기존 사본을 못 읽습니다. `override val cacheName = "point"`처럼 고정하는 것을 권장합니다.
+- `peek(uuid)`는 Redis 사본을 먼저 보고, 없으면 `loadOffline`으로 DB를 읽습니다.
+- 접속 시에도 Redis 사본이 있으면 `load` 대신 그것을 씁니다. 없으면 `load` 결과를 Redis에 기록합니다.
+- 퇴장 후 DB 저장이 끝나면 Redis 사본은 `redis.data-ttl-seconds` 뒤 만료됩니다. 그 사이에 MySQL을 직접 고쳐도 다음 접속에서는 Redis 사본이 우선합니다.
+- 역직렬화에 실패한 사본은 경고를 남기고 무시한 뒤 `load`로 읽습니다.
+- Redis에 접속할 수 없으면 플레이어 접속이 로딩 상태로 보류되고, 회복되지 않으면 킥됩니다. DB로 자동 전환하지 않습니다.
+- Redis가 유실되면 마지막 DB 저장 이후의 변경이 사라집니다. Redis에 AOF(`appendfsync everysec`)를 켜 두세요.
 
 ### 일반 리포지토리
 
@@ -568,6 +610,45 @@ database:
 ```
 
 `type`은 `h2`, `sqlite`, `mysql`입니다. 상대 `file-path`는 HQFramework의 데이터 폴더 기준입니다. SQLite는 WAL 모드와 풀 크기 1로 동작합니다.
+
+---
+
+## Redis 메시징과 임시 저장소
+
+모듈 `hqframework-bukkit-database`, 패키지 `kr.hqservice.framework.database.redis`. HQFramework `config.yml`의 `redis.uri`를 설정하면 서버 간 메시지와 임시 데이터에 Redis를 쓸 수 있습니다. `RedisMessenger`와 `RedisProvider`는 전역 빈이라 생성자로 주입받습니다.
+
+```kotlin
+@Serializable
+data class PartyInvite(val partyId: String, val target: String)
+
+@Module
+class PartyModule(private val messenger: RedisMessenger, private val redis: RedisProvider, private val plugin: HQBukkitPlugin) {
+    @Setup
+    fun setup() {
+        messenger.subscribe("party-invite", PartyInvite.serializer()) { invite ->
+            plugin.launch { plugin.server.getPlayer(invite.target)?.sendMessage("파티 초대: ${invite.partyId}") }
+        }
+    }
+
+    fun invite(partyId: String, target: String) {
+        messenger.publish("party-invite", PartyInvite.serializer(), PartyInvite(partyId, target))
+        redis.connection().sync().expire("myplugin:party:$partyId", 3600)
+    }
+}
+```
+
+**`RedisMessenger`**
+- `publish(channel, serializer, value)`: 값을 JSON으로 직렬화해 보냅니다. 비동기로 보내고 기다리지 않습니다.
+- `subscribe(channel, serializer) { value -> }`: `Subscription`(`AutoCloseable`)을 돌려줍니다. 더 받지 않으려면 `close()`합니다(예: `@Teardown`에서).
+- 실제 Redis 채널 이름은 `<key-prefix>:msg:<channel>`(기본 `hq:msg:<channel>`)입니다. 보낸 서버 자신도 구독 중이면 메시지를 받습니다.
+- 핸들러는 Lettuce의 이벤트 루프 스레드에서 실행됩니다. 블로킹하지 말고, Bukkit API는 `plugin.launch { }`나 `withContext(Dispatchers.BukkitMain)`으로 메인 스레드에 넘긴 뒤 쓰세요.
+- 역직렬화에 실패한 메시지는 경고를 남기고 버립니다.
+
+**`RedisProvider`**
+- `enabled`: `redis.uri`가 설정되어 있는지 확인합니다. 선택 기능이라면 이 값으로 분기하세요.
+- `connection()`: Lettuce `StatefulRedisConnection<String, ByteArray>`를 돌려줍니다. 모든 플러그인이 공유하는 연결이므로 `close()`하지 마세요. 파티 해시에 TTL을 거는 것처럼 Lettuce API(`sync()`, `async()`, `reactive()`)를 직접 씁니다. 값 코덱이 `ByteArray`이므로 문자열 값은 `toByteArray()`로 넣습니다.
+- `redis.uri`가 비어 있으면 `connection()`과 `RedisMessenger`의 `publish`/`subscribe`는 `IllegalStateException`을 던집니다.
+- 키는 플러그인 고유 접두어(예: `myplugin:`)를 쓰세요. `key-prefix`(기본 `hq`)는 프레임워크가 씁니다.
 
 ---
 
@@ -936,13 +1017,16 @@ class JobRegistrar(private val scheduler: Scheduler) {
 | `database.type` | h2 | h2, sqlite, mysql |
 | `database.file-path` | hq-database/database | H2/SQLite 파일 경로 (확장자 제외) |
 | `database.mysql.*` | | 접속 정보와 HikariCP 풀 설정 |
-| `player-data.backend` | database | 플레이어 데이터 소유권 백엔드. 현재 `database`만 지원 |
+| `player-data.backend` | database | 플레이어 데이터 소유권 백엔드. `database` 또는 `redis`. 모든 서버가 같아야 함 |
 | `player-data.lease-seconds` | 30 | 소유권 lease. 갱신이 끊기면 이 시간 뒤 다른 서버가 인계 |
 | `player-data.renew-seconds` | 10 | lease 갱신 주기 |
 | `player-data.join-timeout-seconds` | 5 | 접속 시 소유권 대기 상한. 넘으면 킥 |
 | `player-data.retry-interval-millis` | 200 | 소유권 획득 재시도 간격 |
 | `player-data.dirty-flush-seconds` | 5 | dirty 항목 저장 주기 (`SavePolicy.periodic` 기본값) |
 | `player-data.full-flush-seconds` | 60 | 전체 저장을 나눠 끝내는 주기 (`SavePolicy.periodic` 기본값) |
+| `redis.uri` | "" | Redis 접속 URI. 비우면 Redis 미사용. `backend: redis`면 필수 |
+| `redis.key-prefix` | hq | 프레임워크 Redis 키 접두어 |
+| `redis.data-ttl-seconds` | 3600 | 퇴장 후 `CachedPlayerRepository` 사본을 Redis에 남겨 두는 시간 |
 | `scheduler.instance-id` | "" | Quartz 인스턴스 ID |
 | `scheduler.thread-pool.thread-count` | 10 | Quartz 스레드 수 |
 | `scheduler.job-store.is-clustered` | false | Quartz 클러스터 모드 |
@@ -963,6 +1047,7 @@ class JobRegistrar(private val scheduler: Scheduler) {
 
 **설정**
 - 신설: `netty.secret`, `scheduler.instance-id`, `player-data.*`(backend, lease-seconds, renew-seconds, join-timeout-seconds, retry-interval-millis, dirty-flush-seconds, full-flush-seconds)
+- 신설: `redis.*`(uri, key-prefix, data-ttl-seconds). `player-data.backend`에 `redis` 추가
 - 기본값 변경: 프록시 `netty.shutdown-servers` `true` → `false`(신규 설치만)
 - `config-version` 2.1.0 → 2.3.0. 키가 없을 때 코드 기본값이 실제로 적용되도록 YAML getter 버그를 고쳤고, 코드 기본값은 번들 config와 같게 맞췄습니다.
 
@@ -973,6 +1058,7 @@ class JobRegistrar(private val scheduler: Scheduler) {
 **런타임**
 - 공통 모듈은 Java 17 바이트코드(1.20.6~1.21.x NMS는 21, 26.x는 25). 한 jar로 1.17~26.x 서버에서 동작합니다.
 - NIO 전송 전용(Epoll/KQueue 제거).
+- Lettuce 6.5.5가 plugin.yml `libraries`로 추가됨. netty는 Lettuce와 맞춰 4.1.118로 상향.
 
 **모듈 구조**
 - `netty-core` 신설(global-netty와 velocity-netty가 공유). `multi-netty` 삭제. `proxy-multi-core`는 `proxy-velocity-core`를 확장하고 RedisBungee 전용 클래스만 남음. `proxy-core`에 공용 채널 레지스트리·하트비트·기본 리스너.
@@ -989,6 +1075,8 @@ class JobRegistrar(private val scheduler: Scheduler) {
 - nms: `provideNBTTagService`, `getServerChannels`, `Version.majorVersionOf`, preload 이벤트 삭제. 미정의 마이너 버전은 가장 가까운 하위 구현으로 폴백, 1.20.5는 미지원.
 - DB: `@Table` 마이그레이션이 실제로 ALTER 실행. MySQL URL에서 `allowMultiQueries`·`autoReconnect` 제거. 상대 파일 경로는 플러그인 dataFolder 기준(기존 위치 파일이 있으면 경고 후 사용). Location 컬럼 새 포맷 `L2;...`(구 포맷 읽기 가능).
 - 의존성 노출: `global-yaml`이 coroutines를, `global-netty`가 adventure-legacy·byte-buddy-agent를 transitive로 노출하지 않음.
+- `SessionCoordinator`에 `commitsInsideTransaction`(추상)과 `onReleased`(기본 구현 있음) 추가. 외부 구현체는 컴파일이 깨짐.
+- `PlayerRepository`에 internal 훅(`onMutated`, `afterPersisted` 등) 추가. 하위 플러그인에는 영향 없음.
 
 **라이브 서버에서 확인이 필요한 것**
 - secret 설정/미설정에서 Bukkit(1.20.4, 1.20.6, 1.21.x, 26.x) ↔ Bungee/Velocity/Multi 핸드셰이크·재접속·종료.
@@ -996,3 +1084,5 @@ class JobRegistrar(private val scheduler: Scheduler) {
 - MySQL의 lease SQL(`DATE_ADD`)은 코드 리뷰로만 검증됨(H2·SQLite는 테스트 있음). 모든 서버의 MySQL 세션 time_zone이 같아야 함.
 - Bungee IP-forwarding과 Velocity modern forwarding에서 모루·표지판 virtual handler, 모루 더블클릭.
 - Linux에서 NIO 전송, Folia 스케줄러.
+- 실제 Redis에서 소유권 Lua 스크립트와 pub/sub(해제 알림, `RedisMessenger`)은 미검증. `HQ_TEST_REDIS_URI=redis://...`를 주면 `RedisIntegrationTest`가 실행됨.
+- Paper에서 plugin.yml `libraries`의 netty-all과 Lettuce가 끌어오는 netty 개별 아티팩트가 중복 로딩되어도 문제없는지.
