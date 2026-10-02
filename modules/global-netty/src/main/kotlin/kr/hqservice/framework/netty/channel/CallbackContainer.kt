@@ -1,14 +1,12 @@
 package kr.hqservice.framework.netty.channel
 
 import kr.hqservice.framework.netty.packet.Packet
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KClass
 
 class CallbackContainer {
-    private val callbackMap = ConcurrentHashMap<KClass<out Packet>, Queue<PacketCallbackHandler<out Packet>>>()
-    private val lock = ReentrantReadWriteLock()
+    private val callbackMap = ConcurrentHashMap<KClass<out Packet>, ConcurrentLinkedQueue<PacketCallbackHandler<out Packet>>>()
 
     fun addOnQueue(
         channel: ChannelWrapper,
@@ -16,31 +14,16 @@ class CallbackContainer {
         targetClass: KClass<out Packet>,
         callback: PacketCallbackHandler<out Packet>
     ) {
-        try {
-            lock.writeLock().lock()
-            channel.sendPacket(packet)
-            callbackMap.computeIfAbsent(targetClass) {
-                LinkedList()
-            }.add(callback)
-        } finally {
-            lock.writeLock().unlock()
-        }
+        val queue = callbackMap.computeIfAbsent(targetClass) { ConcurrentLinkedQueue() }
+        queue.add(callback)
+        if (!channel.sendPacket(packet)) queue.remove(callback)
     }
 
     @Suppress("unchecked_cast")
     fun complete(packet: Packet): Boolean {
-        try {
-            lock.readLock().lock()
-            val queue = callbackMap[packet::class]
-            return if (!queue.isNullOrEmpty()) {
-                val callback: PacketCallbackHandler<Packet> =
-                    queue.poll() as? PacketCallbackHandler<Packet> ?: return false
-                callback.onCallbackReceived(packet)
-                true
-            } else false
-        } finally {
-            lock.readLock().unlock()
-        }
+        val callback = callbackMap[packet::class]?.poll() as? PacketCallbackHandler<Packet> ?: return false
+        callback.onCallbackReceived(packet)
+        return true
     }
 
 }

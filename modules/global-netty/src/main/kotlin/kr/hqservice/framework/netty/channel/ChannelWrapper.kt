@@ -33,11 +33,13 @@ class ChannelWrapper(
         callbackContainer.addOnQueue(this, packet, type, handler)
     }
 
-    fun sendPacket(packet: Packet) {
-        if (enabled) {
-            if (handler.connectionState == ConnectionState.CONNECTED) {
-                channel.writeAndFlush(packet)
-            } else logger.severe("Some logic tried to send packet before connection established or disconnected. (Packet: ${packet::class.simpleName})")
+    fun sendPacket(packet: Packet): Boolean {
+        if (!enabled) return false
+        if (handler.connectionState != ConnectionState.CONNECTED) {
+            logger.severe("Some logic tried to send packet before connection established or disconnected. (Packet: ${packet::class.simpleName})")
+            return false
         }
+        channel.writeAndFlush(packet)
+        return true
     }
 }
