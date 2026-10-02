@@ -6,7 +6,7 @@ import kr.hqservice.framework.bukkit.core.component.registry.PluginDepend
 import kr.hqservice.framework.global.core.component.registry.JarBasedComponentRegistry
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.qualifier.Qualifier
-import java.util.jar.JarFile
+import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.isSubtypeOf
@@ -24,8 +24,12 @@ class BukkitComponentRegistry(
         return plugin::class.java.packageName
     }
 
-    override fun getJar(): JarFile {
-        return JarFile(plugin.getJar())
+    override fun getJar(): File {
+        return plugin.getJar()
+    }
+
+    override fun getPluginClassLoader(): ClassLoader {
+        return plugin.getPluginClassLoader()
     }
 
     override fun filterComponent(clazz: Class<*>): Boolean {
