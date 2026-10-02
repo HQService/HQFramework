@@ -14,7 +14,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     override fun load(file: File) {
         loader = YamlConfigurationLoader.builder().file(file).build()
         rootSection = HQYamlConfigurationSectionImpl(loader!!.load())
-        if (cachedFile == null) cachedFile = file
+        cachedFile = file
     }
 
     override fun save(file: File) {
@@ -50,7 +50,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getString(key: String, default: String): String {
-        return rootSection?.getString(key) ?: default
+        return rootSection?.getString(key, default) ?: default
     }
 
     override fun findString(key: String): String? {
@@ -58,7 +58,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getBoolean(key: String, default: Boolean): Boolean {
-        return rootSection?.getBoolean(key) ?: default
+        return rootSection?.getBoolean(key, default) ?: default
     }
 
     override fun findBoolean(key: String): Boolean? {
@@ -66,7 +66,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getInt(key: String, default: Int): Int {
-        return rootSection?.getInt(key) ?: default
+        return rootSection?.getInt(key, default) ?: default
     }
 
     override fun findInt(key: String): Int? {
@@ -74,7 +74,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getDouble(key: String, default: Double): Double {
-        return rootSection?.getDouble(key) ?: default
+        return rootSection?.getDouble(key, default) ?: default
     }
 
     override fun findDouble(key: String): Double? {
@@ -82,7 +82,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getFloat(key: String, default: Float): Float {
-        return rootSection?.getFloat(key) ?: default
+        return rootSection?.getFloat(key, default) ?: default
     }
 
     override fun findFloat(key: String): Float? {
@@ -90,7 +90,7 @@ class HQYamlConfigurationImpl : HQYamlConfiguration {
     }
 
     override fun getLong(key: String, default: Long): Long {
-        return rootSection?.getLong(key) ?: default
+        return rootSection?.getLong(key, default) ?: default
     }
 
     override fun findLong(key: String): Long? {
