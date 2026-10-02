@@ -8,26 +8,9 @@ import java.util.concurrent.ConcurrentHashMap
 abstract class PlayerRepository<V : Any>(
     private val dataMap: MutableMap<UUID, V> = ConcurrentHashMap<UUID, V>(),
 ) : MutableMap<UUID, V> by dataMap, HQComponent {
-    private val preLoadData = ConcurrentHashMap<UUID, V>()
-
     abstract suspend fun load(player: Player): V
 
     abstract suspend fun save(player: Player, value: V)
 
     override fun remove(key: UUID, value: V): Boolean = dataMap.remove(key, value)
-
-    internal suspend fun preLoad0(uniqueId: UUID) {
-        preLoadData.remove(uniqueId)
-        preLoad(uniqueId)?.let { preLoadData[uniqueId] = it }
-    }
-
-    internal fun preValue(player: Player): V? {
-        return preLoadData.remove(player.uniqueId)
-    }
-
-    internal fun removePreLoad(uniqueId: UUID) {
-        preLoadData.remove(uniqueId)
-    }
-
-    open suspend fun preLoad(uniqueId: UUID): V? = null
 }

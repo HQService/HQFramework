@@ -27,7 +27,6 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.*
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -39,7 +38,6 @@ class PlayerConnectionPacketHandler(
     private val playerRepositoryRegistry: PlayerRepositoryRegistry,
     private val coroutineScope: CoroutineScope,
     @Qualifier("switch") private val switchDefermentLock: DefermentLock,
-    @Qualifier("disconnect") private val disconnectDefermentLock: DefermentLock,
     private val switchGate: SwitchGate,
     private val server: Server,
     private val pluginManager: PluginManager,
@@ -48,18 +46,6 @@ class PlayerConnectionPacketHandler(
 ) {
     private var loadPlayer = ConcurrentHashMap.newKeySet<UUID>()
     private val playerScopes = PlayerScopes(coroutineScope, Dispatchers.IO)
-    private val preLoadGate = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
-
-    private fun ensurePreload(id: UUID): CompletableDeferred<Unit> =
-        preLoadGate.computeIfAbsent(id) { CompletableDeferred() }
-
-    private fun completePreload(id: UUID) {
-        preLoadGate.remove(id)?.complete(Unit)
-    }
-
-    private fun failPreload(id: UUID, exception: Throwable) {
-        preLoadGate.remove(id)?.completeExceptionally(exception)
-    }
 
     @Subscribe(HandleOrder.FIRST)
     fun pickup(event: PlayerPickupItemEvent) {
@@ -91,28 +77,16 @@ class PlayerConnectionPacketHandler(
             event.isCancelled = true
     }
 
-    private suspend fun <T : Any> onPreLoad(playerId: UUID, repository: PlayerRepository<T>) =
-        repository.preLoad0(playerId)
-
     private suspend fun <T : Any> onLoad(player: Player, repository: PlayerRepository<T>) {
-        val pre = repository.preValue(player)
-        val value = pre ?: repository.load(player)
-        if (player.isOnline) repository[player.uniqueId] = value
-        else {
-            repository.removePreLoad(player.uniqueId)
-            repository.remove(player.uniqueId)
-        }
+        val value = repository.load(player)
+        if (player.isOnline) repository[player.uniqueId] = value else repository.remove(player.uniqueId)
     }
 
     @Suppress("UNCHECKED_CAST")
     private suspend fun onSave(player: Player, repository: PlayerRepository<*>, snapshot: Any?) {
         val value = snapshot ?: return
         repository as PlayerRepository<Any>
-        val tx = TransactionManager.currentOrNull()
-        if (tx != null) repository.save(player, value)
-        else newSuspendedTransaction(Dispatchers.IO) {
-            repository.save(player, value)
-        }
+        repository.save(player, value)
     }
 
     private suspend fun saveAndClear(player: Player) = coroutineScope {
@@ -128,7 +102,6 @@ class PlayerConnectionPacketHandler(
             }
 
             for (repo in playerRepositories) {
-                repo.removePreLoad(player.uniqueId)
                 removeIfUnchanged(repo, player.uniqueId, values[repo])
             }
         }.onFailure {
@@ -164,63 +137,63 @@ class PlayerConnectionPacketHandler(
         val playerId = player.uniqueId
         plugin.launch(Dispatchers.Default) {
             loadPlayer.add(playerId)
-            playerScopes.awaitIdle(playerId)
-            delay(50)
+            try {
+                playerScopes.awaitIdle(playerId)
+                delay(50)
 
-            if (nettyService.isEnable()) {
-                val lock = switchDefermentLock.findLock(playerId)
-                if (lock != null && !lock.isCancelled && lock.isActive) {
-                    val ok = withTimeoutOrNull(3000) { switchGate.ensure(playerId).await() } != null
-                    if (!ok) {
-                        withContext(Dispatchers.BukkitMain) {
-                            player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
-                        }
-                        switchGate.release(playerId)
-                        return@launch
-                    } else delay(1)
-                }
-                switchGate.release(playerId)
-            }
-
-            delay(5)
-            var exactLoadedCount = -1
-            var loaded = 0
-            val tryLoad = suspend {
-                loaded = 0
-                server.getPlayer(playerId)?.let { currentPlayer ->
-                    val repositories = playerRepositoryRegistry.getAll()
-                    exactLoadedCount = repositories.size
-                    newSuspendedTransaction(Dispatchers.IO + CoroutineName("load:${playerId}")) {
-                        for (repo in repositories) try {
-                            onLoad(currentPlayer, repo)
-                            loaded++
-                        } catch (_: Exception) {
-                            try {
-                                plugin.logger.warning("Failed to load repository (${repo::class.simpleName}) for player $playerId, retrying once...")
-                                delay(250)
-                                onLoad(currentPlayer, repo)
-                                loaded++
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                                coroutineScope.launch(Dispatchers.BukkitMain) { currentPlayer.kick() }
-                                break
+                if (nettyService.isEnable()) {
+                    val lock = switchDefermentLock.findLock(playerId)
+                    if (lock != null && !lock.isCancelled && lock.isActive) {
+                        val ok = withTimeoutOrNull(3000) { switchGate.ensure(playerId).await() } != null
+                        if (!ok) {
+                            withContext(Dispatchers.BukkitMain) {
+                                player.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
                             }
+                            switchGate.release(playerId)
+                            return@launch
+                        } else delay(1)
+                    }
+                    switchGate.release(playerId)
+                }
+
+                delay(5)
+                var exactLoadedCount = -1
+                var loaded = 0
+                val tryLoad = suspend {
+                    loaded = 0
+                    server.getPlayer(playerId)?.let { currentPlayer ->
+                        val repositories = playerRepositoryRegistry.getAll()
+                        try {
+                            newSuspendedTransaction(Dispatchers.IO + CoroutineName("load:${playerId}")) {
+                                for (repo in repositories) {
+                                    onLoad(currentPlayer, repo)
+                                    loaded++
+                                }
+                            }
+                            exactLoadedCount = repositories.size
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            plugin.logger.log(Level.WARNING, "Failed to load player data for $playerId", e)
                         }
                     }
                 }
-            }
-            tryLoad.invoke()
-            delay(5)
-
-            if (exactLoadedCount == -1) {
-                plugin.logger.warning("Failed to load player data for $playerId, retrying once...")
-                delay(250)
                 tryLoad.invoke()
-            }
+                delay(5)
 
-            if (exactLoadedCount == loaded) {
-                server.getPlayer(playerId)?.let { pluginManager.callEvent(PlayerRepositoryLoadedEvent(it)) }
-                loadPlayer.remove(player.uniqueId)
+                if (exactLoadedCount == -1) {
+                    plugin.logger.warning("Failed to load player data for $playerId, retrying once...")
+                    delay(250)
+                    tryLoad.invoke()
+                }
+
+                if (exactLoadedCount == loaded) {
+                    server.getPlayer(playerId)?.let { pluginManager.callEvent(PlayerRepositoryLoadedEvent(it)) }
+                } else {
+                    server.getPlayer(playerId)?.let { withContext(Dispatchers.BukkitMain) { it.kick() } }
+                }
+            } finally {
+                loadPlayer.remove(playerId)
             }
         }
     }
@@ -262,9 +235,7 @@ class PlayerConnectionPacketHandler(
 
     private suspend fun lock(uniqueId: UUID) {
         val lock = switchDefermentLock.findLock(uniqueId)
-        if (lock != null) {
-            //throw IllegalStateException("Player ($uniqueId) is already locked.")
-        } else {
+        if (lock == null) {
             switchDefermentLock.tryLock(uniqueId) {
                 withContext(Dispatchers.BukkitMain) {
                     server.getPlayer(uniqueId)?.kickPlayer("데이터 저장 시점을 받아오지 못하였습니다.")
@@ -277,8 +248,6 @@ class PlayerConnectionPacketHandler(
         val lock = switchDefermentLock.findLock(uniqueId)
         if (lock != null) {
             switchDefermentLock.unlock(uniqueId)
-        } else {
-            //throw IllegalStateException("Player ($uniqueId) not locked.")
         }
     }
 }

@@ -28,15 +28,11 @@ fun Array<ItemStack?>.toExposedBlob(): ExposedBlob {
 }
 
 fun ExposedBlob.toItemStack(): ItemStack {
-    return this.inputStream.use {
-        it.readAllBytes().toItemStack()
-    }
+    return this.bytes.toItemStack()
 }
 
 fun ExposedBlob.toItemArray(): Array<ItemStack> {
-    return this.inputStream.use { stream ->
-        stream.readAllBytes().toItemArray()
-    }
+    return this.bytes.toItemArray()
 }
 
 fun <ID : Comparable<ID>, E : Entity<ID>> EntityClass<ID, E>.findForUpdate(
@@ -50,7 +46,7 @@ fun <ID : Comparable<ID>, E : Entity<ID>> EntityClass<ID, E>.findForUpdate(
 fun <ID : Comparable<ID>, E : Entity<ID>> EntityClass<ID, E>.findByIdForUpdate(
     id: EntityID<ID>
 ): E? {
-    return this.testCache(id) ?: findForUpdate { this@findByIdForUpdate.table.id eq id }.firstOrNull()
+    return findForUpdate { this@findByIdForUpdate.table.id eq id }.firstOrNull()
 }
 
 fun <ID : Comparable<ID>, E : Entity<ID>> EntityClass<ID, E>.findByIdForUpdate(

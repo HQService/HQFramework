@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
 import kotlin.reflect.KProperty
 
-fun Table.location(name: String): Column<String> = varchar(name, 128)
+fun Table.location(name: String): Column<String> = varchar(name, 255)
 
 fun Entity<*>.location(column: Column<String>): ExposedPropertyDelegate<Location> = object : ExposedPropertyDelegate<Location> {
     override operator fun <ID : Comparable<ID>> getValue(
@@ -16,15 +16,7 @@ fun Entity<*>.location(column: Column<String>): ExposedPropertyDelegate<Location
         desc: KProperty<*>,
     ): Location {
         val data = entity.run { column.getValue(this, desc) }
-        val slices = data.split(";")
-        return Location(
-            Bukkit.getWorld(slices[0]),
-            slices[1].toDouble(),
-            slices[2].toDouble(),
-            slices[3].toDouble(),
-            slices[4].toFloat(),
-            slices[5].toFloat(),
-        )
+        return parseLocation(data)
     }
 
     override operator fun <ID : Comparable<ID>> setValue(
@@ -32,9 +24,7 @@ fun Entity<*>.location(column: Column<String>): ExposedPropertyDelegate<Location
         desc: KProperty<*>,
         value: Location,
     ) {
-        val world = requireNotNull(value.world) { "Location with nullable world can't be stored in database" }
-        val parsed = value.run { "${world.name};$x;$y;$z;$yaw;$pitch" }
-        entity.apply { column.setValue(this, desc, parsed) }
+        entity.apply { column.setValue(this, desc, serializeLocation(value)) }
     }
 }
 
@@ -45,17 +35,7 @@ fun Entity<*>.location(column: Column<String?>): ExposedPropertyDelegate<Locatio
         desc: KProperty<*>,
     ): Location? {
         val data = entity.run { column.getValue(this, desc) }
-        val slices = data?.split(";")
-        return slices?.let {
-            Location(
-                Bukkit.getWorld(it[0]),
-                it[1].toDouble(),
-                it[2].toDouble(),
-                it[3].toDouble(),
-                it[4].toFloat(),
-                it[5].toFloat(),
-            )
-        }
+        return data?.let(::parseLocation)
     }
 
     override operator fun <ID : Comparable<ID>> setValue(
@@ -63,10 +43,36 @@ fun Entity<*>.location(column: Column<String?>): ExposedPropertyDelegate<Locatio
         desc: KProperty<*>,
         value: Location?,
     ) {
-        val parsed = value?.run {
-            val world = requireNotNull(world) { "Location with nullable world can't be stored in database" }
-            "${world.name};$x;$y;$z;$yaw;$pitch"
-        }
-        entity.apply { column.setValue(this, desc, parsed) }
+        entity.apply { column.setValue(this, desc, value?.let(::serializeLocation)) }
     }
+}
+
+internal fun serializeLocation(location: Location): String {
+    val world = requireNotNull(location.world) { "Location with nullable world can't be stored in database" }
+    return location.run { "$x;$y;$z;$yaw;$pitch;${world.name}" }
+}
+
+internal fun parseLocation(data: String): Location {
+    if (data.substringBefore(";").toDoubleOrNull() == null) return parseLegacyLocation(data)
+    val slices = data.split(";", limit = 6)
+    return Location(
+        Bukkit.getWorld(slices[5]),
+        slices[0].toDouble(),
+        slices[1].toDouble(),
+        slices[2].toDouble(),
+        slices[3].toFloat(),
+        slices[4].toFloat(),
+    )
+}
+
+private fun parseLegacyLocation(data: String): Location {
+    val slices = data.split(";")
+    return Location(
+        Bukkit.getWorld(slices[0]),
+        slices[1].toDouble(),
+        slices[2].toDouble(),
+        slices[3].toDouble(),
+        slices[4].toFloat(),
+        slices[5].toFloat(),
+    )
 }

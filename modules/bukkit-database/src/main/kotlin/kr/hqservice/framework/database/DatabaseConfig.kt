@@ -1,6 +1,7 @@
 package kr.hqservice.framework.database
 
 import com.zaxxer.hikari.HikariDataSource
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.database.datasource.H2DataSource
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import kr.hqservice.framework.database.datasource.SQLiteDataSource
@@ -18,7 +19,8 @@ import javax.sql.DataSource
 @Configuration
 class DatabaseConfig(
     private val config: HQYamlConfiguration,
-    private val logger: Logger
+    private val logger: Logger,
+    private val plugin: HQBukkitPlugin
 ) {
     @Bean
     fun provideDatabase(dataSource: DataSource): Database {
@@ -65,37 +67,35 @@ class DatabaseConfig(
     }
 
     private fun buildSQLiteDataSource(): HikariDataSource {
-        val databasePath = config.getString("database.sqlite.path").ifEmpty { config.getString("database.file-path") }.run {
+        val configuredPath = config.getString("database.sqlite.path").ifEmpty { config.getString("database.file-path") }.run {
             if (endsWith(".db")) this else "$this.db"
         }
-
-        val databaseFolder = File(databasePath.split("/").toMutableList().apply { removeLast() }.joinToString("/"))
-        if (!databaseFolder.exists()) {
-            databaseFolder.mkdirs()
-        }
-        val databaseFile = File(databasePath)
+        val databaseFile = resolveDatabaseFile(configuredPath) { it }
+        databaseFile.parentFile?.mkdirs()
         try {
             databaseFile.createNewFile()
         } catch (e: IOException) {
-            throw IOException("SQLite DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databasePath} 경로에 파일을 생성하여주세요.", e)
+            throw IOException("SQLite DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databaseFile.path} 경로에 파일을 생성하여주세요.", e)
         }
-        return SQLiteDataSource(databasePath)
+        return SQLiteDataSource(databaseFile.path)
     }
 
     private fun buildH2DataSource(): HikariDataSource {
-        val databasePath = config.getString("database.file-path").run {
-            if (endsWith(".db")) removeSuffix(".db") else this
+        val configuredPath = config.getString("database.file-path").removeSuffix(".db")
+        val databaseFile = resolveDatabaseFile(configuredPath) { File("${it.path}.mv.db") }
+        databaseFile.parentFile?.mkdirs()
+        return H2DataSource(databaseFile.path)
+    }
+
+    private fun resolveDatabaseFile(configuredPath: String, storedFileOf: (File) -> File): File {
+        val configured = File(configuredPath)
+        if (configured.isAbsolute) return configured
+        val resolved = File(plugin.dataFolder, configuredPath).absoluteFile
+        val legacy = configured.absoluteFile
+        if (!storedFileOf(resolved).exists() && storedFileOf(legacy).exists()) {
+            logger.warning("database file found at legacy location ${legacy.path}; move it to ${resolved.path}")
+            return legacy
         }
-        val databaseFolder = File(databasePath.split("/").toMutableList().apply { removeLast() }.joinToString("/"))
-        if (!databaseFolder.exists()) {
-            databaseFolder.mkdirs()
-        }
-        val databaseFile = File(databasePath)
-        try {
-            databaseFile.createNewFile()
-        } catch (e: IOException) {
-            throw IOException("H2 DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databasePath} 경로에 파일을 생성하여주세요.", e)
-        }
-        return H2DataSource("./$databasePath")
+        return resolved
     }
 }
