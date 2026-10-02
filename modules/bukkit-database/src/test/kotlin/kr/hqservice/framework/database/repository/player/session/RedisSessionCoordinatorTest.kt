@@ -38,10 +38,38 @@ class RedisSessionCoordinatorTest {
     }
 
     @Test
-    fun `expired lease is taken over`() = runBlocking {
+    fun `release keeps the committed version for the next owner`() = runBlocking {
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+
+        assertTrue(a.release(playerId))
+
+        assertNull(store.entry(key)!!.owner)
+        assertNull(store.entry(key)!!.leaseUntil)
+        assertEquals(AcquireResult.Acquired(1), b.acquire(playerId))
+    }
+
+    @Test
+    fun `lease is held until it has passed`() = runBlocking {
         a.acquire(playerId)
         store.now += lease.toMillis()
-        assertEquals(AcquireResult.Acquired(0), b.acquire(playerId))
+        assertEquals(AcquireResult.Held("25565"), b.acquire(playerId))
+    }
+
+    @Test
+    fun `expired lease is taken over with the committed version`() = runBlocking {
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+        store.now += lease.toMillis() + 1
+        assertEquals(AcquireResult.Acquired(1), b.acquire(playerId))
+        assertEquals("25566", store.entry(key)!!.owner)
+    }
+
+    @Test
+    fun `commit of the owner does not check the lease expiry`() = runBlocking {
+        a.acquire(playerId)
+        store.now += lease.toMillis() + 1
+        assertEquals(1L, a.commit(playerId, 0))
     }
 
     @Test
@@ -67,9 +95,9 @@ class RedisSessionCoordinatorTest {
         a.acquire(playerId)
         store.now += 20_000
         b.renew(listOf(playerId))
-        assertEquals(30_000L, store.entry(key)!!.expiresAt)
+        assertEquals(30_000L, store.entry(key)!!.leaseUntil)
         a.renew(listOf(playerId))
-        assertEquals(50_000L, store.entry(key)!!.expiresAt)
+        assertEquals(50_000L, store.entry(key)!!.leaseUntil)
     }
 
     @Test

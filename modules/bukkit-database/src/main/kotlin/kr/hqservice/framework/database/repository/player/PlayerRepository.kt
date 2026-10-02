@@ -93,7 +93,7 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
 
     internal open fun onMutated(uuid: UUID) {}
 
-    internal open suspend fun afterPersisted(uuid: UUID, offline: Boolean) {}
+    internal open suspend fun afterPersisted(uuid: UUID, saved: PendingSave<V>, offline: Boolean) {}
 
     internal fun markSaved(uuid: UUID, saved: PendingSave<V>) {
         withEntryLock(uuid, Unit) { entry ->

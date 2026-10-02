@@ -4,7 +4,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kr.hqservice.framework.database.redis.RedisSettings
+import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
+import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.logging.Level
@@ -21,8 +23,10 @@ abstract class CachedPlayerRepository<V : Any>(
     internal var json: Json = Json
     internal var logger: Logger = Logger.getLogger(CachedPlayerRepository::class.java.name)
     internal var cacheWriter: ((UUID, suspend () -> Unit) -> Unit)? = null
+    internal var fence: ((UUID) -> OwnerFence)? = null
 
     private val pendingWrites = ConcurrentHashMap.newKeySet<UUID>()
+    private val fencedOut = ConcurrentHashMap.newKeySet<UUID>()
 
     internal val cacheEnabled: Boolean get() = cache != null
 
@@ -35,12 +39,12 @@ abstract class CachedPlayerRepository<V : Any>(
             .getOrNull()
     }
 
-    internal suspend fun writeCached(uuid: UUID, value: V) {
-        cache?.write(cacheKey(uuid), encode(value))
+    internal suspend fun writeCached(uuid: UUID, value: V, ttl: Duration? = null) {
+        if (cacheEnabled) store(uuid, encode(value), ttl)
     }
 
-    internal suspend fun expireCached(uuid: UUID) {
-        cache?.expire(cacheKey(uuid), cacheSettings!!.dataTtl)
+    internal suspend fun persistCached(uuid: UUID) {
+        cache?.persist(cacheKey(uuid))
     }
 
     override suspend fun peek(uuid: UUID): V? = readCached(uuid) ?: super.peek(uuid)
@@ -56,16 +60,26 @@ abstract class CachedPlayerRepository<V : Any>(
         }
     }
 
-    override suspend fun afterPersisted(uuid: UUID, offline: Boolean) {
-        if (!offline) return
-        guarded("failed to set the ttl of cached player data of $uuid") { expireCached(uuid) }
+    override suspend fun afterPersisted(uuid: UUID, saved: PendingSave<V>, offline: Boolean) {
+        if (!cacheEnabled) return
+        val ttl = if (offline) cacheSettings!!.dataTtl else null
+        guarded("failed to write persisted player data of $uuid to the cache") { writeCached(uuid, saved.value, ttl) }
     }
 
     private suspend fun writeLatest(uuid: UUID) {
         pendingWrites.remove(uuid)
         guarded("failed to write cached player data of $uuid") {
             val bytes = withValue(uuid, ::encode) ?: return@guarded
-            cache?.write(cacheKey(uuid), bytes)
+            store(uuid, bytes, null)
+        }
+    }
+
+    private suspend fun store(uuid: UUID, bytes: ByteArray, ttl: Duration?) {
+        val cache = cache ?: return
+        if (cache.write(cacheKey(uuid), bytes, ttl, fence?.invoke(uuid))) {
+            fencedOut.remove(uuid)
+        } else if (fencedOut.add(uuid)) {
+            logger.log(Level.WARNING, "cached player data of $uuid was not written because this server no longer owns the player")
         }
     }
 

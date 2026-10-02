@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.TestPlugin
+import kr.hqservice.framework.database.redis.InMemoryPubSubTransport
 import kr.hqservice.framework.database.redis.PubSubTransport
 import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.redis.RedisSettings
@@ -55,6 +56,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -504,6 +506,37 @@ class PlayerDataLifecycleTest {
     }
 
     @Test
+    fun `rejoin discards a retained session superseded by another server`() {
+        val flaky = FlakyRepository()
+        val a = Node("25565")
+        a.registry.register(flaky)
+        a.lifecycle.attach(flaky)
+        joined(a)
+        flaky.update(uuid) { it.n = 5 }
+        flaky.failSave = true
+        val retained = a.sessions.get(uuid)!!
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { retained.failures.get() >= 1 }
+        transaction(db) {
+            PlayerSessionTable.update({ PlayerSessionTable.uuid eq uuid }) { it[version] = version + 1 }
+        }
+
+        flaky.failSave = false
+        a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        awaitUntil { uuid !in a.loading }
+
+        val session = a.sessions.get(uuid)!!
+        assertNotSame(retained, session)
+        assertEquals(1L, session.version)
+        assertEquals(0, flaky[uuid]!!.n)
+        assertEquals(2, flaky.loads.get())
+        assertTrue(runBlocking { flaky.flush(uuid) })
+        assertEquals(0, flaky.lastSaved)
+        assertEquals(2L, version())
+        assertEquals("25565", owner())
+    }
+
+    @Test
     fun `failed quit save keeps ownership, cache and session for a retry`() {
         val failing = object : PlayerRepository<Points>() {
             override suspend fun load(player: Player): Points = Points(0)
@@ -618,8 +651,13 @@ class PlayerDataLifecycleTest {
         a.lifecycle.shutdown()
     }
 
-    private fun cachedNode(memory: InMemoryPlayerDataCache, wallet: WalletRepository, redisSettings: RedisSettings = enabledRedis): Node =
-        Node("25565", redisSettings = redisSettings).also { node ->
+    private fun cachedNode(
+        memory: InMemoryPlayerDataCache,
+        wallet: WalletRepository,
+        redisSettings: RedisSettings = enabledRedis,
+        coordinator: SessionCoordinator = DatabaseSessionCoordinator(db, "25565", settings.lease),
+    ): Node =
+        Node("25565", redisSettings = redisSettings, coordinator = coordinator).also { node ->
             node.lifecycle.cacheFactory = { memory }
             node.registry.register(wallet)
             node.lifecycle.attach(wallet)
@@ -669,6 +707,53 @@ class PlayerDataLifecycleTest {
 
         assertEquals(enabledRedis.dataTtl, memory.ttls[walletKey(wallet)])
         assertEquals("""{"coins":42}""", memory.text(walletKey(wallet)))
+    }
+
+    @Test
+    fun `join from the cache removes the data ttl`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet)
+        memory.values[walletKey(wallet)] = """{"coins":7}""".toByteArray()
+        memory.ttls[walletKey(wallet)] = enabledRedis.dataTtl
+
+        joined(a)
+
+        assertEquals(Wallet(7), wallet[uuid])
+        assertNull(memory.ttls[walletKey(wallet)])
+    }
+
+    @Test
+    fun `full flush of a directly mutated value writes the persisted value to the cache`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet)
+        joined(a)
+
+        wallet[uuid]!!.coins = 33
+        assertTrue(runBlocking { wallet.flush(uuid) })
+
+        assertEquals("""{"coins":33}""", memory.text(walletKey(wallet)))
+        assertNull(memory.ttls[walletKey(wallet)])
+    }
+
+    @Test
+    fun `cache writes are fenced by redis session ownership`() {
+        val store = InMemorySessionStore()
+        val coordinator = RedisSessionCoordinator(store, enabledRedis, settings.lease, "25565", InMemoryPubSubTransport())
+        val memory = InMemoryPlayerDataCache(store::owner)
+        val wallet = WalletRepository()
+        val a = cachedNode(memory, wallet, coordinator = coordinator)
+        joined(a)
+        assertEquals("""{"coins":100}""", memory.text(walletKey(wallet)))
+
+        wallet.update(uuid) { it.coins = 1 }
+        awaitUntil { memory.text(walletKey(wallet)) == """{"coins":1}""" }
+        store.entry("hq:session:$uuid")!!.owner = "25566"
+        wallet.update(uuid) { it.coins = 2 }
+        tickFor(100)
+
+        assertEquals("""{"coins":1}""", memory.text(walletKey(wallet)))
     }
 
     @Test

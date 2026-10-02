@@ -2,6 +2,7 @@ package kr.hqservice.framework.database.repository.player.session
 
 import kr.hqservice.framework.database.redis.PubSubTransport
 import kr.hqservice.framework.database.redis.RedisSettings
+import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import kr.hqservice.framework.database.repository.player.session.redis.SessionStore
 import java.time.Duration
 import java.util.UUID
@@ -36,6 +37,8 @@ class RedisSessionCoordinator(
         transport.subscribe(releasedChannel) { payload ->
             runCatching { UUID.fromString(payload.decodeToString()) }.getOrNull()?.let(listener)
         }
+
+    fun fence(uuid: UUID): OwnerFence = OwnerFence(key(uuid), serverId)
 
     private fun key(uuid: UUID): String = settings.key("session", uuid.toString())
 }

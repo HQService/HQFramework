@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kr.hqservice.framework.database.repository.player.cache.LettucePlayerDataCache
+import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
 import kr.hqservice.framework.database.repository.player.session.redis.LettuceSessionStore
 import kotlinx.serialization.json.Json
@@ -73,13 +74,18 @@ class RedisIntegrationTest {
         assertNull(store.commit(key, "a", 0, 30_000))
         assertNull(store.commit(key, "b", 1, 30_000))
         assertEquals(AcquireResult.Acquired(1), store.acquire(key, "a", 30_000))
+        val leaseBefore = leaseUntil(key)
         store.renew(listOf(key), "a", 60_000)
-        assertTrue(provider.connection().sync().pttl(key) > 30_000)
+        assertTrue(leaseUntil(key) >= leaseBefore + 20_000)
+        assertTrue(provider.connection().sync().pttl(key) > Duration.ofDays(29).toMillis())
         assertFalse(store.release(key, "b"))
         assertTrue(store.release(key, "a"))
-        assertEquals(AcquireResult.Acquired(0), store.acquire(key, "b", 30_000))
+        assertNull(provider.connection().sync().hget(key, "owner"))
+        assertEquals(AcquireResult.Acquired(1), store.acquire(key, "b", 30_000))
         assertTrue(store.release(key, "b"))
     }
+
+    private fun leaseUntil(key: String): Long = provider.connection().sync().hget(key, "lease_until")!!.decodeToString().toLong()
 
     @Test
     fun `lettuce session store lease expires`() = runBlocking {
@@ -87,9 +93,11 @@ class RedisIntegrationTest {
         val key = settings.key("session", UUID.randomUUID().toString())
 
         store.acquire(key, "a", 100)
+        assertEquals(1L, store.commit(key, "a", 0, 100))
         delay(300)
 
-        assertEquals(AcquireResult.Acquired(0), store.acquire(key, "b", 30_000))
+        assertEquals(AcquireResult.Acquired(1), store.acquire(key, "b", 30_000))
+        assertNull(store.commit(key, "a", 1, 30_000))
         assertTrue(store.release(key, "b"))
     }
 
@@ -98,18 +106,38 @@ class RedisIntegrationTest {
         val cache = LettucePlayerDataCache(provider)
         val key = settings.key("data", "test", UUID.randomUUID().toString())
 
-        cache.write(key, "first".toByteArray())
+        assertTrue(cache.write(key, "first".toByteArray(), null, null))
         assertEquals("first", cache.read(key)?.decodeToString())
         assertEquals(-1L, provider.connection().sync().pttl(key))
 
-        cache.expire(key, Duration.ofSeconds(30))
+        assertTrue(cache.write(key, "ttl".toByteArray(), Duration.ofSeconds(30), null))
         assertTrue(provider.connection().sync().pttl(key) in 1..30_000)
+        cache.persist(key)
+        assertEquals(-1L, provider.connection().sync().pttl(key))
 
-        cache.write(key, "second".toByteArray())
+        assertTrue(cache.write(key, "second".toByteArray(), null, null))
         assertEquals("second", cache.read(key)?.decodeToString())
         assertEquals(-1L, provider.connection().sync().pttl(key))
 
         cache.delete(key)
         assertNull(cache.read(key))
+    }
+
+    @Test
+    fun `lettuce player data cache honours the owner fence`() = runBlocking {
+        val cache = LettucePlayerDataCache(provider)
+        val store = LettuceSessionStore(provider)
+        val sessionKey = settings.key("session", UUID.randomUUID().toString())
+        val key = settings.key("data", "test", UUID.randomUUID().toString())
+        store.acquire(sessionKey, "a", 30_000)
+
+        assertTrue(cache.write(key, "mine".toByteArray(), Duration.ofSeconds(30), OwnerFence(sessionKey, "a")))
+        assertTrue(provider.connection().sync().pttl(key) in 1..30_000)
+        assertFalse(cache.write(key, "theirs".toByteArray(), null, OwnerFence(sessionKey, "b")))
+        assertEquals("mine", cache.read(key)?.decodeToString())
+
+        store.release(sessionKey, "a")
+        assertFalse(cache.write(key, "released".toByteArray(), null, OwnerFence(sessionKey, "a")))
+        cache.delete(key)
     }
 }

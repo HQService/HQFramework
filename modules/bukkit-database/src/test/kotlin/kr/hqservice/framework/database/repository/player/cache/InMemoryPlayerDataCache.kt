@@ -4,7 +4,7 @@ import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-class InMemoryPlayerDataCache : PlayerDataCache {
+class InMemoryPlayerDataCache(private val sessionOwner: (String) -> String? = { null }) : PlayerDataCache {
     val values = ConcurrentHashMap<String, ByteArray>()
     val ttls = ConcurrentHashMap<String, Duration>()
     val writes = AtomicInteger()
@@ -13,14 +13,16 @@ class InMemoryPlayerDataCache : PlayerDataCache {
 
     override suspend fun read(key: String): ByteArray? = values[key]
 
-    override suspend fun write(key: String, value: ByteArray) {
+    override suspend fun write(key: String, value: ByteArray, ttl: Duration?, fence: OwnerFence?): Boolean {
+        if (fence != null && sessionOwner(fence.sessionKey) != fence.owner) return false
         writes.incrementAndGet()
         values[key] = value
-        ttls.remove(key)
+        if (ttl == null) ttls.remove(key) else ttls[key] = ttl
+        return true
     }
 
-    override suspend fun expire(key: String, ttl: Duration) {
-        if (values.containsKey(key)) ttls[key] = ttl
+    override suspend fun persist(key: String) {
+        ttls.remove(key)
     }
 
     override suspend fun delete(key: String) {

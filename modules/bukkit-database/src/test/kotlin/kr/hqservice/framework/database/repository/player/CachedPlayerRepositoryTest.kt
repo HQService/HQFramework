@@ -7,7 +7,10 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kr.hqservice.framework.database.redis.RedisSettings
+import io.mockk.mockk
+import io.mockk.verify
 import kr.hqservice.framework.database.repository.player.cache.InMemoryPlayerDataCache
+import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.Database
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -19,6 +22,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.time.Duration
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class CachedPlayerRepositoryTest {
     @Serializable
@@ -45,7 +51,8 @@ class CachedPlayerRepositoryTest {
 
     private val uuid = UUID.randomUUID()
     private val settings = RedisSettings("redis://localhost", "hq", Duration.ofSeconds(90))
-    private val cache = InMemoryPlayerDataCache()
+    private val owners = ConcurrentHashMap<String, String>()
+    private val cache = InMemoryPlayerDataCache { owners[it] }
     private val queued = mutableListOf<suspend () -> Unit>()
 
     @BeforeEach
@@ -137,16 +144,67 @@ class CachedPlayerRepositoryTest {
     }
 
     @Test
-    fun `persisting an offline player sets the data ttl`() = runBlocking {
+    fun `persisting an online player writes the persisted value without a ttl`() = runBlocking {
         val repository = WalletRepository().enabled()
         repository.put(uuid, Wallet(0))
-        repository.update(uuid) { it.coins = 5 }
+        cache.ttls[key(repository)] = Duration.ofSeconds(5)
+        repository[uuid]!!.coins = 8
 
-        repository.afterPersisted(uuid, offline = false)
+        repository.afterPersisted(uuid, repository.snapshot(uuid)!!, offline = false)
+
+        assertEquals("""{"coins":8}""", cache.text(key(repository)))
         assertNull(cache.ttls[key(repository)])
+    }
 
-        repository.afterPersisted(uuid, offline = true)
+    @Test
+    fun `persisting an offline player writes the persisted value with the data ttl`() = runBlocking {
+        val repository = WalletRepository().enabled()
+        repository.put(uuid, Wallet(5))
+
+        repository.afterPersisted(uuid, repository.snapshot(uuid)!!, offline = true)
+
+        assertEquals("""{"coins":5}""", cache.text(key(repository)))
         assertEquals(Duration.ofSeconds(90), cache.ttls[key(repository)])
+    }
+
+    @Test
+    fun `persistCached removes the ttl`() = runBlocking {
+        val repository = WalletRepository().enabled()
+        cache.values[key(repository)] = """{"coins":7}""".toByteArray()
+        cache.ttls[key(repository)] = Duration.ofSeconds(90)
+
+        repository.persistCached(uuid)
+
+        assertNull(cache.ttls[key(repository)])
+    }
+
+    @Test
+    fun `fenced write is rejected when another server owns the session and warns once`() = runBlocking {
+        val logger = mockk<Logger>(relaxed = true)
+        val repository = WalletRepository().enabled()
+        repository.logger = logger
+        repository.fence = { OwnerFence("hq:session:$it", "25565") }
+        owners["hq:session:$uuid"] = "25566"
+        repository.put(uuid, Wallet(0))
+
+        repository.update(uuid) { it.coins = 1 }
+        repository.update(uuid) { it.coins = 2 }
+        repository.afterPersisted(uuid, repository.snapshot(uuid)!!, offline = true)
+
+        assertTrue(cache.values.isEmpty())
+        verify(exactly = 1) { logger.log(Level.WARNING, match<String> { it.contains("no longer owns") }) }
+    }
+
+    @Test
+    fun `fenced write succeeds while this server owns the session`() = runBlocking {
+        val repository = WalletRepository().enabled()
+        repository.fence = { OwnerFence("hq:session:$it", "25565") }
+        owners["hq:session:$uuid"] = "25565"
+        repository.put(uuid, Wallet(0))
+
+        repository.update(uuid) { it.coins = 4 }
+
+        assertEquals("""{"coins":4}""", cache.text(key(repository)))
     }
 
     @Test
@@ -158,7 +216,8 @@ class CachedPlayerRepositoryTest {
         repository.update(uuid) { it.coins = 5 }
         repository[uuid] = Wallet(6)
         repository.writeCached(uuid, Wallet(6))
-        repository.afterPersisted(uuid, offline = true)
+        repository.afterPersisted(uuid, repository.snapshot(uuid)!!, offline = true)
+        repository.persistCached(uuid)
 
         assertFalse(repository.cacheEnabled)
         assertEquals(Wallet(6), repository[uuid])

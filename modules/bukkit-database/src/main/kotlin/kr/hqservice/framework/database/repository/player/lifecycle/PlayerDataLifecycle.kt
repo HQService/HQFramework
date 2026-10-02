@@ -32,6 +32,7 @@ import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedP
 import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
 import kr.hqservice.framework.database.repository.player.session.OwnershipTimeoutException
+import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
 import kr.hqservice.framework.netty.api.PacketSender
 import org.bukkit.entity.Player
@@ -93,6 +94,7 @@ class PlayerDataLifecycle(
             repository.json = json
             repository.logger = logger
             repository.cacheWriter = { uuid, block -> playerScopes.launch(uuid) { block() } }
+            repository.fence = (coordinator as? RedisSessionCoordinator)?.let { redis -> redis::fence }
         }
     }
 
@@ -140,7 +142,7 @@ class PlayerDataLifecycle(
                 withTimeoutOrNull(settings.joinTimeout.toMillis()) { playerScopes.awaitIdle(uuid) }
                     ?: throw OwnershipTimeoutException(uuid)
                 val version = acquireWithRetry(uuid)
-                retained = sessions.get(uuid)
+                retained = sessions.get(uuid)?.let { keepUnlessSuperseded(it, version) }
                 if (!isStillJoining(player, token)) {
                     if (retained == null && mayCleanUp(uuid, token)) coordinator.release(uuid)
                     return@launch
@@ -216,6 +218,14 @@ class PlayerDataLifecycle(
         return registered
     }
 
+    private fun keepUnlessSuperseded(retained: PlayerSession, version: Long): PlayerSession? {
+        if (retained.version == version) return retained
+        logger.info("retained session of ${retained.uuid} superseded (version ${retained.version}, current $version); discarding its unsaved data and loading fresh")
+        sessions.remove(retained.uuid)
+        repositories.getAll().forEach { it.remove(retained.uuid) }
+        return null
+    }
+
     private suspend fun acquireWithRetry(uuid: UUID): Long {
         var lastError: Exception? = null
         var hint: CompletableDeferred<Unit>? = null
@@ -273,7 +283,9 @@ class PlayerDataLifecycle(
         val hot = cached?.readCached(uuid)
         val value = hot ?: repository.load(player)
         if (!loading.isCurrent(uuid, token)) return
-        if (cached != null && hot == null) cached.writeCached(uuid, value)
+        if (cached != null) {
+            if (hot == null) cached.writeCached(uuid, value) else cached.persistCached(uuid)
+        }
         repository.put(uuid, value)
     }
 

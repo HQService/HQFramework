@@ -18,6 +18,7 @@ import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
 import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.coroutineContext
 import kr.hqservice.framework.database.repository.player.FlushRequester
+import kr.hqservice.framework.database.repository.player.PendingSave
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.SavePolicy
@@ -153,7 +154,7 @@ class FlushSchedulerTest {
             events += if (TransactionManager.currentOrNull() != null) "save" else "save outside transaction"
         }
 
-        override suspend fun afterPersisted(uuid: UUID, offline: Boolean) {
+        override suspend fun afterPersisted(uuid: UUID, saved: PendingSave<Counter>, offline: Boolean) {
             persisted += uuid to offline
         }
     }

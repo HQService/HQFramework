@@ -45,7 +45,7 @@ class FlushScheduler(
 
         fun markSaved(uuid: UUID) = repository.markSaved(uuid, snapshot)
 
-        suspend fun afterPersisted(uuid: UUID, offline: Boolean) = repository.afterPersisted(uuid, offline)
+        suspend fun afterPersisted(uuid: UUID, offline: Boolean) = repository.afterPersisted(uuid, snapshot, offline)
     }
 
     private val states = ConcurrentHashMap<PlayerRepository<*>, RepositoryState>()
