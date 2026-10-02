@@ -10,13 +10,22 @@ class SwitchGate {
     private val waiters = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
 
     fun ensure(id: UUID): CompletableDeferred<Unit> =
-        waiters.compute(id) { _, existing -> existing ?: CompletableDeferred() }!!
+        waiters.compute(id) { _, existing -> existing?.takeIf { !it.isCompleted } ?: CompletableDeferred() }!!
 
     fun signal(id: UUID) {
-        val d = waiters.compute(id) { _, existing -> existing ?: CompletableDeferred() }!!
-        if (!d.isCompleted) d.complete(Unit)
+        waiters[id]?.complete(Unit)
+    }
+
+    fun release(id: UUID) {
+        waiters.remove(id)
     }
 
     fun cancel(id: UUID) = waiters.remove(id)?.cancel()
-    fun clear() = waiters.values.forEach(CompletableDeferred<*>::cancel)
+
+    fun clear() {
+        waiters.values.forEach(CompletableDeferred<*>::cancel)
+        waiters.clear()
+    }
+
+    fun isEmpty(): Boolean = waiters.isEmpty()
 }

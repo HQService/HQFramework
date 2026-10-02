@@ -176,7 +176,10 @@ class PlayerConnectionPacketHandler(
                         }
                         switchGate.cancel(playerId)
                         return@launch
-                    } else delay(1)
+                    } else {
+                        switchGate.release(playerId)
+                        delay(1)
+                    }
                 }
             }
 

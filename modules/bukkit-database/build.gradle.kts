@@ -23,4 +23,6 @@ dependencies {
     testImplementation(libs.mockBukkit)
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.h2)
+    testImplementation(libs.mockK)
 }
