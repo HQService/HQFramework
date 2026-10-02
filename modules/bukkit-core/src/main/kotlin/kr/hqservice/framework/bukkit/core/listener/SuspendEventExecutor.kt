@@ -1,10 +1,10 @@
 package kr.hqservice.framework.bukkit.core.listener
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import org.bukkit.event.Event
 import org.bukkit.event.Listener
 import org.bukkit.plugin.EventExecutor
@@ -30,22 +30,15 @@ class SuspendEventExecutor(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun invokeHandlerMethod(event: Event) {
         try {
             if (suspend) {
-                if (event::class.simpleName == "PlayerRepositoryLoadedEvent") runBlocking {
+                plugin.launch(Dispatchers.BukkitMain, start = CoroutineStart.UNDISPATCHED) {
                     method.callSuspend(listenerInstance, event)
-                } else runBlocking {
-                    val dispatcher = coroutineContext[CoroutineDispatcher.Key]!!
-                    CoroutineScope(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)).launch(dispatcher) {
-                        method.callSuspend(listenerInstance, event)
-                    }
                 }
             } else method.call(listenerInstance, event)
         } catch (exception: InvocationTargetException) {
-            val cause = exception.cause ?: exception
-            throw cause
+            throw exception.cause ?: exception
         }
     }
 }
