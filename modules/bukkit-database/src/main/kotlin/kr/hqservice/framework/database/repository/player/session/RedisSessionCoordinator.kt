@@ -33,6 +33,9 @@ class RedisSessionCoordinator(
             if (released) transport.publish(releasedChannel, uuid.toString().toByteArray())
         }
 
+    override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean =
+        store.verify(key(uuid), serverId, expectedVersion)
+
     override fun onReleased(listener: (UUID) -> Unit): AutoCloseable =
         transport.subscribe(releasedChannel) { payload ->
             runCatching { UUID.fromString(payload.decodeToString()) }.getOrNull()?.let(listener)

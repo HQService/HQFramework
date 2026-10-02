@@ -20,5 +20,7 @@ interface SessionCoordinator {
 
     suspend fun release(uuid: UUID): Boolean
 
+    suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean
+
     fun onReleased(listener: (UUID) -> Unit): AutoCloseable = AutoCloseable { }
 }

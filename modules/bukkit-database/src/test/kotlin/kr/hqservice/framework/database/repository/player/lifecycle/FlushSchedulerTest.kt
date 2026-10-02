@@ -111,6 +111,8 @@ class FlushSchedulerTest {
             return expectedVersion + 1
         }
 
+        override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean = true
+
         @Volatile var failRelease = false
 
         override suspend fun release(uuid: UUID): Boolean {
@@ -122,6 +124,7 @@ class FlushSchedulerTest {
 
     class OutsideTransactionCoordinator(
         private val events: MutableList<String>,
+        private val verified: Boolean = true,
         private val result: (Long) -> Long? = { it + 1 },
     ) : SessionCoordinator {
         override val serverId: String = "test"
@@ -139,6 +142,11 @@ class FlushSchedulerTest {
         }
 
         override suspend fun release(uuid: UUID): Boolean = true
+
+        override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean {
+            events += if (TransactionManager.currentOrNull() == null) "verify" else "verify inside transaction"
+            return verified
+        }
     }
 
     class RecordingRepository(
@@ -593,7 +601,7 @@ class FlushSchedulerTest {
 
         assertTrue(scheduler(repository, coordinator = outside).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
 
-        assertEquals(listOf("save", "commit"), events.toList())
+        assertEquals(listOf("verify", "save", "commit"), events.toList())
         assertEquals(listOf(4L), outside.commits.toList())
         assertEquals(5L, session.version)
         assertFalse(repository.isDirty(uuid))
@@ -620,7 +628,7 @@ class FlushSchedulerTest {
     @Test
     fun `outside commit rejected after a successful save drops ownership`() = runBlocking {
         val events = Collections.synchronizedList(mutableListOf<String>())
-        val outside = OutsideTransactionCoordinator(events) { null }
+        val outside = OutsideTransactionCoordinator(events, result = { null })
         val repository = RecordingRepository(events)
         val uuid = UUID.randomUUID()
         repository.put(uuid, Counter(0))
@@ -630,10 +638,31 @@ class FlushSchedulerTest {
 
         assertFalse(scheduler(repository, coordinator = outside, onOwnershipLost = { lost += it }).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
 
-        assertEquals(listOf("save", "commit"), events.toList())
+        assertEquals(listOf("verify", "save", "commit"), events.toList())
         assertSame(session, lost.single())
         assertNull(registry.get(uuid))
         assertFalse(repository.contains(uuid))
+    }
+
+    @Test
+    fun `outside coordinator that already lost ownership never touches the database`() = runBlocking {
+        val events = Collections.synchronizedList(mutableListOf<String>())
+        val outside = OutsideTransactionCoordinator(events, verified = false)
+        val repository = RecordingRepository(events)
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        repository.update(uuid) { it.n++ }
+        val session = PlayerSession(uuid, player(uuid), 4).also(registry::put)
+        val lost = mutableListOf<PlayerSession>()
+
+        assertFalse(scheduler(repository, coordinator = outside, onOwnershipLost = { lost += it }).flushPlayer(uuid, listOf(repository), FlushReason.DIRTY))
+
+        assertEquals(listOf("verify"), events.toList())
+        assertTrue(outside.commits.isEmpty())
+        assertSame(session, lost.single())
+        assertNull(registry.get(uuid))
+        assertFalse(repository.contains(uuid))
+        verify { logger.severe(match<String> { it.contains("ownership lost; local cache discarded (persisted data may be overwritten by the new owner)") }) }
     }
 
     @Test

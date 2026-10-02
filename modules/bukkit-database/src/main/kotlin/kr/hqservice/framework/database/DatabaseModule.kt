@@ -6,6 +6,7 @@ import kr.hqservice.framework.bukkit.core.component.module.Setup
 import kr.hqservice.framework.bukkit.core.component.module.Teardown
 import kr.hqservice.framework.database.dao.TimestampEntityHooks
 import kr.hqservice.framework.database.hook.registry.DatabaseShutdownHookRegistry
+import kr.hqservice.framework.database.redis.PubSubTransport
 import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.repository.player.lifecycle.PlayerDataLifecycle
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
@@ -23,6 +24,7 @@ class DatabaseModule(
     private val dataSource: HikariDataSource,
     private val playerDataLifecycle: PlayerDataLifecycle,
     private val redisProvider: RedisProvider,
+    private val pubSubTransport: PubSubTransport,
     private val logger: Logger
 ) {
     @Setup
@@ -48,7 +50,11 @@ class DatabaseModule(
             try {
                 dataSource.close()
             } finally {
-                redisProvider.close()
+                try {
+                    pubSubTransport.close()
+                } finally {
+                    redisProvider.close()
+                }
             }
         }
     }

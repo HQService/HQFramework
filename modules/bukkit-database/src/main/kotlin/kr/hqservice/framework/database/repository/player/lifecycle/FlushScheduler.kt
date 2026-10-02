@@ -108,7 +108,7 @@ class FlushScheduler(
         } catch (e: OwnershipLostException) {
             sessions.remove(uuid)
             repositories().forEach { it.remove(uuid) }
-            logger.severe("player data ownership of $uuid was lost; unsaved changes were discarded")
+            logger.severe("player data of $uuid: ownership lost; local cache discarded (persisted data may be overwritten by the new owner)")
             onOwnershipLost(session)
             return false
         } catch (e: CancellationException) {
@@ -132,6 +132,7 @@ class FlushScheduler(
                 commitOrThrow(uuid, session.version)
             }
         }
+        if (!coordinator.verify(uuid, session.version)) throw OwnershipLostException(uuid)
         newSuspendedTransaction(Dispatchers.IO, database) { selected.forEach { it.save(session.player) } }
         return commitOrThrow(uuid, session.version)
     }

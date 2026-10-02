@@ -43,6 +43,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.coroutines.EmptyCoroutineContext
@@ -70,15 +71,15 @@ class PlayerDataLifecycle(
     private val cache: PlayerDataCache by lazy { cacheFactory() }
     private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost)
     private val schedulerJob = scheduler.start(plugin)
-    private val releasedSubscription: AutoCloseable
+    private val releasedSubscription = AtomicReference<AutoCloseable?>()
 
     init {
         repositories.getAll().forEach(::attach)
-        releasedSubscription = runCatching { coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) } }
-            .getOrElse {
-                logger.log(Level.WARNING, "failed to subscribe to player data release notifications; falling back to polling", it)
-                AutoCloseable { }
-            }
+        plugin.launch(Dispatchers.IO) {
+            runCatching { coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) } }
+                .onSuccess { if (!releasedSubscription.compareAndSet(null, it)) it.close() }
+                .onFailure { logger.log(Level.WARNING, "failed to subscribe to player data release notifications; falling back to polling", it) }
+        }
     }
 
     fun attach(repository: PlayerRepository<*>) {
@@ -113,7 +114,7 @@ class PlayerDataLifecycle(
 
     fun shutdown() {
         stop()
-        releasedSubscription.close()
+        releasedSubscription.getAndSet(AutoCloseable { })?.close()
         runBlocking {
             withTimeoutOrNull(5_000) {
                 sessions.all().forEach { session ->
@@ -147,7 +148,8 @@ class PlayerDataLifecycle(
                     if (retained == null && mayCleanUp(uuid, token)) coordinator.release(uuid)
                     return@launch
                 }
-                loadAll(player, token, onlyMissing = retained != null)
+                withTimeoutOrNull(settings.joinTimeout.toMillis()) { loadAll(player, token, onlyMissing = retained != null) }
+                    ?: throw IllegalStateException("loading player data of $uuid did not finish within ${settings.joinTimeout.toMillis()}ms")
                 if (!register(retained ?: PlayerSession(uuid, player, version), token)) {
                     if (retained == null && mayCleanUp(uuid, token)) {
                         repositories.getAll().forEach { it.remove(uuid) }
@@ -270,24 +272,32 @@ class PlayerDataLifecycle(
     }
 
     private suspend fun loadOnce(player: Player, token: Long, onlyMissing: Boolean) {
-        newSuspendedTransaction(Dispatchers.IO, database) {
-            repositories.getAll()
-                .filterNot { onlyMissing && it.contains(player.uniqueId) }
-                .forEach { load(it, player, token) }
+        val uuid = player.uniqueId
+        val targets = repositories.getAll().filterNot { onlyMissing && it.contains(uuid) }
+        val hot = targets.mapNotNull { readHot(it, uuid) }
+        val cold = targets - hot.map { it.repository }.toSet()
+        val loaded = newSuspendedTransaction(Dispatchers.IO, database) { cold.map { loadCold(it, player) } }
+        if (!loading.isCurrent(uuid, token)) return
+        (hot + loaded).forEach { it.publish(uuid) }
+    }
+
+    private class Loaded<V : Any>(val repository: PlayerRepository<V>, val value: V, val fromCache: Boolean) {
+        suspend fun publish(uuid: UUID) {
+            val cached = (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled }
+            if (cached != null) {
+                if (fromCache) cached.persistCached(uuid) else cached.writeCached(uuid, value)
+            }
+            repository.put(uuid, value)
         }
     }
 
-    private suspend fun <V : Any> load(repository: PlayerRepository<V>, player: Player, token: Long) {
-        val uuid = player.uniqueId
-        val cached = (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled }
-        val hot = cached?.readCached(uuid)
-        val value = hot ?: repository.load(player)
-        if (!loading.isCurrent(uuid, token)) return
-        if (cached != null) {
-            if (hot == null) cached.writeCached(uuid, value) else cached.persistCached(uuid)
-        }
-        repository.put(uuid, value)
+    private suspend fun <V : Any> readHot(repository: PlayerRepository<V>, uuid: UUID): Loaded<V>? {
+        val cached = (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled } ?: return null
+        return cached.readCached(uuid)?.let { Loaded(repository, it, true) }
     }
+
+    private suspend fun <V : Any> loadCold(repository: PlayerRepository<V>, player: Player): Loaded<V> =
+        Loaded(repository, repository.load(player), false)
 
     private fun onOwnershipLost(session: PlayerSession) {
         val player = session.player

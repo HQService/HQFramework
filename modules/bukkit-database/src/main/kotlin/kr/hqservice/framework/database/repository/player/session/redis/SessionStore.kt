@@ -10,4 +10,6 @@ interface SessionStore {
     suspend fun commit(key: String, owner: String, expectedVersion: Long, leaseMillis: Long): Long?
 
     suspend fun release(key: String, owner: String): Boolean
+
+    suspend fun verify(key: String, owner: String, expectedVersion: Long): Boolean
 }

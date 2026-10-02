@@ -27,10 +27,12 @@ class RedisMessenger(
     }
 }
 
-interface PubSubTransport {
+interface PubSubTransport : AutoCloseable {
     fun publish(channel: String, payload: ByteArray)
 
     fun subscribe(channel: String, listener: (ByteArray) -> Unit): AutoCloseable
+
+    override fun close() {}
 }
 
 fun interface Subscription : AutoCloseable

@@ -101,6 +101,19 @@ class DatabaseSessionCoordinatorTest {
     }
 
     @Test
+    fun `verify checks the owner and the version`() = runBlocking {
+        assertFalse(a.verify(playerId, 0))
+        a.acquire(playerId)
+        assertTrue(a.verify(playerId, 0))
+        assertFalse(a.verify(playerId, 1))
+        assertFalse(b.verify(playerId, 0))
+        a.commit(playerId, 0)
+        assertTrue(a.verify(playerId, 1))
+        a.release(playerId)
+        assertFalse(a.verify(playerId, 1))
+    }
+
+    @Test
     fun `same owner can acquire again`() = runBlocking {
         assertEquals(AcquireResult.Acquired(0), a.acquire(playerId))
         assertEquals(AcquireResult.Acquired(0), a.acquire(playerId))

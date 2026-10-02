@@ -73,6 +73,11 @@ class DatabaseSessionCoordinator(
         } == 1
     }
 
+    override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean = inTransaction {
+        val current = findSession(uuid)
+        current != null && current[PlayerSessionTable.owner] == serverId && current[PlayerSessionTable.version] == expectedVersion
+    }
+
     private fun Transaction.tryAcquire(uuid: UUID): AcquireResult.Acquired? {
         val until = leaseExpiry()
         val updated = PlayerSessionTable.update({

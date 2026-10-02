@@ -9,6 +9,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -26,6 +27,8 @@ import kr.hqservice.framework.database.repository.player.CachedPlayerRepository
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.cache.InMemoryPlayerDataCache
+import kr.hqservice.framework.database.repository.player.cache.OwnerFence
+import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
@@ -48,6 +51,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.upsert
@@ -67,6 +71,9 @@ import java.time.Instant
 import java.util.Collections
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 
@@ -363,11 +370,31 @@ class PlayerDataLifecycleTest {
     fun `shutdown closes the release notification subscription`() {
         val notifying = NotifyingCoordinator(DatabaseSessionCoordinator(db, "25565", settings.lease))
         val a = Node("25565", coordinator = notifying)
-        assertEquals(1, notifying.listenerCount())
+        awaitUntil { notifying.listenerCount() == 1 }
 
         a.lifecycle.shutdown()
 
-        assertEquals(0, notifying.listenerCount())
+        awaitUntil { notifying.listenerCount() == 0 }
+    }
+
+    @Test
+    fun `creating the lifecycle does not wait for the release notification subscription`() {
+        val gate = CountDownLatch(1)
+        val closed = AtomicBoolean()
+        val blocking = object : SessionCoordinator by DatabaseSessionCoordinator(db, "25565", settings.lease) {
+            override fun onReleased(listener: (UUID) -> Unit): AutoCloseable {
+                gate.await(2, TimeUnit.SECONDS)
+                return AutoCloseable { closed.set(true) }
+            }
+        }
+        val started = System.currentTimeMillis()
+
+        val a = Node("25565", coordinator = blocking)
+
+        assertTrue(System.currentTimeMillis() - started < 1000)
+        a.lifecycle.shutdown()
+        gate.countDown()
+        awaitUntil { closed.get() }
     }
 
     @Test
@@ -652,7 +679,7 @@ class PlayerDataLifecycleTest {
     }
 
     private fun cachedNode(
-        memory: InMemoryPlayerDataCache,
+        memory: PlayerDataCache,
         wallet: WalletRepository,
         redisSettings: RedisSettings = enabledRedis,
         coordinator: SessionCoordinator = DatabaseSessionCoordinator(db, "25565", settings.lease),
@@ -754,6 +781,46 @@ class PlayerDataLifecycleTest {
         tickFor(100)
 
         assertEquals("""{"coins":1}""", memory.text(walletKey(wallet)))
+    }
+
+    @Test
+    fun `cache is read and written outside the database transaction`() {
+        val memory = InMemoryPlayerDataCache()
+        val inTransaction = CopyOnWriteArrayList<String>()
+        val probing = object : PlayerDataCache by memory {
+            override suspend fun read(key: String): ByteArray? =
+                memory.read(key).also { if (TransactionManager.currentOrNull() != null) inTransaction += "read" }
+
+            override suspend fun write(key: String, value: ByteArray, ttl: Duration?, fence: OwnerFence?): Boolean =
+                memory.write(key, value, ttl, fence).also { if (TransactionManager.currentOrNull() != null) inTransaction += "write" }
+        }
+        val wallet = WalletRepository()
+        val a = cachedNode(probing, wallet)
+
+        joined(a)
+
+        assertEquals("""{"coins":100}""", memory.text(walletKey(wallet)))
+        assertTrue(inTransaction.isEmpty(), inTransaction.toString())
+    }
+
+    @Test
+    fun `join is kicked and ownership released when loading does not finish within the join timeout`() {
+        val memory = InMemoryPlayerDataCache()
+        val hanging = object : PlayerDataCache by memory {
+            override suspend fun read(key: String): ByteArray? = awaitCancellation()
+        }
+        val wallet = WalletRepository()
+        val a = cachedNode(hanging, wallet)
+        val started = System.currentTimeMillis()
+
+        a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        awaitUntil(5000) { !player.isOnline }
+
+        assertTrue(System.currentTimeMillis() - started >= settings.joinTimeout.toMillis())
+        awaitUntil { uuid !in a.loading }
+        assertNull(a.sessions.get(uuid))
+        assertFalse(wallet.contains(uuid))
+        assertNull(owner())
     }
 
     @Test
