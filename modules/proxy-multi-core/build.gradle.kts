@@ -7,7 +7,7 @@ dependencies {
     apiModule("global", "core")
     apiModule("global", "yaml")
     apiModule("proxy", "core")
-    apiModule("multi", "netty")
+    apiModule("velocity", "netty")
 
     compileOnly(libs.velocity.api)
     compileOnly(libs.byte.buddy.agent)
