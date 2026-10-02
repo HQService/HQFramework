@@ -1,21 +1,13 @@
 package kr.hqservice.framework.netty.packet.extension
 
 import io.netty.buffer.ByteBuf
-import kr.hqservice.framework.global.core.extension.compress
-import kr.hqservice.framework.global.core.extension.decompress
+import io.netty.handler.codec.DecoderException
 import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.api.NettyPlayer
 import kr.hqservice.framework.netty.api.impl.NettyChannelImpl
 import kr.hqservice.framework.netty.api.impl.NettyPlayerImpl
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
 import java.util.*
-import java.util.logging.Logger
 import kotlin.experimental.and
-
-private val packetLogger: Logger = Logger.getLogger("HQFramework.Packet")
 
 private const val MAX_STRING_CHARS = 32767
 private const val MAX_STRING_BYTES = MAX_STRING_CHARS * 4
@@ -89,16 +81,16 @@ fun ByteBuf.readUUID(): UUID {
 }
 
 fun ByteBuf.writeChannel(nettyChannel: NettyChannel?) {
-    if (nettyChannel == null) writeString("null-channel")
-    else {
+    writeBoolean(nettyChannel != null)
+    if (nettyChannel != null) {
         writeString(nettyChannel.getName())
         writeInt(nettyChannel.getPort())
     }
 }
 
 fun ByteBuf.readChannel(): NettyChannel? {
+    if (!readBoolean()) return null
     val name = readString()
-    if (name == "null-channel") return null
     val port = readInt()
     return NettyChannelImpl(port, name)
 }
@@ -133,51 +125,18 @@ fun ByteBuf.readPlayer(): NettyPlayer {
 }
 
 fun ByteBuf.writePlayers(nettyPlayers: List<NettyPlayer>) {
-    if (nettyPlayers.isEmpty()) writeBytes(ByteArray(0))
-    else ByteArrayOutputStream().use {
-        ObjectOutputStream(it).use { oos ->
-            oos.writeInt(nettyPlayers.size)
-            nettyPlayers.forEach { player ->
-                oos.writeUTF(player.getName())
-                oos.writeUTF(player.getDisplayName())
-                oos.writeUTF(player.getUniqueId().toString())
-                player.getChannel()?.apply {
-                    oos.writeInt(getPort())
-                    oos.writeUTF(getName())
-                } ?: oos.writeInt(-1)
-            }
-        }
-        val byteArray = it.toByteArray().compress()
-        writeBytes(byteArray)
-    }
+    writeInt(nettyPlayers.size)
+    nettyPlayers.forEach(::writePlayer)
 }
 
 fun ByteBuf.readPlayers(): List<NettyPlayer> {
-    val players = mutableListOf<NettyPlayer>()
-    val remaining = readableBytes()
-    if (remaining == 0) return players
     try {
-        val bytes = ByteArray(remaining)
-        getBytes(readerIndex(), bytes)
-        ByteArrayInputStream(bytes.decompress()).use {
-            ObjectInputStream(it).use { ois ->
-                val size = ois.readInt()
-                if (size !in 0 .. MAX_COLLECTION_SIZE) {
-                    throw IllegalArgumentException("invalid player list size: $size")
-                }
-                for (i in 0 until size) {
-                    val name = ois.readUTF()
-                    val displayName = ois.readUTF()
-                    val uuid = UUID.fromString(ois.readUTF())
-                    val port = ois.readInt()
-                    val channel =
-                        if (port == -1) null else NettyChannelImpl(port, ois.readUTF())
-                    players.add(NettyPlayerImpl(name, displayName, uuid, channel))
-                }
-            }
+        val size = readInt()
+        if (size !in 0 .. MAX_COLLECTION_SIZE) {
+            throw IllegalArgumentException("invalid player list size: $size")
         }
+        return List(size) { readPlayer() }
     } catch (e: Exception) {
-        packetLogger.warning("Failed to deserialize player list packet: ${e.javaClass.simpleName}: ${e.message}")
+        throw DecoderException("players payload corrupt", e)
     }
-    return players
 }

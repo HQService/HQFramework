@@ -5,7 +5,7 @@ import io.netty.channel.ChannelOption
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
-import io.netty.util.concurrent.DefaultEventExecutorGroup
+import kotlinx.coroutines.CoroutineDispatcher
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.MAX_FRAME_BYTES
 import kr.hqservice.framework.netty.pipeline.PacketDecoder
@@ -14,6 +14,7 @@ import java.util.logging.Logger
 
 class HQChannelInitializer(
     private val logger: Logger,
+    private val blockingDispatcher: CoroutineDispatcher,
     private val server: Boolean = false,
     private val expectedSecret: String? = null
 ) : ChannelInitializer<SocketChannel>() {
@@ -24,6 +25,6 @@ class HQChannelInitializer(
             .addLast("decode-filter", LengthFieldBasedFrameDecoder(MAX_FRAME_BYTES, 0, 8, 0, 8))
             .addLast("packet-decoder", PacketDecoder())
             .addLast("packet-encoder", PacketEncoder())
-            .addLast("handler-boss", BossHandler(ch, logger, expectedSecret))
+            .addLast("handler-boss", BossHandler(ch, logger, expectedSecret, blockingDispatcher))
     }
 }

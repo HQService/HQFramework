@@ -23,8 +23,13 @@ enum class Direction {
     }
 
     fun <T : Packet> registerPacket(packetClass: KClass<T>) {
-        if (packetMap.containsKey(packetClass.qualifiedName!!))
+        val existing = packetMap[packetClass.qualifiedName!!]
+        if (existing != null && existing.clazz.java === packetClass.java)
             return
+
+        val primaryConstructor = packetClass.primaryConstructor
+            ?: throw IllegalArgumentException("'${packetClass.simpleName}' packet has not primary constructor")
+        primaryConstructor.parameters.forEach { requireBackingField(packetClass, it.name) }
 
         val codecClass: Class<*> = ByteBuddy()
             .redefine(packetClass.java)
@@ -35,10 +40,12 @@ enum class Direction {
             .load(packetClass.java.classLoader, ClassLoadingStrategy.Default.WRAPPER)
             .loaded
 
-        val primaryConstructor = packetClass.primaryConstructor
-            ?: throw IllegalArgumentException("'${packetClass.simpleName}' packet has not primary constructor")
-
         packetMap[packetClass.qualifiedName!!] = PacketWrapper(packetClass, codecClass, primaryConstructor)
+    }
+
+    private fun requireBackingField(packetClass: KClass<*>, name: String?) {
+        val missing = name == null || runCatching { packetClass.java.getDeclaredField(name) }.isFailure
+        if (missing) throw IllegalArgumentException("packet ${packetClass.qualifiedName} parameter $name needs a backing property")
     }
 
     fun <T : Packet> addListener(packetClass: KClass<T>, packetHandler: suspend (packet: T, channel: ChannelWrapper) -> Unit) {

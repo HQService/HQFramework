@@ -6,8 +6,8 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
+import kotlinx.coroutines.CoroutineDispatcher
 import kr.hqservice.framework.netty.HQChannelInitializer
-import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.container.ChannelContainer
 import kr.hqservice.framework.netty.container.impl.ChannelContainerImpl
 import kr.hqservice.framework.netty.packet.Direction
@@ -24,17 +24,42 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 
 class HQNettyClient(
     private val logger: Logger,
     private val config: HQYamlConfiguration,
-    private val group: EventLoopGroup
+    private val group: EventLoopGroup,
+    private val blockingDispatcher: CoroutineDispatcher
 ) : KoinComponent {
+    private companion object {
+        val defaultsRegistered = AtomicBoolean(false)
+    }
+
     private val container: ChannelContainer by inject()
 
-    fun start(isBootUp: Boolean): CompletableFuture<Channel> {
-        if (isBootUp) {
+    fun start(): CompletableFuture<Channel> {
+        registerDefaults()
+
+        val future = CompletableFuture<Channel>()
+        val bootstrap = Bootstrap()
+        bootstrap.channel(NioSocketChannel::class.java)
+            .option(ChannelOption.TCP_NODELAY, true)
+            .option(ChannelOption.SO_KEEPALIVE, true)
+            .handler(HQChannelInitializer(logger, blockingDispatcher))
+            .group(group)
+            .connect(InetSocketAddress(config.getString("netty.host"), config.getInt("netty.port")))
+            .addListener(ChannelFutureListener {
+                if (it.isSuccess) {
+                    future.complete(it.channel())
+                } else future.completeExceptionally(it.cause())
+            })
+        return future
+    }
+
+    private fun registerDefaults() {
+        if (defaultsRegistered.compareAndSet(false, true)) {
             Direction.OUTBOUND.registerPacket(RelayingPacket::class)
             Direction.INBOUND.registerPacket(ShutdownPacket::class)
             Direction.INBOUND.registerPacket(ChannelListPacket::class)
@@ -76,31 +101,6 @@ class HQNettyClient(
                     else -> {}
                 }
             }
-        }
-
-        val future = CompletableFuture<Channel>()
-        val bootstrap = Bootstrap()
-        bootstrap.channel(NioSocketChannel::class.java)
-            .option(ChannelOption.TCP_NODELAY, true)
-            .option(ChannelOption.SO_KEEPALIVE, true)
-            .handler(HQChannelInitializer(logger))
-            .group(group)
-            .connect(InetSocketAddress(config.getString("netty.host"), config.getInt("netty.port")))
-            .addListener(ChannelFutureListener {
-                if (it.isSuccess) {
-                    future.complete(it.channel())
-                } else future.completeExceptionally(it.cause())
-            })
-        return future
-    }
-
-    private fun NettyChannel?.printLog(tab: Boolean) {
-        if (this == null) print("null\n")
-        else {
-            val first = if (tab) "\t" else ""
-            print("\n")
-            println("$first\tname: ${getName()}")
-            println("$first\tport: ${getPort()}")
         }
     }
 

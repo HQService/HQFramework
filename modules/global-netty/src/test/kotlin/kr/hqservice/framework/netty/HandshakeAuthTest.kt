@@ -3,6 +3,7 @@ package kr.hqservice.framework.netty
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.embedded.EmbeddedChannel
+import kotlinx.coroutines.Dispatchers
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.pipeline.BossHandler
@@ -30,7 +31,7 @@ class HandshakeAuthTest {
 
     private fun channelExpecting(secret: String?) = EmbeddedChannel(object : ChannelInitializer<Channel>() {
         override fun initChannel(ch: Channel) {
-            handler = BossHandler(ch, Logger.getAnonymousLogger(), secret)
+            handler = BossHandler(ch, Logger.getAnonymousLogger(), secret, Dispatchers.Default)
             ch.pipeline().addLast(handler)
         }
     })

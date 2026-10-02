@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     api(libs.kotlin.reflect)
-    api(libs.kotlinx.coroutines.core)
     implementation(libs.configurate.yaml)
     api(libs.snakeyaml)
 

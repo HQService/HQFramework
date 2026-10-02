@@ -4,16 +4,12 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.handler.timeout.ReadTimeoutException
-import io.netty.util.concurrent.DefaultEventExecutorGroup
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.channel.DisconnectHandler
 import kr.hqservice.framework.netty.channel.PacketPreprocessHandler
@@ -23,16 +19,24 @@ import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import java.io.IOException
 import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Level
 import java.util.logging.Logger
 
 class BossHandler(
     channel: Channel,
     private val logger: Logger,
-    private val expectedSecret: String? = null
+    private val expectedSecret: String?,
+    private val blockingDispatcher: CoroutineDispatcher
 ) : ChannelInboundHandlerAdapter() {
+    private companion object {
+        const val PAUSE_ABOVE_PENDING = 256
+        const val RESUME_BELOW_PENDING = 64
+    }
+
     private lateinit var channelScope: ChannelScope
     private lateinit var serialized: CoroutineDispatcher
+    private val pending = AtomicInteger()
 
     @Volatile
     private var preprocessHandler: PacketPreprocessHandler? = null
@@ -79,14 +83,27 @@ class BossHandler(
         }
 
         val packet = msg as Packet
+        if (pending.incrementAndGet() > PAUSE_ABOVE_PENDING) ctx.channel().config().isAutoRead = false
         channelScope.scope.launch(serialized) {
-            channelScope.gate.withPermit {
+            try {
                 preprocessHandler?.preprocess(packet, channel)
                 if (packet.isCallbackResult() && channel.callbackContainer.complete(packet)) return@launch
 
                 Direction.INBOUND.onPacketReceived(packet, channel)
+            } finally {
+                if (pending.decrementAndGet() < RESUME_BELOW_PENDING) resumeReading(ctx)
             }
         }
+    }
+
+    private fun resumeReading(ctx: ChannelHandlerContext) {
+        if (ctx.channel().config().isAutoRead) return
+        val executor = ctx.executor()
+        if (executor.inEventLoop()) enableAutoRead(ctx) else executor.execute { enableAutoRead(ctx) }
+    }
+
+    private fun enableAutoRead(ctx: ChannelHandlerContext) {
+        if (pending.get() < RESUME_BELOW_PENDING) ctx.channel().config().isAutoRead = true
     }
 
     private fun secretAccepted(secret: String) =
@@ -120,14 +137,14 @@ class BossHandler(
 
     override fun channelInactive(ctx: ChannelHandlerContext) {
         connectionState = ConnectionState.IDLE
-        disconnectHandler?.onDisconnect(channel)
-        channelScope.close()
-        super.channelInactive(ctx)
+        try {
+            disconnectHandler?.onDisconnect(channel)
+        } finally {
+            channelScope.close()
+            super.channelInactive(ctx)
+        }
     }
 }
-
-val blockingGroup = DefaultEventExecutorGroup(Runtime.getRuntime().availableProcessors())
-val blockingDispatcher = blockingGroup.asCoroutineDispatcher()
 
 class ChannelScope(ctx: ChannelHandlerContext, logger: Logger) {
     val job = SupervisorJob()
@@ -135,6 +152,5 @@ class ChannelScope(ctx: ChannelHandlerContext, logger: Logger) {
         logger.log(Level.SEVERE, "error: ${throwable.message}", throwable)
     }
     val scope = CoroutineScope(job + CoroutineName("ch-${ctx.channel().id()}") + exceptionHandler)
-    val gate = Semaphore(64)
     fun close() = job.cancel()
 }

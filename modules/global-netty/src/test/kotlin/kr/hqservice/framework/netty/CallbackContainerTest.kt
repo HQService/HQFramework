@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.embedded.EmbeddedChannel
+import kotlinx.coroutines.Dispatchers
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import kr.hqservice.framework.netty.channel.PacketCallbackHandler
 import kr.hqservice.framework.netty.packet.Direction
@@ -45,7 +46,7 @@ class CallbackContainerTest {
         lateinit var handler: BossHandler
         EmbeddedChannel(object : ChannelInitializer<Channel>() {
             override fun initChannel(ch: Channel) {
-                handler = BossHandler(ch, Logger.getAnonymousLogger())
+                handler = BossHandler(ch, Logger.getAnonymousLogger(), null, Dispatchers.Default)
                 ch.pipeline().addLast(handler)
             }
         })

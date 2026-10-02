@@ -5,8 +5,8 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
 import io.netty.channel.EventLoopGroup
-import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
+import kotlinx.coroutines.CoroutineDispatcher
 import kr.hqservice.framework.netty.HQChannelInitializer
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.channel.ChannelConnectedPacket
@@ -18,30 +18,27 @@ import kr.hqservice.framework.netty.packet.server.RelayingPacket
 import kr.hqservice.framework.netty.packet.server.ShutdownPacket
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 
 class HQNettyServer(
     private val logger: Logger,
     private val config: HQYamlConfiguration,
-    private val group: EventLoopGroup
+    private val group: EventLoopGroup,
+    private val blockingDispatcher: CoroutineDispatcher
 ) {
+    private companion object {
+        val defaultsRegistered = AtomicBoolean(false)
+    }
 
     fun start(): CompletableFuture<Channel> {
-        Direction.INBOUND.registerPacket(RelayingPacket::class)
-        Direction.OUTBOUND.registerPacket(ShutdownPacket::class)
-        Direction.OUTBOUND.registerPacket(ChannelListPacket::class)
-        Direction.OUTBOUND.registerPacket(ChannelConnectedPacket::class)
-        Direction.OUTBOUND.registerPacket(ChannelDisconnectedPacket::class)
-        Direction.OUTBOUND.registerPacket(PlayerConnectionPacket::class)
-        Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
-            channel.channel.writeAndFlush(PingPongPacket(packet.time, -1L))
-        }
+        registerDefaults()
 
         val future = CompletableFuture<Channel>()
         val bootstrap = ServerBootstrap()
         bootstrap.channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_REUSEADDR, true)
-            .childHandler(HQChannelInitializer(logger, true, config.getString("netty.secret", "")))
+            .childHandler(HQChannelInitializer(logger, blockingDispatcher, true, config.getString("netty.secret", "")))
             .localAddress(config.getString("netty.host"), config.getInt("netty.port"))
             .group(group)
             .bind()
@@ -51,6 +48,20 @@ class HQNettyServer(
                 else future.completeExceptionally(it.cause())
             })
         return future
+    }
+
+    private fun registerDefaults() {
+        if (defaultsRegistered.compareAndSet(false, true)) {
+            Direction.INBOUND.registerPacket(RelayingPacket::class)
+            Direction.OUTBOUND.registerPacket(ShutdownPacket::class)
+            Direction.OUTBOUND.registerPacket(ChannelListPacket::class)
+            Direction.OUTBOUND.registerPacket(ChannelConnectedPacket::class)
+            Direction.OUTBOUND.registerPacket(ChannelDisconnectedPacket::class)
+            Direction.OUTBOUND.registerPacket(PlayerConnectionPacket::class)
+            Direction.INBOUND.addListener(PingPongPacket::class) { packet, channel ->
+                channel.channel.writeAndFlush(PingPongPacket(packet.time, -1L))
+            }
+        }
     }
 
 }
