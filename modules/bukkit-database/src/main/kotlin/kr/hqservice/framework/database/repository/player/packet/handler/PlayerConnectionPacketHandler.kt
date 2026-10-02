@@ -25,7 +25,6 @@ import org.bukkit.Server
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.*
-import org.bukkit.event.server.PluginDisableEvent
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginManager
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -89,13 +88,6 @@ class PlayerConnectionPacketHandler(
     fun onClick(event: PlayerMoveEvent) {
         if (loadPlayer.contains(event.player.uniqueId))
             event.isCancelled = true
-    }
-
-    @Subscribe(HandleOrder.FIRST)
-    fun onPluginDisabled(event: PluginDisableEvent) {
-        if (event.plugin.name == plugin.name) {
-            playerScopes.cancelAll()
-        }
     }
 
     private suspend fun <T : Any> onPreLoad(playerId: UUID, repository: PlayerRepository<T>) =
