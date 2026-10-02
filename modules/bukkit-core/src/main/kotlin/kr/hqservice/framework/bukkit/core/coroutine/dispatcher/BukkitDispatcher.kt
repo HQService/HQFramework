@@ -1,6 +1,7 @@
 package kr.hqservice.framework.bukkit.core.coroutine.dispatcher
 
 import kotlinx.coroutines.*
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import org.bukkit.Bukkit
@@ -17,7 +18,12 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
         get() = BukkitMainDispatcherImmediate()
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        isAsync || location != null || !Bukkit.isPrimaryThread()
+        isAsync || location != null || !Bukkit.isPrimaryThread() || !isPluginEnabling(context)
+
+    private fun isPluginEnabling(context: CoroutineContext): Boolean {
+        val plugin = runCatching { getPluginByCoroutineContext(context) }.getOrNull()
+        return (plugin as? HQBukkitPlugin)?.isEnabling == true
+    }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         val plugin = getPluginByCoroutineContext(context)

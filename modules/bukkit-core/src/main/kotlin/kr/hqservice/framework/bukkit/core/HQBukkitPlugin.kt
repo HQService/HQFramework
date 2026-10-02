@@ -160,6 +160,9 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
 
     open val group = "HQPlugin"
 
+    var isEnabling: Boolean = false
+        private set
+
     fun getHQConfig(): HQYamlConfiguration {
         return config
     }
@@ -180,24 +183,29 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             false
         }
 
-        runBlocking(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
-            val timerJob =
-                launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
-                    var index = 0
-                    while (this@timer.isActive) {
-                        index++
-                        logger.info("${AnsiColor.CYAN}Enabling${".".repeat(index)}${AnsiColor.RESET}")
-                        delay(1000)
+        isEnabling = true
+        try {
+            runBlocking(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
+                val timerJob =
+                    launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
+                        var index = 0
+                        while (this@timer.isActive) {
+                            index++
+                            logger.info("${AnsiColor.CYAN}Enabling${".".repeat(index)}${AnsiColor.RESET}")
+                            delay(1000)
+                        }
                     }
-                }
-            onPreEnable()
-            val folder = getErrorFolder()
-            if (!folder.exists()) folder.mkdir()
-            loadConfigIfExist()
-            bukkitComponentRegistry.setup()
-            onPostEnable()
-            timerJob.cancel()
-            logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
+                onPreEnable()
+                val folder = getErrorFolder()
+                if (!folder.exists()) folder.mkdir()
+                loadConfigIfExist()
+                bukkitComponentRegistry.setup()
+                onPostEnable()
+                timerJob.cancel()
+                logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
+            }
+        } finally {
+            isEnabling = false
         }
     }
 
