@@ -15,3 +15,10 @@ kotlin {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
+
+val jUnitVersion: String by project
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter:$jUnitVersion")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
