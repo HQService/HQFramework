@@ -28,7 +28,7 @@ class ButtonElement(
 
     fun item(itemStack: ItemStack, itemStackMetaScope: suspend ItemStack.(index: Int) -> Unit = {}) {
         itemStackBuilder = {
-            itemStack.apply {
+            itemStack.clone().apply {
                 itemStackMetaScope(this, index)
             }
         }

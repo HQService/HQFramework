@@ -10,8 +10,8 @@ val _viewModelFactory: ViewModelFactory by getKoin().inject()
 
 fun <T : ViewModel> View.viewModels(modelClass: KClass<T>): Lazy<T> {
     return lazy {
-        _viewModelFactory.provideViewModel(modelClass) as T
-    }.apply {
-        this@viewModels._childLifecycles.add(this.value)
+        (_viewModelFactory.provideViewModel(modelClass) as T).also { viewModel ->
+            addChildLifecycle(viewModel)
+        }
     }
 }

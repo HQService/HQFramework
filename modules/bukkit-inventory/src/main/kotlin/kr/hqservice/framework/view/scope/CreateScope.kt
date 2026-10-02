@@ -2,8 +2,11 @@ package kr.hqservice.framework.view.scope
 
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
 import kr.hqservice.framework.view.View
 import kr.hqservice.framework.view.element.ButtonElement
@@ -19,7 +22,9 @@ class CreateScope(private val view: View, private val coroutineScope: CoroutineS
             buttonScope(button)
             val buttonJob = coroutineScope.launch {
                 val buttonItemStack = button.itemStackBuilder.invoke(button.index)
-                view.inventory.setItem(button.index, buttonItemStack)
+                withContext(Dispatchers.BukkitMain) {
+                    view.inventory.setItem(button.index, buttonItemStack)
+                }
             }
             buttonJobs.add(buttonJob)
 
@@ -28,7 +33,10 @@ class CreateScope(private val view: View, private val coroutineScope: CoroutineS
                     buttonJob.join()
                     state as SubscribableState
                     state.getStateFlow().collect {
-                        view.inventory.setItem(button.index, button.itemStackBuilder.invoke(button.index))
+                        val buttonItemStack = button.itemStackBuilder.invoke(button.index)
+                        withContext(Dispatchers.BukkitMain) {
+                            view.inventory.setItem(button.index, buttonItemStack)
+                        }
                     }
                 }
             }.forEach { job ->

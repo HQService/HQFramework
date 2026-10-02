@@ -15,6 +15,9 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class View(
     private val size: Int,
@@ -23,9 +26,11 @@ abstract class View(
 ) : InventoryHolder {
     private var baseInventory = lazy { Bukkit.createInventory(this@View, size, title.colorize()) }
     private val buttons: MutableMap<Int, ButtonElement> = mutableMapOf()
-    internal val subscribes = mutableListOf<Job>()
-    internal val viewerIds = mutableListOf<UUID>()
-    val _childLifecycles = mutableListOf<LifecycleOwner>()
+    internal val subscribes: MutableList<Job> = CopyOnWriteArrayList()
+    internal val viewerIds: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
+    private val _childLifecycles: MutableList<LifecycleOwner> = CopyOnWriteArrayList()
+    val childLifecycles: List<LifecycleOwner> get() = _childLifecycles
+    private val isCreated = AtomicBoolean(false)
     protected val lifecycleJob = Job()
 
     protected abstract suspend fun CreateScope.onCreate()
@@ -34,6 +39,10 @@ abstract class View(
     protected open suspend fun ClickScope.onClickTop(clicker: Player) {}
     protected open suspend fun ClickScope.onClickBottom(clicker: Player) {}
 
+    internal fun addChildLifecycle(lifecycleOwner: LifecycleOwner) {
+        _childLifecycles.add(lifecycleOwner)
+    }
+
     internal fun registerButton(slot: Int, buttonElement: ButtonElement) {
         buttons[slot] = buttonElement
     }
@@ -41,11 +50,16 @@ abstract class View(
     internal suspend fun open(vararg viewer: Player, afterAction: suspend (player: Player) -> Unit) {
         coroutineScope {
             viewerIds.addAll(viewer.map { it.uniqueId })
+            if (isCreated.compareAndSet(false, true)) {
+                val openContext = Dispatchers.IO + CoroutineName("HQFrameworkViewOpenCoroutine")
+                val createScope = CreateScope(this@View, this + openContext)
+                withContext(openContext) {
+                    createScope.onCreate()
+                }
+                createScope.buttonJobs.joinAll()
+            }
             viewer.forEach { player ->
                 launch(Dispatchers.IO + CoroutineName("HQFrameworkViewOpenCoroutine")) {
-                    val createScope = CreateScope(this@View, this)
-                    createScope.onCreate()
-                    createScope.buttonJobs.joinAll()
                     withContext(Dispatchers.BukkitMain) {
                         player.openInventory(inventory)
                     }
