@@ -1,6 +1,10 @@
 package kr.hqservice.framework.database.redis
 
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -54,12 +58,13 @@ class RedisIntegrationTest {
     fun `messenger round trips over lettuce`() {
         val messenger = RedisMessenger(LettucePubSubTransport(provider, mockk(relaxed = true)), settings, Json, mockk(relaxed = true))
         val received = CompletableFuture<Ping>()
-        val subscription = messenger.subscribe("ping", Ping.serializer()) { received.complete(it) }
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        messenger.subscribe("ping", Ping.serializer(), scope) { received.complete(it) }
         try {
             messenger.publish("ping", Ping.serializer(), Ping("hello"))
             assertEquals(Ping("hello"), received.get(2, TimeUnit.SECONDS))
         } finally {
-            subscription.close()
+            scope.cancel()
         }
     }
 
