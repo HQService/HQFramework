@@ -5,6 +5,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -38,6 +39,7 @@ import kr.hqservice.framework.database.repository.player.registry.PlayerReposito
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
 import kr.hqservice.framework.database.repository.player.session.OwnershipLostException
 import kr.hqservice.framework.database.repository.player.session.OwnershipTimeoutException
+import kr.hqservice.framework.database.repository.player.session.PlayerDataBackendMarker
 import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
 import kr.hqservice.framework.netty.api.PacketSender
@@ -49,6 +51,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -78,6 +81,13 @@ class PlayerDataLifecycle(
     private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost, ::onSaveFailed, ::onSaveRecovered)
     private val schedulerJob = scheduler.start(plugin)
     private val releasedSubscription = AtomicReference<AutoCloseable?>()
+    private val backendChanged = AtomicBoolean()
+    private val backendCheckJob = plugin.launch(Dispatchers.IO) {
+        while (isActive) {
+            delay(settings.renewInterval.toMillis())
+            runCatching { checkBackendMarker() }
+        }
+    }
     private val offlineWriter = object : OfflineWriter {
         override suspend fun <V : Any> write(uuid: UUID, repository: PlayerRepository<V>, value: V): OfflineWriteResult {
             var outcome: Result<OfflineWriteResult>? = null
@@ -115,6 +125,16 @@ class PlayerDataLifecycle(
 
     fun stop() {
         schedulerJob.cancel()
+        backendCheckJob.cancel()
+    }
+
+    internal suspend fun checkBackendMarker() {
+        val stored = newSuspendedTransaction(Dispatchers.IO, database) { PlayerDataBackendMarker.stored() } ?: return
+        if (stored == settings.backend || !backendChanged.compareAndSet(false, true)) return
+        logger.severe("player-data.backend is '${settings.backend}' but the shared database now says '$stored': another server switched the backend. New joins are refused and online players are disconnected; restart this server with player-data.backend: $stored")
+        withContext(Dispatchers.BukkitMain) {
+            plugin.server.onlinePlayers.toList().forEach { it.kickPlayer(BACKEND_CHANGED_MESSAGE) }
+        }
     }
 
     suspend fun flushRepositoryForTeardown(repository: PlayerRepository<*>) {
@@ -149,6 +169,10 @@ class PlayerDataLifecycle(
     fun onJoin(event: PlayerJoinEvent) {
         val player = event.player
         val uuid = player.uniqueId
+        if (backendChanged.get()) {
+            plugin.launch(Dispatchers.BukkitMain) { if (player.isOnline) player.kickPlayer(BACKEND_CHANGED_MESSAGE) }
+            return
+        }
         val token = loading.begin(uuid)
         sessions.get(uuid)?.player = player
         plugin.launch(Dispatchers.Default) {
@@ -370,5 +394,9 @@ class PlayerDataLifecycle(
         withContext(Dispatchers.BukkitMain) {
             if (player.isOnline) player.kickPlayer(message)
         }
+    }
+
+    private companion object {
+        const val BACKEND_CHANGED_MESSAGE = "서버 데이터 설정이 바뀌어 재시작이 필요합니다. 잠시 후 다시 접속해 주세요"
     }
 }

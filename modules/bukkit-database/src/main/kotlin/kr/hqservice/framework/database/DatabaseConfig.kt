@@ -54,7 +54,9 @@ class DatabaseConfig(
     ): SessionCoordinator {
         val serverId = server.port.toString()
         if (settings.backend == "redis") check(redisSettings.enabled) { "player-data.backend is redis but redis.uri is empty" }
-        PlayerDataBackendMarker.ensure(database, settings.backend)
+        if (PlayerDataBackendMarker.ensure(database, settings.backend)) {
+            logger.warning("player-data.backend marker switched to '${settings.backend}' because no player session was held by the previous backend; every server of this network must now use backend '${settings.backend}'")
+        }
         return when (settings.backend) {
             "redis" -> RedisSessionCoordinator(LettuceSessionStore(redisProvider), redisSettings, settings.lease, serverId, transport, logger)
             else -> DatabaseSessionCoordinator(database, serverId, settings.lease)

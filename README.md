@@ -534,7 +534,7 @@ player-data:
   full-flush-seconds: 60
 ```
 
-`backend`는 `database` 또는 `redis`이며 그 외 값이면 기동에 실패합니다. 네트워크의 모든 서버가 같은 값을 써야 합니다. 처음 기동한 서버의 값이 DB 테이블 `hqframework_player_data_backend`에 기록되고, 이후 다른 값으로 기동하면 거부됩니다. `lease-seconds > renew-seconds > 0`, `dirty-flush-seconds > 0`, `full-flush-seconds >= dirty-flush-seconds`, `join-timeout-seconds > 0`, `retry-interval-millis > 0`을 만족하지 않아도 기동에 실패하며 오류 메시지에 해당 키가 나옵니다. `SavePolicy.periodic`의 간격과 `batchSize`도 양수여야 합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
+`backend`는 `database` 또는 `redis`이며 그 외 값이면 기동에 실패합니다. 네트워크의 모든 서버가 같은 값을 써야 합니다. 처음 기동한 서버의 값이 DB 테이블 `hqframework_player_data_backend`에 기록됩니다. 이후 `redis`로 바꿔 기동하면 옛 백엔드에 살아 있는 세션이 없을 때만 자동 전환되고, 그 외에는 거부됩니다(아래 Redis 절 참고). `lease-seconds > renew-seconds > 0`, `dirty-flush-seconds > 0`, `full-flush-seconds >= dirty-flush-seconds`, `join-timeout-seconds > 0`, `retry-interval-millis > 0`을 만족하지 않아도 기동에 실패하며 오류 메시지에 해당 키가 나옵니다. `SavePolicy.periodic`의 간격과 `batchSize`도 양수여야 합니다. `lease-seconds`는 `renew-seconds`의 3배 정도로 두어 GC 멈춤이나 DB 지연 한 번에 소유권을 잃지 않게 합니다.
 
 ### Redis (선택)
 
@@ -550,11 +550,14 @@ redis:
 
 `redis.uri`를 비워 두면 Redis를 전혀 쓰지 않습니다. `backend: redis`인데 `redis.uri`가 비어 있으면 기동에 실패합니다. 단일 Redis(또는 Sentinel 뒤의 마스터)만 지원하며 **Redis 5 이상이 필요하고 Redis Cluster는 지원하지 않습니다**(소유권 갱신 스크립트가 여러 플레이어 키를 한 번에 다룹니다).
 
-`backend`를 `database`에서 `redis`로(또는 반대로) 바꾸는 절차:
-1. 네트워크의 모든 서버를 정지합니다.
-2. 공유 DB의 `hqframework_player_data_backend` 테이블 행의 `backend` 값을 새 값으로 바꿉니다.
-3. 모든 서버의 `config.yml`에서 `player-data.backend`(와 `redis.uri`)를 바꿉니다.
-4. 서버를 기동합니다.
+`backend`를 `database`에서 `redis`로 바꾸는 절차:
+1. 네트워크의 모든 서버를 정지합니다(접속 중인 플레이어가 없어야 합니다).
+2. 모든 서버의 `config.yml`에서 `player-data.backend: redis`와 `redis.uri`를 넣습니다.
+3. 서버를 기동합니다. 옛 백엔드에 살아 있는 세션이 없으면 `hqframework_player_data_backend` 마커가 자동으로 `redis`로 바뀌고 경고 한 줄이 남습니다. 살아 있는 세션이 있으면(다른 서버가 아직 `database`로 운영 중) 기동이 거부되고 메시지에 수동 SQL이 나옵니다.
+
+`redis`에서 `database`로 되돌리는 것은 수동입니다. 모든 서버를 정지한 뒤 `UPDATE hqframework_player_data_backend SET backend = 'database' WHERE id = 1`을 실행하고 설정을 바꿔 기동합니다(Redis에 남은 세션을 프레임워크가 확인할 수 없기 때문입니다).
+
+운영 중인 서버는 `renew-seconds`마다 마커를 다시 읽습니다. 다른 서버가 백엔드를 바꾼 것이 보이면 새 접속을 거부하고 접속 중인 플레이어를 저장 후 내보내며 SEVERE 로그를 남깁니다. 설정이 오래된 서버가 혼자 다른 백엔드로 계속 운영하는 상태를 막기 위한 동작이므로, 그 서버는 설정을 맞춰 재시작하면 됩니다.
 
 바뀌는 것:
 - **소유권 조율이 Redis로 이동**합니다(`<key-prefix>:session:<uuid>` 해시, Lua 스크립트로 원자적 처리). 소유권을 놓아도 저장 버전은 남으며, 키는 마지막 기록 후 30일 뒤 자동 삭제됩니다. 영속 저장은 여전히 `database` 설정의 MySQL/H2/SQLite입니다.

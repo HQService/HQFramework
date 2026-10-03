@@ -39,6 +39,7 @@ import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedP
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
 import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.PlayerDataBackendTable
 import kr.hqservice.framework.database.repository.player.session.PlayerSessionTable
 import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
@@ -55,6 +56,7 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.deleteAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.TransactionManager
@@ -613,6 +615,34 @@ class PlayerDataLifecycleTest {
         awaitUntil { loadedListener.recovered.size == 1 }
         assertEquals(3, loadedListener.recovered.single().failuresBeforeRecovery)
         assertEquals(0, a.sessions.get(uuid)!!.failures.get())
+    }
+
+    @Test
+    fun `a backend switched by another server refuses joins and disconnects players`() {
+        transaction(db) {
+            SchemaUtils.create(PlayerDataBackendTable)
+            PlayerDataBackendTable.deleteAll()
+            PlayerDataBackendTable.insert {
+                it[id] = 1
+                it[backend] = "database"
+            }
+        }
+        val a = Node("25565")
+        joined(a)
+        val unchanged = background.launch { a.lifecycle.checkBackendMarker() }
+        awaitUntil { unchanged.isCompleted }
+        assertTrue(player.isOnline)
+
+        transaction(db) { PlayerDataBackendTable.update({ PlayerDataBackendTable.id eq 1 }) { it[backend] = "redis" } }
+        background.launch { a.lifecycle.checkBackendMarker() }
+        awaitUntil { !player.isOnline }
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { owner() == null }
+
+        val late = server.addPlayer()
+        a.lifecycle.onJoin(PlayerJoinEvent(late, "join"))
+        awaitUntil { !late.isOnline }
+        assertNull(a.sessions.get(late.uniqueId))
     }
 
     @Test
