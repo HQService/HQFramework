@@ -285,4 +285,22 @@ class RedisEndToEndTest {
         assertEquals("25566", session("owner"))
         assertEquals("1", session("version"))
     }
+
+    @Test
+    fun `flush after a commit whose reply was lost resyncs the version and keeps the player`() {
+        val a = Node("25565")
+        joined(a)
+        a.repo.update(uuid) { it.n = 5 }
+        assertEquals(1L, runBlocking { LettuceSessionStore(a.provider).commit(sessionKey(), "25565", 0, 60_000) })
+
+        assertTrue(runBlocking { a.repo.flush(uuid) })
+
+        assertEquals("2", session("version"))
+        assertEquals(2L, a.sessions.get(uuid)!!.version)
+        assertEquals("25565", session("owner"))
+        assertEquals(5, storedPoints())
+        assertTrue(player.isOnline)
+        assertTrue(logged.any { it.contains("session version resynced from 0 to 1") })
+        assertFalse(logged.any { it.contains("ownership lost") })
+    }
 }

@@ -28,6 +28,9 @@ class LettuceSessionStore(private val provider: RedisProvider) : SessionStore {
     override suspend fun verify(key: String, owner: String, expectedVersion: Long): Boolean =
         eval<Long>(VERIFY, ScriptOutputType.INTEGER, listOf(key), owner, expectedVersion.toString()) == 1L
 
+    override suspend fun ownedVersion(key: String, owner: String): Long? =
+        eval<Long>(OWNED_VERSION, ScriptOutputType.INTEGER, listOf(key), owner).takeIf { it >= 0 }
+
     private suspend fun <T> eval(script: String, type: ScriptOutputType, keys: List<String>, vararg args: String): T =
         provider.connection().async()
             .eval<T>(script, type, keys.toTypedArray(), *args.map { it.toByteArray() }.toTypedArray())
@@ -80,6 +83,13 @@ class LettuceSessionStore(private val provider: RedisProvider) : SessionStore {
                 return 1
             end
             return 0
+        """
+
+        const val OWNED_VERSION = """
+            if redis.call('HGET', KEYS[1], 'owner') == ARGV[1] then
+                return tonumber(redis.call('HGET', KEYS[1], 'version'))
+            end
+            return -1
         """
 
         const val RELEASE = """

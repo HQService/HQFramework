@@ -126,19 +126,29 @@ class FlushScheduler(
     }
 
     private suspend fun saveAndCommit(uuid: UUID, session: PlayerSession, selected: List<Selected<*>>): Long {
+        var resynced = false
+        suspend fun resyncOrThrow() {
+            if (resynced) throw OwnershipLostException(uuid)
+            resynced = true
+            val owned = coordinator.ownedVersion(uuid) ?: throw OwnershipLostException(uuid)
+            logger.warning("player data of $uuid: session version resynced from ${session.version} to $owned")
+            session.version = owned
+        }
+        suspend fun commit(): Long {
+            coordinator.commit(uuid, session.version)?.let { return it }
+            resyncOrThrow()
+            return coordinator.commit(uuid, session.version) ?: throw OwnershipLostException(uuid)
+        }
         if (coordinator.commitsInsideTransaction) {
             return newSuspendedTransaction(Dispatchers.IO, database) {
                 selected.forEach { it.save(session.player) }
-                commitOrThrow(uuid, session.version)
+                commit()
             }
         }
-        if (!coordinator.verify(uuid, session.version)) throw OwnershipLostException(uuid)
+        if (!coordinator.verify(uuid, session.version)) resyncOrThrow()
         newSuspendedTransaction(Dispatchers.IO, database) { selected.forEach { it.save(session.player) } }
-        return commitOrThrow(uuid, session.version)
+        return commit()
     }
-
-    private suspend fun commitOrThrow(uuid: UUID, version: Long): Long =
-        coordinator.commit(uuid, version) ?: throw OwnershipLostException(uuid)
 
     private suspend fun releaseOffline(session: PlayerSession) {
         val repositories = repositories()

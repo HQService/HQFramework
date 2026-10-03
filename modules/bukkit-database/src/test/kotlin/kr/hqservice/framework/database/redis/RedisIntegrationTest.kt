@@ -106,6 +106,8 @@ class RedisIntegrationTest {
         assertTrue(store.verify(key, "a", 1))
         assertFalse(store.verify(key, "a", 0))
         assertFalse(store.verify(key, "b", 1))
+        assertEquals(1L, store.ownedVersion(key, "a"))
+        assertNull(store.ownedVersion(key, "b"))
         val leaseBefore = leaseUntil(key)
         store.renew(listOf(key), "a", 60_000)
         assertTrue(leaseUntil(key) >= leaseBefore + 20_000)
@@ -113,6 +115,7 @@ class RedisIntegrationTest {
         assertFalse(store.release(key, "b"))
         assertTrue(store.release(key, "a"))
         assertNull(provider.connection().sync().hget(key, "owner"))
+        assertNull(store.ownedVersion(key, "a"))
         assertEquals(AcquireResult.Acquired(1), store.acquire(key, "b", 30_000))
         assertTrue(store.release(key, "b"))
     }

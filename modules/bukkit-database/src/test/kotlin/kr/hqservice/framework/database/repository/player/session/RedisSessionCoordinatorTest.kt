@@ -164,4 +164,15 @@ class RedisSessionCoordinatorTest {
 
         assertTrue(released.isEmpty())
     }
+
+    @Test
+    fun `owned version is the current version only for the owner`() = runBlocking {
+        assertNull(a.ownedVersion(playerId))
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+        assertEquals(1L, a.ownedVersion(playerId))
+        assertNull(b.ownedVersion(playerId))
+        a.release(playerId)
+        assertNull(a.ownedVersion(playerId))
+    }
 }

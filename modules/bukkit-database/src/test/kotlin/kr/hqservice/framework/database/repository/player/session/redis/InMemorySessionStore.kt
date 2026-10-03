@@ -38,6 +38,10 @@ class InMemorySessionStore : SessionStore {
         entries[key]?.let { it.owner == owner && it.version == expectedVersion } ?: false
     }
 
+    override suspend fun ownedVersion(key: String, owner: String): Long? = synchronized(this) {
+        entries[key]?.takeIf { it.owner == owner }?.version
+    }
+
     override suspend fun release(key: String, owner: String): Boolean = synchronized(this) {
         val current = entries[key]?.takeIf { it.owner == owner } ?: return false
         current.owner = null

@@ -78,6 +78,10 @@ class DatabaseSessionCoordinator(
         current != null && current[PlayerSessionTable.owner] == serverId && current[PlayerSessionTable.version] == expectedVersion
     }
 
+    override suspend fun ownedVersion(uuid: UUID): Long? = inTransaction {
+        findSession(uuid)?.takeIf { it[PlayerSessionTable.owner] == serverId }?.get(PlayerSessionTable.version)
+    }
+
     private fun Transaction.tryAcquire(uuid: UUID): AcquireResult.Acquired? {
         val until = leaseExpiry()
         val updated = PlayerSessionTable.update({

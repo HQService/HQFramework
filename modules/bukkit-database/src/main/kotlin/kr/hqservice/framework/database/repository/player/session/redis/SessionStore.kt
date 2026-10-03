@@ -12,4 +12,6 @@ interface SessionStore {
     suspend fun release(key: String, owner: String): Boolean
 
     suspend fun verify(key: String, owner: String, expectedVersion: Long): Boolean
+
+    suspend fun ownedVersion(key: String, owner: String): Long?
 }

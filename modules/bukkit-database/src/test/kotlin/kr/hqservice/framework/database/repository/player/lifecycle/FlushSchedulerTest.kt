@@ -115,6 +115,8 @@ class FlushSchedulerTest {
 
         override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean = true
 
+        override suspend fun ownedVersion(uuid: UUID): Long? = null
+
         @Volatile var failRelease = false
 
         override suspend fun release(uuid: UUID): Boolean {
@@ -149,6 +151,8 @@ class FlushSchedulerTest {
             events += if (TransactionManager.currentOrNull() == null) "verify" else "verify inside transaction"
             return verified
         }
+
+        override suspend fun ownedVersion(uuid: UUID): Long? = null
     }
 
     class OutageCoordinator(override val commitsInsideTransaction: Boolean = false) : SessionCoordinator {
@@ -180,6 +184,40 @@ class FlushSchedulerTest {
             failWhileDown(verifyOutages) { RedisConnectionException("redis down") }
             return true
         }
+
+        override suspend fun ownedVersion(uuid: UUID): Long? = null
+
+        override suspend fun release(uuid: UUID): Boolean = true
+    }
+
+    class VersionedCoordinator(
+        override val commitsInsideTransaction: Boolean = false,
+        @Volatile var owner: String? = "test",
+        @Volatile var version: Long = 0,
+        @Volatile var lostReplies: Int = 0,
+    ) : SessionCoordinator {
+        override val serverId: String = "test"
+        val commits: MutableList<Long> = Collections.synchronizedList(mutableListOf())
+
+        override suspend fun acquire(uuid: UUID): AcquireResult = AcquireResult.Acquired(version)
+
+        override suspend fun renew(uuids: Collection<UUID>) {}
+
+        override suspend fun commit(uuid: UUID, expectedVersion: Long): Long? = synchronized(this) {
+            commits += expectedVersion
+            if (owner != serverId || version != expectedVersion) return null
+            version++
+            if (lostReplies > 0) {
+                lostReplies--
+                null
+            } else {
+                version
+            }
+        }
+
+        override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean = owner == serverId && version == expectedVersion
+
+        override suspend fun ownedVersion(uuid: UUID): Long? = version.takeIf { owner == serverId }
 
         override suspend fun release(uuid: UUID): Boolean = true
     }
@@ -820,5 +858,95 @@ class FlushSchedulerTest {
         verify(exactly = 1) { logger.log(Level.WARNING, match<String> { it.contains("renew") }, any<Throwable>()) }
         verify(exactly = 0) { logger.log(Level.SEVERE, any<String>(), any<Throwable>()) }
         assertEquals(listOf(session.uuid), outage.renewals.first())
+    }
+
+    private fun versionedFlush(versioned: VersionedCoordinator, sessionVersion: Long): Triple<Boolean, PlayerSession, CounterRepository> = runBlocking {
+        val repository = CounterRepository()
+        val session = addSessions(1, repository).single()
+        session.version = sessionVersion
+        repository.update(session.uuid) { it.n = 5 }
+        val lost = Collections.synchronizedList(mutableListOf<PlayerSession>())
+        val saved = scheduler(repository, coordinator = versioned, onOwnershipLost = { lost += it })
+            .flushPlayer(session.uuid, listOf(repository), FlushReason.DIRTY)
+        Triple(saved && lost.isEmpty(), session, repository)
+    }
+
+    @Test
+    fun `commit whose reply was lost is resynced from the owned version and committed again`() {
+        val versioned = VersionedCoordinator(version = 4, lostReplies = 1)
+
+        val (saved, session, repository) = versionedFlush(versioned, 4)
+
+        assertTrue(saved)
+        assertEquals(listOf(4L, 5L), versioned.commits.toList())
+        assertEquals(6L, session.version)
+        assertEquals(6L, versioned.version)
+        assertEquals(1, repository.saveCount(session.uuid))
+        assertFalse(repository.isDirty(session.uuid))
+        assertSame(session, registry.get(session.uuid))
+        verify { logger.warning(match<String> { it.contains("session version resynced from 4 to 5") }) }
+    }
+
+    @Test
+    fun `verify of a version behind the owned one is resynced and the save proceeds`() {
+        val versioned = VersionedCoordinator(version = 5)
+
+        val (saved, session, repository) = versionedFlush(versioned, 4)
+
+        assertTrue(saved)
+        assertEquals(listOf(5L), versioned.commits.toList())
+        assertEquals(6L, session.version)
+        assertEquals(1, repository.saveCount(session.uuid))
+        assertSame(session, registry.get(session.uuid))
+        verify { logger.warning(match<String> { it.contains("session version resynced from 4 to 5") }) }
+    }
+
+    @Test
+    fun `version mismatch with another owner is still ownership lost`() {
+        val versioned = VersionedCoordinator(owner = "other", version = 5)
+
+        val (saved, session, repository) = versionedFlush(versioned, 4)
+
+        assertFalse(saved)
+        assertTrue(versioned.commits.isEmpty())
+        assertEquals(0, repository.saveCount(session.uuid))
+        assertNull(registry.get(session.uuid))
+        assertFalse(repository.contains(session.uuid))
+        verify(exactly = 0) { logger.warning(match<String> { it.contains("resynced") }) }
+    }
+
+    @Test
+    fun `version resync happens at most once per flush`() {
+        val versioned = VersionedCoordinator(version = 4, lostReplies = 2)
+
+        val (saved, session, _) = versionedFlush(versioned, 4)
+
+        assertFalse(saved)
+        assertEquals(listOf(4L, 5L), versioned.commits.toList())
+        assertNull(registry.get(session.uuid))
+    }
+
+    @Test
+    fun `database commit whose reply was lost is resynced inside the transaction`() = runBlocking {
+        transaction(db) {
+            SchemaUtils.drop(PlayerSessionTable, FlushProbeTable)
+            SchemaUtils.create(PlayerSessionTable, FlushProbeTable)
+        }
+        val repository = ProbeRepository()
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        val session = PlayerSession(uuid, player(uuid), 0).also(registry::put)
+        val database = DatabaseSessionCoordinator(db, "25565", Duration.ofSeconds(30))
+        database.acquire(uuid)
+        assertEquals(1L, database.commit(uuid, 0))
+        val lost = mutableListOf<PlayerSession>()
+
+        assertTrue(scheduler(repository, coordinator = database, onOwnershipLost = { lost += it }).flushPlayer(uuid, listOf(repository), FlushReason.EXPLICIT))
+
+        assertTrue(lost.isEmpty())
+        assertEquals(2L, session.version)
+        assertEquals(1L, transaction(db) { FlushProbeTable.selectAll().count() })
+        assertEquals(2L, transaction(db) { PlayerSessionTable.selectAll().where { PlayerSessionTable.uuid eq uuid }.single()[PlayerSessionTable.version] })
+        assertSame(session, registry.get(uuid))
     }
 }
