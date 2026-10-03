@@ -45,7 +45,11 @@ class RedisIntegrationTest {
 
     @AfterAll
     fun close() {
-        if (::provider.isInitialized) provider.close()
+        if (!::provider.isInitialized) return
+        val commands = provider.connection().sync()
+        val created = commands.keys("${settings.keyPrefix}:*")
+        if (created.isNotEmpty()) commands.del(*created.toTypedArray())
+        provider.close()
     }
 
     @Test
