@@ -12,7 +12,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kr.hqservice.framework.bukkit.core.coroutine.LifecycleMainThread
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
@@ -79,26 +82,82 @@ class BukkitDispatcherTest {
         assertTrue(job.isCancelled)
     }
 
+    private fun pluginWithoutScheduler(): HQBukkitPlugin {
+        val plugin = lifecyclePlugin(enabling = false, disabling = false)
+        every { plugin.getScheduler() } throws AssertionError("the bukkit scheduler must not be used while the main thread is blocked")
+        return plugin
+    }
+
     @Test
-    fun `main dispatch from the main thread runs inline while the plugin is enabling`() {
-        val enablingPlugin = lifecyclePlugin(enabling = true, disabling = false)
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(enablingPlugin))
+    fun `main dispatch from the main thread runs inline while a lifecycle runBlocking holds the main thread`() {
+        val plugin = pluginWithoutScheduler()
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(plugin))
         var ran = false
 
-        scope.launch { ran = true }
+        LifecycleMainThread.runBlockingOnMainThread { scope.launch { ran = true } }
 
         assertTrue(ran)
     }
 
     @Test
-    fun `main dispatch from the main thread runs inline while the plugin is disabling`() {
-        val disablingPlugin = lifecyclePlugin(enabling = false, disabling = true)
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(disablingPlugin))
-        var ran = false
+    fun `a resume from another thread while the main thread is blocked runs on the blocking loop`() {
+        val plugin = pluginWithoutScheduler()
+        var thread: Thread? = null
 
+        LifecycleMainThread.runBlockingOnMainThread {
+            withTimeout(2000) {
+                withContext(Dispatchers.BukkitMain + PluginCoroutineContextElement(plugin)) {
+                    withContext(Dispatchers.IO) { Thread.sleep(20) }
+                    thread = Thread.currentThread()
+                }
+            }
+        }
+
+        assertEquals(Thread.currentThread(), thread)
+    }
+
+    @Test
+    fun `delay on the main dispatcher completes while the main thread is blocked`() {
+        val plugin = pluginWithoutScheduler()
+        var elapsed = 0L
+
+        LifecycleMainThread.runBlockingOnMainThread {
+            withTimeout(2000) {
+                withContext(Dispatchers.BukkitMain + PluginCoroutineContextElement(plugin)) {
+                    val started = System.nanoTime()
+                    delay(60)
+                    elapsed = (System.nanoTime() - started) / 1_000_000
+                }
+            }
+        }
+
+        assertTrue(elapsed >= 50, "delay returned after ${elapsed}ms")
+    }
+
+    @Test
+    fun `main thread work queued before disable is drained instead of dropped`() {
+        val runnables = mutableListOf<() -> Unit>()
+        val scheduler = mockk<HQScheduler>()
+        every { scheduler.runTask(capture(runnables)) } just Runs
+        every { scheduler.runTaskLater(any(), any<() -> Unit>()) } returns mockk<kr.hqservice.framework.bukkit.core.scheduler.HQTask>(relaxed = true)
+        val plugin = lifecyclePlugin(enabling = false, disabling = false)
+        every { plugin.getScheduler() } returns scheduler
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(plugin))
+        var ran = false
+        var delayedFinally = false
         scope.launch { ran = true }
+        scope.launch { try { delay(10_000) } finally { delayedFinally = true } }
+        runnables[1].invoke()
+        assertFalse(ran)
+        assertFalse(delayedFinally)
+
+        LifecycleMainThread.runBlockingOnMainThread {
+            BukkitDispatcher.drainPending(plugin)
+            delay(50)
+        }
 
         assertTrue(ran)
+        assertTrue(delayedFinally)
     }
 
     @Test

@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -140,11 +141,11 @@ class PlayerDataLifecycle(
 
     suspend fun flushRepositoryForTeardown(repository: PlayerRepository<*>) {
         val owner = currentCoroutineContext()[PluginCoroutineContextElement] ?: EmptyCoroutineContext
-        sessions.all().forEach { session ->
+        sessions.all().map { session ->
             playerScopes.launch(session.uuid, owner) {
                 scheduler.flushPlayer(session.uuid, listOf(repository), FlushReason.TEARDOWN)
-            }.join()
-        }
+            }
+        }.joinAll()
     }
 
     fun shutdown() {

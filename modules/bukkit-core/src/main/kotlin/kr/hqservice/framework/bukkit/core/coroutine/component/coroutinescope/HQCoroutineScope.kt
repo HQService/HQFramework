@@ -7,7 +7,9 @@ import kr.hqservice.framework.global.core.component.HQComponent
 import kotlin.coroutines.CoroutineContext
 
 abstract class HQCoroutineScope(private val plugin: HQBukkitPlugin, private val dispatcher: CoroutineDispatcher) : CoroutineScope, HQComponent {
-    private val supervisorJob = SupervisorJob()
+    private val supervisorJob = SupervisorJob().also { supervisor ->
+        plugin.coroutineContext[Job]?.invokeOnCompletion { supervisor.cancel() }
+    }
 
     final override val coroutineContext: CoroutineContext
         get() = supervisorJob + dispatcher + plugin.coroutineContext[PluginCoroutineContextElement.Key]!! + plugin.coroutineContext[CoroutineExceptionHandler.Key]!! + getCoroutineName()

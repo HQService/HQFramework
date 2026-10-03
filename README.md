@@ -366,6 +366,8 @@ plugin.launch {
 - `delay(ms)`는 틱 단위로 올림되며 최소 1틱입니다. `bukkitDelay(ticks)`도 있습니다.
 - `launch(TeardownOptionCoroutineContextElement(true)) { }`로 띄운 코루틴은 플러그인 disable 시 기다리지 않고 즉시 취소됩니다. 그 외 코루틴은 5초까지 완료를 기다립니다.
 - 플러그인이 disable된 뒤의 디스패치는 취소 상태로 IO 스레드에서 마무리됩니다. 영원히 멈추지 않습니다.
+- enable/disable 동안 메인 스레드는 프레임워크의 `runBlocking` 에 막혀 있습니다. 이때 `Dispatchers.BukkitMain` 으로 가는 작업과 `delay` 는 Bukkit 스케줄러 대신 그 블로킹 루프에서 실행되므로, suspend `@Setup`/`@Teardown` 안에서 `withContext(Dispatchers.BukkitMain)` 이나 `delay` 를 써도 멈추지 않습니다. 메인 스레드에서 직접 `runBlocking` 을 열어야 하면 `LifecycleMainThread.runBlockingOnMainThread { }` 를 쓰세요.
+- disable 직전에 메인 스레드 큐에 남아 있던 코루틴 재개는 버리지 않고 그 자리에서 실행하며, 틱을 기다리던 `delay` 는 취소돼 `finally` 가 실행됩니다.
 - 별도 스코프가 필요하면 `HQCoroutineScope`를 상속합니다. teardown 시 자동으로 정리됩니다.
 
 ```kotlin

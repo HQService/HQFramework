@@ -31,10 +31,11 @@ class CoroutineScopeComponentHandler : HQComponentHandler<HQCoroutineScope> {
                 job.coroutineContext[TeardownOptionCoroutineContextElement.Key]?.cancelWhenPluginTeardown == true
             }.forEach { it.cancel() }
 
-        if (supervisor.children.none()) return
-
-        runBlocking {
-            CoroutineTeardown.awaitChildren(supervisor, logger)
+        if (supervisor.children.any()) {
+            runBlocking {
+                CoroutineTeardown.awaitChildren(supervisor, logger)
+            }
         }
+        supervisor.cancel()
     }
 }

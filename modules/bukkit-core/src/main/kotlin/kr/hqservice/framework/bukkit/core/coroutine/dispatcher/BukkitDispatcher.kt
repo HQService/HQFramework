@@ -1,7 +1,7 @@
 package kr.hqservice.framework.bukkit.core.coroutine.dispatcher
 
 import kotlinx.coroutines.*
-import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
+import kr.hqservice.framework.bukkit.core.coroutine.LifecycleMainThread
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import org.bukkit.Bukkit
@@ -17,15 +17,18 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
     override val immediate: MainCoroutineDispatcher
         get() = BukkitMainDispatcherImmediate()
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        isAsync || location != null || !Bukkit.isPrimaryThread() || !isLifecycleBlockingMainThread(context)
+    private val isMainThreadDispatcher: Boolean get() = !isAsync && location == null
 
-    private fun isLifecycleBlockingMainThread(context: CoroutineContext): Boolean {
-        val plugin = runCatching { getPluginByCoroutineContext(context) }.getOrNull()
-        return (plugin as? HQBukkitPlugin)?.isLifecycleBlockingMainThread == true
-    }
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
+        !isMainThreadDispatcher || !Bukkit.isPrimaryThread() || !LifecycleMainThread.isBlocked
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
+        if (isMainThreadDispatcher) {
+            LifecycleMainThread.current?.let { loop ->
+                loop.dispatch(context, block)
+                return
+            }
+        }
         val plugin = getPluginByCoroutineContext(context)
         try {
             if (location != null) {
@@ -34,7 +37,7 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
             }
             else {
                 if (isAsync) plugin.getScheduler().runTaskAsynchronously { block.run() }
-                else plugin.getScheduler().runTask { block.run() }
+                else PendingMainThreadWork.schedule(plugin, plugin.getScheduler(), block)
             }
         } catch (_: IllegalPluginAccessException) {
             context[Job]?.cancel(CancellationException("Plugin is disabled, cannot dispatch"))
@@ -43,10 +46,18 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        if (isMainThreadDispatcher) {
+            (LifecycleMainThread.current as? Delay)?.let { loop ->
+                loop.scheduleResumeAfterDelay(timeMillis, continuation)
+                return
+            }
+        }
         val plugin = getPluginByCoroutineContext(continuation.context)
+        if (isMainThreadDispatcher) PendingMainThreadWork.track(plugin, continuation)
 
         val task = try {
             val resumer: () -> Unit = {
+                PendingMainThreadWork.untrack(plugin, continuation)
                 with(continuation) { resumeUndispatched(Unit) }
             }
             val ticks = ticksFor(timeMillis)
@@ -58,7 +69,14 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
             null
         }
 
-        continuation.invokeOnCancellation { task?.cancel() }
+        continuation.invokeOnCancellation {
+            PendingMainThreadWork.untrack(plugin, continuation)
+            task?.cancel()
+        }
+    }
+
+    companion object {
+        fun drainPending(plugin: Plugin) = PendingMainThreadWork.drain(plugin)
     }
 
     private fun getPluginByCoroutineContext(coroutineContext: CoroutineContext): Plugin {

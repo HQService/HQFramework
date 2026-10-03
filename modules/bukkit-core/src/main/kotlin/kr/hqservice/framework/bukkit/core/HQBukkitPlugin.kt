@@ -3,6 +3,8 @@ package kr.hqservice.framework.bukkit.core
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
 import kr.hqservice.framework.bukkit.core.coroutine.CoroutineTeardown
+import kr.hqservice.framework.bukkit.core.coroutine.LifecycleMainThread
+import kr.hqservice.framework.bukkit.core.coroutine.dispatcher.BukkitDispatcher
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.AttachableExceptionHandler
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.ExceptionHandlerRegistry
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.HandleResult
@@ -66,14 +68,12 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
         }
     }
 
-    private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
-    private val supervisorJob = SupervisorJob()
+    private val exceptionHandlers: MutableList<AttachableExceptionHandler> = CopyOnWriteArrayList()
+    private var supervisorJob = SupervisorJob()
     private val pluginCoroutineContextElement get() = PluginCoroutineContextElement(this)
     private val coroutineExceptionHandler = CoroutineExceptionHandler handler@{ coroutineContext, throwable ->
-        val exceptionHandlers = listOf(
-            *GlobalExceptionHandlerRegistry.exceptionHandlers.map { it.second }.toTypedArray(),
-            *this.exceptionHandlers.toTypedArray()
-        )
+        val exceptionHandlers = (GlobalExceptionHandlerRegistry.exceptionHandlers.map { it.second } + this.exceptionHandlers)
+            .sortedBy { it.priority }
 
         exceptionHandlers.forEach forEach@{ handler ->
             when (handler.handle(throwable)) {
@@ -206,9 +206,10 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
             false
         }
 
+        if (supervisorJob.isCancelled) supervisorJob = SupervisorJob()
         isEnabling = true
         try {
-            runBlocking(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
+            LifecycleMainThread.runBlockingOnMainThread(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
                 val timerJob =
                     launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
                         var index = 0
@@ -236,10 +237,11 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
     final override fun onDisable() {
         isDisabling = true
         try {
-            runBlocking(
+            LifecycleMainThread.runBlockingOnMainThread(
                 this@HQBukkitPlugin.coroutineContext.minusKey(CoroutineDispatcher).minusKey(Job) + SupervisorJob()
             ) {
                 logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
+                BukkitDispatcher.drainPending(this@HQBukkitPlugin)
                 onPreDisable()
                 supervisorJob.childrenAll
                     .filter { job ->
