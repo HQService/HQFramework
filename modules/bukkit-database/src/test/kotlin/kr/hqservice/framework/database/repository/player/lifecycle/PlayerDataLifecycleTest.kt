@@ -17,7 +17,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.TestPlugin
 import kr.hqservice.framework.database.redis.InMemoryPubSubTransport
@@ -370,7 +369,7 @@ class PlayerDataLifecycleTest {
         a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
         awaitUntil { a.sent.isNotEmpty() }
 
-        b.lifecycle.onPacketReceive(AsyncNettyPacketReceivedEvent(mockk(relaxed = true), PlayerDataSavedPacket(uuid)))
+        b.lifecycle.onPeerSaved(PlayerDataSavedPacket(uuid))
         awaitUntil(500) { b.sessions.get(uuid) != null }
 
         assertEquals(9, b.repo[uuid]!!.n)

@@ -50,9 +50,13 @@ open class ProxyNettyServer(
         return getPlayers().firstOrNull { it.getUniqueId() == uniqueId }
     }
 
+    @Deprecated("@PacketListener(outbound = [...]) 를 쓰거나 첫 전송 때의 자동 등록에 맡기세요")
+
     override fun <T : Packet> registerOuterPacket(packetClass: KClass<T>) {
         Direction.OUTBOUND.registerPacket(packetClass)
     }
+
+    @Deprecated("@PacketListener 클래스의 @PacketSubscribe 함수로 받으세요")
 
     override fun <T : Packet> registerInnerPacket(
         packetClass: KClass<T>,
@@ -61,6 +65,8 @@ open class ProxyNettyServer(
         Direction.INBOUND.registerPacket(packetClass)
         Direction.INBOUND.addListener(packetClass, packetHandler)
     }
+
+    @Deprecated("@PacketListener 클래스의 @PacketSubscribe 함수로 받으세요")
 
     override fun <T : Packet> registerInnerPacket(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
         Direction.INBOUND.registerPacket(packetClass)

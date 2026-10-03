@@ -10,7 +10,6 @@ import kr.hqservice.framework.database.redis.PubSubTransport
 import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.repository.player.lifecycle.PlayerDataLifecycle
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
-import kr.hqservice.framework.netty.api.NettyServer
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import java.util.logging.Level
@@ -18,7 +17,6 @@ import java.util.logging.Logger
 
 @Module
 class DatabaseModule(
-    private val nettyServer: NettyServer,
     private val database: Database,
     private val databaseShutdownHookRegistry: DatabaseShutdownHookRegistry,
     private val dataSource: HikariDataSource,
@@ -27,12 +25,6 @@ class DatabaseModule(
     private val pubSubTransport: PubSubTransport,
     private val logger: Logger
 ) {
-    @Setup
-    fun registerPackets() {
-        nettyServer.registerInnerPacket(PlayerDataSavedPacket::class) { packet, _ -> }
-        nettyServer.registerOuterPacket(PlayerDataSavedPacket::class)
-    }
-
     @Teardown
     fun closeDatabase() {
         try {

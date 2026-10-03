@@ -985,15 +985,14 @@ class GreetPacket(var name: String, var uuid: UUID) : Packet() {
 
 ### 등록, 수신, 송신 (Bukkit)
 
+받을 패킷은 `@Listener` 처럼 어노테이션으로 선언합니다. 클래스에 `@PacketListener`, 함수에 `@PacketSubscribe` 를 붙이면 첫 파라미터의 패킷 타입이 자동으로 등록되고, 플러그인이 disable 될 때 해제됩니다.
+
 ```kotlin
-@Module
-class GreetModule(private val nettyServer: NettyServer, private val logger: Logger) {
-    @Setup
-    fun setup() {
-        nettyServer.registerOuterPacket(GreetPacket::class)
-        nettyServer.registerInnerPacket(GreetPacket::class) { packet, channel ->
-            logger.info("${packet.name} greeted from port ${channel.port}")
-        }
+@PacketListener
+class GreetPackets(private val logger: Logger) {
+    @PacketSubscribe
+    fun onGreet(packet: GreetPacket, channel: ChannelWrapper) {
+        logger.info("${packet.name} greeted from port ${channel.port}")
     }
 }
 
@@ -1006,7 +1005,10 @@ class GreetListener(private val packetSender: PacketSender) {
 }
 ```
 
-- `registerOuterPacket`은 보낼 패킷, `registerInnerPacket`은 받을 패킷을 등록합니다. 받을 패킷을 등록하지 않으면 조용히 버려집니다.
+- `@PacketSubscribe` 함수는 `(packet)` 또는 `(packet, channel: ChannelWrapper)` 를 받고 `suspend` 여도 됩니다. 그 외 시그니처는 enable 시 실패합니다.
+- 보낼 패킷은 따로 등록하지 않아도 첫 전송 때 자동 등록됩니다. 받는 쪽 서버에도 리스너가 있어야 하며, 등록되지 않은 타입의 패킷은 받는 쪽에서 조용히 버려집니다.
+- 패킷 핸들러는 Bukkit 메인 스레드가 아니라 채널마다 하나씩 순서대로 실행되는 네티 쪽 스레드에서 돕니다. Bukkit API 를 쓰려면 `plugin.launch(Dispatchers.BukkitMain) { }` 로 넘기세요. 한 핸들러가 예외를 던져도 다른 핸들러는 계속 실행됩니다.
+- `NettyServer.registerInnerPacket` / `registerOuterPacket` 은 그대로 동작하지만 deprecated 입니다. 수동 등록은 disable 때 해제되지 않아 reload 시 옛 핸들러가 남습니다.
 - `PacketSender`: `sendPacketToProxy(packet)`, `sendPacketAll(packet)`(자기 자신 포함 모든 백엔드), `sendPacket(port, packet)`, `sendPacket(serverName, packet)`, `broadcast(component)`, `sendMessageToPlayers(players, component)`.
 - `NettyServer`: `getChannels()`, `getChannel(name)`, `getPlayer(uuid)`, `getPlayers()`로 네트워크 전체의 서버와 플레이어를 조회합니다.
 - suspend 리스너가 필요하면 `Direction.INBOUND.registerPacket(...)` 후 `Direction.INBOUND.addListener(GreetPacket::class) { packet, channel -> }`를 씁니다.

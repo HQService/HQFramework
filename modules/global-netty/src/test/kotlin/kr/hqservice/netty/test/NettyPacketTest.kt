@@ -4,7 +4,6 @@ import be.seeseemelk.mockbukkit.MockBukkit
 import be.seeseemelk.mockbukkit.MockPlugin
 import be.seeseemelk.mockbukkit.ServerMock
 import io.netty.buffer.PooledByteBufAllocator
-import io.netty.handler.codec.EncoderException
 import kr.hqservice.framework.global.core.extension.print
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.message.MessagePacket
@@ -16,6 +15,7 @@ import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.Visibility
 import net.bytebuddy.implementation.MethodCall
 import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.assertNotNull
 import java.io.File
 import kotlin.reflect.full.primaryConstructor
 
@@ -119,14 +119,11 @@ class NettyPacketTest {
         val config = File("src/test/resources/config.yml").yaml()
         val channel = TestBootstrap(plugin.logger, config).initTestChannel()
 
-        // unregistered packet -> throw
-        assertThrows<EncoderException> {
-            channel.writeOutbound(HandShakePacket(25545))
-        }
-
-        Direction.OUTBOUND.registerPacket(HandShakePacket::class)
+        Direction.OUTBOUND.unregisterPacket(HandShakePacket::class)
 
         channel.writeOutbound(HandShakePacket(25545))
+
+        assertNotNull(Direction.OUTBOUND.findPacketByClass(HandShakePacket::class))
         channel.finish()
     }
 

@@ -20,7 +20,6 @@ import kr.hqservice.framework.bukkit.core.coroutine.extension.runCatchingCancell
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
-import kr.hqservice.framework.bukkit.core.netty.event.AsyncNettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.netty.service.HQNettyService
 import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.redis.RedisSettings
@@ -242,9 +241,8 @@ class PlayerDataLifecycle(
         }
     }
 
-    @Subscribe
-    fun onPacketReceive(event: AsyncNettyPacketReceivedEvent) {
-        (event.packet as? PlayerDataSavedPacket)?.let { hints[it.id]?.complete(Unit) }
+    fun onPeerSaved(packet: PlayerDataSavedPacket) {
+        hints[packet.id]?.complete(Unit)
     }
 
     private fun mayCleanUp(uuid: UUID, token: Long): Boolean = !loading.isSuperseded(uuid, token) && sessions.get(uuid) == null

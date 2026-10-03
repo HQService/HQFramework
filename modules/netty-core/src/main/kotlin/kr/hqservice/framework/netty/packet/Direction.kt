@@ -66,6 +66,10 @@ enum class Direction {
         handlers.computeIfAbsent(packetClass.qualifiedName!!) { CopyOnWriteArrayList() }.add(packetHandler)
     }
 
+    fun <T : Packet> removeListener(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
+        handlers[packetClass.qualifiedName!!]?.remove(packetHandler)
+    }
+
     @Suppress("unchecked_cast")
     fun <T : Packet> getPacketByClass(clazz: KClass<T>): PacketWrapper<T> {
         return packetMap[clazz.qualifiedName!!] as? PacketWrapper<T>
