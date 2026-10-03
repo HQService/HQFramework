@@ -54,12 +54,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly("kr.hqservice:hqframework-bukkit-core:2.1.0-SNAPSHOT")
-    compileOnly("kr.hqservice:hqframework-bukkit-database:2.1.0-SNAPSHOT")
-    compileOnly("kr.hqservice:hqframework-bukkit-command:2.1.0-SNAPSHOT")
-    compileOnly("kr.hqservice:hqframework-bukkit-inventory:2.1.0-SNAPSHOT")
-    compileOnly("kr.hqservice:hqframework-bukkit-region:2.1.0-SNAPSHOT")
-    compileOnly("kr.hqservice:hqframework-bukkit-nms:2.1.0-SNAPSHOT")
+    compileOnly("kr.hqservice:hqframework-bukkit-core:2.3.0-SNAPSHOT")
+    compileOnly("kr.hqservice:hqframework-bukkit-database:2.3.0-SNAPSHOT")
+    compileOnly("kr.hqservice:hqframework-bukkit-command:2.3.0-SNAPSHOT")
+    compileOnly("kr.hqservice:hqframework-bukkit-inventory:2.3.0-SNAPSHOT")
+    compileOnly("kr.hqservice:hqframework-bukkit-region:2.3.0-SNAPSHOT")
+    compileOnly("kr.hqservice:hqframework-bukkit-nms:2.3.0-SNAPSHOT")
 }
 ```
 
