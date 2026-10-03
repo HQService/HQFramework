@@ -493,6 +493,7 @@ class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
 | `repo.peek(uuid)` (suspend) | `loadOffline`으로 DB의 마지막 저장본을 읽음. 캐시와 소유권은 건드리지 않음(읽기 전용). 기본 Database(`TransactionManager.defaultDatabase`)의 트랜잭션에서 실행 |
 | `repo.writeOffline(uuid, value)` (suspend) | 접속하지 않은 플레이어의 데이터를 소유권을 잠깐 얻어 저장. 세션을 획득한 뒤 트랜잭션에서 `saveOffline`을 호출하고 버전을 올리고 Redis 사본(있으면)을 갱신한 뒤 해제. 다른 서버가 소유 중이면 `OfflineWriteResult.Held(owner)`(owner = 그 서버의 포트 문자열)를 돌려주므로 호출자가 그 서버로 변경을 전달해야 함. 이 서버에 접속 중이거나 로드 중이면 `Held(자기 포트)`. `saveOffline`이 던진 예외는 호출자에게 그대로 전달되고 소유권은 해제됨 |
 
+- 저장이 실패하면 `PlayerDataSaveFailedEvent`(uuid, 플레이어 이름, 연속 실패 횟수, 원인, `SaveFailureHint`)가 비동기로 발생하고, 이후 저장이 성공하면 `PlayerDataSaveRecoveredEvent`가 발생합니다. `SaveFailureHint`는 원인을 컬럼 크기 부족, DB 연결 불가, 스키마 누락, 디스크·권한, 미분류로 나누고 운영자가 할 일을 문장으로 담고 있습니다. 실패한 저장은 소유권을 유지한 채 dirty 주기마다 재시도되므로, 플러그인은 이 이벤트로 운영자에게 알리기만 하면 됩니다.
 - 접속 시 모든 리포지토리의 load가 끝나면 `PlayerRepositoryLoadedEvent`가 메인 스레드에서 발생합니다. 로딩 중에는 이동, 클릭, 드래그, 손 교체, 슬롯 변경, 명령, 줍기, 버리기가 차단됩니다. load가 두 번 실패하면 플레이어를 킥합니다.
 - 퇴장 시 모든 리포지토리를 한 트랜잭션으로 저장한 뒤 소유권을 놓고 캐시를 비웁니다. 플러그인 disable이나 서버 종료 시에도 접속 중인 플레이어를 저장합니다(메인 스레드 블로킹, 리포지토리당 5초 상한).
 
@@ -1096,7 +1097,7 @@ class JobRegistrar(private val scheduler: Scheduler) {
 **설정**
 - 신설: `netty.secret`, `scheduler.instance-id`, `player-data.*`(backend, lease-seconds, renew-seconds, join-timeout-seconds, retry-interval-millis, dirty-flush-seconds, full-flush-seconds)
 - 신설: `redis.*`(uri, key-prefix, data-ttl-seconds). `player-data.backend`에 `redis` 추가
-- 신설 API: `PlayerRepository.writeOffline`/`saveOffline`(접속하지 않은 플레이어 데이터 쓰기), 로드 가드가 드래그·손 교체·슬롯 변경·픽업 시도 이벤트도 차단
+- 신설 API: `PlayerRepository.writeOffline`/`saveOffline`(접속하지 않은 플레이어 데이터 쓰기), 로드 가드가 드래그·손 교체·슬롯 변경·픽업 시도 이벤트도 차단, 저장 실패·복구 이벤트 `PlayerDataSaveFailedEvent`/`PlayerDataSaveRecoveredEvent`
 - 기본값 변경: 프록시 `netty.shutdown-servers` `true` → `false`(신규 설치만)
 - `config-version` 2.1.0 → 2.3.0. 키가 없을 때 코드 기본값이 실제로 적용되도록 YAML getter 버그를 고쳤고, 코드 기본값은 번들 config와 같게 맞췄습니다.
 

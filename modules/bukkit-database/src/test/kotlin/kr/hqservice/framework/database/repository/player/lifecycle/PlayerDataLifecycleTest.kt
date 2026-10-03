@@ -31,7 +31,10 @@ import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.cache.InMemoryPlayerDataCache
 import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
+import kr.hqservice.framework.database.repository.player.event.PlayerDataSaveFailedEvent
+import kr.hqservice.framework.database.repository.player.event.PlayerDataSaveRecoveredEvent
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
+import kr.hqservice.framework.database.repository.player.event.SaveFailureHint
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
@@ -194,10 +197,22 @@ class PlayerDataLifecycleTest {
 
     inner class LoadedListener : Listener {
         val loaded: MutableList<UUID> = Collections.synchronizedList(mutableListOf())
+        val failed: MutableList<PlayerDataSaveFailedEvent> = Collections.synchronizedList(mutableListOf())
+        val recovered: MutableList<PlayerDataSaveRecoveredEvent> = Collections.synchronizedList(mutableListOf())
 
         @EventHandler
         fun onLoaded(event: PlayerRepositoryLoadedEvent) {
             loaded += event.player.uniqueId
+        }
+
+        @EventHandler
+        fun onFailed(event: PlayerDataSaveFailedEvent) {
+            failed += event
+        }
+
+        @EventHandler
+        fun onRecovered(event: PlayerDataSaveRecoveredEvent) {
+            recovered += event
         }
     }
 
@@ -572,6 +587,32 @@ class PlayerDataLifecycleTest {
         assertEquals(5, flaky.lastSaved)
         assertEquals(1L, version())
         assertEquals("25565", owner())
+    }
+
+    @Test
+    fun `save failures and the recovery are reported as events with a classified hint`() {
+        val flaky = FlakyRepository()
+        val a = Node("25565")
+        a.registry.register(flaky)
+        a.lifecycle.attach(flaky)
+        joined(a)
+        flaky.failSave = true
+
+        repeat(3) {
+            flaky.update(uuid) { it.n += 1 }
+            assertFalse(runBlocking { flaky.flush(uuid) })
+        }
+        awaitUntil { loadedListener.failed.size == 3 }
+        assertEquals(listOf(1, 2, 3), loadedListener.failed.map { it.consecutiveFailures })
+        assertEquals(player.name, loadedListener.failed.last().playerName)
+        assertEquals(SaveFailureHint.UNKNOWN, loadedListener.failed.last().hint)
+        assertEquals("db down", loadedListener.failed.last().cause.message)
+
+        flaky.failSave = false
+        assertTrue(runBlocking { flaky.flush(uuid) })
+        awaitUntil { loadedListener.recovered.size == 1 }
+        assertEquals(3, loadedListener.recovered.single().failuresBeforeRecovery)
+        assertEquals(0, a.sessions.get(uuid)!!.failures.get())
     }
 
     @Test

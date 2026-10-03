@@ -13,6 +13,7 @@ import kr.hqservice.framework.database.repository.player.PendingSave
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.SavePolicy
+import kr.hqservice.framework.database.repository.player.event.SaveFailureHint
 import kr.hqservice.framework.database.repository.player.session.OwnershipLostException
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
 import org.bukkit.entity.Player
@@ -34,6 +35,8 @@ class FlushScheduler(
     private val playerScopes: PlayerScopes,
     private val logger: Logger,
     private val onOwnershipLost: suspend (PlayerSession) -> Unit = {},
+    private val onSaveFailed: (PlayerSession, Int, Throwable) -> Unit = { _, _, _ -> },
+    private val onSaveRecovered: (PlayerSession, Int) -> Unit = { _, _ -> },
 ) {
     private class RepositoryState {
         var ticks = 0L
@@ -104,7 +107,8 @@ class FlushScheduler(
         try {
             session.version = saveAndCommit(uuid, session, selected)
             selected.forEach { it.markSaved(uuid) }
-            session.failures.set(0)
+            val recovered = session.failures.getAndSet(0)
+            if (recovered > 0) runCatching { onSaveRecovered(session, recovered) }
         } catch (e: OwnershipLostException) {
             sessions.remove(uuid)
             repositories().forEach { it.remove(uuid) }
@@ -115,8 +119,10 @@ class FlushScheduler(
             throw e
         } catch (e: Exception) {
             val failures = session.failures.incrementAndGet()
+            val hint = SaveFailureHint.of(e)
             val level = if (failures >= 3) Level.SEVERE else Level.WARNING
-            logger.log(level, "failed to save player data of $uuid ($failures consecutive failures)", e)
+            logger.log(level, "failed to save player data of $uuid ($failures consecutive failures): ${hint.summary}; ${hint.action}", e)
+            runCatching { onSaveFailed(session, failures, e) }
             return false
         }
         val offline = !session.player.isOnline || plan.values.any { it == FlushReason.QUIT || it == FlushReason.TEARDOWN }

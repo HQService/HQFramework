@@ -29,7 +29,10 @@ import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.cache.LettucePlayerDataCache
 import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
+import kr.hqservice.framework.database.repository.player.event.PlayerDataSaveFailedEvent
+import kr.hqservice.framework.database.repository.player.event.PlayerDataSaveRecoveredEvent
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
+import kr.hqservice.framework.database.repository.player.event.SaveFailureHint
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
@@ -72,7 +75,7 @@ class PlayerDataLifecycle(
     private val hints = ConcurrentHashMap<UUID, CompletableDeferred<Unit>>()
     internal var cacheFactory: () -> PlayerDataCache = { LettucePlayerDataCache(redisProvider) }
     private val cache: PlayerDataCache by lazy { cacheFactory() }
-    private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost)
+    private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost, ::onSaveFailed, ::onSaveRecovered)
     private val schedulerJob = scheduler.start(plugin)
     private val releasedSubscription = AtomicReference<AutoCloseable?>()
     private val offlineWriter = object : OfflineWriter {
@@ -342,6 +345,14 @@ class PlayerDataLifecycle(
             }
         }
         return OfflineWriteResult.Written
+    }
+
+    private fun onSaveFailed(session: PlayerSession, failures: Int, cause: Throwable) {
+        pluginManager.callEvent(PlayerDataSaveFailedEvent(session.uuid, session.player.name, failures, cause, SaveFailureHint.of(cause)))
+    }
+
+    private fun onSaveRecovered(session: PlayerSession, failures: Int) {
+        pluginManager.callEvent(PlayerDataSaveRecoveredEvent(session.uuid, session.player.name, failures))
     }
 
     private fun onOwnershipLost(session: PlayerSession) {
