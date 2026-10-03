@@ -57,6 +57,20 @@ abstract class CachedPlayerRepository<V : Any>(
         cache?.persist(cacheKey(uuid))
     }
 
+    internal suspend fun refreshCached(uuid: UUID, value: V, ttl: Duration) {
+        val cache = cache ?: return
+        val key = cacheKey(uuid)
+        val written = try {
+            cache.write(key, resolvedCodec.encode(value), ttl, fence?.invoke(uuid))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "failed to refresh cached player data of $uuid; evicting the stale copy", e)
+            false
+        }
+        if (!written) cache.delete(key)
+    }
+
     override suspend fun peek(uuid: UUID): V? = readCached(uuid) ?: super.peek(uuid)
 
     override fun onMutated(uuid: UUID) {

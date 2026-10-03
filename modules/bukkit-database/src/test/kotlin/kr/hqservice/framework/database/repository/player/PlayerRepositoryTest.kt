@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -213,5 +214,21 @@ class PlayerRepositoryTest {
         assertTrue(repo.remove(uuid, replaced))
         assertFalse(repo.contains(uuid))
         assertNull(repo[uuid])
+    }
+
+    @Test
+    fun `saveOffline is unsupported by default`() {
+        val repo = TestRepository()
+        assertThrows(UnsupportedOperationException::class.java) {
+            runBlocking { repo.saveOffline(uuid, Counter(1)) }
+        }
+    }
+
+    @Test
+    fun `writeOffline requires the repository to be attached`() {
+        val repo = TestRepository()
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking { repo.writeOffline(uuid, Counter(1)) }
+        }
     }
 }

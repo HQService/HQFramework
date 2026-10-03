@@ -23,6 +23,8 @@ import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.redis.RedisSettings
 import kr.hqservice.framework.database.repository.player.CachedPlayerRepository
 import kr.hqservice.framework.database.repository.player.FlushRequester
+import kr.hqservice.framework.database.repository.player.OfflineWriteResult
+import kr.hqservice.framework.database.repository.player.OfflineWriter
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.cache.LettucePlayerDataCache
@@ -31,6 +33,7 @@ import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryL
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.PlayerRepositoryRegistry
 import kr.hqservice.framework.database.repository.player.session.AcquireResult
+import kr.hqservice.framework.database.repository.player.session.OwnershipLostException
 import kr.hqservice.framework.database.repository.player.session.OwnershipTimeoutException
 import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
@@ -72,6 +75,13 @@ class PlayerDataLifecycle(
     private val scheduler = FlushScheduler(sessions, { repositories.getAll() }, coordinator, database, settings, playerScopes, logger, ::onOwnershipLost)
     private val schedulerJob = scheduler.start(plugin)
     private val releasedSubscription = AtomicReference<AutoCloseable?>()
+    private val offlineWriter = object : OfflineWriter {
+        override suspend fun <V : Any> write(uuid: UUID, repository: PlayerRepository<V>, value: V): OfflineWriteResult {
+            var result: OfflineWriteResult? = null
+            playerScopes.launch(uuid) { result = writeOffline(uuid, repository, value) }.join()
+            return result ?: throw IllegalStateException("offline write of $uuid did not complete")
+        }
+    }
 
     init {
         repositories.getAll().forEach(::attach)
@@ -89,6 +99,7 @@ class PlayerDataLifecycle(
             playerScopes.launch(uuid) { saved = scheduler.flushPlayer(uuid, listOf(target), FlushReason.EXPLICIT) }.join()
             saved
         }
+        repository.offlineWriter = offlineWriter
         if (repository is CachedPlayerRepository<*> && redisSettings.enabled) {
             repository.cache = cache
             repository.cacheSettings = redisSettings
@@ -303,6 +314,29 @@ class PlayerDataLifecycle(
 
     private suspend fun <V : Any> loadCold(repository: PlayerRepository<V>, player: Player): Loaded<V> =
         Loaded(repository, repository.load(player), false)
+
+    private suspend fun <V : Any> writeOffline(uuid: UUID, repository: PlayerRepository<V>, value: V): OfflineWriteResult {
+        if (sessions.get(uuid) != null || uuid in loading) return OfflineWriteResult.Held(coordinator.serverId)
+        val version = when (val acquired = coordinator.acquire(uuid)) {
+            is AcquireResult.Held -> return OfflineWriteResult.Held(acquired.owner)
+            is AcquireResult.Acquired -> acquired.version
+        }
+        try {
+            if (coordinator.commitsInsideTransaction) {
+                newSuspendedTransaction(Dispatchers.IO, database) {
+                    repository.saveOffline(uuid, value)
+                    coordinator.commit(uuid, version) ?: throw OwnershipLostException(uuid)
+                }
+            } else {
+                newSuspendedTransaction(Dispatchers.IO, database) { repository.saveOffline(uuid, value) }
+                coordinator.commit(uuid, version) ?: throw OwnershipLostException(uuid)
+            }
+            (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled }?.refreshCached(uuid, value, redisSettings.dataTtl)
+        } finally {
+            coordinator.release(uuid)
+        }
+        return OfflineWriteResult.Written
+    }
 
     private fun onOwnershipLost(session: PlayerSession) {
         val player = session.player

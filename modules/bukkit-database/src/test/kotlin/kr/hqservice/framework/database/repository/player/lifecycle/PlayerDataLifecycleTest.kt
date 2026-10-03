@@ -25,6 +25,7 @@ import kr.hqservice.framework.database.redis.PubSubTransport
 import kr.hqservice.framework.database.redis.RedisProvider
 import kr.hqservice.framework.database.redis.RedisSettings
 import kr.hqservice.framework.database.repository.player.CachedPlayerRepository
+import kr.hqservice.framework.database.repository.player.OfflineWriteResult
 import kr.hqservice.framework.database.repository.player.PlayerDataSettings
 import kr.hqservice.framework.database.repository.player.PlayerRepository
 import kr.hqservice.framework.database.repository.player.cache.InMemoryPlayerDataCache
@@ -107,6 +108,13 @@ class PlayerDataLifecycleTest {
                 it[n] = value.n
             }
         }
+
+        override suspend fun saveOffline(uuid: UUID, value: Points) {
+            PointTable.upsert {
+                it[PointTable.uuid] = uuid
+                it[n] = value.n
+            }
+        }
     }
 
     class FlakyRepository : PlayerRepository<Points>() {
@@ -134,6 +142,8 @@ class PlayerDataLifecycleTest {
         override suspend fun load(player: Player): Wallet = Wallet(100).also { loads.incrementAndGet() }
 
         override suspend fun save(player: Player, value: Wallet) {}
+
+        override suspend fun saveOffline(uuid: UUID, value: Wallet) {}
     }
 
     inner class Node(
@@ -900,5 +910,58 @@ class PlayerDataLifecycleTest {
         assertFalse(wallet.cacheEnabled)
         assertEquals(1, wallet.loads.get())
         assertTrue(memory.values.isEmpty())
+    }
+
+    @Test
+    fun `offline write saves, bumps the version and releases ownership`() {
+        val a = Node("25565")
+        joined(a)
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { a.sent.isNotEmpty() }
+        val before = version()
+
+        val result = runBlocking { a.repo.writeOffline(uuid, Points(7)) }
+
+        assertEquals(OfflineWriteResult.Written, result)
+        assertEquals(7, storedPoints())
+        assertEquals(before + 1, version())
+        assertNull(owner())
+        assertNull(a.repo[uuid])
+    }
+
+    @Test
+    fun `offline write is held while the player is online`() {
+        val a = Node("25565")
+        joined(a)
+
+        val result = runBlocking { a.repo.writeOffline(uuid, Points(7)) }
+
+        assertEquals(OfflineWriteResult.Held("25565"), result)
+        assertNull(storedPoints())
+    }
+
+    @Test
+    fun `offline write is held by the owner of a live lease on another server`() {
+        val a = Node("25565")
+        insertSession("25566", Instant.now().plusSeconds(60))
+
+        val result = runBlocking { a.repo.writeOffline(uuid, Points(7)) }
+
+        assertEquals(OfflineWriteResult.Held("25566"), result)
+        assertNull(storedPoints())
+    }
+
+    @Test
+    fun `offline write refreshes the cached copy with the data ttl`() {
+        val memory = InMemoryPlayerDataCache()
+        val wallet = WalletRepository()
+        cachedNode(memory, wallet)
+        memory.values[walletKey(wallet)] = """{"coins":7}""".toByteArray()
+
+        val result = runBlocking { wallet.writeOffline(uuid, Wallet(9)) }
+
+        assertEquals(OfflineWriteResult.Written, result)
+        assertEquals("""{"coins":9}""", memory.text(walletKey(wallet)))
+        assertEquals(enabledRedis.dataTtl, memory.ttls[walletKey(wallet)])
     }
 }

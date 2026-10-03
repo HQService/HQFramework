@@ -23,6 +23,7 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
     private val locks = ConcurrentHashMap<UUID, ReentrantLock>()
 
     internal var flushRequester: FlushRequester? = null
+    internal var offlineWriter: OfflineWriter? = null
     internal var flushScope: CoroutineScope? = null
 
     abstract suspend fun load(player: Player): V
@@ -30,6 +31,10 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
     abstract suspend fun save(player: Player, value: V)
 
     open suspend fun loadOffline(uuid: UUID): V? = null
+
+    open suspend fun saveOffline(uuid: UUID, value: V) {
+        throw UnsupportedOperationException("${this::class.simpleName} does not support offline writes")
+    }
 
     open fun fingerprint(value: V): Any? = null
 
@@ -60,6 +65,11 @@ abstract class PlayerRepository<V : Any>(val savePolicy: SavePolicy = SavePolicy
     suspend fun flush(uuid: UUID): Boolean = flushRequester?.flush(uuid, this) ?: false
 
     open suspend fun peek(uuid: UUID): V? = newSuspendedTransaction(Dispatchers.IO) { loadOffline(uuid) }
+
+    suspend fun writeOffline(uuid: UUID, value: V): OfflineWriteResult {
+        val writer = offlineWriter ?: throw IllegalStateException("${this::class.simpleName} is not attached to the player data lifecycle")
+        return writer.write(uuid, this, value)
+    }
 
     fun remove(uuid: UUID): V? {
         val removed = withLock(uuid) { entries.remove(uuid) }
