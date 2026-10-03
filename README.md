@@ -667,6 +667,8 @@ database:
 
 모듈 `hqframework-bukkit-database`, 패키지 `kr.hqservice.framework.database.redis`. HQFramework `config.yml`의 `redis.uri`를 설정하면 서버 간 메시지와 임시 데이터에 Redis를 쓸 수 있습니다. `RedisMessenger`, `RedisStores`, `RedisProvider`는 전역 빈이라 생성자로 주입받습니다.
 
+메시지 수신은 `@Listener`처럼 어노테이션으로 선언합니다. 클래스에 `@RedisSubscriber`, 함수에 `@RedisChannel("채널")`을 붙이면 함수의 파라미터 타입으로 역직렬화해서 호출합니다.
+
 ```kotlin
 @Serializable
 data class Party(val leader: String, val members: List<String>)
@@ -674,16 +676,17 @@ data class Party(val leader: String, val members: List<String>)
 @Serializable
 data class PartyInvite(val partyId: String, val target: String)
 
-@Module
-class PartyModule(private val messenger: RedisMessenger, stores: RedisStores, private val plugin: HQBukkitPlugin) {
-    private val parties = stores.create<Party>("myplugin:party", Duration.ofHours(1))
-
-    @Setup
-    fun setup() {
-        messenger.subscribe("party-invite", PartyInvite.serializer(), plugin) { invite ->
-            plugin.server.getPlayer(invite.target)?.sendMessage("파티 초대: ${invite.partyId}")
-        }
+@RedisSubscriber
+class PartyMessages(private val plugin: HQBukkitPlugin) {
+    @RedisChannel("party-invite")
+    suspend fun onInvite(invite: PartyInvite) {
+        plugin.server.getPlayer(invite.target)?.sendMessage("파티 초대: ${invite.partyId}")
     }
+}
+
+@Module
+class PartyModule(private val messenger: RedisMessenger, stores: RedisStores) {
+    private val parties = stores.create<Party>("myplugin:party", Duration.ofHours(1))
 
     suspend fun create(partyId: String, leader: String): Party? =
         parties.update(partyId) { current -> current ?: Party(leader, listOf(leader)) }
@@ -705,8 +708,9 @@ class PartyModule(private val messenger: RedisMessenger, stores: RedisStores, pr
 ```
 
 **`RedisMessenger`**
+- `@RedisSubscriber` 클래스의 `@RedisChannel("채널")` 함수: 파라미터는 메시지 하나여야 하며(`@Serializable` 타입이나 `List<String>` 같은 기본 조합), `suspend`여도 됩니다. 플러그인 스코프에서 실행되어 메인 스레드이고, 플러그인이 disable될 때 구독이 해제됩니다. 파라미터 수가 다르거나 직렬화할 수 없는 타입이면 enable이 실패합니다. `redis.uri`가 비어 있으면 경고만 남기고 구독하지 않으므로 Redis가 선택 기능인 플러그인도 그대로 켜집니다.
 - `publish(channel, serializer, value)`: 값을 JSON으로 직렬화해 보냅니다. 비동기로 보내고 기다리지 않습니다.
-- `subscribe(channel, serializer, scope) { value -> }`: 핸들러는 `suspend`이며 메시지마다 `scope.launch`로 실행됩니다. 스코프의 디스패처를 따르므로 `plugin`을 넘기면 메인 스레드에서 실행되어 Bukkit API를 바로 쓸 수 있습니다. 핸들러 안에서 `plugin.launch { }`로 다시 감쌀 필요가 없습니다.
+- `subscribe(channel, serializer, scope) { value -> }`: 어노테이션 없이 직접 구독할 때 씁니다. 핸들러는 `suspend`이며 메시지마다 `scope.launch`로 실행됩니다. 스코프의 디스패처를 따르므로 `plugin`을 넘기면 메인 스레드에서 실행되어 Bukkit API를 바로 쓸 수 있습니다. 핸들러 안에서 `plugin.launch { }`로 다시 감쌀 필요가 없습니다.
 - `Subscription`(`AutoCloseable`)을 돌려줍니다. `close()`하면 더 받지 않으며 여러 번 불러도 됩니다. 스코프의 `Job`이 끝나면(취소·완료) 구독도 자동으로 해제됩니다. 플러그인을 스코프로 넘기면 플러그인이 disable될 때 함께 해제됩니다.
 - 실제 Redis 채널 이름은 `<key-prefix>:msg:<channel>`(기본 `hq:msg:<channel>`)입니다. 보낸 서버 자신도 구독 중이면 메시지를 받습니다.
 - 핸들러가 던진 예외는 스코프의 예외 처리로 전달됩니다(`plugin`이면 플러그인 예외 핸들러). `SupervisorJob`을 가진 스코프라면 다른 구독과 다음 메시지에는 영향을 주지 않습니다.
