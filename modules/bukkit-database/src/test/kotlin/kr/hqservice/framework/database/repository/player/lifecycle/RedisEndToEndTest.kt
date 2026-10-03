@@ -287,6 +287,34 @@ class RedisEndToEndTest {
     }
 
     @Test
+    fun `wiping redis while the player is online keeps the player and the next flush reclaims the session`() {
+        val a = Node("25565")
+        joined(a)
+        a.repo.update(uuid) { it.n = 5 }
+        assertTrue(runBlocking { a.repo.flush(uuid) })
+        assertEquals("1", session("version"))
+
+        inspector.connection().sync().flushall()
+        assertNull(session("owner"))
+        a.repo.update(uuid) { it.n = 6 }
+        awaitUntil { cached(a.repo) == """{"n":6}""" }
+
+        assertTrue(runBlocking { a.repo.flush(uuid) })
+
+        assertTrue(player.isOnline)
+        assertEquals("25565", session("owner"))
+        assertEquals("2", session("version"))
+        assertEquals(2L, a.sessions.get(uuid)!!.version)
+        assertEquals(6, storedPoints())
+        assertFalse(logged.any { it.contains("ownership lost") || it.contains("no longer owns") })
+
+        a.lifecycle.onQuit(PlayerQuitEvent(player, "quit"))
+        awaitUntil { session("owner") == null }
+        assertEquals("3", session("version"))
+        assertEquals(6, storedPoints())
+    }
+
+    @Test
     fun `flush after a commit whose reply was lost resyncs the version and keeps the player`() {
         val a = Node("25565")
         joined(a)

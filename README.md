@@ -599,7 +599,7 @@ class BackpackRepository : CachedPlayerRepository<Backpack>(BackpackCodec()) { .
 - **값은 반드시 `update {}`나 `set`으로만 수정하세요.** `repository[uuid]!!.point = 10`처럼 직접 고친 값은 다음 전체 저장 때 MySQL과 Redis에 함께 반영되지만, 그 전에 플레이어가 다른 서버로 옮기거나 재접속하면 Redis의 이전 값이 보입니다.
 - 역직렬화에 실패한 사본은 경고를 남기고 무시한 뒤 `load`로 읽습니다.
 - Redis에 접속할 수 없으면 플레이어 접속이 로딩 상태로 보류되고, 회복되지 않으면 킥됩니다. DB로 자동 전환하지 않습니다.
-- Redis가 유실되면 마지막 DB 저장 이후의 변경이 사라집니다. Redis에 AOF(`appendfsync everysec`)를 켜 두세요.
+- **Redis는 휘발성이어도 됩니다.** 영속 저장소는 DB 하나이고 Redis에는 세션 메타와 사본만 있습니다. Redis가 재시작되거나 `FLUSHALL`로 비워져도 접속 중인 플레이어는 그대로 유지되며, 소유 서버가 다음 리스 갱신(`renew-seconds`)이나 다음 저장에서 세션을 다시 잡고 사본도 다시 씁니다. 비워지는 순간과 어떤 플레이어의 서버 이동이 겹치면 새 서버가 이전 서버의 저장 완료를 기다리지 못해 그 플레이어만 마지막 DB 저장 이후의 변경(최대 `dirty-flush-seconds`)을 잃을 수 있습니다. AOF를 켜면 이 창도 사라지지만 필수는 아닙니다.
 
 ### 일반 리포지토리
 

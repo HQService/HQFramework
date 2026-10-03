@@ -60,7 +60,9 @@ class LettuceSessionStore(private val provider: RedisProvider) : SessionStore {
         const val RENEW = NOW + """
             local leaseUntil = string.format('%d', now + tonumber(ARGV[2]))
             for _, key in ipairs(KEYS) do
-                if redis.call('HGET', key, 'owner') == ARGV[1] then
+                local owner = redis.call('HGET', key, 'owner')
+                if owner == ARGV[1] or (owner == false and redis.call('EXISTS', key) == 0) then
+                    redis.call('HSET', key, 'owner', ARGV[1])
                     redis.call('HSET', key, 'lease_until', leaseUntil)
                     redis.call('PEXPIRE', key, ARGV[3])
                 end
@@ -69,7 +71,15 @@ class LettuceSessionStore(private val provider: RedisProvider) : SessionStore {
         """
 
         const val COMMIT = NOW + """
-            if redis.call('HGET', KEYS[1], 'owner') == ARGV[1] and redis.call('HGET', KEYS[1], 'version') == ARGV[2] then
+            local owner = redis.call('HGET', KEYS[1], 'owner')
+            if owner == false and redis.call('EXISTS', KEYS[1]) == 0 then
+                redis.call('HSET', KEYS[1], 'owner', ARGV[1])
+                redis.call('HSET', KEYS[1], 'version', ARGV[2])
+                owner = ARGV[1]
+            elseif owner == ARGV[1] and redis.call('HEXISTS', KEYS[1], 'version') == 0 then
+                redis.call('HSET', KEYS[1], 'version', ARGV[2])
+            end
+            if owner == ARGV[1] and redis.call('HGET', KEYS[1], 'version') == ARGV[2] then
                 local version = redis.call('HINCRBY', KEYS[1], 'version', 1)
                 redis.call('HSET', KEYS[1], 'lease_until', string.format('%d', now + tonumber(ARGV[3])))
                 redis.call('PEXPIRE', KEYS[1], ARGV[4])
@@ -79,7 +89,15 @@ class LettuceSessionStore(private val provider: RedisProvider) : SessionStore {
         """
 
         const val VERIFY = """
-            if redis.call('HGET', KEYS[1], 'owner') == ARGV[1] and redis.call('HGET', KEYS[1], 'version') == ARGV[2] then
+            local owner = redis.call('HGET', KEYS[1], 'owner')
+            if owner == false and redis.call('EXISTS', KEYS[1]) == 0 then
+                redis.call('HSET', KEYS[1], 'owner', ARGV[1])
+                redis.call('HSET', KEYS[1], 'version', ARGV[2])
+                owner = ARGV[1]
+            elseif owner == ARGV[1] and redis.call('HEXISTS', KEYS[1], 'version') == 0 then
+                redis.call('HSET', KEYS[1], 'version', ARGV[2])
+            end
+            if owner == ARGV[1] and redis.call('HGET', KEYS[1], 'version') == ARGV[2] then
                 return 1
             end
             return 0
@@ -87,7 +105,7 @@ class LettuceSessionStore(private val provider: RedisProvider) : SessionStore {
 
         const val OWNED_VERSION = """
             if redis.call('HGET', KEYS[1], 'owner') == ARGV[1] then
-                return tonumber(redis.call('HGET', KEYS[1], 'version'))
+                return tonumber(redis.call('HGET', KEYS[1], 'version')) or -1
             end
             return -1
         """

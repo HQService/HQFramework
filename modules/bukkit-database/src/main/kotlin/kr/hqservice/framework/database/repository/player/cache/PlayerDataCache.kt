@@ -48,7 +48,7 @@ class LettucePlayerDataCache(private val provider: RedisProvider) : PlayerDataCa
 
     private companion object {
         const val FENCED_SET = """
-            if redis.call('HGET', KEYS[2], 'owner') ~= ARGV[2] then
+            if redis.call('HGET', KEYS[2], 'owner') ~= ARGV[2] and redis.call('EXISTS', KEYS[2]) == 1 then
                 return 0
             end
             if ARGV[3] == '' then

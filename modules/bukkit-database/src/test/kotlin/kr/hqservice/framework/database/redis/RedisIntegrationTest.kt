@@ -127,6 +127,36 @@ class RedisIntegrationTest {
     private fun leaseUntil(key: String): Long = provider.connection().sync().hget(key, "lease_until")!!.decodeToString().toLong()
 
     @Test
+    fun `lettuce session store reclaims a session wiped from redis`() = runBlocking {
+        val store = LettuceSessionStore(provider)
+        val key = settings.key("session", UUID.randomUUID().toString())
+        store.acquire(key, "a", 30_000)
+        assertEquals(1L, store.commit(key, "a", 0, 30_000))
+
+        provider.connection().sync().del(key)
+        store.renew(listOf(key), "a", 30_000)
+        assertEquals("a", provider.connection().sync().hget(key, "owner")?.decodeToString())
+        assertEquals(AcquireResult.Held("a"), store.acquire(key, "b", 30_000))
+        assertNull(store.ownedVersion(key, "a"))
+        assertEquals(2L, store.commit(key, "a", 1, 30_000))
+        assertEquals(2L, store.ownedVersion(key, "a"))
+
+        provider.connection().sync().del(key)
+        assertTrue(store.verify(key, "a", 2))
+        assertEquals("a", provider.connection().sync().hget(key, "owner")?.decodeToString())
+        assertFalse(store.verify(key, "b", 2))
+        assertEquals(3L, store.commit(key, "a", 2, 30_000))
+        assertEquals("a", provider.connection().sync().hget(key, "owner")?.decodeToString())
+        assertNull(store.commit(key, "b", 3, 30_000))
+
+        assertTrue(store.release(key, "a"))
+        store.renew(listOf(key), "a", 30_000)
+        assertNull(provider.connection().sync().hget(key, "owner"))
+        assertEquals(AcquireResult.Acquired(3), store.acquire(key, "b", 30_000))
+        assertTrue(store.release(key, "b"))
+    }
+
+    @Test
     fun `lettuce session store lease expires`() = runBlocking {
         val store = LettuceSessionStore(provider)
         val key = settings.key("session", UUID.randomUUID().toString())

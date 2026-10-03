@@ -107,6 +107,68 @@ class RedisSessionCoordinatorTest {
     }
 
     @Test
+    fun `renew reclaims a session that vanished from redis`() = runBlocking {
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+        store.wipe(key)
+
+        a.renew(listOf(playerId))
+
+        assertEquals("25565", store.owner(key))
+        assertEquals(AcquireResult.Held("25565"), b.acquire(playerId))
+    }
+
+    @Test
+    fun `renew does not reclaim a released session`() = runBlocking {
+        a.acquire(playerId)
+        assertTrue(a.release(playerId))
+
+        a.renew(listOf(playerId))
+
+        assertNull(store.owner(key))
+        assertEquals(AcquireResult.Acquired(0), b.acquire(playerId))
+    }
+
+    @Test
+    fun `commit reclaims a vanished session and continues the version`() = runBlocking {
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+        store.wipe(key)
+
+        assertEquals(2L, a.commit(playerId, 1))
+
+        assertEquals("25565", store.owner(key))
+        assertEquals(2L, a.ownedVersion(playerId))
+        assertNull(b.commit(playerId, 2))
+    }
+
+    @Test
+    fun `commit after a renew reclaim restores the version of the owner`() = runBlocking {
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+        store.wipe(key)
+        a.renew(listOf(playerId))
+
+        assertNull(a.ownedVersion(playerId))
+        assertEquals(2L, a.commit(playerId, 1))
+        assertEquals(2L, a.ownedVersion(playerId))
+    }
+
+    @Test
+    fun `verify reclaims a vanished session with the version of the owner`() = runBlocking {
+        a.acquire(playerId)
+        a.commit(playerId, 0)
+        store.wipe(key)
+
+        assertTrue(a.verify(playerId, 1))
+
+        assertEquals("25565", store.owner(key))
+        assertEquals(1L, a.ownedVersion(playerId))
+        assertFalse(b.verify(playerId, 1))
+        assertEquals(AcquireResult.Held("25565"), b.acquire(playerId))
+    }
+
+    @Test
     fun `same owner can acquire again and keeps the version`() = runBlocking {
         assertEquals(AcquireResult.Acquired(0), a.acquire(playerId))
         a.commit(playerId, 0)
@@ -115,7 +177,6 @@ class RedisSessionCoordinatorTest {
 
     @Test
     fun `verify checks the owner and the version`() = runBlocking {
-        assertFalse(a.verify(playerId, 0))
         a.acquire(playerId)
         assertTrue(a.verify(playerId, 0))
         assertFalse(a.verify(playerId, 1))
