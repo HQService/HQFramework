@@ -5,6 +5,7 @@ import kr.hqservice.framework.bukkit.core.netty.event.NettyClientDisconnectedEve
 import kr.hqservice.framework.bukkit.core.netty.event.NettyPacketReceivedEvent
 import kr.hqservice.framework.bukkit.core.scheduler.getScheduler
 import kr.hqservice.framework.netty.HQNettyBootstrap
+import kr.hqservice.framework.netty.bootstrap.ReconnectBackoff
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.message.BroadcastPacket
 import kr.hqservice.framework.netty.packet.message.MessagePacket
@@ -23,10 +24,7 @@ class NettyClientBootstrap(
     private val logger: Logger,
     private val config: HQYamlConfiguration
 ) {
-    private companion object {
-        const val RECONNECT_DELAY_TICKS = 60L
-    }
-
+    private val backoff = ReconnectBackoff()
     private var bootup = true
     private var currentBootstrap: HQNettyBootstrap? = null
     @Volatile
@@ -35,11 +33,7 @@ class NettyClientBootstrap(
     fun initializing() {
         if (shutdown || !plugin.isEnabled) return
 
-        // 이전 bootstrap 이 있으면 EventLoopGroup 을 먼저 닫기
-        currentBootstrap?.shutdown()
-
-        val bootstrap = HQNettyBootstrap(logger, config)
-        currentBootstrap = bootstrap
+        val bootstrap = currentBootstrap ?: HQNettyBootstrap(logger, config).also { currentBootstrap = it }
         val future = bootstrap.initClient(bootup)
         if (bootup) {
             Direction.OUTBOUND.registerPacket(BroadcastPacket::class)
@@ -72,12 +66,17 @@ class NettyClientBootstrap(
 
             handlerBoss.setPacketPreprocessHandler { packet, wrapper ->
                 if (!plugin.isEnabled) return@setPacketPreprocessHandler
-                plugin.server.pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
-                plugin.getScheduler().runTask {
-                    plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
+                if (AsyncNettyPacketReceivedEvent.getHandlerList().registeredListeners.isNotEmpty()) {
+                    plugin.server.pluginManager.callEvent(AsyncNettyPacketReceivedEvent(wrapper, packet))
+                }
+                if (NettyPacketReceivedEvent.getHandlerList().registeredListeners.isNotEmpty()) {
+                    plugin.getScheduler().runTask {
+                        plugin.server.pluginManager.callEvent(NettyPacketReceivedEvent(wrapper, packet))
+                    }
                 }
             }
 
+            backoff.reset()
             logger.info("netty-client initialization success!")
 
             handlerBoss.connectionState = ConnectionState.HANDSHAKING
@@ -89,7 +88,9 @@ class NettyClientBootstrap(
     private fun scheduleReconnect() {
         if (shutdown || !plugin.isEnabled) return
         try {
-            plugin.getScheduler().runTaskLaterAsynchronously(RECONNECT_DELAY_TICKS) {
+            val delayMillis = backoff.nextDelayMillis()
+            logger.info("reconnecting to the proxy in ${delayMillis}ms")
+            plugin.getScheduler().runTaskLaterAsynchronously(maxOf(1L, delayMillis / 50)) {
                 if (!shutdown && plugin.isEnabled) initializing()
             }
         } catch (_: IllegalPluginAccessException) {

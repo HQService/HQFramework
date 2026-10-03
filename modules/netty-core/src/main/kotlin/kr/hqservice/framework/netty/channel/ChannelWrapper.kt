@@ -6,6 +6,7 @@ import kr.hqservice.framework.netty.math.PingCalculator
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.pipeline.BossHandler
 import kr.hqservice.framework.netty.pipeline.ConnectionState
+import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 
@@ -42,6 +43,10 @@ class ChannelWrapper(
             logger.severe("Some logic tried to send packet before connection established or disconnected. (Packet: ${packet::class.simpleName})")
             return null
         }
-        return channel.writeAndFlush(packet)
+        return channel.writeAndFlush(packet).addListener { future ->
+            if (!future.isSuccess && channel.isActive) {
+                logger.log(Level.WARNING, "failed to send ${packet::class.simpleName}", future.cause())
+            }
+        }
     }
 }

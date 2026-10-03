@@ -63,7 +63,7 @@ class HQNettyBootstrap(
 
     private fun shutdownIfRunning(executorGroup: EventExecutorGroup) {
         if (!executorGroup.isShuttingDown && !executorGroup.isShutdown) {
-            executorGroup.shutdownGracefully(0, 2, TimeUnit.SECONDS)
+            executorGroup.shutdownGracefully(0, 2, TimeUnit.SECONDS).awaitUninterruptibly(3, TimeUnit.SECONDS)
         }
     }
 

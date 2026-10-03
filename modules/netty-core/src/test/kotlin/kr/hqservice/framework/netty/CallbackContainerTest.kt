@@ -112,4 +112,33 @@ class CallbackContainerTest {
         assertEquals(200, received.size)
         received.forEach { (marker, reply) -> assertEquals(marker, reply) }
     }
+
+    @Test
+    fun `a callback that is never answered is dropped after its timeout`() {
+        val wrapper = wrapperIn(ConnectionState.CONNECTED)
+        var answered = false
+        wrapper.callbackContainer.addOnQueue(wrapper, PingLike(1), PingLike::class, callback { answered = true }, timeoutMs = 50)
+        val embedded = wrapper.channel as EmbeddedChannel
+        embedded.readOutbound<Any>()
+
+        Thread.sleep(120)
+        embedded.runScheduledPendingTasks()
+
+        assertFalse(wrapper.callbackContainer.complete(PingLike(1).apply { setCallbackResult(true) }))
+        assertFalse(answered)
+    }
+
+    @Test
+    fun `pending callbacks are discarded when the channel closes`() {
+        val wrapper = wrapperIn(ConnectionState.CONNECTED)
+        var answered = false
+        wrapper.callbackContainer.addOnQueue(wrapper, PingLike(1), PingLike::class, callback { answered = true })
+        val embedded = wrapper.channel as EmbeddedChannel
+        embedded.readOutbound<Any>()
+
+        embedded.close().syncUninterruptibly()
+
+        assertFalse(wrapper.callbackContainer.complete(PingLike(1).apply { setCallbackResult(true) }))
+        assertFalse(answered)
+    }
 }

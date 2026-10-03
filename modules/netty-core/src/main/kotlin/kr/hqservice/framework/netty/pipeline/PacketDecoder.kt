@@ -25,25 +25,6 @@ class PacketDecoder(
             buf.skipBytes(buf.readableBytes())
             return
         }
-        val packetClass = wrapper.clazz
-        val codecClass = wrapper.codecClass
-        val codecPacket = codecClass.getConstructor().newInstance()
-
-        codecClass.getMethod("read", ByteBuf::class.java).invoke(codecPacket, buf)
-
-        val packetConstructor = wrapper.primaryConstructor
-        val params = mutableListOf<Any?>()
-
-        packetConstructor.parameters.forEach {
-            val field =
-                codecClass.getDeclaredField(it.name ?: throw IllegalArgumentException("not found field ${it.name}"))
-            field.isAccessible = true
-            params.add(field.get(codecPacket))
-            field.isAccessible = false
-        }
-
-        val packet = packetConstructor.call(*params.toTypedArray())
-        packetClass.java.getMethod("setCallbackResult", Boolean::class.java).invoke(packet, callbackResult)
-        out.add(packet)
+        out.add(wrapper.decode(buf, callbackResult))
     }
 }

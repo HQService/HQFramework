@@ -4,6 +4,7 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelOption
+import io.netty.channel.WriteBufferWaterMark
 import io.netty.channel.EventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -38,6 +39,9 @@ class HQNettyServer(
         val bootstrap = ServerBootstrap()
         bootstrap.channel(NioServerSocketChannel::class.java)
             .option(ChannelOption.SO_REUSEADDR, true)
+            .childOption(ChannelOption.TCP_NODELAY, true)
+            .childOption(ChannelOption.SO_KEEPALIVE, true)
+            .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, WriteBufferWaterMark(1 shl 20, 2 shl 20))
             .childHandler(HQChannelInitializer(logger, blockingDispatcher, true, config.getString("netty.secret", "")))
             .localAddress(config.getString("netty.host", "127.0.0.1"), config.getInt("netty.port", 11286))
             .group(group)

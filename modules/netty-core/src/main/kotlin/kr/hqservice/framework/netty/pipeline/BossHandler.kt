@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kr.hqservice.framework.netty.channel.ChannelWrapper
@@ -15,6 +16,8 @@ import kr.hqservice.framework.netty.channel.DisconnectHandler
 import kr.hqservice.framework.netty.channel.PacketPreprocessHandler
 import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.Packet
+import kr.hqservice.framework.netty.packet.PacketEventPolicy
+import kr.hqservice.framework.netty.packet.server.PingPongPacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import java.io.IOException
 import java.security.MessageDigest
@@ -78,6 +81,10 @@ class BossHandler(
         }
 
         val packet = msg as Packet
+        if (packet is PingPongPacket) {
+            channelScope.scope.launch(start = CoroutineStart.UNDISPATCHED) { deliver(packet) }
+            return
+        }
         val pendingNow = pending.incrementAndGet()
         if (pendingNow > BACKPRESSURE_PAUSE_PENDING && ctx.channel().config().isAutoRead) {
             ctx.channel().config().isAutoRead = false
@@ -85,14 +92,23 @@ class BossHandler(
         }
         channelScope.scope.launch(serialized) {
             try {
-                preprocessHandler?.preprocess(packet, channel)
-                if (packet.isCallbackResult() && channel.callbackContainer.complete(packet)) return@launch
-
-                Direction.INBOUND.onPacketReceived(packet, channel)
+                if (!PacketEventPolicy.isInternal(packet)) preprocessHandler?.preprocess(packet, channel)
+                deliver(packet)
             } finally {
                 if (pending.decrementAndGet() < BACKPRESSURE_RESUME_PENDING) resumeReading(ctx)
             }
         }
+    }
+
+    private suspend fun deliver(packet: Packet) {
+        if (packet.isCallbackResult() && channel.callbackContainer.complete(packet)) return
+        Direction.INBOUND.onPacketReceived(packet, channel)
+    }
+
+    override fun channelWritabilityChanged(ctx: ChannelHandlerContext) {
+        if (ctx.channel().isWritable) logger.info("channel ${ctx.channel().id()} is writable again")
+        else logger.warning("channel ${ctx.channel().id()} outbound buffer is full; the peer is reading slowly")
+        super.channelWritabilityChanged(ctx)
     }
 
     private fun resumeReading(ctx: ChannelHandlerContext) {
@@ -137,6 +153,7 @@ class BossHandler(
     override fun channelInactive(ctx: ChannelHandlerContext) {
         connectionState = ConnectionState.IDLE
         try {
+            channel.callbackContainer.failAll()
             disconnectHandler?.onDisconnect(channel)
         } finally {
             channelScope.close()
