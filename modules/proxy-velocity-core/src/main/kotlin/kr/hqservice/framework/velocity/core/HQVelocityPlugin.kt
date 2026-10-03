@@ -80,7 +80,7 @@ abstract class HQVelocityPlugin : HQProxyPlugin, KoinComponent {
     }
 
     final override fun getPluginClassLoader(): ClassLoader {
-        return Thread.currentThread().contextClassLoader
+        return javaClass.classLoader
     }
 
     private fun loadConfig() {
