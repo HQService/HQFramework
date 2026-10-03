@@ -508,7 +508,7 @@ class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
 - 서버를 이동하면 새 서버는 이전 서버가 저장을 끝내고 소유권을 놓을 때까지 기다린 뒤 load합니다. `player-data.join-timeout-seconds` 안에 얻지 못하면 "잠시 후 다시 접속해 주세요"로 킥합니다. 프록시 연결(`netty.enabled: true`)이 있으면 저장 완료 패킷으로 바로 재시도하고, 없어도 `retry-interval-millis`마다 재시도하므로 동작합니다.
 - 서버가 크래시하면 lease(`lease-seconds`)가 만료된 뒤 다음 접속 서버가 마지막 저장본으로 인계받습니다. 손실 범위는 마지막 저장 이후의 변경입니다.
 - 퇴장 저장이 실패하면 소유권과 캐시를 유지한 채 dirty 주기마다 다시 저장하고, 성공하면 그때 소유권을 놓습니다. 끝내 실패하면 lease 만료로 인계됩니다.
-- 다른 서버가 소유권을 가져간 것이 감지되면(버전 불일치) 저장을 버리고 캐시를 지운 뒤 접속 중이면 킥합니다.
+- 다른 서버가 소유권을 가져간 것이 감지되면(버전 불일치) 저장을 버리고 캐시를 지운 뒤 접속 중이면 킥합니다. 같은 서버가 소유 중인데 버전만 어긋나면 서버 쪽 버전을 받아들여 계속 진행하고, 소유자가 바뀐 경우에만 소유권 상실로 처리합니다.
 
 #### 기존 코드에서 옮기기
 
@@ -571,7 +571,20 @@ class PointRepository : CachedPlayerRepository<PointData>(PointData.serializer()
 ```
 
 - 패키지: `kr.hqservice.framework.database.repository.player`. 생성자의 두 번째 인자로 `SavePolicy`를 줄 수 있고, 나머지 API는 `PlayerRepository`와 같습니다.
-- `V`는 `@Serializable`이어야 합니다. Redis에는 kotlinx.serialization JSON으로 저장됩니다.
+- 직렬화 생성자(`PointData.serializer()`)를 쓰면 `V`는 `@Serializable`이어야 하고, Redis에는 kotlinx.serialization JSON으로 저장됩니다. `CachedPlayerRepository(JsonPlayerDataCodec(serializer, json))`과 같습니다.
+- 데이터가 크거나 JSON으로 다루기 어려우면(예: `ItemStack`은 `ItemStack.serializeAsBytes`) `PlayerDataCodec<V>`를 직접 구현해 `CachedPlayerRepository(codec: PlayerDataCodec<V>)` 생성자에 넘깁니다. 이때 `V`는 `@Serializable`일 필요가 없습니다. 코덱 인터페이스는 `kr.hqservice.framework.database.repository.player.cache` 패키지에 있습니다.
+
+```kotlin
+data class Backpack(val item: ItemStack)
+
+class BackpackCodec : PlayerDataCodec<Backpack> {
+    override fun encode(value: Backpack): ByteArray = value.item.serializeAsBytes()
+    override fun decode(bytes: ByteArray): Backpack = Backpack(ItemStack.deserializeBytes(bytes))
+}
+
+class BackpackRepository : CachedPlayerRepository<Backpack>(BackpackCodec()) { ... }
+```
+
 - `redis.uri`가 비어 있으면 `PlayerRepository`와 완전히 같게 동작하며 직렬화는 호출되지 않습니다. `redis.uri`가 있으면 `backend`가 `database`여도 Redis 캐시를 씁니다.
 - Redis 키는 `<key-prefix>:data:<cacheName>:<uuid>`입니다. `cacheName` 기본값은 클래스 FQCN이라 패키지나 클래스 이름을 바꾸면 키가 바뀌어 기존 사본을 못 읽습니다. `override val cacheName = "point"`처럼 고정하는 것을 권장합니다.
 - `peek(uuid)`는 Redis 사본을 먼저 보고, 없으면 `loadOffline`으로 DB를 읽습니다.
