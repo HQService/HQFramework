@@ -1,5 +1,8 @@
 package kr.hqservice.framework.netty.packet
 
+import kotlinx.coroutines.CancellationException
+import java.util.logging.Level
+import java.util.logging.Logger
 import kr.hqservice.framework.netty.channel.ChannelWrapper
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.Visibility
@@ -9,6 +12,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
+
+private val logger: Logger = Logger.getLogger("HQFramework.netty")
 
 enum class Direction {
     INBOUND,
@@ -79,7 +84,13 @@ enum class Direction {
         val handlers = this.handlers[packet::class.qualifiedName!!] ?: return false
         for (listener in handlers) {
             listener as PacketHandler<T>
-            listener.onPacketReceive(packet, channel)
+            try {
+                listener.onPacketReceive(packet, channel)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.log(Level.SEVERE, "packet handler ${listener::class.qualifiedName} failed for ${packet::class.simpleName}", e)
+            }
         }
         return true
     }

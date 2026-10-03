@@ -10,7 +10,7 @@ import org.bukkit.plugin.IllegalPluginAccessException
 import org.bukkit.plugin.Plugin
 import kotlin.coroutines.CoroutineContext
 
-internal fun ticksFor(timeMillis: Long): Long = maxOf(1L, timeMillis / 50)
+internal fun ticksFor(timeMillis: Long): Long = maxOf(1L, (timeMillis + 49) / 50)
 
 @OptIn(InternalCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 class BukkitDispatcher(private val isAsync: Boolean, private val location: Location?) : MainCoroutineDispatcher(), Delay {

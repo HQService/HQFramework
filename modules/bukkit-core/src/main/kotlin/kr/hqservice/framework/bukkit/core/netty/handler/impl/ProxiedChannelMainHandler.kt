@@ -18,6 +18,7 @@ import net.md_5.bungee.api.chat.TextComponent
 class ProxiedChannelMainHandler(
     private val plugin: HQBukkitPlugin
 ) : ChannelMainHandler {
+    @Volatile
     private var proxyChannel: ChannelWrapper? = null
 
     override suspend fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {

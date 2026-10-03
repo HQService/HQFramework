@@ -31,6 +31,8 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.jvmErasure
 
+private const val TAB_COMPLETE_TIMEOUT_MS = 2_000L
+
 @AnnotationHandler
 class CommandAnnotationHandler(
     private val pluginManager: PluginManager,
@@ -314,11 +316,13 @@ class CommandAnnotationHandler(
         ): List<String> {
             return completeTabs(sender, args) { kParameter, context ->
                 runBlocking {
-                    plugin.async(Dispatchers.IO) {
-                        getArgumentProvider(kParameter)
-                            .getTabComplete(context, location)
-                            .filter { it.startsWith(args.last()) }
-                    }.await()
+                    withTimeoutOrNull(TAB_COMPLETE_TIMEOUT_MS) {
+                        plugin.async(Dispatchers.IO) {
+                            getArgumentProvider(kParameter)
+                                .getTabComplete(context, location)
+                                .filter { it.startsWith(args.last()) }
+                        }.await()
+                    } ?: emptyList()
                 }
             }
         }

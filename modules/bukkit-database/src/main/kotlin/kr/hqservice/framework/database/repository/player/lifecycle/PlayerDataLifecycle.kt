@@ -15,6 +15,7 @@ import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.coroutine.PlayerScopes
 import kr.hqservice.framework.bukkit.core.coroutine.element.PluginCoroutineContextElement
 import kr.hqservice.framework.bukkit.core.coroutine.element.TeardownOptionCoroutineContextElement
+import kr.hqservice.framework.bukkit.core.coroutine.extension.runCatchingCancellable
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
@@ -82,16 +83,16 @@ class PlayerDataLifecycle(
     private val schedulerJob = scheduler.start(plugin)
     private val releasedSubscription = AtomicReference<AutoCloseable?>()
     private val backendChanged = AtomicBoolean()
-    private val backendCheckJob = plugin.launch(Dispatchers.IO) {
+    private val backendCheckJob = plugin.launch(Dispatchers.IO + TeardownOptionCoroutineContextElement(true)) {
         while (isActive) {
             delay(settings.renewInterval.toMillis())
-            runCatching { checkBackendMarker() }
+            runCatchingCancellable { checkBackendMarker() }.onFailure { logger.log(Level.WARNING, "failed to check the player-data backend marker", it) }
         }
     }
     private val offlineWriter = object : OfflineWriter {
         override suspend fun <V : Any> write(uuid: UUID, repository: PlayerRepository<V>, value: V): OfflineWriteResult {
             var outcome: Result<OfflineWriteResult>? = null
-            playerScopes.launch(uuid) { outcome = runCatching { writeOffline(uuid, repository, value) } }.join()
+            playerScopes.launch(uuid) { outcome = runCatchingCancellable { writeOffline(uuid, repository, value) } }.join()
             return outcome?.getOrThrow() ?: throw IllegalStateException("offline write of $uuid did not complete")
         }
     }
@@ -99,7 +100,7 @@ class PlayerDataLifecycle(
     init {
         repositories.getAll().forEach(::attach)
         plugin.launch(Dispatchers.IO) {
-            runCatching { coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) } }
+            runCatchingCancellable { coordinator.onReleased { uuid -> hints[uuid]?.complete(Unit) } }
                 .onSuccess { if (!releasedSubscription.compareAndSet(null, it)) it.close() }
                 .onFailure { logger.log(Level.WARNING, "failed to subscribe to player data release notifications; falling back to polling", it) }
         }
@@ -205,7 +206,7 @@ class PlayerDataLifecycle(
                 logger.log(Level.SEVERE, "failed to load player data of $uuid", e)
                 if (retained == null && mayCleanUp(uuid, token)) {
                     repositories.getAll().forEach { it.remove(uuid) }
-                    runCatching { coordinator.release(uuid) }
+                    runCatchingCancellable { coordinator.release(uuid) }.onFailure { logger.log(Level.WARNING, "failed to release player data ownership of $uuid after a load failure", it) }
                 }
                 kick(player, "데이터를 불러오지 못했습니다")
             } finally {
