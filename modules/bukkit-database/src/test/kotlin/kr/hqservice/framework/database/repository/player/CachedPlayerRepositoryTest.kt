@@ -6,13 +6,16 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
 import kr.hqservice.framework.database.redis.RedisSettings
 import io.mockk.mockk
 import io.mockk.verify
 import kr.hqservice.framework.database.repository.player.cache.InMemoryPlayerDataCache
 import kr.hqservice.framework.database.repository.player.cache.OwnerFence
+import kr.hqservice.framework.database.repository.player.cache.PlayerDataCodec
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.Database
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -20,6 +23,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
+import java.nio.ByteBuffer
 import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -47,6 +51,31 @@ class CachedPlayerRepositoryTest {
         override fun serialize(encoder: Encoder, value: Wallet) = fail("serializer must not be used without redis")
 
         override fun deserialize(decoder: Decoder): Wallet = fail("serializer must not be used without redis")
+    }
+
+    data class Count(var n: Int)
+
+    object IntCodec : PlayerDataCodec<Count> {
+        override fun encode(value: Count): ByteArray = ByteBuffer.allocate(4).putInt(value.n).array()
+
+        override fun decode(bytes: ByteArray): Count = Count(ByteBuffer.wrap(bytes).int)
+    }
+
+    object ForbiddenCodec : PlayerDataCodec<Count> {
+        override fun encode(value: Count): ByteArray = fail("codec must not be used without redis")
+
+        override fun decode(bytes: ByteArray): Count = fail("codec must not be used without redis")
+    }
+
+    class CountRepository(
+        codec: PlayerDataCodec<Count> = IntCodec,
+        private val offline: Count? = null,
+    ) : CachedPlayerRepository<Count>(codec) {
+        override suspend fun load(player: Player): Count = Count(0)
+
+        override suspend fun save(player: Player, value: Count) {}
+
+        override suspend fun loadOffline(uuid: UUID): Count? = offline
     }
 
     private val uuid = UUID.randomUUID()
@@ -224,6 +253,64 @@ class CachedPlayerRepositoryTest {
         assertTrue(repository.isDirty(uuid))
         assertNull(repository.readCached(uuid))
         assertEquals(Wallet(3), repository.peek(uuid))
+        assertTrue(cache.values.isEmpty())
+    }
+
+    @Test
+    fun `custom codec bytes are written on update and persist and decoded on read`() = runBlocking {
+        val repository = CountRepository().enabled()
+        repository.put(uuid, Count(0))
+
+        repository.update(uuid) { it.n = 258 }
+        assertArrayEquals(byteArrayOf(0, 0, 1, 2), cache.values[key(repository)])
+
+        repository[uuid]!!.n = 65536
+        repository.afterPersisted(uuid, repository.snapshot(uuid)!!, offline = true)
+        assertArrayEquals(byteArrayOf(0, 1, 0, 0), cache.values[key(repository)])
+        assertEquals(Duration.ofSeconds(90), cache.ttls[key(repository)])
+
+        cache.values[key(repository)] = byteArrayOf(0, 0, 0, 7)
+        assertEquals(Count(7), repository.readCached(uuid))
+        assertEquals(Count(7), repository.peek(uuid))
+    }
+
+    @Test
+    fun `custom codec that cannot decode the cached bytes is ignored`() = runBlocking {
+        val repository = CountRepository(offline = Count(3)).enabled()
+        cache.values[key(repository)] = byteArrayOf(1)
+
+        assertNull(repository.readCached(uuid))
+        assertEquals(Count(3), repository.peek(uuid))
+    }
+
+    @Test
+    fun `serializer constructor encodes with the injected json`() = runBlocking {
+        val repository = WalletRepository().enabled()
+        repository.json = Json { prettyPrint = true }
+        repository.put(uuid, Wallet(0))
+
+        repository.update(uuid) { it.coins = 5 }
+
+        assertEquals("{\n    \"coins\": 5\n}", cache.text(key(repository)))
+        assertEquals(Wallet(5), repository.readCached(uuid))
+    }
+
+    @Test
+    fun `without redis a custom codec is never invoked`() = runBlocking {
+        val repository = CountRepository(ForbiddenCodec, offline = Count(3))
+        repository.cacheWriter = { _, block -> runBlocking { block() } }
+        repository.put(uuid, Count(0))
+
+        repository.update(uuid) { it.n = 5 }
+        repository[uuid] = Count(6)
+        repository.writeCached(uuid, Count(6))
+        repository.afterPersisted(uuid, repository.snapshot(uuid)!!, offline = true)
+        repository.persistCached(uuid)
+
+        assertFalse(repository.cacheEnabled)
+        assertEquals(Count(6), repository[uuid])
+        assertNull(repository.readCached(uuid))
+        assertEquals(Count(3), repository.peek(uuid))
         assertTrue(cache.values.isEmpty())
     }
 }

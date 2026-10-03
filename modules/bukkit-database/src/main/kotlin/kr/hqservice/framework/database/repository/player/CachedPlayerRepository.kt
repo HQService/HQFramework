@@ -4,8 +4,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kr.hqservice.framework.database.redis.RedisSettings
+import kr.hqservice.framework.database.repository.player.cache.JsonPlayerDataCodec
 import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
+import kr.hqservice.framework.database.repository.player.cache.PlayerDataCodec
 import java.time.Duration
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -13,10 +15,18 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 abstract class CachedPlayerRepository<V : Any>(
-    private val serializer: KSerializer<V>,
+    codec: PlayerDataCodec<V>,
     savePolicy: SavePolicy = SavePolicy.periodic(),
 ) : PlayerRepository<V>(savePolicy) {
+    constructor(serializer: KSerializer<V>, savePolicy: SavePolicy = SavePolicy.periodic()) :
+        this(JsonPlayerDataCodec(serializer, Json), savePolicy) {
+        this.serializer = serializer
+    }
+
     open val cacheName: String = this::class.java.name
+
+    private var serializer: KSerializer<V>? = null
+    private val resolvedCodec: PlayerDataCodec<V> by lazy { serializer?.let { JsonPlayerDataCodec(it, json) } ?: codec }
 
     internal var cache: PlayerDataCache? = null
     internal var cacheSettings: RedisSettings? = null
@@ -34,13 +44,13 @@ abstract class CachedPlayerRepository<V : Any>(
 
     internal suspend fun readCached(uuid: UUID): V? {
         val bytes = cache?.read(cacheKey(uuid)) ?: return null
-        return runCatching { json.decodeFromString(serializer, bytes.decodeToString()) }
+        return runCatching { resolvedCodec.decode(bytes) }
             .onFailure { logger.log(Level.WARNING, "ignored malformed cached player data at ${cacheKey(uuid)}", it) }
             .getOrNull()
     }
 
     internal suspend fun writeCached(uuid: UUID, value: V, ttl: Duration? = null) {
-        if (cacheEnabled) store(uuid, encode(value), ttl)
+        if (cacheEnabled) store(uuid, resolvedCodec.encode(value), ttl)
     }
 
     internal suspend fun persistCached(uuid: UUID) {
@@ -69,7 +79,7 @@ abstract class CachedPlayerRepository<V : Any>(
     private suspend fun writeLatest(uuid: UUID) {
         pendingWrites.remove(uuid)
         guarded("failed to write cached player data of $uuid") {
-            val bytes = withValue(uuid, ::encode) ?: return@guarded
+            val bytes = withValue(uuid, resolvedCodec::encode) ?: return@guarded
             store(uuid, bytes, null)
         }
     }
@@ -92,6 +102,4 @@ abstract class CachedPlayerRepository<V : Any>(
             logger.log(Level.WARNING, message, e)
         }
     }
-
-    private fun encode(value: V): ByteArray = json.encodeToString(serializer, value).toByteArray()
 }
