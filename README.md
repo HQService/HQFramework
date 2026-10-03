@@ -203,6 +203,29 @@ class MyConfig {
 class DefaultStorage : StorageService { override fun name() = "default" }
 ```
 
+### 같은 타입을 전부 주입받기 (List)
+
+파라미터 타입이 `List<T>`(또는 `Collection<T>`)이면 `T`에 해당하는 빈이 모두 주입됩니다.
+
+```kotlin
+interface DamageRule { fun apply(event: EntityDamageEvent) }
+
+@Component class FallRule : DamageRule { ... }
+@Component class LavaRule : DamageRule { ... }
+
+@Component
+class DamageService(private val rules: List<DamageRule>) {
+    fun handle(event: EntityDamageEvent) = rules.forEach { it.apply(event) }
+}
+```
+
+- `@Component`, `@Bean`, `@Singleton`, `@Factory`, `@Configuration`의 `@Bean` 함수가 모두 후보입니다. 구현체가 하나도 없으면 빈 리스트가 들어옵니다.
+- 순서는 `@Primary`가 먼저, 나머지는 스캔 순서입니다. `@Primary`가 아닌 구현체도 리스트에는 전부 들어갑니다(단일 주입에서는 `@Primary`만 선택되는 것과 다릅니다).
+- 파라미터에 `@Qualifier("name")`를 붙이면 그 이름의 빈만 모읍니다.
+- 자기 플러그인과 HQFramework의 빈만 모입니다. 다른 플러그인의 빈은 들어오지 않습니다.
+- 소비자가 스캔 순서상 먼저 와도 구현체가 모두 만들어질 때까지 기다렸다가 주입됩니다. 구현체가 거꾸로 소비자를 의존하면 `ComponentCircularException`으로 enable이 실패합니다.
+- Quartz 잡과 View 모델처럼 `injectParameters`를 쓰는 곳에서도 똑같이 동작합니다.
+
 ### 알아둘 것
 
 - 생성자는 하나여야 합니다. nullable이거나 기본값이 있는 파라미터는 해당 빈이 끝내 없을 때만 null/기본값이 됩니다.
