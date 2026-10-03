@@ -16,6 +16,7 @@ class SaveFailureHintTest {
     fun `connection problems are classified by exception type or message`() {
         assertEquals(SaveFailureHint.CONNECTION, SaveFailureHint.of(SQLTransientConnectionException("hqframework - Connection is not available, request timed out after 30000ms")))
         assertEquals(SaveFailureHint.CONNECTION, SaveFailureHint.of(SQLException("Communications link failure")))
+        assertEquals(SaveFailureHint.CONNECTION, SaveFailureHint.of(SQLException("Connection is closed")))
     }
 
     @Test

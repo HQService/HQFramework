@@ -327,11 +327,15 @@ class PlayerDataLifecycle(
         try {
             if (coordinator.commitsInsideTransaction) {
                 newSuspendedTransaction(Dispatchers.IO, database) {
+                    repetitionAttempts = 0
                     repository.saveOffline(uuid, value)
                     coordinator.commit(uuid, version) ?: throw OwnershipLostException(uuid)
                 }
             } else {
-                newSuspendedTransaction(Dispatchers.IO, database) { repository.saveOffline(uuid, value) }
+                newSuspendedTransaction(Dispatchers.IO, database) {
+                    repetitionAttempts = 0
+                    repository.saveOffline(uuid, value)
+                }
                 coordinator.commit(uuid, version) ?: throw OwnershipLostException(uuid)
             }
             (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled }?.refreshCached(uuid, value, redisSettings.dataTtl)

@@ -147,12 +147,16 @@ class FlushScheduler(
         }
         if (coordinator.commitsInsideTransaction) {
             return newSuspendedTransaction(Dispatchers.IO, database) {
+                repetitionAttempts = 0
                 selected.forEach { it.save(session.player) }
                 commit()
             }
         }
         if (!coordinator.verify(uuid, session.version)) resyncOrThrow()
-        newSuspendedTransaction(Dispatchers.IO, database) { selected.forEach { it.save(session.player) } }
+        newSuspendedTransaction(Dispatchers.IO, database) {
+            repetitionAttempts = 0
+            selected.forEach { it.save(session.player) }
+        }
         return commit()
     }
 

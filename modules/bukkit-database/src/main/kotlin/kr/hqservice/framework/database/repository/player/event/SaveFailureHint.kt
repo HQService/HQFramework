@@ -21,7 +21,7 @@ enum class SaveFailureHint(val summary: String, val action: String) {
                     message.contains("doesn't exist") || message.contains("unknown column") || message.contains("no such table") || message.contains("no such column") -> return MISSING_SCHEMA
                     message.contains("disk full") || message.contains("no space") || message.contains("access denied") || message.contains("permission denied") || message.contains("read-only") -> return DISK_OR_PERMISSION
                     current is SQLTransientConnectionException || current is SQLNonTransientConnectionException || current is java.net.ConnectException || current is java.net.SocketTimeoutException -> return CONNECTION
-                    message.contains("communications link") || message.contains("connection refused") || message.contains("connection reset") || message.contains("connection is not available") || message.contains("timed out") -> return CONNECTION
+                    message.contains("communications link") || message.contains("connection is closed") || message.contains("connection refused") || message.contains("connection reset") || message.contains("connection is not available") || message.contains("timed out") -> return CONNECTION
                 }
                 current = current.cause
             }
