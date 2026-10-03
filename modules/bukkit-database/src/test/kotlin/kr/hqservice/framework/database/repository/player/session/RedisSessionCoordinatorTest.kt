@@ -1,7 +1,10 @@
 package kr.hqservice.framework.database.repository.player.session
 
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.database.redis.InMemoryPubSubTransport
+import kr.hqservice.framework.database.redis.PubSubTransport
 import kr.hqservice.framework.database.redis.RedisSettings
 import kr.hqservice.framework.database.repository.player.session.redis.InMemorySessionStore
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,14 +14,17 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.util.UUID
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class RedisSessionCoordinatorTest {
     private val store = InMemorySessionStore()
     private val transport = InMemoryPubSubTransport()
     private val settings = RedisSettings("", "hq", Duration.ofSeconds(3600))
     private val lease = Duration.ofSeconds(30)
-    private val a = RedisSessionCoordinator(store, settings, lease, "25565", transport)
-    private val b = RedisSessionCoordinator(store, settings, lease, "25566", transport)
+    private val logger = mockk<Logger>(relaxed = true)
+    private val a = RedisSessionCoordinator(store, settings, lease, "25565", transport, logger)
+    private val b = RedisSessionCoordinator(store, settings, lease, "25566", transport, logger)
     private val playerId = UUID.randomUUID()
     private val key = "hq:session:$playerId"
 
@@ -174,5 +180,21 @@ class RedisSessionCoordinatorTest {
         assertNull(b.ownedVersion(playerId))
         a.release(playerId)
         assertNull(a.ownedVersion(playerId))
+    }
+
+    @Test
+    fun `release succeeds even when publishing the release notification fails`() = runBlocking {
+        val failing = object : PubSubTransport {
+            override fun publish(channel: String, payload: ByteArray) = throw IllegalStateException("redis down")
+
+            override fun subscribe(channel: String, listener: (ByteArray) -> Unit): AutoCloseable = AutoCloseable { }
+        }
+        val coordinator = RedisSessionCoordinator(store, settings, lease, "25565", failing, logger)
+        coordinator.acquire(playerId)
+
+        assertTrue(coordinator.release(playerId))
+
+        assertNull(store.entry(key)!!.owner)
+        verify { logger.log(Level.WARNING, match<String> { it.contains("release notification") }, any<Throwable>()) }
     }
 }

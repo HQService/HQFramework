@@ -260,14 +260,19 @@ class PlayerDataLifecycle(
     }
 
     private suspend fun loadAll(player: Player, token: Long, onlyMissing: Boolean) {
-        try {
-            loadOnce(player, token, onlyMissing)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            logger.log(Level.WARNING, "failed to load player data of ${player.uniqueId}, retrying once", e)
-            delay(250)
-            loadOnce(player, token, onlyMissing)
+        var failed = false
+        while (true) {
+            try {
+                loadOnce(player, token, onlyMissing)
+                return
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (!failed) logger.log(Level.WARNING, "failed to load player data of ${player.uniqueId}, retrying until the join timeout", e)
+                failed = true
+                if (!loading.isCurrent(player.uniqueId, token)) return
+                delay(settings.retryInterval.toMillis())
+            }
         }
     }
 

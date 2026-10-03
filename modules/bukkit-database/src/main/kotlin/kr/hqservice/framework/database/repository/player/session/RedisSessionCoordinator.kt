@@ -6,6 +6,8 @@ import kr.hqservice.framework.database.repository.player.cache.OwnerFence
 import kr.hqservice.framework.database.repository.player.session.redis.SessionStore
 import java.time.Duration
 import java.util.UUID
+import java.util.logging.Level
+import java.util.logging.Logger
 
 class RedisSessionCoordinator(
     private val store: SessionStore,
@@ -13,6 +15,7 @@ class RedisSessionCoordinator(
     lease: Duration,
     override val serverId: String,
     private val transport: PubSubTransport,
+    private val logger: Logger,
 ) : SessionCoordinator {
     override val commitsInsideTransaction: Boolean = false
     private val leaseMillis = lease.toMillis()
@@ -30,7 +33,10 @@ class RedisSessionCoordinator(
 
     override suspend fun release(uuid: UUID): Boolean =
         store.release(key(uuid), serverId).also { released ->
-            if (released) transport.publish(releasedChannel, uuid.toString().toByteArray())
+            if (released) {
+                runCatching { transport.publish(releasedChannel, uuid.toString().toByteArray()) }
+                    .onFailure { logger.log(Level.WARNING, "failed to publish the release notification of $uuid; other servers fall back to polling", it) }
+            }
         }
 
     override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean =

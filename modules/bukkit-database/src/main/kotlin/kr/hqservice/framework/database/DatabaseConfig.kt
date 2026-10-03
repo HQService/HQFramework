@@ -56,7 +56,7 @@ class DatabaseConfig(
         if (settings.backend == "redis") check(redisSettings.enabled) { "player-data.backend is redis but redis.uri is empty" }
         PlayerDataBackendMarker.ensure(database, settings.backend)
         return when (settings.backend) {
-            "redis" -> RedisSessionCoordinator(LettuceSessionStore(redisProvider), redisSettings, settings.lease, serverId, transport)
+            "redis" -> RedisSessionCoordinator(LettuceSessionStore(redisProvider), redisSettings, settings.lease, serverId, transport, logger)
             else -> DatabaseSessionCoordinator(database, serverId, settings.lease)
         }
     }

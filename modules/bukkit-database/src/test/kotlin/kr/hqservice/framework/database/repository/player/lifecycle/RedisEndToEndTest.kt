@@ -76,7 +76,7 @@ class RedisEndToEndTest {
     inner class Node(serverId: String, settings: PlayerDataSettings = this@RedisEndToEndTest.settings()) {
         val provider = RedisProvider(redis, logger).also(providers::add)
         val transport = LettucePubSubTransport(provider, logger).also(transports::add)
-        val coordinator = RedisSessionCoordinator(LettuceSessionStore(provider), redis, settings.lease, serverId, transport)
+        val coordinator = RedisSessionCoordinator(LettuceSessionStore(provider), redis, settings.lease, serverId, transport, logger)
         val repo = PointRepository()
         val registry = PlayerRepositoryRegistryImpl().also { it.register(repo) }
         val sessions = PlayerSessionRegistry()

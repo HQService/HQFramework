@@ -700,6 +700,7 @@ class PlayerDataLifecycleTest {
             settings.lease,
             "25565",
             unreachable,
+            logger,
         )
 
         val a = Node("25565", coordinator = coordinator)
@@ -798,7 +799,7 @@ class PlayerDataLifecycleTest {
     @Test
     fun `cache writes are fenced by redis session ownership`() {
         val store = InMemorySessionStore()
-        val coordinator = RedisSessionCoordinator(store, enabledRedis, settings.lease, "25565", InMemoryPubSubTransport())
+        val coordinator = RedisSessionCoordinator(store, enabledRedis, settings.lease, "25565", InMemoryPubSubTransport(), logger)
         val memory = InMemoryPlayerDataCache(store::owner)
         val wallet = WalletRepository()
         val a = cachedNode(memory, wallet, coordinator = coordinator)
@@ -852,6 +853,38 @@ class PlayerDataLifecycleTest {
         assertNull(a.sessions.get(uuid))
         assertFalse(wallet.contains(uuid))
         assertNull(owner())
+    }
+
+    @Test
+    fun `join keeps retrying a failing cache read until the join timeout and loads the player`() {
+        val slow = settings(joinTimeout = Duration.ofSeconds(2), retryInterval = Duration.ofMillis(50))
+        val memory = InMemoryPlayerDataCache()
+        val recoversAt = AtomicLong(Long.MAX_VALUE)
+        val reads = AtomicInteger()
+        val flaky = object : PlayerDataCache by memory {
+            override suspend fun read(key: String): ByteArray? {
+                reads.incrementAndGet()
+                if (System.currentTimeMillis() < recoversAt.get()) throw RedisConnectionException("redis down")
+                return memory.read(key)
+            }
+        }
+        val wallet = WalletRepository()
+        val a = Node("25565", slow, redisSettings = enabledRedis, coordinator = DatabaseSessionCoordinator(db, "25565", slow.lease)).also { node ->
+            node.lifecycle.cacheFactory = { flaky }
+            node.registry.register(wallet)
+            node.lifecycle.attach(wallet)
+        }
+        val started = System.currentTimeMillis()
+        recoversAt.set(started + 300)
+
+        a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        awaitUntil(3000) { loadedListener.loaded.contains(uuid) }
+
+        assertTrue(System.currentTimeMillis() - started >= 300)
+        assertTrue(reads.get() > 2)
+        assertTrue(player.isOnline)
+        assertEquals(Wallet(100), wallet[uuid])
+        assertNotNull(a.sessions.get(uuid))
     }
 
     @Test
