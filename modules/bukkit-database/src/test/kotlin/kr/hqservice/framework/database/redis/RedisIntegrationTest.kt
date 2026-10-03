@@ -69,6 +69,30 @@ class RedisIntegrationTest {
     }
 
     @Test
+    fun `lettuce key value commands compare and set`() = runBlocking {
+        val commands = LettuceKeyValueCommands(provider)
+        val key = settings.key("kv", UUID.randomUUID().toString())
+
+        assertFalse(commands.compareAndSet(key, "x".toByteArray(), "a".toByteArray(), null))
+        assertTrue(commands.compareAndSet(key, null, "a".toByteArray(), Duration.ofSeconds(30)))
+        assertTrue(provider.connection().sync().pttl(key) in 1..30_000)
+        assertFalse(commands.compareAndSet(key, null, "b".toByteArray(), null))
+        assertFalse(commands.compareAndSet(key, "b".toByteArray(), "c".toByteArray(), null))
+        assertTrue(commands.compareAndSet(key, "a".toByteArray(), "b".toByteArray(), null))
+        assertEquals(-1L, provider.connection().sync().pttl(key))
+        assertEquals("b", commands.get(key)?.decodeToString())
+        assertTrue(commands.compareAndSet(key, "b".toByteArray(), null, null))
+        assertFalse(commands.exists(key))
+
+        commands.set(key, "v".toByteArray(), null)
+        assertTrue(commands.expire(key, Duration.ofSeconds(30)))
+        assertTrue(provider.connection().sync().pttl(key) in 1..30_000)
+        assertTrue(commands.delete(key))
+        assertFalse(commands.delete(key))
+        assertFalse(commands.expire(key, Duration.ofSeconds(30)))
+    }
+
+    @Test
     fun `lettuce session store acquires commits and releases`() = runBlocking {
         val store = LettuceSessionStore(provider)
         val key = settings.key("session", UUID.randomUUID().toString())

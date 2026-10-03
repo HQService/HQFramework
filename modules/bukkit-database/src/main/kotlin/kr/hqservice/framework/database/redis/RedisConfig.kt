@@ -20,4 +20,7 @@ class RedisConfig {
     @Bean
     fun provideRedisMessenger(transport: PubSubTransport, settings: RedisSettings, json: Json, logger: Logger): RedisMessenger =
         RedisMessenger(transport, settings, json, logger)
+
+    @Bean
+    fun provideRedisStores(provider: RedisProvider, json: Json): RedisStores = RedisStores(provider, json)
 }
