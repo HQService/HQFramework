@@ -481,6 +481,7 @@ class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
   - `SavePolicy.onQuitOnly()`: 퇴장, 플러그인 disable, 서버 종료 때만 저장합니다. 소유권 lease 갱신은 계속됩니다.
 - `fingerprint(value)` (선택): 전체 저장 주기에서 지문이 바뀐 항목만 저장합니다. 기본값 `null`이면 전체 저장 주기마다 모두 저장합니다.
 - `loadOffline(uuid)` (선택): `peek`이 사용합니다. 오버라이드하지 않으면 `peek`은 항상 `null`입니다.
+- `saveOffline(uuid, value)` (선택): `writeOffline`이 사용합니다. 오버라이드하지 않으면 `writeOffline`은 `UnsupportedOperationException`을 던집니다.
 
 | 호출 | 동작 |
 |---|---|
@@ -490,8 +491,9 @@ class PointRepository : PlayerRepository<PointData>(SavePolicy.periodic()) {
 | `repo.update(uuid, immediate = true) { }` | 위와 같고, 플레이어 큐에 즉시 저장을 예약 |
 | `repo.flush(uuid)` (suspend) | dirty 여부와 무관하게 즉시 저장하고 완료를 기다림. flush는 저장이 커밋되면 `true`, 실패·소유권 상실·미등록이면 `false` |
 | `repo.peek(uuid)` (suspend) | `loadOffline`으로 DB의 마지막 저장본을 읽음. 캐시와 소유권은 건드리지 않음(읽기 전용). 기본 Database(`TransactionManager.defaultDatabase`)의 트랜잭션에서 실행 |
+| `repo.writeOffline(uuid, value)` (suspend) | 접속하지 않은 플레이어의 데이터를 소유권을 잠깐 얻어 저장. 세션을 획득한 뒤 트랜잭션에서 `saveOffline`을 호출하고 버전을 올리고 Redis 사본(있으면)을 갱신한 뒤 해제. 다른 서버가 소유 중이면 `OfflineWriteResult.Held(owner)`(owner = 그 서버의 포트 문자열)를 돌려주므로 호출자가 그 서버로 변경을 전달해야 함. 이 서버에 접속 중이거나 로드 중이면 `Held(자기 포트)`. `saveOffline`이 던진 예외는 호출자에게 그대로 전달되고 소유권은 해제됨 |
 
-- 접속 시 모든 리포지토리의 load가 끝나면 `PlayerRepositoryLoadedEvent`가 메인 스레드에서 발생합니다. 로딩 중에는 이동, 클릭, 명령, 줍기, 버리기가 차단됩니다. load가 두 번 실패하면 플레이어를 킥합니다.
+- 접속 시 모든 리포지토리의 load가 끝나면 `PlayerRepositoryLoadedEvent`가 메인 스레드에서 발생합니다. 로딩 중에는 이동, 클릭, 드래그, 손 교체, 슬롯 변경, 명령, 줍기, 버리기가 차단됩니다. load가 두 번 실패하면 플레이어를 킥합니다.
 - 퇴장 시 모든 리포지토리를 한 트랜잭션으로 저장한 뒤 소유권을 놓고 캐시를 비웁니다. 플러그인 disable이나 서버 종료 시에도 접속 중인 플레이어를 저장합니다(메인 스레드 블로킹, 리포지토리당 5초 상한).
 
 #### 주의사항
@@ -1094,6 +1096,7 @@ class JobRegistrar(private val scheduler: Scheduler) {
 **설정**
 - 신설: `netty.secret`, `scheduler.instance-id`, `player-data.*`(backend, lease-seconds, renew-seconds, join-timeout-seconds, retry-interval-millis, dirty-flush-seconds, full-flush-seconds)
 - 신설: `redis.*`(uri, key-prefix, data-ttl-seconds). `player-data.backend`에 `redis` 추가
+- 신설 API: `PlayerRepository.writeOffline`/`saveOffline`(접속하지 않은 플레이어 데이터 쓰기), 로드 가드가 드래그·손 교체·슬롯 변경·픽업 시도 이벤트도 차단
 - 기본값 변경: 프록시 `netty.shutdown-servers` `true` → `false`(신규 설치만)
 - `config-version` 2.1.0 → 2.3.0. 키가 없을 때 코드 기본값이 실제로 적용되도록 YAML getter 버그를 고쳤고, 코드 기본값은 번들 config와 같게 맞췄습니다.
 
