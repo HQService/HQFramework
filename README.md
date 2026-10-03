@@ -623,38 +623,63 @@ database:
 
 ## Redis 메시징과 임시 저장소
 
-모듈 `hqframework-bukkit-database`, 패키지 `kr.hqservice.framework.database.redis`. HQFramework `config.yml`의 `redis.uri`를 설정하면 서버 간 메시지와 임시 데이터에 Redis를 쓸 수 있습니다. `RedisMessenger`와 `RedisProvider`는 전역 빈이라 생성자로 주입받습니다.
+모듈 `hqframework-bukkit-database`, 패키지 `kr.hqservice.framework.database.redis`. HQFramework `config.yml`의 `redis.uri`를 설정하면 서버 간 메시지와 임시 데이터에 Redis를 쓸 수 있습니다. `RedisMessenger`, `RedisStores`, `RedisProvider`는 전역 빈이라 생성자로 주입받습니다.
 
 ```kotlin
+@Serializable
+data class Party(val leader: String, val members: List<String>)
+
 @Serializable
 data class PartyInvite(val partyId: String, val target: String)
 
 @Module
-class PartyModule(private val messenger: RedisMessenger, private val redis: RedisProvider, private val plugin: HQBukkitPlugin) {
+class PartyModule(private val messenger: RedisMessenger, stores: RedisStores, private val plugin: HQBukkitPlugin) {
+    private val parties = stores.create<Party>("myplugin:party", Duration.ofHours(1))
+
     @Setup
     fun setup() {
-        messenger.subscribe("party-invite", PartyInvite.serializer()) { invite ->
-            plugin.launch { plugin.server.getPlayer(invite.target)?.sendMessage("파티 초대: ${invite.partyId}") }
+        messenger.subscribe("party-invite", PartyInvite.serializer(), plugin) { invite ->
+            plugin.server.getPlayer(invite.target)?.sendMessage("파티 초대: ${invite.partyId}")
         }
     }
 
-    fun invite(partyId: String, target: String) {
+    suspend fun create(partyId: String, leader: String): Party? =
+        parties.update(partyId) { current -> current ?: Party(leader, listOf(leader)) }
+
+    suspend fun join(partyId: String, player: String): Party? =
+        parties.update(partyId) { current -> current?.copy(members = (current.members + player).distinct()) }
+
+    suspend fun leave(partyId: String, player: String): Party? =
+        parties.update(partyId) { current ->
+            val members = current?.members.orEmpty() - player
+            if (current == null || members.isEmpty()) null else current.copy(members = members)
+        }
+
+    suspend fun invite(partyId: String, target: String) {
+        if (!parties.touch(partyId)) return
         messenger.publish("party-invite", PartyInvite.serializer(), PartyInvite(partyId, target))
-        redis.connection().async().expire("myplugin:party:$partyId", 3600)
     }
 }
 ```
 
 **`RedisMessenger`**
 - `publish(channel, serializer, value)`: 값을 JSON으로 직렬화해 보냅니다. 비동기로 보내고 기다리지 않습니다.
-- `subscribe(channel, serializer) { value -> }`: `Subscription`(`AutoCloseable`)을 돌려줍니다. 더 받지 않으려면 `close()`합니다(예: `@Teardown`에서).
+- `subscribe(channel, serializer, scope) { value -> }`: 핸들러는 `suspend`이며 메시지마다 `scope.launch`로 실행됩니다. 스코프의 디스패처를 따르므로 `plugin`을 넘기면 메인 스레드에서 실행되어 Bukkit API를 바로 쓸 수 있습니다. 핸들러 안에서 `plugin.launch { }`로 다시 감쌀 필요가 없습니다.
+- `Subscription`(`AutoCloseable`)을 돌려줍니다. `close()`하면 더 받지 않으며 여러 번 불러도 됩니다. 스코프의 `Job`이 끝나면(취소·완료) 구독도 자동으로 해제됩니다. 단, 현재 `HQBukkitPlugin`의 `Job`은 비활성화 때 끝나지 않으므로 플러그인을 스코프로 넘긴 구독을 리로드 전에 확실히 지우려면 `@Teardown`에서 `close()`하세요.
 - 실제 Redis 채널 이름은 `<key-prefix>:msg:<channel>`(기본 `hq:msg:<channel>`)입니다. 보낸 서버 자신도 구독 중이면 메시지를 받습니다.
-- 핸들러는 프레임워크 전용 단일 스레드(`hq-redis-pubsub`)에서 차례로 실행됩니다. 오래 블로킹하면 다른 메시지가 밀리므로 피하고, Bukkit API는 `plugin.launch { }`나 `withContext(Dispatchers.BukkitMain)`으로 메인 스레드에 넘긴 뒤 쓰세요. 핸들러가 던진 예외는 경고로 기록되고 다른 핸들러에는 영향을 주지 않습니다.
+- 핸들러가 던진 예외는 스코프의 예외 처리로 전달됩니다(`plugin`이면 플러그인 예외 핸들러). `SupervisorJob`을 가진 스코프라면 다른 구독과 다음 메시지에는 영향을 주지 않습니다.
 - 역직렬화에 실패한 메시지는 경고를 남기고 버립니다.
+
+**`RedisStore`**
+- `RedisStores.create<T>(prefix, ttl)`(또는 `create(serializer, prefix, ttl)`)로 만듭니다. 한 번 만들어 필드에 두고 재사용하세요. `T`는 `@Serializable`이어야 하며 값은 JSON으로 저장됩니다. `redis.uri`가 비어 있으면 `create`가 `IllegalStateException`을 던지므로 선택 기능이라면 `RedisProvider.enabled`로 먼저 분기하세요.
+- 키는 `<prefix>:<id>`입니다. `key-prefix`(기본 `hq`)는 프레임워크가 쓰므로 `myplugin:party`처럼 플러그인 고유 접두어를 쓰세요. `key(id)`로 실제 키를 확인할 수 있습니다.
+- `get`, `set`, `delete`, `exists`는 모두 `suspend`입니다. `ttl`을 주면 `set`과 `update`로 쓸 때마다 만료 시간이 다시 걸립니다. `ttl`이 없으면 만료되지 않습니다.
+- `touch(id)`: 값은 그대로 두고 만료 시간만 `ttl`로 연장합니다. 키가 없거나 `ttl`이 없으면 `false`입니다.
+- `update(id) { current -> next }`: 현재 값을 읽어 블록의 결과로 원자적으로 바꿉니다(낙관적 동시성). 블록이 `null`을 돌려주면 키를 지웁니다. 그 사이에 다른 서버가 값을 바꾸면 다시 읽고 블록을 재실행하며, 5번 모두 충돌하면 `IllegalStateException`을 던집니다. **블록은 여러 번 실행될 수 있으므로 순수 함수여야 합니다**(메시지 전송, 다른 저장소 쓰기 같은 부수 효과는 `update`가 돌려준 값으로 블록 밖에서 하세요).
 
 **`RedisProvider`**
 - `enabled`: `redis.uri`가 설정되어 있는지 확인합니다. 선택 기능이라면 이 값으로 분기하세요.
-- `connection()`: Lettuce `StatefulRedisConnection<String, ByteArray>`를 돌려줍니다. 처음 호출할 때 연결하며 연결과 명령 타임아웃은 3초입니다. 메인 스레드에서 `sync()`를 쓰면 그만큼 멈출 수 있으니 `async()`를 쓰세요. 모든 플러그인이 공유하는 연결이므로 `close()`하지 마세요. 파티 해시에 TTL을 거는 것처럼 Lettuce API(`sync()`, `async()`, `reactive()`)를 직접 씁니다. 값 코덱이 `ByteArray`이므로 문자열 값은 `toByteArray()`로 넣습니다.
+- `connection()`: Lettuce `StatefulRedisConnection<String, ByteArray>`를 돌려줍니다. 처음 호출할 때 연결하며 연결과 명령 타임아웃은 3초입니다. 메인 스레드에서 `sync()`를 쓰면 그만큼 멈출 수 있으니 `async()`를 쓰세요. 모든 플러그인이 공유하는 연결이므로 `close()`하지 마세요. `RedisStore`로 부족할 때(해시, 정렬 집합 등) Lettuce API(`sync()`, `async()`, `reactive()`)를 직접 씁니다. 값 코덱이 `ByteArray`이므로 문자열 값은 `toByteArray()`로 넣습니다.
 - `redis.uri`가 비어 있으면 `connection()`과 `RedisMessenger`의 `publish`/`subscribe`는 `IllegalStateException`을 던집니다. `redis.uri` 형식이 잘못되면 기동에 실패합니다.
 - 키는 플러그인 고유 접두어(예: `myplugin:`)를 쓰세요. `key-prefix`(기본 `hq`)는 프레임워크가 씁니다.
 
@@ -1092,5 +1117,5 @@ class JobRegistrar(private val scheduler: Scheduler) {
 - MySQL의 lease SQL(`DATE_ADD`)은 코드 리뷰로만 검증됨(H2·SQLite는 테스트 있음). 모든 서버의 MySQL 세션 time_zone이 같아야 함.
 - Bungee IP-forwarding과 Velocity modern forwarding에서 모루·표지판 virtual handler, 모루 더블클릭.
 - Linux에서 NIO 전송, Folia 스케줄러.
-- 실제 Redis에서 소유권 Lua 스크립트와 pub/sub(해제 알림, `RedisMessenger`)은 미검증. `HQ_TEST_REDIS_URI=redis://...`를 주면 `RedisIntegrationTest`가 실행됨.
+- 실제 Redis에서 소유권 Lua 스크립트, `RedisStore`의 compare-and-set 스크립트, pub/sub(해제 알림, `RedisMessenger`)은 미검증. `HQ_TEST_REDIS_URI=redis://...`를 주면 `RedisIntegrationTest`가 실행됨.
 - Paper에서 plugin.yml `libraries`의 netty-all과 Lettuce가 끌어오는 netty 개별 아티팩트가 중복 로딩되어도 문제없는지.
