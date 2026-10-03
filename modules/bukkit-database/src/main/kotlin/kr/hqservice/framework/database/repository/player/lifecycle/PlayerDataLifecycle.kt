@@ -77,9 +77,9 @@ class PlayerDataLifecycle(
     private val releasedSubscription = AtomicReference<AutoCloseable?>()
     private val offlineWriter = object : OfflineWriter {
         override suspend fun <V : Any> write(uuid: UUID, repository: PlayerRepository<V>, value: V): OfflineWriteResult {
-            var result: OfflineWriteResult? = null
-            playerScopes.launch(uuid) { result = writeOffline(uuid, repository, value) }.join()
-            return result ?: throw IllegalStateException("offline write of $uuid did not complete")
+            var outcome: Result<OfflineWriteResult>? = null
+            playerScopes.launch(uuid) { outcome = runCatching { writeOffline(uuid, repository, value) } }.join()
+            return outcome?.getOrThrow() ?: throw IllegalStateException("offline write of $uuid did not complete")
         }
     }
 
@@ -333,7 +333,13 @@ class PlayerDataLifecycle(
             }
             (repository as? CachedPlayerRepository<V>)?.takeIf { it.cacheEnabled }?.refreshCached(uuid, value, redisSettings.dataTtl)
         } finally {
-            coordinator.release(uuid)
+            try {
+                coordinator.release(uuid)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                logger.log(Level.WARNING, "failed to release player data ownership of $uuid after an offline write; the lease expires on its own", e)
+            }
         }
         return OfflineWriteResult.Written
     }

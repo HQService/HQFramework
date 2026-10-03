@@ -65,6 +65,7 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -90,7 +91,7 @@ class PlayerDataLifecycleTest {
         override val primaryKey = PrimaryKey(uuid)
     }
 
-    class TestPointRepository(private val gate: CompletableDeferred<Unit>? = null) : PlayerRepository<Points>() {
+    open class TestPointRepository(private val gate: CompletableDeferred<Unit>? = null) : PlayerRepository<Points>() {
         val loadStarted = CompletableDeferred<Unit>()
         val loads = AtomicInteger()
         val loadsFinished = AtomicInteger()
@@ -963,5 +964,39 @@ class PlayerDataLifecycleTest {
         assertEquals(OfflineWriteResult.Written, result)
         assertEquals("""{"coins":9}""", memory.text(walletKey(wallet)))
         assertEquals(enabledRedis.dataTtl, memory.ttls[walletKey(wallet)])
+    }
+
+    @Test
+    fun `offline write failure reaches the caller and releases ownership`() {
+        val failing = object : TestPointRepository() {
+            override suspend fun saveOffline(uuid: UUID, value: Points) {
+                throw IllegalStateException("db down")
+            }
+        }
+        val a = Node("25565", repo = failing)
+
+        val thrown = assertThrows(IllegalStateException::class.java) {
+            runBlocking { a.repo.writeOffline(uuid, Points(7)) }
+        }
+
+        assertEquals("db down", thrown.message)
+        assertNull(owner())
+        assertNull(storedPoints())
+    }
+
+    @Test
+    fun `offline write evicts the cached copy when the fenced write is rejected`() {
+        val memory = InMemoryPlayerDataCache()
+        val rejecting = object : PlayerDataCache by memory {
+            override suspend fun write(key: String, value: ByteArray, ttl: Duration?, fence: OwnerFence?): Boolean = false
+        }
+        val wallet = WalletRepository()
+        cachedNode(rejecting, wallet)
+        memory.values[walletKey(wallet)] = """{"coins":7}""".toByteArray()
+
+        val result = runBlocking { wallet.writeOffline(uuid, Wallet(9)) }
+
+        assertEquals(OfflineWriteResult.Written, result)
+        assertNull(memory.text(walletKey(wallet)))
     }
 }

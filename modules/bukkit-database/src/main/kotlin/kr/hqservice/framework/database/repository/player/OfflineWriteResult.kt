@@ -3,7 +3,7 @@ package kr.hqservice.framework.database.repository.player
 import java.util.UUID
 
 sealed interface OfflineWriteResult {
-    object Written : OfflineWriteResult
+    data object Written : OfflineWriteResult
 
     data class Held(val owner: String) : OfflineWriteResult
 }
