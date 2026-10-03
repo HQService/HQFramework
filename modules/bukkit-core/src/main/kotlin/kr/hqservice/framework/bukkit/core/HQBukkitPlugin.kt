@@ -254,6 +254,7 @@ abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineSc
                 logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
             }
         } finally {
+            supervisorJob.cancel()
             isDisabling = false
         }
     }

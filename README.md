@@ -665,7 +665,7 @@ class PartyModule(private val messenger: RedisMessenger, stores: RedisStores, pr
 **`RedisMessenger`**
 - `publish(channel, serializer, value)`: 값을 JSON으로 직렬화해 보냅니다. 비동기로 보내고 기다리지 않습니다.
 - `subscribe(channel, serializer, scope) { value -> }`: 핸들러는 `suspend`이며 메시지마다 `scope.launch`로 실행됩니다. 스코프의 디스패처를 따르므로 `plugin`을 넘기면 메인 스레드에서 실행되어 Bukkit API를 바로 쓸 수 있습니다. 핸들러 안에서 `plugin.launch { }`로 다시 감쌀 필요가 없습니다.
-- `Subscription`(`AutoCloseable`)을 돌려줍니다. `close()`하면 더 받지 않으며 여러 번 불러도 됩니다. 스코프의 `Job`이 끝나면(취소·완료) 구독도 자동으로 해제됩니다. 단, 현재 `HQBukkitPlugin`의 `Job`은 비활성화 때 끝나지 않으므로 플러그인을 스코프로 넘긴 구독을 리로드 전에 확실히 지우려면 `@Teardown`에서 `close()`하세요.
+- `Subscription`(`AutoCloseable`)을 돌려줍니다. `close()`하면 더 받지 않으며 여러 번 불러도 됩니다. 스코프의 `Job`이 끝나면(취소·완료) 구독도 자동으로 해제됩니다. 플러그인을 스코프로 넘기면 플러그인이 disable될 때 함께 해제됩니다.
 - 실제 Redis 채널 이름은 `<key-prefix>:msg:<channel>`(기본 `hq:msg:<channel>`)입니다. 보낸 서버 자신도 구독 중이면 메시지를 받습니다.
 - 핸들러가 던진 예외는 스코프의 예외 처리로 전달됩니다(`plugin`이면 플러그인 예외 핸들러). `SupervisorJob`을 가진 스코프라면 다른 구독과 다음 메시지에는 영향을 주지 않습니다.
 - 역직렬화에 실패한 메시지는 경고를 남기고 버립니다.
