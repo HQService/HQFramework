@@ -2,6 +2,8 @@ package kr.hqservice.framework.database.repository.player.lifecycle
 
 import io.mockk.every
 import io.mockk.mockk
+import io.lettuce.core.RedisCommandTimeoutException
+import io.lettuce.core.RedisConnectionException
 import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -147,6 +149,39 @@ class FlushSchedulerTest {
             events += if (TransactionManager.currentOrNull() == null) "verify" else "verify inside transaction"
             return verified
         }
+    }
+
+    class OutageCoordinator(override val commitsInsideTransaction: Boolean = false) : SessionCoordinator {
+        override val serverId: String = "test"
+        val verifyOutages = AtomicInteger()
+        val commitOutages = AtomicInteger()
+        val renewOutages = AtomicInteger()
+        val commits: MutableList<Long> = Collections.synchronizedList(mutableListOf())
+        val renewals: MutableList<List<UUID>> = Collections.synchronizedList(mutableListOf())
+
+        private fun failWhileDown(outages: AtomicInteger, error: () -> Exception) {
+            if (outages.getAndUpdate { maxOf(0, it - 1) } > 0) throw error()
+        }
+
+        override suspend fun acquire(uuid: UUID): AcquireResult = AcquireResult.Acquired(0)
+
+        override suspend fun renew(uuids: Collection<UUID>) {
+            failWhileDown(renewOutages) { RedisConnectionException("redis down") }
+            renewals += uuids.toList()
+        }
+
+        override suspend fun commit(uuid: UUID, expectedVersion: Long): Long {
+            failWhileDown(commitOutages) { RedisCommandTimeoutException("command timed out") }
+            commits += expectedVersion
+            return expectedVersion + 1
+        }
+
+        override suspend fun verify(uuid: UUID, expectedVersion: Long): Boolean {
+            failWhileDown(verifyOutages) { RedisConnectionException("redis down") }
+            return true
+        }
+
+        override suspend fun release(uuid: UUID): Boolean = true
     }
 
     class RecordingRepository(
@@ -695,5 +730,95 @@ class FlushSchedulerTest {
         assertFalse(scheduler(repository).flushPlayer(uuid, listOf(repository), FlushReason.QUIT))
 
         assertTrue(repository.persisted.isEmpty())
+    }
+
+    private fun assertOutageIsASaveFailure(outage: OutageCoordinator, outages: AtomicInteger) = runBlocking {
+        val repository = CounterRepository()
+        val session = addSessions(1, repository).single()
+        session.version = 4
+        repository.update(session.uuid) { it.n = 5 }
+        val lost = Collections.synchronizedList(mutableListOf<PlayerSession>())
+        val scheduler = scheduler(repository, coordinator = outage, onOwnershipLost = { lost += it })
+        outages.set(3)
+
+        repeat(3) { scheduler.tick().joinAll() }
+
+        verify(exactly = 2) { logger.log(Level.WARNING, match<String> { it.contains("failed to save") }, any<Throwable>()) }
+        verify(exactly = 1) { logger.log(Level.SEVERE, match<String> { it.contains("failed to save") }, any<Throwable>()) }
+        verify(exactly = 0) { logger.severe(any<String>()) }
+        assertTrue(lost.isEmpty())
+        assertSame(session, registry.get(session.uuid))
+        assertTrue(repository.contains(session.uuid))
+        assertTrue(repository.isDirty(session.uuid))
+        assertEquals(4L, session.version)
+        assertTrue(outage.commits.isEmpty())
+
+        scheduler.tick().joinAll()
+
+        assertFalse(repository.isDirty(session.uuid))
+        assertEquals(listOf(4L), outage.commits.toList())
+        assertEquals(5L, session.version)
+        assertEquals(0, session.failures.get())
+        assertSame(session, registry.get(session.uuid))
+        assertTrue(lost.isEmpty())
+    }
+
+    @Test
+    fun `redis outage during verify is a save failure and the next tick after recovery saves`() {
+        val outage = OutageCoordinator()
+        assertOutageIsASaveFailure(outage, outage.verifyOutages)
+    }
+
+    @Test
+    fun `redis outage during an outside commit is a save failure and the next tick after recovery saves`() {
+        val outage = OutageCoordinator()
+        assertOutageIsASaveFailure(outage, outage.commitOutages)
+    }
+
+    @Test
+    fun `redis outage during a commit inside the transaction is a save failure and the next tick after recovery saves`() {
+        val outage = OutageCoordinator(commitsInsideTransaction = true)
+        assertOutageIsASaveFailure(outage, outage.commitOutages)
+    }
+
+    @Test
+    fun `redis outage on quit keeps the offline session and its data until a retry succeeds`() = runBlocking {
+        val outage = OutageCoordinator()
+        val repository = CounterRepository()
+        val uuid = UUID.randomUUID()
+        repository.put(uuid, Counter(0))
+        repository.update(uuid) { it.n = 3 }
+        val session = PlayerSession(uuid, player(uuid, online = false), 0).also(registry::put)
+        val lost = Collections.synchronizedList(mutableListOf<PlayerSession>())
+        val scheduler = scheduler(repository, coordinator = outage, onOwnershipLost = { lost += it })
+        outage.verifyOutages.set(1)
+
+        assertFalse(scheduler.flushPlayer(uuid, listOf(repository), FlushReason.QUIT))
+
+        assertTrue(lost.isEmpty())
+        assertSame(session, registry.get(uuid))
+        assertTrue(repository.isDirty(uuid))
+
+        scheduler.tick().joinAll()
+
+        assertTrue(lost.isEmpty())
+        assertEquals(listOf(0L), outage.commits.toList())
+        assertNull(registry.get(uuid))
+        assertFalse(repository.contains(uuid))
+    }
+
+    @Test
+    fun `redis outage during renewal logs a warning and the next interval renews`() = runBlocking {
+        val outage = OutageCoordinator()
+        outage.renewOutages.set(1)
+        val session = addSessions(1).single()
+        val job = scheduler(coordinator = outage, settings = fastSettings).start(parent)
+
+        withTimeout(2000) { while (outage.renewals.isEmpty()) delay(10) }
+        job.cancel()
+
+        verify(exactly = 1) { logger.log(Level.WARNING, match<String> { it.contains("renew") }, any<Throwable>()) }
+        verify(exactly = 0) { logger.log(Level.SEVERE, any<String>(), any<Throwable>()) }
+        assertEquals(listOf(session.uuid), outage.renewals.first())
     }
 }

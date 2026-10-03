@@ -3,6 +3,7 @@ package kr.hqservice.framework.database.repository.player.lifecycle
 import be.seeseemelk.mockbukkit.MockBukkit
 import be.seeseemelk.mockbukkit.ServerMock
 import be.seeseemelk.mockbukkit.entity.PlayerMock
+import io.lettuce.core.RedisConnectionException
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
@@ -32,6 +33,7 @@ import kr.hqservice.framework.database.repository.player.cache.PlayerDataCache
 import kr.hqservice.framework.database.repository.player.event.PlayerRepositoryLoadedEvent
 import kr.hqservice.framework.database.repository.player.packet.PlayerDataSavedPacket
 import kr.hqservice.framework.database.repository.player.registry.impl.PlayerRepositoryRegistryImpl
+import kr.hqservice.framework.database.repository.player.session.AcquireResult
 import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
 import kr.hqservice.framework.database.repository.player.session.PlayerSessionTable
 import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
@@ -75,6 +77,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
 
 class PlayerDataLifecycleTest {
@@ -411,6 +414,34 @@ class PlayerDataLifecycleTest {
         assertFalse(b.repo.contains(uuid))
         assertEquals("25567", owner())
         awaitUntil { uuid !in b.loading }
+    }
+
+    @Test
+    fun `join retries acquire through a short redis outage and loads the player`() {
+        val slow = settings(joinTimeout = Duration.ofSeconds(2), retryInterval = Duration.ofMillis(50))
+        val real = DatabaseSessionCoordinator(db, "25565", slow.lease)
+        val recoversAt = AtomicLong(Long.MAX_VALUE)
+        val attempts = AtomicInteger()
+        val flaky = object : SessionCoordinator by real {
+            override suspend fun acquire(uuid: UUID): AcquireResult {
+                attempts.incrementAndGet()
+                if (System.currentTimeMillis() < recoversAt.get()) throw RedisConnectionException("redis down")
+                return real.acquire(uuid)
+            }
+        }
+        val a = Node("25565", slow, coordinator = flaky)
+        val started = System.currentTimeMillis()
+        recoversAt.set(started + 300)
+
+        a.lifecycle.onJoin(PlayerJoinEvent(player, "join"))
+        awaitUntil(3000) { loadedListener.loaded.contains(uuid) }
+
+        assertTrue(System.currentTimeMillis() - started >= 300)
+        assertTrue(attempts.get() > 1)
+        assertTrue(player.isOnline)
+        assertEquals("25565", owner())
+        assertNotNull(a.repo[uuid])
+        assertNotNull(a.sessions.get(uuid))
     }
 
     @Test
