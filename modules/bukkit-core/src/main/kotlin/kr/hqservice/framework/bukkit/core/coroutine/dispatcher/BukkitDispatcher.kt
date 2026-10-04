@@ -9,6 +9,7 @@ import org.bukkit.Location
 import org.bukkit.plugin.IllegalPluginAccessException
 import org.bukkit.plugin.Plugin
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 
 internal fun ticksFor(timeMillis: Long): Long = maxOf(1L, (timeMillis + 49) / 50)
 
@@ -20,15 +21,22 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
     private val isMainThreadDispatcher: Boolean get() = !isAsync && location == null
 
     override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        !isMainThreadDispatcher || !Bukkit.isPrimaryThread() || !LifecycleMainThread.isBlocked
+        !isMainThreadDispatcher || !Bukkit.isPrimaryThread() || lifecycleLoop(context) == null
+
+    private fun lifecycleLoop(context: CoroutineContext): CoroutineDispatcher? {
+        if (!isMainThreadDispatcher || !LifecycleMainThread.isBlocked) return null
+        return LifecycleMainThread.loopFor(getPluginByCoroutineContext(context))
+    }
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-        if (isMainThreadDispatcher) {
-            LifecycleMainThread.current?.let { loop ->
-                loop.dispatch(context, block)
-                return
-            }
+        lifecycleLoop(context)?.let { loop ->
+            loop.dispatch(context) { if (Bukkit.isPrimaryThread()) block.run() else dispatchThroughScheduler(context, block) }
+            return
         }
+        dispatchThroughScheduler(context, block)
+    }
+
+    private fun dispatchThroughScheduler(context: CoroutineContext, block: Runnable) {
         val plugin = getPluginByCoroutineContext(context)
         try {
             if (location != null) {
@@ -46,13 +54,12 @@ class BukkitDispatcher(private val isAsync: Boolean, private val location: Locat
     }
 
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
-        if (isMainThreadDispatcher) {
-            (LifecycleMainThread.current as? Delay)?.let { loop ->
-                loop.scheduleResumeAfterDelay(timeMillis, continuation)
-                return
-            }
-        }
         val plugin = getPluginByCoroutineContext(continuation.context)
+        (lifecycleLoop(continuation.context) as? Delay)?.let { loop ->
+            val handle = loop.invokeOnTimeout(timeMillis, { continuation.resume(Unit) }, continuation.context)
+            continuation.invokeOnCancellation { handle.dispose() }
+            return
+        }
         if (isMainThreadDispatcher) PendingMainThreadWork.track(plugin, continuation)
 
         val task = try {

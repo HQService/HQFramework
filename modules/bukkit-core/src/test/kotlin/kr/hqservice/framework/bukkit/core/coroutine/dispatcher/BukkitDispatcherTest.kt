@@ -176,4 +176,46 @@ class BukkitDispatcherTest {
         runnable.captured.invoke()
         assertTrue(ran)
     }
+
+    @Test
+    fun `coroutines of another plugin still wait for the scheduler while one plugin blocks the main thread`() {
+        val blocking = pluginWithoutScheduler()
+        val other = lifecyclePlugin(enabling = false, disabling = false)
+        val runnables = mutableListOf<() -> Unit>()
+        val scheduler = mockk<HQScheduler>()
+        every { scheduler.runTask(capture(runnables)) } just Runs
+        every { other.getScheduler() } returns scheduler
+        val otherScope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(other))
+        var ran = false
+
+        LifecycleMainThread.runBlockingOnMainThread(PluginCoroutineContextElement(blocking)) {
+            otherScope.launch { ran = true }
+        }
+
+        assertFalse(ran)
+        assertEquals(1, runnables.size)
+        runnables.single().invoke()
+        assertTrue(ran)
+    }
+
+    @Test
+    fun `a delay that outlives the lifecycle block resumes through the scheduler instead of a background thread`() {
+        val plugin = lifecyclePlugin(enabling = false, disabling = false)
+        val runnables = mutableListOf<() -> Unit>()
+        val scheduler = mockk<HQScheduler>()
+        every { scheduler.runTask(capture(runnables)) } just Runs
+        every { plugin.getScheduler() } returns scheduler
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.BukkitMain + PluginCoroutineContextElement(plugin))
+        var resumedOn: Thread? = null
+
+        LifecycleMainThread.runBlockingOnMainThread(PluginCoroutineContextElement(plugin)) {
+            scope.launch { delay(150); resumedOn = Thread.currentThread() }
+        }
+        Thread.sleep(400)
+
+        assertEquals(null, resumedOn, "must not resume on a background thread")
+        assertEquals(1, runnables.size)
+        runnables.single().invoke()
+        assertEquals(Thread.currentThread(), resumedOn)
+    }
 }

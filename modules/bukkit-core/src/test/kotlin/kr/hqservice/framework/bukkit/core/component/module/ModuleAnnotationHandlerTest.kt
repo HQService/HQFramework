@@ -10,10 +10,8 @@ import kr.hqservice.framework.bukkit.core.coroutine.LifecycleMainThread
 import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.Duration
 import kotlin.reflect.full.findAnnotation
 
 class ModuleAnnotationHandlerTest {
@@ -54,11 +52,17 @@ class ModuleAnnotationHandlerTest {
         val handler = ModuleAnnotationHandler(plugin)
         val annotation = MainThreadModule::class.findAnnotation<Module>()!!
 
-        assertTimeoutPreemptively(Duration.ofSeconds(3)) {
+        val main = Thread.currentThread()
+        val watchdog = Thread {
+            try { Thread.sleep(5000); main.interrupt() } catch (_: InterruptedException) {}
+        }.apply { isDaemon = true; start() }
+        try {
             LifecycleMainThread.runBlockingOnMainThread {
                 handler.setup(module, annotation)
                 handler.teardown(module, annotation)
             }
+        } finally {
+            watchdog.interrupt()
         }
 
         assertEquals(listOf("io", "main", "teardown"), module.steps)
