@@ -2,7 +2,7 @@ package kr.hqservice.framework.bukkit.scheduler
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.bukkit.core.util.PluginScopeFinder
 import org.quartz.JobExecutionContext
@@ -70,15 +70,13 @@ class HQFrameworkJobRunShell(
                     log.debug("Calling execute on job " + jobDetail.key)
 
                     if (job is SuspendedJob) {
-                        runBlocking {
-                            plugin.launch(Dispatchers.Default) {
-                                if (plugin.isEnabled) {
-                                    job.executeSuspend(jec)
-                                }
-                            }.join()
+                        runBlocking(plugin.coroutineContext.minusKey(Job) + Dispatchers.Default) {
+                            if (plugin.isEnabled) {
+                                job.executeSuspend(jec)
+                            }
                         }
                     } else {
-                        runBlocking(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key)) {
+                        runBlocking(plugin.coroutineContext.minusKey(CoroutineDispatcher.Key).minusKey(Job)) {
                             if (plugin.isEnabled) {
                                 job.execute(jec)
                             }

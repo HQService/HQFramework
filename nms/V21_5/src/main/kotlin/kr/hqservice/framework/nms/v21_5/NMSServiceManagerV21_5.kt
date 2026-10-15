@@ -7,11 +7,11 @@ import kr.hqservice.framework.nms.NMSServiceManager
 import kr.hqservice.framework.nms.NMSServiceProvider
 import kr.hqservice.framework.nms.NMSVirtualFactoryProvider
 import kr.hqservice.framework.nms.Version
-import kr.hqservice.framework.nms.handler.EarlyPacketHandler
+import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.registry.LanguageRegistry
+import kr.hqservice.framework.nms.v21.NMSServiceProviderImpl
 import kr.hqservice.framework.nms.v21.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
-import net.kyori.adventure.key.Key
 import net.minecraft.core.UUIDUtil
 import net.minecraft.network.protocol.login.ServerboundHelloPacket
 import org.bukkit.plugin.Plugin
@@ -22,7 +22,7 @@ class NMSServiceManagerV21_5(
     private val languageRegistry: LanguageRegistry,
     private val virtualHandlerRegistry: VirtualHandlerRegistry,
 ) : NMSServiceManager {
-    private lateinit var serviceProvider: NMSServiceProviderImplV21_5
+    private lateinit var serviceProvider: NMSServiceProviderImpl
     private lateinit var virtualFactoryProvider: VirtualFactoryProviderImplV21_5
 
     override fun support(version: Version): Boolean {
@@ -30,24 +30,19 @@ class NMSServiceManagerV21_5(
     }
 
     override fun initialize() {
-        ChannelInitializeListenerHolder.addListener(Key.key("hqservice:early-pipeline-hook")) { ch ->
-            if (ch.pipeline().get("hq_packet_handler") == null) {
-                ch.eventLoop().execute {
-                    ch.pipeline().addBefore(
-                        "packet_handler", "hq_packet_handler",
-                        EarlyPacketHandler(plugin, virtualHandlerRegistry) {
-                            if (it is ServerboundHelloPacket) {
-                                if (plugin.server.onlineMode || GlobalConfiguration.get().proxies.velocity.enabled) it.profileId
-                                else UUIDUtil.createOfflinePlayerUUID(it.name)
-                            } else null
-                        }
-                    )
-                }
-            }
+        EarlyHookInstaller.install(
+            plugin, virtualHandlerRegistry,
+            { key, initializer -> ChannelInitializeListenerHolder.addListener(key) { initializer(it) } },
+            { key -> ChannelInitializeListenerHolder.removeListener(key) }
+        ) {
+            if (it is ServerboundHelloPacket) {
+                if (plugin.server.onlineMode || GlobalConfiguration.get().proxies.velocity.enabled) it.profileId
+                else UUIDUtil.createOfflinePlayerUUID(it.name)
+            } else null
         }
 
         val reflectionWrapper = NmsReflectionWrapperImpl()
-        serviceProvider = NMSServiceProviderImplV21_5(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
+        serviceProvider = NMSServiceProviderImpl(plugin, languageRegistry, virtualHandlerRegistry, reflectionWrapper)
         virtualFactoryProvider = VirtualFactoryProviderImplV21_5(reflectionWrapper, serviceProvider)
     }
 

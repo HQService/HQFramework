@@ -18,8 +18,13 @@ class HQFrameworkThreadPool(
     init {
         isThreadsInheritContextClassLoaderOfInitializingThread = true
         isThreadsInheritGroupOfInitializingThread = true
-        Thread.currentThread().contextClassLoader = plugin.getPluginClassLoader()
-        super.initialize()
+        val previousClassLoader = Thread.currentThread().contextClassLoader
+        try {
+            Thread.currentThread().contextClassLoader = plugin.getPluginClassLoader()
+            super.initialize()
+        } finally {
+            Thread.currentThread().contextClassLoader = previousClassLoader
+        }
     }
 
     override fun getLog(): Logger {

@@ -15,7 +15,7 @@ import java.util.*
 import kotlin.reflect.KClass
 
 @Bean
-class ProxyNettyServer(
+open class ProxyNettyServer(
     private val proxy: ProxyServer
 ) : NettyServer {
 
@@ -32,7 +32,10 @@ class ProxyNettyServer(
     }
 
     override fun getPlayers(): List<NettyPlayer> {
-        return proxy.allPlayers.map { NettyPlayerImpl(it.username, it.username, it.uniqueId, getChannel(it.currentServer.get().serverInfo.address.port)) }
+        return proxy.allPlayers.mapNotNull { player ->
+            val server = player.currentServer.orElse(null) ?: return@mapNotNull null
+            NettyPlayerImpl(player.username, player.username, player.uniqueId, getChannel(server.serverInfo.address.port))
+        }
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {
@@ -47,9 +50,13 @@ class ProxyNettyServer(
         return getPlayers().firstOrNull { it.getUniqueId() == uniqueId }
     }
 
+    @Deprecated("@PacketListener(outbound = [...]) 를 쓰거나 첫 전송 때의 자동 등록에 맡기세요")
+
     override fun <T : Packet> registerOuterPacket(packetClass: KClass<T>) {
         Direction.OUTBOUND.registerPacket(packetClass)
     }
+
+    @Deprecated("@PacketListener 클래스의 @PacketSubscribe 함수로 받으세요")
 
     override fun <T : Packet> registerInnerPacket(
         packetClass: KClass<T>,
@@ -58,6 +65,8 @@ class ProxyNettyServer(
         Direction.INBOUND.registerPacket(packetClass)
         Direction.INBOUND.addListener(packetClass, packetHandler)
     }
+
+    @Deprecated("@PacketListener 클래스의 @PacketSubscribe 함수로 받으세요")
 
     override fun <T : Packet> registerInnerPacket(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
         Direction.INBOUND.registerPacket(packetClass)

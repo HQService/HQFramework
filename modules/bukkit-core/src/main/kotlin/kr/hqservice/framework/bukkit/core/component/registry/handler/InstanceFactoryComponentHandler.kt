@@ -11,4 +11,8 @@ class InstanceFactoryComponentHandler(private val registry: InstanceFactoryRegis
     override fun setup(element: HQInstanceFactory<*>) {
         registry.registerInstanceFactory(element)
     }
+
+    override fun teardown(element: HQInstanceFactory<*>) {
+        registry.unregisterInstanceFactory(element)
+    }
 }

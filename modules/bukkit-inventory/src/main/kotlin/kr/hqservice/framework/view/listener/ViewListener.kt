@@ -2,6 +2,7 @@ package kr.hqservice.framework.view.listener
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kr.hqservice.framework.bukkit.core.coroutine.extension.BukkitMain
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
@@ -13,30 +14,39 @@ import kr.hqservice.framework.view.navigator.impl.NavigatorImpl
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.event.inventory.InventoryDragEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.InventoryView
 
 @Listener
 class ViewListener(private val navigator: Navigator) {
     @Subscribe(handleOrder = HandleOrder.FIRST)
-    suspend fun inventoryClick(event: InventoryClickEvent) {
-        getView(event.view)?.apply {
-            event.isCancelled = this.cancel
-            val plugin = PluginScopeFinder.get(this::class)
-            plugin.launch(Dispatchers.Default) {
-                if (event.clickedInventory == event.whoClicked.inventory) {
-                    this@apply.invokeOnClickBottom(event)
-                } else if (event.clickedInventory != null && event.clickedInventory != event.whoClicked.inventory) {
-                    this@apply.invokeOnClickTop(event)
-                }
-            }.join()
-            val button = getButton(event.rawSlot)
-            if (button != null) {
-                event.isCancelled = true
-                plugin.launch(Dispatchers.Default) {
-                    button.invokeOnclick(ButtonInteractEvent(this@apply, button, event))
-                }
+    fun inventoryClick(event: InventoryClickEvent) {
+        val view = getView(event.view) ?: return
+        val button = view.getButton(event.rawSlot)
+        event.isCancelled = view.cancel || button != null
+        val plugin = PluginScopeFinder.get(view::class)
+        val clickJob = plugin.launch(Dispatchers.BukkitMain) {
+            if (event.clickedInventory == event.whoClicked.inventory) {
+                view.invokeOnClickBottom(event)
+            } else if (event.clickedInventory != null) {
+                view.invokeOnClickTop(event)
             }
         }
+        if (button != null) {
+            plugin.launch(Dispatchers.BukkitMain) {
+                clickJob.join()
+                button.invokeOnclick(ButtonInteractEvent(view, button, event))
+            }
+        }
+    }
+
+    @Subscribe(handleOrder = HandleOrder.FIRST)
+    fun inventoryDrag(event: InventoryDragEvent) {
+        val view = getView(event.view) ?: return
+        val topInventorySize = event.view.topInventory.size
+        val isButtonDragged = event.rawSlots.any { rawSlot -> rawSlot < topInventorySize && view.getButton(rawSlot) != null }
+        if (view.cancel || isButtonDragged) event.isCancelled = true
     }
 
     @Subscribe(handleOrder = HandleOrder.FIRST)
@@ -46,23 +56,21 @@ class ViewListener(private val navigator: Navigator) {
         if (navigator !is NavigatorImpl) {
             return
         }
-        if (view != null && !navigator.isAllowToChangeView(player.uniqueId)) {
+        if (view != null && !navigator.isAllowToChangeView(player.uniqueId) && navigator.current(player.uniqueId) === view) {
             view.invokeOnClose(player)
             val plugin = PluginScopeFinder.get(view::class)
             plugin.launch(Dispatchers.IO) {
                 navigator.goPrevious(player)
-
-                var viewQuited = 0
-                for (viewerId in view.viewerIds) {
-                    if (navigator.openedViews(viewerId).filterIsInstance(view::class.java).isEmpty()) {
-                        viewQuited++
-                    }
-                }
-                if (viewQuited == view.viewerIds.size) {
-                    view.dispose()
-                }
             }
         }
+    }
+
+    @Subscribe(handleOrder = HandleOrder.FIRST)
+    fun playerQuit(event: PlayerQuitEvent) {
+        if (navigator !is NavigatorImpl) {
+            return
+        }
+        navigator.clear(event.player)
     }
 
     private fun getView(inventoryView: InventoryView): View? {

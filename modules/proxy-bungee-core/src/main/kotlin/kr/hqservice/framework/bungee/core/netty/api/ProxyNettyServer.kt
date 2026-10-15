@@ -11,6 +11,7 @@ import kr.hqservice.framework.netty.packet.Direction
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.PacketHandler
 import net.md_5.bungee.api.ProxyServer
+import java.net.InetSocketAddress
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -32,7 +33,10 @@ class ProxyNettyServer(
     }
 
     override fun getPlayers(): List<NettyPlayer> {
-        return proxy.players.map { NettyPlayerImpl(it.name, it.displayName, it.uniqueId, getChannel(it.server.address.port)) }
+        return proxy.players.mapNotNull { player ->
+            val serverAddress = player.server?.info?.socketAddress as? InetSocketAddress ?: return@mapNotNull null
+            NettyPlayerImpl(player.name, player.displayName, player.uniqueId, getChannel(serverAddress.port))
+        }
     }
 
     override fun getPlayers(channel: NettyChannel): List<NettyPlayer> {
@@ -47,9 +51,13 @@ class ProxyNettyServer(
         return getPlayers().firstOrNull { it.getUniqueId() == uniqueId }
     }
 
+    @Deprecated("@PacketListener(outbound = [...]) 를 쓰거나 첫 전송 때의 자동 등록에 맡기세요")
+
     override fun <T : Packet> registerOuterPacket(packetClass: KClass<T>) {
         Direction.OUTBOUND.registerPacket(packetClass)
     }
+
+    @Deprecated("@PacketListener 클래스의 @PacketSubscribe 함수로 받으세요")
 
     override fun <T : Packet> registerInnerPacket(
         packetClass: KClass<T>,
@@ -58,6 +66,8 @@ class ProxyNettyServer(
         Direction.INBOUND.registerPacket(packetClass)
         Direction.INBOUND.addListener(packetClass, packetHandler)
     }
+
+    @Deprecated("@PacketListener 클래스의 @PacketSubscribe 함수로 받으세요")
 
     override fun <T : Packet> registerInnerPacket(packetClass: KClass<T>, packetHandler: PacketHandler<T>) {
         Direction.INBOUND.registerPacket(packetClass)

@@ -9,7 +9,8 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.exists
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.koin.core.component.KoinComponent
-import java.sql.SQLSyntaxErrorException
+import java.sql.SQLException
+import java.util.logging.Level
 import java.util.logging.Logger
 
 @AnnotationHandler
@@ -25,7 +26,7 @@ class TableAnnotationHandler(
         transaction(database) {
             try {
                 if (instance.exists()) {
-                    SchemaUtils.addMissingColumnsStatements(instance, withLogs = false)
+                    SchemaUtils.addMissingColumnsStatements(instance, withLogs = false).forEach { exec(it) }
                 } else {
                     SchemaUtils.create(instance).also {
                         if (annotation.withLogs) {
@@ -33,8 +34,8 @@ class TableAnnotationHandler(
                         }
                     }
                 }
-            } catch (exception: SQLSyntaxErrorException) {
-                logger.info("${instance.tableName} table may initialized not properly due to Mariadb internal issues.")
+            } catch (exception: SQLException) {
+                logger.log(Level.WARNING, "${instance.tableName} schema update failed", exception)
             }
         }
     }

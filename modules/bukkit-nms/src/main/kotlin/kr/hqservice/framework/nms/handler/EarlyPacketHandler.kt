@@ -14,7 +14,10 @@ class EarlyPacketHandler(
     legacy: Boolean = false,
     private val uniqueIdProvider: (Any) -> UUID?,
 ) : ChannelDuplexHandler() {
-    private var uniqueId: UUID? = null
+    @Volatile
+    var uniqueId: UUID? = null
+        private set
+    @Volatile
     private var child: PacketHandler? = null
 
     init {
@@ -24,10 +27,16 @@ class EarlyPacketHandler(
         }
     }
 
+    fun bindUniqueId(uniqueId: UUID) {
+        if (this.uniqueId == uniqueId && child != null) return
+        this.uniqueId = uniqueId
+        child = PacketHandler(uniqueId, plugin, virtualHandlerRegistry)
+    }
+
     override fun write(context: ChannelHandlerContext, message: Any, promise: ChannelPromise) {
         val result = child?.write0(context, message, promise) ?: emptyList()
         if (result.isNotEmpty()) {
-            result.forEach { super.write(context, it, promise) }
+            PacketHandler.writeAll(context, result, promise)
         } else super.write(context, message, promise)
     }
 

@@ -12,32 +12,19 @@ class HQYamlTest {
     @Test
     fun yamlTest() {
         val file = File("src/test/resources/config.yml")
-        val yaml = file.yaml()
-        assertEquals(yaml.getString("host"), "")
-        assertEquals(yaml.getSection("netty")?.getString("host"), "127.0.0.1")
+        val original = file.readText()
+        try {
+            val yaml = file.yaml()
+            assertEquals("", yaml.getString("host"))
+            assertEquals("127.0.0.1", yaml.getSection("netty")?.getString("host"))
 
-        val temp = File("src/test/resources/temp.yml")
-        file.copyTo(temp, true)
+            file.appendText("\ntest: hello")
+            assertEquals("", yaml.getString("test"))
 
-        file.appendText("\ntest: hello")
-        assertEquals(yaml.getString("test"), "")
-
-        yaml.reload()
-        yaml.getSection("netty")?.getKeys()?.forEach {
-            // it.print("netty-section-> ")
+            yaml.reload()
+            assertEquals("hello", yaml.getString("test"))
+        } finally {
+            file.writeText(original)
         }
-        assertEquals(yaml.getString("test"), "hello")
-
-        temp.copyTo(file, true)
-        temp.delete()
-    }
-
-    @Test
-    fun test() {
-        val file = File("src/test/resources/config.yml")
-        val config = file.yaml()
-
-        val list = config.getLongList("long-list")
-        println(list)
     }
 }

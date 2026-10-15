@@ -15,15 +15,10 @@ interface CommandSuggestible {
         if (isHide && hideSuggestion) {
             return false
         }
-        if (sender.isOp || sender.hasPermission(permission)) {
-            return true
-        }
-        if (!sender.isOp && isOp) {
-            return false
-        }
-        if (permission != "" && !sender.hasPermission(permission)) {
-            return false
-        }
-        return true
+        return canUse(sender)
+    }
+
+    fun canUse(sender: CommandSender): Boolean {
+        return (permission.isBlank() || sender.hasPermission(permission)) && (!isOp || sender.isOp)
     }
 }

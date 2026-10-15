@@ -9,25 +9,20 @@ import java.util.concurrent.ConcurrentHashMap
 @Bean
 class TabCompleteRateLimitRegistryImpl(
     private val config: HQYamlConfiguration,
+    private val nowMillis: () -> Long = System::currentTimeMillis,
 ) : TabCompleteRateLimitRegistry {
 
-    private val tabCompleteRateLimitRegistry: MutableMap<UUID, Pair<Long, Int>> = ConcurrentHashMap()
+    private val tabCompleteRateLimitRegistry: ConcurrentHashMap<UUID, Pair<Long, Int>> = ConcurrentHashMap()
 
     override fun isTabCompletable(playerUniqueId: UUID): Boolean {
-        if(!tabCompleteRateLimitRegistry.containsKey(playerUniqueId)) {
-            tabCompleteRateLimitRegistry[playerUniqueId] = System.currentTimeMillis() to 1
-            return true
-        }
-
-        val pair = tabCompleteRateLimitRegistry[playerUniqueId]!!
-        if(System.currentTimeMillis() - pair.first > 1000) {
-            tabCompleteRateLimitRegistry[playerUniqueId] = System.currentTimeMillis() to 1
-            return true
-        }
-        tabCompleteRateLimitRegistry[playerUniqueId] = pair.first to pair.second + 1
-        return pair.second + 1 < getLimitPerSecond()
+        val now = nowMillis()
+        tabCompleteRateLimitRegistry.values.removeIf { now - it.first > 1000 }
+        val (_, count) = tabCompleteRateLimitRegistry.compute(playerUniqueId) { _, window ->
+            if (window == null || now - window.first > 1000) now to 1 else window.first to window.second + 1
+        }!!
+        return count <= getLimitPerSecond()
     }
 
-    private fun getLimitPerSecond() = config.getInt("command.tab-complete.limit-per-second")
+    private fun getLimitPerSecond() = config.getInt("command.tab-complete.limit-per-second", 20)
 
 }

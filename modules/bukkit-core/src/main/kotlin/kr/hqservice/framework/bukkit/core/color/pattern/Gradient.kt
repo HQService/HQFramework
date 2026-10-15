@@ -5,29 +5,25 @@ import kr.hqservice.framework.bukkit.core.extension.withoutColor
 import net.md_5.bungee.api.ChatColor
 import java.awt.Color
 import java.util.regex.Pattern
-import kotlin.math.abs
+import kotlin.math.roundToInt
 
 internal object Gradient : TextColorPattern {
     private val pattern = Pattern.compile("<g:([0-9A-Fa-f]{6})>(.*?)</g:([0-9A-Fa-f]{6})>")
 
-    private fun getDirection(first: Int, last: Int): Int {
-        return if (first < last) 1 else -1
+    private fun interpolate(first: Int, last: Int, ratio: Float): Int {
+        return (first + (last - first) * ratio).roundToInt()
     }
 
     private fun generateGradient(firstColor: Color, lastColor: Color, size: Int): List<ChatColor> {
-        val r = abs(firstColor.red - lastColor.red) / (size - 1)
-        val g = abs(firstColor.green - lastColor.green) / (size - 1)
-        val b = abs(firstColor.blue - lastColor.blue) / (size - 1)
-        val redDirection = getDirection(firstColor.red, lastColor.red)
-        val greenDirection = getDirection(firstColor.green, lastColor.green)
-        val blueDirection = getDirection(firstColor.blue, lastColor.blue)
+        if (size <= 1) return List(size) { ChatColor.of(firstColor) }
 
         return List(size) {
+            val ratio = it.toFloat() / (size - 1)
             ChatColor.of(
                 Color(
-                    firstColor.red + r * it * redDirection,
-                    firstColor.green + g * it * greenDirection,
-                    firstColor.blue + b * it * blueDirection
+                    interpolate(firstColor.red, lastColor.red, ratio),
+                    interpolate(firstColor.green, lastColor.green, ratio),
+                    interpolate(firstColor.blue, lastColor.blue, ratio)
                 )
             )
         }

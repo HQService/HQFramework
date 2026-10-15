@@ -12,17 +12,16 @@ import kr.hqservice.framework.netty.packet.message.BroadcastPacket
 import kr.hqservice.framework.netty.packet.message.MessagePacket
 import kr.hqservice.framework.netty.packet.server.HandShakePacket
 import kr.hqservice.framework.netty.packet.server.RelayingPacket
-import kr.hqservice.framework.netty.pipeline.ConnectionState
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.api.chat.TextComponent
 
 class ProxiedChannelMainHandler(
     private val plugin: HQBukkitPlugin
 ) : ChannelMainHandler {
+    @Volatile
     private var proxyChannel: ChannelWrapper? = null
 
     override suspend fun onPacketReceive(packet: HandShakePacket, channel: ChannelWrapper) {
-        channel.handler.connectionState = ConnectionState.CONNECTED
         this.proxyChannel = channel.handler.channel
         plugin.launch {
             plugin.server.pluginManager.callEvent(NettyClientConnectedEvent(channel))

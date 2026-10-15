@@ -1,10 +1,10 @@
 package kr.hqservice.framework.nms.v21_11.virtual.handler
 
-import kotlinx.coroutines.runBlocking
 import kr.hqservice.framework.nms.v21_11.wrapper.reflect.NmsReflectionWrapperImpl
 import kr.hqservice.framework.nms.virtual.handler.HandlerUnregisterType
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.virtual.handler.VirtualSignHandlerFactory
+import kr.hqservice.framework.nms.virtual.handler.launchVirtualCallback
 import kr.hqservice.framework.nms.wrapper.NmsReflectionWrapper
 import net.minecraft.network.protocol.game.ServerboundSignUpdatePacket
 
@@ -31,7 +31,7 @@ class VirtualSignHandlerFactoryImpl : VirtualSignHandlerFactory {
             override fun unregisterCondition(message: Any): Boolean {
                 if (message is ServerboundSignUpdatePacket) {
                     val lines = message.lines.toList()
-                    runBlocking { confirmHandler(lines) }
+                    launchVirtualCallback { confirmHandler(lines) }
                     return true
                 }
                 return false

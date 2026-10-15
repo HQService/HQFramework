@@ -6,6 +6,16 @@ import org.bukkit.Location
 import org.bukkit.inventory.EquipmentSlot
 
 interface VirtualEntityClasses : HQSimpleComponent {
+    companion object {
+        fun toNmsSlotName(slotName: String): String {
+            return when (slotName.uppercase()) {
+                "HAND", "MAINHAND" -> "mainhand"
+                "OFF_HAND", "OFFHAND" -> "offhand"
+                else -> slotName.lowercase()
+            }
+        }
+    }
+
     val entitySpawnPacket : VirtualMessageConstructor
     val entityDestroyPacket : VirtualMessageConstructor
     val entityTeleportPacket : VirtualMessageConstructor

@@ -2,7 +2,9 @@ package kr.hqservice.framework.global.core.component.registry
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.*
+import kr.hqservice.framework.global.core.component.error.ComponentCircularException
 import kr.hqservice.framework.global.core.component.error.ConstructorConflictException
 import kr.hqservice.framework.global.core.component.error.IllegalDependException
 import kr.hqservice.framework.global.core.component.error.NoBeanDefinitionsFoundException
@@ -16,19 +18,21 @@ import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.component.KoinComponent
+import org.koin.core.context.GlobalContext
 import org.koin.core.definition.BeanDefinition
 import org.koin.core.definition.Definition
 import org.koin.core.definition.Kind
 import org.koin.core.definition.indexKey
-import org.koin.core.error.DefinitionOverrideException
 import org.koin.core.error.InstanceCreationException
 import org.koin.core.instance.FactoryInstanceFactory
+import org.koin.core.instance.InstanceFactory
 import org.koin.core.instance.NoClass
 import org.koin.core.instance.ResolutionContext
 import org.koin.core.instance.SingleInstanceFactory
 import org.koin.core.module.Module
 import org.koin.core.qualifier.Qualifier
 import org.koin.core.qualifier.StringQualifier
+import org.koin.core.qualifier.named
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
@@ -39,21 +43,41 @@ import kotlin.reflect.jvm.jvmErasure
 
 @OptIn(KoinInternalApi::class)
 abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
-    private companion object {
-        val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
-        val annotationHandlers: MutableMap<KClass<HQAnnotationHandler<*>>, HQAnnotationHandler<*>> = mutableMapOf()
-        val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
-    }
-
+    private val componentHandlers: MutableMap<KClass<HQComponentHandler<*>>, HQComponentHandler<*>> = mutableMapOf()
+    private val annotationHandlers: MutableMap<KClass<HQAnnotationHandler<*>>, HQAnnotationHandler<*>> = mutableMapOf()
+    private val qualifierProviders: MutableMap<String, MutableNamedProvider> = mutableMapOf()
     private val componentInstances: ComponentInstanceMap = ComponentInstanceMap()
     private val annotationProcessNeededInstancesMap: Multimap<KClass<out Annotation>, Any> = ArrayListMultimap.create()
+    private val primaryIndexKeys: MutableSet<String> = mutableSetOf()
+    private val loadedModules: MutableList<Module> = mutableListOf()
+    private val listCandidates: Multimap<KClass<*>, ListCandidate> = ArrayListMultimap.create()
+    private var parentRegistry: AbstractComponentRegistry? = null
+    private var pendingClasses: Collection<KClass<*>> = emptyList()
+    private var allowOptionalFallback = true
+
+    private class ListCandidate(val factory: InstanceFactory<*>, val primary: Boolean, val qualifier: Qualifier?)
 
     abstract fun getProvidedInstances(): MutableMap<KClass<*>, out Any>
 
     abstract fun getConfiguration(): HQYamlConfiguration
 
+    protected open fun findParentRegistry(): AbstractComponentRegistry? {
+        return GlobalContext.getOrNull()
+            ?.getOrNull<HQPlugin>(named("hqframework"))
+            ?.getComponentRegistry() as? AbstractComponentRegistry
+    }
+
+    fun inheritHandlersFrom(parent: AbstractComponentRegistry) {
+        componentHandlers.putAll(parent.componentHandlers)
+        annotationHandlers.putAll(parent.annotationHandlers)
+        qualifierProviders.putAll(parent.qualifierProviders)
+    }
+
     @Suppress("UNCHECKED_CAST")
     final override fun setup() {
+        allowOptionalFallback = false
+        parentRegistry = findParentRegistry()?.takeIf { it !== this }
+        parentRegistry?.let { inheritHandlersFrom(it) }
         val componentClasses = mutableListOf<Class<*>>()
         val beanClasses = mutableListOf<Class<*>>()
         val configurationClasses = mutableListOf<Class<*>>()
@@ -88,6 +112,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
             addAll(beanClasses.map { it.kotlin })
             addAll(configurationClasses.map { it.kotlin })
         }
+        pendingClasses = componentClassesQueue
 
         // 사이즈가 같은 채로 그 큐의 사이즈만큼 반복됐다면, 더 이상 definition 이 없는것으로 판단 후 throw
         var componentExceptionCatchingStack = 0
@@ -101,8 +126,13 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     componentExceptionCatchingStack++
                 }
                 if (componentExceptionCatchingStack == componentClassesQueue.size) {
-                    printFriendlyException(componentClassesQueue.toList())
-                    throw NoBeanDefinitionsFoundException()
+                    if (!allowOptionalFallback) {
+                        allowOptionalFallback = true
+                        componentExceptionCatchingStack = 0
+                    } else {
+                        printFriendlyException(componentClassesQueue.toList())
+                        throw NoBeanDefinitionsFoundException()
+                    }
                 }
                 previousComponentQueueSize = componentClassesQueue.size
             }
@@ -112,6 +142,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     tryCreateBeanModule(component, component) {
                         callByInjectedParameters(component.constructors.first())
                     }
+                    componentExceptionCatchingStack = 0
                     continue
                 } else if (component.hasAnnotation<Configuration>()) {
                     val instance = callByInjectedParameters(component.constructors.first())
@@ -122,10 +153,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                     val methods = component.declaredFunctions.filter {
                         BeanProperty.findBeanProperty(it) != null || it.hasAnnotation<Bean>() || it.hasAnnotation<Singleton>() || it.hasAnnotation<Factory>()
                     }
-                    val definitions = methods.associateBy { it.returnType.jvmErasure }
-                    definitions.forEach { (definitionClass, kFunction) ->
+                    methods.forEach { kFunction ->
                         try {
-                            tryCreateBeanModule(kFunction, definitionClass) {
+                            tryCreateBeanModule(kFunction, kFunction.returnType.jvmErasure) {
                                 val injected = injectParameters(kFunction, getProvidedInstances())
                                 kFunction.call(instance, *injected.toTypedArray())
                             }
@@ -134,15 +164,16 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                             throw exception
                         }
                     }
-                }
-
-                if (component.constructors.size > 1) {
-                    throw ConstructorConflictException(component)
-                }
-                if (component.objectInstance == null) {
-                    callByInjectedParameters(component.constructors.first())
+                    instance
                 } else {
-                    component.objectInstance!!
+                    if (component.constructors.size > 1) {
+                        throw ConstructorConflictException(component)
+                    }
+                    if (component.objectInstance == null) {
+                        callByInjectedParameters(component.constructors.first())
+                    } else {
+                        component.objectInstance!!
+                    }
                 }
             } catch (exception: QualifierNotFoundException) {
                 back()
@@ -177,9 +208,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 componentExceptionCatchingStack = 0
             }
         }
+        allowOptionalFallback = true
+        pendingClasses = emptyList()
 
         val annotationHandlersQueue: ConcurrentLinkedQueue<KClass<HQAnnotationHandler<*>>> =
-            ConcurrentLinkedQueue(unsortedAnnotationHandlers.values.toMutableList() + annotationHandlers.keys)
+            ConcurrentLinkedQueue((unsortedAnnotationHandlers.values + annotationHandlers.keys).distinct())
+        annotationHandlers.clear()
 
         var previousHandlerQueueSize = annotationHandlersQueue.size
         var handlerExceptionCatchingStack = 0
@@ -189,7 +223,7 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 handlerExceptionCatchingStack++
             }
             if (handlerExceptionCatchingStack == handlersQueue.size) {
-                printFriendlyException(handlersQueue.map { it::class })
+                printFriendlyException(handlersQueue.toList())
                 throw NoBeanDefinitionsFoundException()
             }
             previousHandlerQueueSize = handlersQueue.size
@@ -215,8 +249,9 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }
 
         val componentHandlersQueue: ConcurrentLinkedQueue<KClass<HQComponentHandler<*>>> =
-            ConcurrentLinkedQueue(unsortedComponentHandlers.values.toMutableList() + componentHandlers.keys)
-        previousComponentQueueSize = componentHandlersQueue.size
+            ConcurrentLinkedQueue((unsortedComponentHandlers.values + componentHandlers.keys).distinct())
+        componentHandlers.clear()
+        previousHandlerQueueSize = componentHandlersQueue.size
         resetThrowStack()
 
         while (componentHandlersQueue.isNotEmpty()) {
@@ -265,6 +300,18 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
                 teardown(component)
             }
         }
+        annotationProcessNeededInstancesMap.clear()
+        componentInstances.clear()
+        primaryIndexKeys.clear()
+        listCandidates.clear()
+        runCatching {
+            val instances = getKoin().instanceRegistry.instances
+            loadedModules.forEach { module ->
+                module.mappings.entries.removeIf { (key, factory) -> instances[key] !== factory }
+            }
+            getKoin().unloadModules(loadedModules)
+        }
+        loadedModules.clear()
     }
 
     private fun processComponents(
@@ -307,11 +354,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
     private fun printFriendlyException(classes: List<KClass<*>>) {
         classes.forEach { kClass ->
-            val parameters = kClass.primaryConstructor?.valueParameters ?: listOf()
-            val injected = injectParameters(kClass.primaryConstructor!!)
+            val primaryConstructor = kClass.primaryConstructor ?: return@forEach
+            val parameters = primaryConstructor.valueParameters
+            val injected = injectParameters(primaryConstructor)
             val parameterDisplays = parameters.mapIndexed { index, kParameter ->
                 val simpleName = kParameter.type.jvmErasure.simpleName
-                val qualifier = getQualifier(kParameter)?.value
+                val qualifier = runCatching { getQualifier(kParameter) }.getOrNull()?.value
                 val color = if (injected[index] != null) AnsiColor.GREEN else AnsiColor.RED
                 if (qualifier != null) {
                     "${color}${simpleName}(q: ${qualifier})${AnsiColor.RESET}"
@@ -354,12 +402,19 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         kFunction: KFunction<T>,
         providedInstanceMap: Map<KClass<*>, *> = getProvidedInstances()
     ): T? {
-        val injectedParameters = injectParameters(kFunction, providedInstanceMap ?: getProvidedInstances())
-        if (injectedParameters.any { it == null }) {
+        val injectedParameters = injectParameters(kFunction, providedInstanceMap)
+        val valueParameters = kFunction.valueParameters
+        val unresolvedRequired = valueParameters.indices.any { index ->
+            injectedParameters[index] == null && (!allowOptionalFallback || !valueParameters[index].isOptional && !valueParameters[index].type.isMarkedNullable)
+        }
+        if (unresolvedRequired) {
             return null
         }
+        val arguments = valueParameters.indices
+            .filterNot { index -> injectedParameters[index] == null && valueParameters[index].isOptional }
+            .associate { index -> valueParameters[index] to injectedParameters[index] }
         return try {
-            kFunction.call(*injectedParameters.toTypedArray())
+            kFunction.callBy(arguments)
         } catch (illegalArgumentException: IllegalArgumentException) {
             kFunction
                 .instanceParameter
@@ -393,12 +448,16 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         return kFunction.valueParameters.mapIndexed { index, parameter ->
             val parameterKClass = parameter.type.jvmErasure
 
-            val providedInstance = getProvidedInstances().filter { parameterKClass == it.key }.values.firstOrNull()
+            val providedInstance = (providedInstanceMap ?: getProvidedInstances()).filter { parameterKClass == it.key }.values.firstOrNull()
             if (providedInstance != null) {
                 return@mapIndexed providedInstance
             }
 
             val qualifier = getQualifier(parameter)
+            if (parameterKClass == List::class || parameterKClass == Collection::class) {
+                val elementType = parameter.type.arguments.firstOrNull()?.type?.jvmErasure ?: return@mapIndexed null
+                return@mapIndexed injectAll(elementType, qualifier, kFunction.returnType.jvmErasure)
+            }
             val scopeQualifier = getScopeQualifier()
             val indexKey = indexKey(parameterKClass, qualifier, scopeQualifier)
 
@@ -421,6 +480,47 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         }.toList()
     }
 
+    private fun injectAll(elementType: KClass<*>, qualifier: Qualifier?, consumer: KClass<*>): List<Any>? {
+        val pendingCandidates = pendingClasses.filter { it != consumer && providesCandidateOf(it, elementType) }
+        pendingCandidates.firstOrNull { dependsOn(it, consumer) }?.let { throw ComponentCircularException(listOf(consumer, it)) }
+        if (pendingCandidates.isNotEmpty()) {
+            return null
+        }
+        val context = ResolutionContext(getKoin().logger, getKoin().getScope(getScopeQualifier().value), NoClass::class)
+        return try {
+            candidatesOf(elementType, qualifier).map { it.factory.get(context) as Any }
+        } catch (exception: InstanceCreationException) {
+            exception.printStackTrace()
+            null
+        } catch (exception: IllegalStateException) {
+            exception.cause?.printStackTrace()
+            null
+        }
+    }
+
+    private fun candidatesOf(elementType: KClass<*>, qualifier: Qualifier?): List<ListCandidate> {
+        val own = listCandidates.get(elementType)
+            .filter { qualifier == null || it.qualifier == qualifier }
+            .distinctBy { it.factory }
+            .sortedByDescending { it.primary }
+        return parentRegistry?.candidatesOf(elementType, qualifier).orEmpty() + own
+    }
+
+    private fun providesCandidateOf(queued: KClass<*>, elementType: KClass<*>): Boolean {
+        if (elementType.java.isAssignableFrom(queued.java)) {
+            return true
+        }
+        return queued.hasAnnotation<Configuration>() && queued.declaredFunctions.any {
+            (BeanProperty.findBeanProperty(it) != null || it.hasAnnotation<Bean>()) && elementType.java.isAssignableFrom(it.returnType.jvmErasure.java)
+        }
+    }
+
+    private fun dependsOn(queued: KClass<*>, consumer: KClass<*>): Boolean {
+        return queued.constructors.any { constructor ->
+            constructor.valueParameters.any { it.type.jvmErasure.java.isAssignableFrom(consumer.java) }
+        }
+    }
+
     abstract fun getAllComponentsToScan(): Collection<Class<*>>
 
     /**
@@ -434,8 +534,14 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val scopeQualifier = getScopeQualifier()
         val qualifier = getQualifier(annotatedElement)
         val property = BeanProperty.getBeanProperty(annotatedElement)
-        val secondaryTypes: List<KClass<*>> = property.binds.ifEmpty {
+        val boundTypes: List<KClass<*>> = property.binds.ifEmpty {
             primaryBind.allSuperclasses.toList()
+        }
+        val secondaryTypes = if (property.isPrimary) {
+            boundTypes.forEach { primaryIndexKeys.add(indexKey(it, qualifier, scopeQualifier)) }
+            boundTypes
+        } else {
+            boundTypes.filter { indexKey(it, qualifier, scopeQualifier) !in primaryIndexKeys }
         }
 
         val module = when (property.kind) {
@@ -457,7 +563,12 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
 
             Kind.Scoped -> throw UnsupportedOperationException()
         }
-        getKoin().loadModules(listOf(module), allowOverride = !property.isPrimary)
+        getKoin().loadModules(listOf(module), allowOverride = true)
+        loadedModules.add(module)
+        val factory = module.mappings.values.first()
+        (boundTypes + primaryBind).distinct().forEach { type ->
+            listCandidates.put(type, ListCandidate(factory, property.isPrimary, qualifier))
+        }
     }
 
     private fun <T> createSingletonBeanModule(
@@ -471,12 +582,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Singleton, secondaryTypes)
         val singletonInstanceFactory = SingleInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            try {
-                indexPrimaryType(singletonInstanceFactory)
-                indexSecondaryTypes(singletonInstanceFactory)
-            } catch (_: DefinitionOverrideException) {
-            }
-
+            indexPrimaryType(singletonInstanceFactory)
+            indexSecondaryTypes(singletonInstanceFactory)
         }
     }
 
@@ -491,11 +598,8 @@ abstract class AbstractComponentRegistry : ComponentRegistry, KoinComponent {
         val beanDefinition = BeanDefinition(scopeQualifier, klass, qualifier, instance, Kind.Factory, secondaryTypes)
         val factoryInstanceFactory = FactoryInstanceFactory(beanDefinition)
         return Module(createdAtStart).apply {
-            try {
-                indexPrimaryType(factoryInstanceFactory)
-                indexSecondaryTypes(factoryInstanceFactory)
-            } catch (_: DefinitionOverrideException) {
-            }
+            indexPrimaryType(factoryInstanceFactory)
+            indexSecondaryTypes(factoryInstanceFactory)
         }
     }
 

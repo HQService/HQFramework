@@ -7,7 +7,7 @@ import com.velocitypowered.api.plugin.Plugin
 import com.velocitypowered.api.plugin.PluginContainer
 import com.velocitypowered.api.plugin.annotation.DataDirectory
 import com.velocitypowered.api.proxy.ProxyServer
-import kr.hqservice.framework.velocity.HQFrameworkVelocityPlugin
+import kr.hqservice.framework.velocity.multi.HQFrameworkMultiPlugin
 import java.io.File
 import java.nio.file.Path
 
@@ -26,7 +26,7 @@ class HQFrameworkVelocity @Inject constructor(
     private val logger: org.slf4j.Logger,
     private val eventManager: EventManager,
     @DataDirectory private val dataFolder: Path
-) : HQFrameworkVelocityPlugin() {
+) : HQFrameworkMultiPlugin() {
     override fun getDataFolder(): File {
         return dataFolder.toFile()
     }

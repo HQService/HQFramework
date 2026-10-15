@@ -7,7 +7,6 @@ import kr.hqservice.framework.nms.service.entity.NmsDisplayService
 import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
-import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.service.math.NmsVector3fService
 import kr.hqservice.framework.nms.service.world.NmsWorldBorderService
 import kr.hqservice.framework.nms.service.world.NmsWorldService
@@ -24,8 +23,6 @@ interface NMSServiceProvider {
     fun provideItemService(): NmsItemService
 
     fun provideItemStackService(): NmsItemStackService
-
-    fun provideNBTTagService(): NmsNBTTagCompoundService
 
     fun provideVector3fService(): NmsVector3fService
 

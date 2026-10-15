@@ -79,9 +79,12 @@ class ComponentHandlerHandleOrderTest {
 
     @AfterEach
     fun teardown() {
-        HQFrameworkBukkitMock.unmock()
-        MockBukkit.unmock()
-        clearAllMocks()
+        try {
+            HQFrameworkBukkitMock.unmock()
+        } finally {
+            MockBukkit.unmock()
+            clearAllMocks()
+        }
     }
 
     @Test

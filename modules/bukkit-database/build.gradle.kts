@@ -16,6 +16,7 @@ dependencies {
     api(libs.exposed.java.time)
     api(libs.hikaricp)
     api(libs.koin.core)
+    api(libs.lettuce.core)
 
     testImplementationModule("bukkit", "test")
     testImplementation(libs.mysql.connector)
@@ -23,4 +24,6 @@ dependencies {
     testImplementation(libs.mockBukkit)
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.h2)
+    testImplementation(libs.mockK)
 }

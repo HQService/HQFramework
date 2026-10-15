@@ -24,7 +24,7 @@ class NmsWorldBoardServiceImpl(
 
     override fun createWorldBorderWarningBlocksPacket(distance: Int, wrapper: WorldBorderWrapper): Any {
         val border = wrapper.getUnwrappedInstance() as WorldBorder
-        border.warningTime = distance
+        border.warningBlocks = distance
         return border
     }
 

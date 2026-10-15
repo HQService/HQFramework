@@ -28,6 +28,10 @@ bungeeResourceGenerator {
     )
 }
 
+tasks.named("generateBungeeResource") {
+    inputs.property("libraries", provider { bungeeResourceGenerator.libraries.orEmpty().map { it.get().run { "$module:${versionConstraint.requiredVersion}" } } })
+}
+
 dependencies {
     implementationModule("proxy-bungee", "core")
     runtimeOnlyModule("global", "core")

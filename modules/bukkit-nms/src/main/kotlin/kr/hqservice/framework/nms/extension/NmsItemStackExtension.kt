@@ -1,7 +1,5 @@
 package kr.hqservice.framework.nms.extension
 
-import kr.hqservice.framework.nms.NMSServiceManager
-import kr.hqservice.framework.nms.Version
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
 import kr.hqservice.framework.nms.wrapper.item.NmsItemStackWrapper
 import org.bukkit.inventory.ItemStack
@@ -9,7 +7,6 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.koin.java.KoinJavaComponent.getKoin
 
 private val itemService: NmsItemStackService by getKoin().inject()
-private val nmsServiceManager: NMSServiceManager by getKoin().inject()
 
 private val getItemNameMethod by lazy {
     try {
@@ -36,7 +33,7 @@ fun ItemStack.getNmsItemStack(block: NmsItemStackWrapper.() -> Unit): NmsItemSta
 
 fun ItemStack.getDisplayName(): String {
     return if (this.itemMeta?.hasDisplayName() == true) this.itemMeta!!.displayName else {
-        if (nmsServiceManager.support(Version.V_21_4)) {
+        if (getItemNameMethod != null) {
             this.itemMeta?.let { meta ->
                 val result = getItemNameMethod?.invoke(meta) as? String
                 if (result?.isEmpty() == true) null else result

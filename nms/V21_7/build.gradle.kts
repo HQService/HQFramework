@@ -3,13 +3,16 @@ plugins {
     id("io.papermc.paperweight.userdev")
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     apiModule("global", "core")
     apiModule("bukkit", "core")
     apiModule("bukkit", "nms")
     api(project(":nms:V21"))
     api(project(":nms:V21_5"))
-    api(project(":nms:V21_6"))
 
     api(libs.paper.api)
     api(libs.kotlinx.coroutines.core)

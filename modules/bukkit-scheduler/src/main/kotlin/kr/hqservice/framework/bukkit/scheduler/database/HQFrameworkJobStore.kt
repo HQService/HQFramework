@@ -1,5 +1,6 @@
 package kr.hqservice.framework.bukkit.scheduler.database
 
+import kr.hqservice.framework.bukkit.scheduler.resolveSchedulerInstanceId
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
@@ -32,7 +33,7 @@ class HQFrameworkJobStore(
     }
 
     init {
-        if (config.getString("database.type").uppercase() == "SQLITE") {
+        if (config.getString("database.type", "h2").uppercase() == "SQLITE") {
             driverDelegateClass = SQLiteDriverDelegate::class.qualifiedName
             logger.info("${AnsiColor.CYAN}SQLite DataSource Provided to HQFrameworkJobStore.${AnsiColor.RESET}")
             logger.info("${AnsiColor.CYAN}Set job store driver delegate class to SQLiteDriverDelegate.${AnsiColor.RESET}")
@@ -44,13 +45,9 @@ class HQFrameworkJobStore(
         tablePrefix = TABLE_PREFIX
         this.dataSource = DATASOURCE_NAME
         dbRetryInterval = 15000
-        instanceId = getSchedulerInstanceId(server)
+        instanceId = resolveSchedulerInstanceId(config, server)
         isThreadsInheritInitializersClassLoadContext = true
         setUseProperties(config.getBoolean("scheduler.job-store.use-properties", true).toString())
-        setIsClustered(config.getBoolean("scheduler.job-store.is-clustered", true))
-    }
-
-    private fun getSchedulerInstanceId(server: Server): String {
-        return server.port.toString()
+        setIsClustered(config.getBoolean("scheduler.job-store.is-clustered", false))
     }
 }

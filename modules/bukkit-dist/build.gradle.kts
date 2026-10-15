@@ -4,6 +4,10 @@ plugins {
     id("kr.hqservice.resource-generator.bukkit")
 }
 
+java {
+    disableAutoTargetJvm()
+}
+
 bukkitResourceGenerator {
     main = "kr.hqservice.framework.HQFrameworkBukkit"
     name = "HQFramework"
@@ -31,7 +35,12 @@ bukkitResourceGenerator {
         libs.byte.buddy.agent,
         libs.quartz,
         libs.adventure.text.serializer.legacy,
+        libs.lettuce.core,
     )
+}
+
+tasks.named("generateBukkitResource") {
+    inputs.property("libraries", provider { bukkitResourceGenerator.libraries.orEmpty().map { it.get().run { "$module:${versionConstraint.requiredVersion}" } } })
 }
 
 dependencies {
@@ -41,6 +50,7 @@ dependencies {
     implementationModule("bukkit", "command")
     runtimeOnlyModule("global", "core")
     runtimeOnlyModule("global", "netty")
+    runtimeOnly(project(":modules:netty-core"))
     runtimeOnlyModule("global", "yaml")
     runtimeOnlyModule("bukkit", "inventory")
     runtimeOnlyModule("bukkit", "region")
@@ -56,6 +66,7 @@ dependencies {
     runtimeOnly(project(":nms:V21_11"))
     runtimeOnly(project(":nms:V26_1"))
     runtimeOnly(project(":nms:V26_2"))
+    runtimeOnly(project(":nms:V26_3"))
 
     runtimeOnlyModule("bukkit", "scheduler")
 

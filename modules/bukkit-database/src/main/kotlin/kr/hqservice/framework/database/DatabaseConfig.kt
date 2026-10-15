@@ -1,14 +1,25 @@
 package kr.hqservice.framework.database
 
 import com.zaxxer.hikari.HikariDataSource
+import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.database.datasource.H2DataSource
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import kr.hqservice.framework.database.datasource.SQLiteDataSource
+import kr.hqservice.framework.database.redis.PubSubTransport
+import kr.hqservice.framework.database.redis.RedisProvider
+import kr.hqservice.framework.database.redis.RedisSettings
+import kr.hqservice.framework.database.repository.player.PlayerDataSettings
+import kr.hqservice.framework.database.repository.player.session.DatabaseSessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.PlayerDataBackendMarker
+import kr.hqservice.framework.database.repository.player.session.RedisSessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.SessionCoordinator
+import kr.hqservice.framework.database.repository.player.session.redis.LettuceSessionStore
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.global.core.component.Configuration
 import kr.hqservice.framework.global.core.component.Singleton
 import kr.hqservice.framework.global.core.util.AnsiColor
 import kr.hqservice.framework.yaml.config.HQYamlConfiguration
+import org.bukkit.Server
 import org.jetbrains.exposed.sql.Database
 import java.io.File
 import java.io.IOException
@@ -18,20 +29,44 @@ import javax.sql.DataSource
 @Configuration
 class DatabaseConfig(
     private val config: HQYamlConfiguration,
-    private val logger: Logger
+    private val logger: Logger,
+    private val plugin: HQBukkitPlugin
 ) {
     @Bean
     fun provideDatabase(dataSource: DataSource): Database {
         return Database.connect(dataSource).also {
-            val type = config.getString("database.type")
+            val type = config.getString("database.type", "h2")
             logger.info("${AnsiColor.CYAN}${type.uppercase()} Database initialized.${AnsiColor.RESET}")
+        }
+    }
+
+    @Bean
+    fun providePlayerDataSettings(): PlayerDataSettings = PlayerDataSettings.from(config)
+
+    @Bean
+    fun provideSessionCoordinator(
+        database: Database,
+        settings: PlayerDataSettings,
+        server: Server,
+        redisSettings: RedisSettings,
+        redisProvider: RedisProvider,
+        transport: PubSubTransport,
+    ): SessionCoordinator {
+        val serverId = server.port.toString()
+        if (settings.backend == "redis") check(redisSettings.enabled) { "player-data.backend is redis but redis.uri is empty" }
+        if (PlayerDataBackendMarker.ensure(database, settings.backend)) {
+            logger.warning("player-data.backend marker switched to '${settings.backend}' because no player session was held by the previous backend; every server of this network must now use backend '${settings.backend}'")
+        }
+        return when (settings.backend) {
+            "redis" -> RedisSessionCoordinator(LettuceSessionStore(redisProvider), redisSettings, settings.lease, serverId, transport, logger)
+            else -> DatabaseSessionCoordinator(database, serverId, settings.lease)
         }
     }
 
     @Singleton(binds = [HikariDataSource::class, DataSource::class])
     @Bean
     fun provideDataSource(): HikariDataSource {
-        val type = config.getString("database.type")
+        val type = config.getString("database.type", "h2")
         return when(type.uppercase()) {
             "MYSQL" -> buildMySQLDataSource()
             "SQLITE" -> buildSQLiteDataSource()
@@ -44,11 +79,11 @@ class DatabaseConfig(
     }
 
     private fun buildMySQLDataSource(): HikariDataSource {
-        val host = config.getString("database.mysql.host")
-        val port = config.getInt("database.mysql.port")
-        val user = config.getString("database.mysql.user")
-        val password = config.getString("database.mysql.password")
-        val database = config.getString("database.mysql.database")
+        val host = config.getString("database.mysql.host", "localhost")
+        val port = config.getInt("database.mysql.port", 3306)
+        val user = config.getString("database.mysql.user", "root")
+        val password = config.getString("database.mysql.password", "password")
+        val database = config.getString("database.mysql.database", "hq")
         val maximumPoolSize = config.getInt("database.mysql.maximum-pool-size", 10)
         val maxLifetime = config.getLong("database.mysql.maximum-lifetime", 1800000)
         val keepaliveTime = config.getLong("database.mysql.keepalive-time", 0L)
@@ -65,37 +100,35 @@ class DatabaseConfig(
     }
 
     private fun buildSQLiteDataSource(): HikariDataSource {
-        val databasePath = config.getString("database.sqlite.path").ifEmpty { config.getString("database.file-path") }.run {
+        val configuredPath = config.getString("database.sqlite.path").ifEmpty { config.getString("database.file-path", "hq-database/database") }.run {
             if (endsWith(".db")) this else "$this.db"
         }
-
-        val databaseFolder = File(databasePath.split("/").toMutableList().apply { removeLast() }.joinToString("/"))
-        if (!databaseFolder.exists()) {
-            databaseFolder.mkdirs()
-        }
-        val databaseFile = File(databasePath)
+        val databaseFile = resolveDatabaseFile(configuredPath) { it }
+        databaseFile.parentFile?.mkdirs()
         try {
             databaseFile.createNewFile()
         } catch (e: IOException) {
-            throw IOException("SQLite DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databasePath} 경로에 파일을 생성하여주세요.", e)
+            throw IOException("SQLite DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databaseFile.path} 경로에 파일을 생성하여주세요.", e)
         }
-        return SQLiteDataSource(databasePath)
+        return SQLiteDataSource(databaseFile.path)
     }
 
     private fun buildH2DataSource(): HikariDataSource {
-        val databasePath = config.getString("database.file-path").run {
-            if (endsWith(".db")) removeSuffix(".db") else this
+        val configuredPath = config.getString("database.file-path", "hq-database/database").removeSuffix(".db")
+        val databaseFile = resolveDatabaseFile(configuredPath) { File("${it.path}.mv.db") }
+        databaseFile.parentFile?.mkdirs()
+        return H2DataSource(databaseFile.path)
+    }
+
+    private fun resolveDatabaseFile(configuredPath: String, storedFileOf: (File) -> File): File {
+        val configured = File(configuredPath)
+        if (configured.isAbsolute) return configured
+        val resolved = File(plugin.dataFolder, configuredPath).absoluteFile
+        val legacy = configured.absoluteFile
+        if (!storedFileOf(resolved).exists() && storedFileOf(legacy).exists()) {
+            logger.warning("database file found at legacy location ${legacy.path}; move it to ${resolved.path}")
+            return legacy
         }
-        val databaseFolder = File(databasePath.split("/").toMutableList().apply { removeLast() }.joinToString("/"))
-        if (!databaseFolder.exists()) {
-            databaseFolder.mkdirs()
-        }
-        val databaseFile = File(databasePath)
-        try {
-            databaseFile.createNewFile()
-        } catch (e: IOException) {
-            throw IOException("H2 DataSource 파일을 생성하는 것을 실패하였습니다. 직접 ${databasePath} 경로에 파일을 생성하여주세요.", e)
-        }
-        return H2DataSource("./$databasePath")
+        return resolved
     }
 }

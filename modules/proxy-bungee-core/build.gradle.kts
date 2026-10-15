@@ -15,4 +15,5 @@ dependencies {
     api(libs.netty)
     testImplementation(kotlin("test"))
     testImplementation(libs.bungeecord.api)
+    testImplementation(libs.mockK)
 }

@@ -38,7 +38,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getString(key: String, default: String): String {
-        return findNode(key).getString(default) ?: default
+        val node = findNode(key)
+        return if (node.virtual()) default else node.getString(default) ?: default
     }
 
     override fun findString(key: String): String? {
@@ -46,7 +47,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getBoolean(key: String, default: Boolean): Boolean {
-        return findNode(key).getBoolean(default)
+        val node = findNode(key)
+        return if (node.virtual()) default else node.getBoolean(default)
     }
 
     override fun findBoolean(key: String): Boolean? {
@@ -54,7 +56,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getInt(key: String, default: Int): Int {
-        return findNode(key).getInt(default)
+        val node = findNode(key)
+        return if (node.virtual()) default else node.getInt(default)
     }
 
     override fun findInt(key: String): Int? {
@@ -62,7 +65,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getDouble(key: String, default: Double): Double {
-        return findNode(key).getDouble(default)
+        val node = findNode(key)
+        return if (node.virtual()) default else node.getDouble(default)
     }
 
     override fun findDouble(key: String): Double? {
@@ -70,7 +74,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getFloat(key: String, default: Float): Float {
-        return findNode(key).getFloat(default)
+        val node = findNode(key)
+        return if (node.virtual()) default else node.getFloat(default)
     }
 
     override fun findFloat(key: String): Float? {
@@ -78,7 +83,8 @@ open class HQYamlConfigurationSectionImpl(
     }
 
     override fun getLong(key: String, default: Long): Long {
-        return findNode(key).getLong(default)
+        val node = findNode(key)
+        return if (node.virtual()) default else node.getLong(default)
     }
 
     override fun findLong(key: String): Long? {

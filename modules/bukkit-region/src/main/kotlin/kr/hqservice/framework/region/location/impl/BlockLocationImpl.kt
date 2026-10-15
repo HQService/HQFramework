@@ -55,10 +55,8 @@ data class BlockLocationImpl(
     }
 
     override fun equals(other: Any?): Boolean {
-        return when (other) {
-            null -> false
-            !is BlockLocation -> false
-            else -> hashCode() == other.hashCode()
-        }
+        if (this === other) return true
+        if (other !is BlockLocation) return false
+        return vector3I == other.getPoint() && world.name == other.worldName()
     }
 }

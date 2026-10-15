@@ -2,6 +2,9 @@ package kr.hqservice.framework.bukkit.core
 
 import kotlinx.coroutines.*
 import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
+import kr.hqservice.framework.bukkit.core.coroutine.CoroutineTeardown
+import kr.hqservice.framework.bukkit.core.coroutine.LifecycleMainThread
+import kr.hqservice.framework.bukkit.core.coroutine.dispatcher.BukkitDispatcher
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.AttachableExceptionHandler
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.ExceptionHandlerRegistry
 import kr.hqservice.framework.bukkit.core.coroutine.component.exceptionhandler.HandleResult
@@ -22,7 +25,9 @@ import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import kr.hqservice.framework.yaml.extension.yaml
 import org.bukkit.Location
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.parameter.parametersOf
@@ -30,16 +35,18 @@ import java.io.File
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.time.LocalDateTime
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
-abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
-    /*internal constructor(
+abstract class HQBukkitPlugin : JavaPlugin, HQPlugin, KoinComponent, CoroutineScope, ExceptionHandlerRegistry {
+    constructor() : super()
+    protected constructor(
         loader: JavaPluginLoader,
         description: PluginDescriptionFile,
         dataFolder: File,
         file: File
-    ) : super(loader, description, dataFolder, file)*/
+    ) : super(loader, description, dataFolder, file)
 
     open val bukkitComponentRegistry: BukkitComponentRegistry by inject { parametersOf(this) }
     private val config = File(dataFolder, "config.yml").yaml()
@@ -48,26 +55,25 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
     private lateinit var globalScheduler: HQScheduler
     private var hasRegionScheduler = false
 
-    internal companion object GlobalExceptionHandlerRegistry : ExceptionHandlerRegistry {
-        private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
+    internal companion object GlobalExceptionHandlerRegistry {
+        private val exceptionHandlers: MutableList<Pair<HQBukkitPlugin, AttachableExceptionHandler>> = CopyOnWriteArrayList()
 
-        const val GRACE_PERIOD_MS = 5000L
-        const val FORCE_CANCEL_TIMEOUT_MS = 2000L
+        fun attachExceptionHandler(plugin: HQBukkitPlugin, attachableExceptionHandler: AttachableExceptionHandler) {
+            exceptionHandlers.add(plugin to attachableExceptionHandler)
+            exceptionHandlers.sortBy { it.second.priority }
+        }
 
-        override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
-            exceptionHandlers.add(attachableExceptionHandler)
-            exceptionHandlers.sortBy { attachableExceptionHandler.priority }
+        fun detachExceptionHandlers(plugin: HQBukkitPlugin) {
+            exceptionHandlers.removeIf { it.first === plugin }
         }
     }
 
-    private val exceptionHandlers: MutableList<AttachableExceptionHandler> = mutableListOf()
-    private val supervisorJob = SupervisorJob()
+    private val exceptionHandlers: MutableList<AttachableExceptionHandler> = CopyOnWriteArrayList()
+    private var supervisorJob = SupervisorJob()
     private val pluginCoroutineContextElement get() = PluginCoroutineContextElement(this)
     private val coroutineExceptionHandler = CoroutineExceptionHandler handler@{ coroutineContext, throwable ->
-        val exceptionHandlers = listOf(
-            *GlobalExceptionHandlerRegistry.exceptionHandlers.toTypedArray(),
-            *this.exceptionHandlers.toTypedArray()
-        )
+        val exceptionHandlers = (GlobalExceptionHandlerRegistry.exceptionHandlers.map { it.second } + this.exceptionHandlers)
+            .sortedBy { it.priority }
 
         exceptionHandlers.forEach forEach@{ handler ->
             when (handler.handle(throwable)) {
@@ -80,13 +86,13 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
                 HandleResult.UNHANDLED -> return@forEach
             }
         }
-        logUnhandledExceptionInfo(throwable)
+        logUnhandledExceptionInfo(throwable, coroutineContext)
         storeStackTrace(throwable)
     }
 
-    private fun logUnhandledExceptionInfo(throwable: Throwable) {
+    private fun logUnhandledExceptionInfo(throwable: Throwable, failedContext: CoroutineContext) {
         with(logger) {
-            severe("an unhandled exception occurs in CoroutineContext named ${coroutineContext[CoroutineName]?.name ?: "UNNAMED"}")
+            severe("an unhandled exception occurs in CoroutineContext named ${failedContext[CoroutineName]?.name ?: "UNNAMED"}")
             severe("exception: ${throwable::class.simpleName}")
             severe("cause: ${throwable.cause}")
             severe("message: ${throwable.message}")
@@ -97,10 +103,24 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
     }
 
     private fun storeStackTrace(throwable: Throwable) {
+        if (isEnabled) {
+            launch(Dispatchers.IO) {
+                try {
+                    writeStackTrace(throwable)
+                } catch (exception: Exception) {
+                    logger.severe("an error occurs while storing stack trace: ${exception.message}")
+                }
+            }
+        } else {
+            writeStackTrace(throwable)
+        }
+    }
+
+    private fun writeStackTrace(throwable: Throwable) {
         val nowString = LocalDateTime.now().format("yyyyMMdd_HHmmssSSS")
         val fileName = nowString + "_" + this.name + "_" + throwable::class.simpleName + "_" + ".txt"
         val folder = getErrorFolder()
-        if (!folder.exists()) folder.mkdir()
+        if (!folder.exists()) folder.mkdirs()
         PrintWriter(File(folder, fileName)).use { printWriter ->
             throwable.printStackTrace(printWriter)
             printWriter.println()
@@ -149,13 +169,22 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
 
     override fun attachExceptionHandler(attachableExceptionHandler: AttachableExceptionHandler) {
         exceptionHandlers.add(attachableExceptionHandler)
-        exceptionHandlers.sortBy { attachableExceptionHandler.priority }
+        exceptionHandlers.sortBy { it.priority }
     }
 
     override val coroutineContext: CoroutineContext
         get() = CoroutineName("${this.name}CoroutineScope") + Dispatchers.BukkitMain + coroutineExceptionHandler + supervisorJob + pluginCoroutineContextElement
 
     open val group = "HQPlugin"
+
+    var isEnabling: Boolean = false
+        private set
+
+    var isDisabling: Boolean = false
+        private set
+
+    val isLifecycleBlockingMainThread: Boolean
+        get() = isEnabling || isDisabling
 
     fun getHQConfig(): HQYamlConfiguration {
         return config
@@ -177,82 +206,59 @@ abstract class HQBukkitPlugin : JavaPlugin(), HQPlugin, KoinComponent, Coroutine
             false
         }
 
-        runBlocking(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
-            val timerJob =
-                launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
-                    var index = 0
-                    while (this@timer.isActive) {
-                        index++
-                        logger.info("${AnsiColor.CYAN}Enabling${".".repeat(index)}${AnsiColor.RESET}")
-                        delay(1000)
+        if (supervisorJob.isCancelled) supervisorJob = SupervisorJob()
+        isEnabling = true
+        try {
+            LifecycleMainThread.runBlockingOnMainThread(coroutineContext.minusKey(CoroutineDispatcher.Key) + CoroutineName("${this@HQBukkitPlugin.name}EnableCoroutine")) {
+                val timerJob =
+                    launch(Dispatchers.Default + CoroutineName("${this@HQBukkitPlugin.name}EnableTimerCoroutine")) timer@{
+                        var index = 0
+                        while (this@timer.isActive) {
+                            index++
+                            logger.info("${AnsiColor.CYAN}Enabling${".".repeat(index)}${AnsiColor.RESET}")
+                            delay(1000)
+                        }
                     }
-                }
-            onPreEnable()
-            val folder = getErrorFolder()
-            if (!folder.exists()) folder.mkdir()
-            loadConfigIfExist()
-            bukkitComponentRegistry.setup()
-            onPostEnable()
-            timerJob.cancel()
-            logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
+                onPreEnable()
+                val folder = getErrorFolder()
+                if (!folder.exists()) folder.mkdirs()
+                loadConfigIfExist()
+                bukkitComponentRegistry.setup()
+                onPostEnable()
+                timerJob.cancel()
+                logger.info("${AnsiColor.CYAN}${this@HQBukkitPlugin.name} initialized successfully and is ready for service.${AnsiColor.RESET}")
+            }
+        } finally {
+            isEnabling = false
         }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     final override fun onDisable() {
-        runBlocking(
-            this@HQBukkitPlugin.coroutineContext.minusKey(CoroutineDispatcher).minusKey(Job) + SupervisorJob()
-        ) {
-            launch(start = CoroutineStart.UNDISPATCHED) {
+        isDisabling = true
+        try {
+            LifecycleMainThread.runBlockingOnMainThread(
+                this@HQBukkitPlugin.coroutineContext.minusKey(CoroutineDispatcher).minusKey(Job) + SupervisorJob()
+            ) {
+                logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
+                BukkitDispatcher.drainPending(this@HQBukkitPlugin)
+                onPreDisable()
                 supervisorJob.childrenAll
                     .filter { job ->
                         job.coroutineContext[TeardownOptionCoroutineContextElement.Key]?.cancelWhenPluginTeardown == true
                     }.forEach { job ->
                         job.cancel()
                     }
-                val children = supervisorJob.children.toList()
-                if (children.isNotEmpty()) {
-                    logger.info("${AnsiColor.CYAN}Cleaning up ${children.size} coroutine(s)...${AnsiColor.RESET}")
-
-                    // 자연 종료 대기 (5초). DB 트랜잭션 / HTTP 등
-                    withTimeoutOrNull(GRACE_PERIOD_MS) {
-                        coroutineScope {
-                            children.forEach { job -> launch { job.join() } }
-                        }
-                    }
-
-                    val stillActive = children.filter { it.isActive }
-                    if (stillActive.isNotEmpty()) {
-                        stillActive.forEach { it.cancel() }
-                        withTimeoutOrNull(FORCE_CANCEL_TIMEOUT_MS) {
-                            coroutineScope {
-                                stillActive.forEach { job -> launch { job.join() } }
-                            }
-                        }
-
-                        val abandoned = children.filter { it.isActive }
-                        abandoned.forEach { job ->
-                            val name = job.coroutineContext[CoroutineName]?.name
-                            logger.warning("${AnsiColor.CYAN}Abandoning [$name routine] - non-cancellable blocking work; server shutdown will proceed${AnsiColor.RESET}")
-                        }
-                    }
-
-                    val finishedCount = children.count { !it.isActive }
-                    logger.info("${AnsiColor.CYAN}Cleaned up $finishedCount/${children.size} coroutine(s)${AnsiColor.RESET}")
-                }
-
-                logger.info("${AnsiColor.CYAN}Disabling...${AnsiColor.RESET}")
-                onPreDisable()
+                CoroutineTeardown.awaitChildren(supervisorJob, logger)
                 bukkitComponentRegistry.teardown()
                 onPostDisable()
+                GlobalExceptionHandlerRegistry.detachExceptionHandlers(this@HQBukkitPlugin)
                 logger.info("${AnsiColor.CYAN}Teardown finished.${AnsiColor.RESET}")
-            }.join()
+            }
+        } finally {
+            supervisorJob.cancel()
+            isDisabling = false
         }
-    }
-
-    fun reload() {
-        onDisable()
-        onEnable()
     }
 
     final override fun getJar(): File {

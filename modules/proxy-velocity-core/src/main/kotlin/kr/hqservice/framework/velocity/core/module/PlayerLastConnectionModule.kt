@@ -19,7 +19,8 @@ class PlayerLastConnectionModule(
     private val isLastConnectionEnabled = config.getBoolean("last-connection")
 
     private val gson by lazy { Gson() }
-    private val file by lazy { File("last-connection.json") }
+    private val file by lazy { File(plugin.getDataFolder(), "last-connection.json") }
+    private val legacyFile by lazy { File("last-connection.json") }
 
     @Setup
     fun setup() {
@@ -32,9 +33,10 @@ class PlayerLastConnectionModule(
     }
 
     private fun loadPlayerLastConnection() {
-        if (!file.exists()) return
+        val source = if (file.exists()) file else legacyFile
+        if (!source.exists()) return
         val playerLastConnectionRegistry = gson.fromJson(
-            file.readLines().joinToString(),
+            source.readLines().joinToString(),
             PlayerLastConnectionRegistry::class.java
         )
         this.playerLastConnectionRegistry.restore(playerLastConnectionRegistry)

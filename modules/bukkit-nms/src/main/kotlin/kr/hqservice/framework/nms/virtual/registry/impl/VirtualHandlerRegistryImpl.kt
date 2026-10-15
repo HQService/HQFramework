@@ -1,6 +1,5 @@
 package kr.hqservice.framework.nms.virtual.registry.impl
 
-import io.netty.util.internal.ConcurrentSet
 import kr.hqservice.framework.global.core.component.Bean
 import kr.hqservice.framework.nms.virtual.handler.VirtualHandler
 import kr.hqservice.framework.nms.virtual.registry.VirtualHandlerRegistry
@@ -9,15 +8,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Bean
 class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
-    private val handlers = ConcurrentHashMap<UUID, ConcurrentSet<VirtualHandler>>()
-    private var loadHandler: (suspend (UUID) -> Unit)? = null
-
-    fun setLoadHandler(handler: suspend (UUID) -> Unit) {
-        this.loadHandler = handler
-    }
+    private val handlers = ConcurrentHashMap<UUID, MutableSet<VirtualHandler>>()
 
     override fun register(uniqueId: UUID, handler: VirtualHandler) {
-        handlers.computeIfAbsent(uniqueId) { ConcurrentSet() }
+        handlers.computeIfAbsent(uniqueId) { ConcurrentHashMap.newKeySet() }
             .add(handler)
     }
 
@@ -26,12 +20,10 @@ class VirtualHandlerRegistryImpl : VirtualHandlerRegistry {
     }
 
     override fun cleanup(uniqueId: UUID) {
-        handlers.remove(uniqueId)
+        handlers.remove(uniqueId)?.forEach { handler -> runCatching { handler.close() } }
     }
 
     override fun getHandlers(uniqueId: UUID): Set<VirtualHandler> {
         return handlers[uniqueId] ?: emptySet()
     }
-
-    fun findLoadHandler(): (suspend (UUID) -> Unit)? = loadHandler
 }

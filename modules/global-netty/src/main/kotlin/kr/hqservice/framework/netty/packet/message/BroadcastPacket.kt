@@ -7,6 +7,7 @@ import kr.hqservice.framework.netty.api.NettyChannel
 import kr.hqservice.framework.netty.packet.Packet
 import kr.hqservice.framework.netty.packet.extension.readChannel
 import kr.hqservice.framework.netty.packet.extension.writeChannel
+import kr.hqservice.framework.netty.pipeline.MAX_FRAME_BYTES
 import net.md_5.bungee.api.chat.BaseComponent
 import net.md_5.bungee.chat.ComponentSerializer
 
@@ -16,7 +17,7 @@ class BroadcastPacket(
     var targetChannel: NettyChannel?
 ) : Packet() {
     override fun write(buf: ByteBuf) {
-        val byteArray = BaseComponent.toPlainText(message).toByteArray().compress()
+        val byteArray = ComponentSerializer.toString(message).toByteArray().compress()
         buf.writeInt(byteArray.size)
         buf.writeBytes(byteArray)
         buf.writeBoolean(logging)
@@ -24,7 +25,10 @@ class BroadcastPacket(
     }
 
     override fun read(buf: ByteBuf) {
-        val bytes = ByteArray(buf.readInt())
+        val size = buf.readInt()
+        require(size in 0..MAX_FRAME_BYTES) { "message payload too large: $size" }
+        require(size <= buf.readableBytes()) { "message payload truncated: $size > ${buf.readableBytes()}" }
+        val bytes = ByteArray(size)
         buf.readBytes(bytes)
         message = ComponentSerializer.parse(
             bytes.decompress().toString(Charsets.UTF_8)

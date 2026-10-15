@@ -5,21 +5,26 @@ import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComp
 import kr.hqservice.framework.bukkit.core.component.registry.registry.InstanceFactoryRegistry
 import kr.hqservice.framework.global.core.HQPlugin
 import kr.hqservice.framework.global.core.component.registry.ComponentRegistry
-import net.bytebuddy.agent.ByteBuddyAgent
 import org.bukkit.plugin.Plugin
+import org.bukkit.plugin.PluginDescriptionFile
+import org.bukkit.plugin.java.JavaPluginLoader
 import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 import org.koin.core.qualifier.named
 import org.koin.dsl.binds
 import org.koin.dsl.module
+import java.io.File
 
-abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin() {
-    //constructor(loader: JavaPluginLoader, description: PluginDescriptionFile, dataFolder: File, file: File) : super(loader, description, dataFolder, file)
+abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin {
+    constructor() : super()
+    protected constructor(
+        loader: JavaPluginLoader,
+        description: PluginDescriptionFile,
+        dataFolder: File,
+        file: File
+    ) : super(loader, description, dataFolder, file)
 
     final override fun onPreLoad() {
-        try {
-            ByteBuddyAgent.install()
-        } catch (_: Exception) {
-        }
         startKoin()
     }
 
@@ -30,13 +35,14 @@ abstract class HQFrameworkBukkitPlugin : HQBukkitPlugin() {
                 single<HQPlugin>(named("hqframework")) { this@HQFrameworkBukkitPlugin }
                 single<HQBukkitPlugin>(named("hqframework")) { this@HQFrameworkBukkitPlugin }
                 single<HQFrameworkBukkitPlugin> { this@HQFrameworkBukkitPlugin }
-                single { this@HQFrameworkBukkitPlugin.bukkitComponentRegistry } binds arrayOf(
-                    InstanceFactoryRegistry::class,
-                    ComponentRegistry::class
-                )
                 factory<BukkitComponentRegistry> { BukkitComponentRegistry(it.get()) }
+                single<ComponentRegistry> { this@HQFrameworkBukkitPlugin.bukkitComponentRegistry } binds arrayOf(InstanceFactoryRegistry::class)
             }
             modules(module)
         }
+    }
+
+    final override fun onPostDisable() {
+        stopKoin()
     }
 }

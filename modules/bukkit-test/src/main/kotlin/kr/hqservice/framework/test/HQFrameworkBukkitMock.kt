@@ -6,14 +6,16 @@ import io.mockk.spyk
 import kr.hqservice.framework.bukkit.HQFrameworkBukkitPlugin
 import kr.hqservice.framework.bukkit.core.HQBukkitPlugin
 import kr.hqservice.framework.bukkit.core.component.registry.registry.BukkitComponentRegistry
+import kr.hqservice.framework.yaml.config.HQYamlConfiguration
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.PluginDescriptionFile
 import org.bukkit.plugin.java.JavaPluginLoader
+import org.koin.core.context.stopKoin
 import java.io.File
 import java.util.logging.Logger
 import kotlin.reflect.KClass
 
-class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
+open class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
     companion object {
         private var plugin: HQFrameworkBukkitMock? = null
         private val extendedSearchScope: MutableList<Class<*>> = mutableListOf()
@@ -33,19 +35,25 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
                 "HQFramework", "1.0.0",
                 HQFrameworkBukkitMock::class.java.name
             )
-            val instance = MockBukkit.getMock().pluginManager.loadPlugin(
-                HQFrameworkBukkitMock::class.java,
-                description,
-                arrayOfNulls(0)
-            )
-            MockBukkit.getMock().pluginManager.enablePlugin(instance)
-            plugin = instance as HQFrameworkBukkitMock
-            return plugin!!
+            try {
+                val instance = MockBukkit.getMock()!!.pluginManager.loadPlugin(
+                    HQFrameworkBukkitMock::class.java,
+                    description,
+                    emptyArray<Any>()
+                )
+                MockBukkit.getMock()!!.pluginManager.enablePlugin(instance)
+                plugin = instance as HQFrameworkBukkitMock
+                return plugin!!
+            } catch (throwable: Throwable) {
+                plugin = null
+                stopKoin()
+                throw throwable
+            }
         }
 
         fun unmock() {
             ensureMocking()
-            MockBukkit.getMock().pluginManager.disablePlugin(plugin!!)
+            MockBukkit.getMock()!!.pluginManager.disablePlugin(plugin!!)
             plugin = null
         }
 
@@ -78,6 +86,7 @@ class HQFrameworkBukkitMock : HQFrameworkBukkitPlugin {
             put(this::class, this@HQFrameworkBukkitMock)
             put(HQBukkitPlugin::class, this@HQFrameworkBukkitMock)
             put(Logger::class, this@HQFrameworkBukkitMock.logger)
+            put(HQYamlConfiguration::class, this@HQFrameworkBukkitMock.getHQConfig())
         }
     }
 

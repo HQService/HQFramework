@@ -5,7 +5,7 @@ import kr.hqservice.framework.region.location.impl.BlockLocationImpl
 import kr.hqservice.framework.region.range.enums.LineAxis
 import kr.hqservice.framework.region.range.enums.Offset
 
-class LineRange(
+class LineRange internal constructor(
     minPosition: BlockLocation,
     maxPosition: BlockLocation,
     val axis: LineAxis,
@@ -21,7 +21,7 @@ class LineRange(
             LineAxis.VERTICAL ->
                 getDot(minPosition.getY(), getCenter().getY(), maxPosition.getY(), offset)
         }
-        return PointRange(BlockLocationImpl(getWorld(), dot, dot, dot))
+        return pointAt(dot)
     }
 
     fun getPoint(offset: Offset): PointRange {
@@ -35,6 +35,20 @@ class LineRange(
             LineAxis.VERTICAL ->
                 getDot(minPosition.getY(), getCenter().getY(), maxPosition.getY(), -1, offset)
         }
-        return PointRange(BlockLocationImpl(getWorld(), dot, dot, dot))
+        return pointAt(dot)
+    }
+
+    private fun pointAt(dot: Int): PointRange {
+        val world = getWorld()
+        val x = minPosition.getX()
+        val y = minPosition.getY()
+        val z = minPosition.getZ()
+        return PointRange(
+            when (axis) {
+                LineAxis.HORIZONTAL_Z -> BlockLocationImpl(world, dot, y, z)
+                LineAxis.HORIZONTAL_X -> BlockLocationImpl(world, x, y, dot)
+                LineAxis.VERTICAL -> BlockLocationImpl(world, x, dot, z)
+            }
+        )
     }
 }

@@ -35,11 +35,13 @@ open class HQContainer(
         if (slot >= size) throw IndexOutOfBoundsException(slot)
 
         buttons[slot] = button
-        val original = inventory.contents[slot]
+        val original = inventory.getItem(slot)
+        val buttonItemStack = button.getItemStack()
 
-        if (original?.isMatchedType(button.getItemStack()) == true)
-            original.itemMeta = button.getItemStack().itemMeta
-        else inventory.setItem(slot, button.getItemStack().clone())
+        if (original?.isMatchedType(buttonItemStack) == true) {
+            original.itemMeta = buttonItemStack.itemMeta
+            original.amount = buttonItemStack.amount
+        } else inventory.setItem(slot, buttonItemStack.clone())
         button.checkOwningPlayer(slot, inventory)
     }
 
@@ -67,17 +69,16 @@ open class HQContainer(
     }
 
     fun open(vararg players: Player) {
+        val inventory = inventory
         val openedPlayers = mutableListOf<Player>()
         for (player in players) {
             val prevHolder = player.openInventory.topInventory.holder
             if (prevHolder == this) continue
             if (prevHolder is HQContainer) {
-                // 같은 클래스의 컨테이너는 이미 열려있으므로 스킵
-                if (prevHolder::class == this::class) continue
-
-                if (plugin == null) plugin = JavaPlugin.getProvidingPlugin(this::class.java)
-                val plugin = plugin!!
-                plugin.getScheduler().runTaskLater(1) { open(player) }
+                findPlugin().getScheduler().runTaskLater(1) {
+                    player.openInventory(inventory)
+                    onOpen(player)
+                }
             } else {
                 player.openInventory(inventory)
                 openedPlayers.add(player)
@@ -85,6 +86,12 @@ open class HQContainer(
         }
 
         onOpen(*openedPlayers.toTypedArray())
+    }
+
+    private fun findPlugin(): Plugin {
+        return plugin ?: runCatching { JavaPlugin.getProvidingPlugin(this::class.java) }
+            .getOrElse { Bukkit.getPluginManager().getPlugin("HQFramework")!! }
+            .also { plugin = it }
     }
 
     @Suppress("deprecation")

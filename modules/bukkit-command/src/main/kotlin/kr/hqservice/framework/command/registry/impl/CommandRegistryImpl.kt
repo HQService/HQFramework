@@ -13,16 +13,13 @@ import kotlin.reflect.full.findAnnotation
 
 @Bean
 class CommandRegistryImpl : CommandRegistry {
-    private val commandRoots: MutableMap<String, RegisteredCommandRoot> = mutableMapOf()
     private val commandTrees: BiMap<KClass<*>, RegisteredCommandTree> = HashBiMap.create()
     private val commandTreesByParentKey: Multimap<KClass<*>, RegisteredCommandTree> = ArrayListMultimap.create()
     private val commandExecutorsByParentKey: Multimap<KClass<*>, RegisteredCommandExecutor> = ArrayListMultimap.create()
 
     override fun registerRoot(declaredAt: KClass<*>): RegisteredCommandRoot {
         val annotation = declaredAt.findAnnotation<Command>()!!
-        return RegisteredCommandRoot(declaredAt, annotation.label, annotation.permission, annotation.isOp, annotation.hideSuggestion, annotation.aliases.toList()).also { registeredCommandRoot ->
-            commandRoots[annotation.label] = registeredCommandRoot
-        }
+        return RegisteredCommandRoot(declaredAt, annotation.label, annotation.permission, annotation.isOp, annotation.hideSuggestion, annotation.aliases.toList())
     }
 
     override fun registerTree(parent: KClass<*>, treeClass: KClass<*>): RegisteredCommandTree {
@@ -51,10 +48,6 @@ class CommandRegistryImpl : CommandRegistry {
         return RegisteredCommandExecutor(annotation, executorInstance, function).also { registeredCommandExecutor ->
             commandExecutorsByParentKey.put(parent, registeredCommandExecutor)
         }
-    }
-
-    override fun findRoot(label: String): RegisteredCommandRoot? {
-        return commandRoots[label]
     }
 
     override fun findTree(treeClass: KClass<*>): RegisteredCommandTree? {

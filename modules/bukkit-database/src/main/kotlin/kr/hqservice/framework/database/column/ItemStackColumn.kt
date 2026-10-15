@@ -2,7 +2,6 @@ package kr.hqservice.framework.database.column
 
 import kr.hqservice.framework.bukkit.core.extension.toItemStack
 import kr.hqservice.framework.database.extension.toExposedBlob
-import kr.hqservice.framework.database.extension.toItemStack
 import kr.hqservice.framework.database.util.ExposedPropertyDelegate
 import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.dao.Entity
@@ -19,7 +18,7 @@ fun Entity<*>.itemStack(column: Column<ExposedBlob>): ExposedPropertyDelegate<It
         desc: KProperty<*>,
     ): ItemStack {
         val blob = entity.run { column.getValue(this, desc) }
-        return blob.toItemStack()
+        return blob.bytes.toItemStack()
     }
 
     override operator fun <ID : Comparable<ID>> setValue(

@@ -1,7 +1,6 @@
 package kr.hqservice.framework.region.range
 
 import kr.hqservice.framework.region.extension.asBlockLocation
-import kr.hqservice.framework.region.extension.toList
 import kr.hqservice.framework.region.location.BlockLocation
 import kr.hqservice.framework.region.location.impl.BlockLocationImpl
 import kr.hqservice.framework.region.math.Point
@@ -12,7 +11,31 @@ import org.bukkit.World
 sealed class Range(
     val minPosition: BlockLocation,
     val maxPosition: BlockLocation,
-) : List<BlockLocation> by minPosition.toList(maxPosition) {
+) : Collection<BlockLocation> {
+    override val size: Int
+        get() = Math.multiplyExact(
+            Math.multiplyExact(maxPosition.getX() - minPosition.getX() + 1, maxPosition.getY() - minPosition.getY() + 1),
+            maxPosition.getZ() - minPosition.getZ() + 1
+        )
+
+    override fun isEmpty(): Boolean {
+        return false
+    }
+
+    override fun iterator(): Iterator<BlockLocation> {
+        val world = getWorld()
+        return sequence {
+            for (x in minPosition.getX()..maxPosition.getX())
+                for (y in minPosition.getY()..maxPosition.getY())
+                    for (z in minPosition.getZ()..maxPosition.getZ())
+                        yield(BlockLocationImpl(world, x, y, z))
+        }.iterator()
+    }
+
+    override fun containsAll(elements: Collection<BlockLocation>): Boolean {
+        return elements.all { contains(it) }
+    }
+
     fun getWorld(): World {
         return minPosition.getWorld()
     }
@@ -33,17 +56,17 @@ sealed class Range(
     }
 
     fun collidesWith(range: Range): Boolean {
-        return if (this === range) true
-        else {
-            val difference = range - this
-            range.size != difference.size
-        }
+        if (this === range) return true
+        if (getWorld() != range.getWorld()) return false
+        return minPosition.getX() <= range.maxPosition.getX() && range.minPosition.getX() <= maxPosition.getX() &&
+                minPosition.getY() <= range.maxPosition.getY() && range.minPosition.getY() <= maxPosition.getY() &&
+                minPosition.getZ() <= range.maxPosition.getZ() && range.minPosition.getZ() <= maxPosition.getZ()
     }
 
     open fun getCenter(): BlockLocation {
         val (x1, y1, z1) = minPosition.getPoint()
         val (x2, y2, z2) = maxPosition.getPoint()
-        return BlockLocationImpl(minPosition.getWorld(), (x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2)
+        return BlockLocationImpl(minPosition.getWorld(), Math.floorDiv(x1 + x2, 2), Math.floorDiv(y1 + y2, 2), Math.floorDiv(z1 + z2, 2))
     }
 
     protected fun getDot(min: Int, center: Int, max: Int, offsetValue: Int, offset: Offset? = null): Int {

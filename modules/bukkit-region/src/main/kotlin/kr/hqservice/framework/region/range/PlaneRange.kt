@@ -6,7 +6,7 @@ import kr.hqservice.framework.region.range.enums.LineAxis
 import kr.hqservice.framework.region.range.enums.Offset
 import kr.hqservice.framework.region.range.enums.PlaneAxis
 
-class PlaneRange(
+class PlaneRange internal constructor(
     minPosition: BlockLocation,
     maxPosition: BlockLocation,
     val axis: PlaneAxis,
@@ -27,7 +27,7 @@ class PlaneRange(
                     LineAxis.HORIZONTAL_X -> {
                         val x = getDot(
                             minPosition.getX(),
-                            (minPosition.getX() + maxPosition.getX()) / 2,
+                            Math.floorDiv(minPosition.getX() + maxPosition.getX(), 2),
                             maxPosition.getX(),
                             offsetValue,
                             offset
@@ -42,7 +42,7 @@ class PlaneRange(
                     LineAxis.HORIZONTAL_Z -> {
                         val z = getDot(
                             minPosition.getZ(),
-                            (minPosition.getZ() + maxPosition.getZ()) / 2,
+                            Math.floorDiv(minPosition.getZ() + maxPosition.getZ(), 2),
                             maxPosition.getZ(),
                             offsetValue,
                             offset
@@ -63,7 +63,7 @@ class PlaneRange(
                     LineAxis.HORIZONTAL_X -> {
                         val y = getDot(
                             minPosition.getY(),
-                            (minPosition.getY() + maxPosition.getY()) / 2,
+                            Math.floorDiv(minPosition.getY() + maxPosition.getY(), 2),
                             maxPosition.getY(),
                             offsetValue,
                             offset
@@ -78,7 +78,7 @@ class PlaneRange(
                     LineAxis.VERTICAL -> {
                         val z = getDot(
                             minPosition.getZ(),
-                            (minPosition.getZ() + maxPosition.getZ()) / 2,
+                            Math.floorDiv(minPosition.getZ() + maxPosition.getZ(), 2),
                             maxPosition.getZ(),
                             offsetValue,
                             offset
@@ -99,7 +99,7 @@ class PlaneRange(
                     LineAxis.HORIZONTAL_Z -> {
                         val y = getDot(
                             minPosition.getY(),
-                            (minPosition.getY() + maxPosition.getY()) / 2,
+                            Math.floorDiv(minPosition.getY() + maxPosition.getY(), 2),
                             maxPosition.getY(),
                             offsetValue,
                             offset
@@ -114,7 +114,7 @@ class PlaneRange(
                     LineAxis.VERTICAL -> {
                         val x = getDot(
                             minPosition.getX(),
-                            (minPosition.getX() + maxPosition.getX()) / 2,
+                            Math.floorDiv(minPosition.getX() + maxPosition.getX(), 2),
                             maxPosition.getX(),
                             offsetValue,
                             offset

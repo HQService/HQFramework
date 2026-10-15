@@ -16,10 +16,11 @@ dependencies {
     api(libs.exposed.core)
 
     testImplementationModule("global", "yaml")
-    testImplementation(libs.mysql.connector)
+    testImplementation(libs.h2)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.junit.parameterizedTest)
     testImplementation(libs.mockBukkit)
     testImplementation(libs.kotlin.reflect)
     testImplementation(libs.netty)
+    testImplementation(libs.mockK)
 }

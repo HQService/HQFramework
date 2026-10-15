@@ -3,6 +3,7 @@ package kr.hqservice.framework.nms.listener
 import kr.hqservice.framework.bukkit.core.listener.HandleOrder
 import kr.hqservice.framework.bukkit.core.listener.Listener
 import kr.hqservice.framework.bukkit.core.listener.Subscribe
+import kr.hqservice.framework.nms.hook.EarlyHookInstaller
 import kr.hqservice.framework.nms.util.NmsNettyInjectService
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
@@ -16,6 +17,7 @@ class PlayerConnectionListener(
     @Subscribe(handleOrder = HandleOrder.FIRST)
     fun onJoin(event: PlayerJoinEvent) {
         injectUtil.injectHandler(event.player)
+        EarlyHookInstaller.bindUniqueId(injectUtil.getPlayerChannel(event.player), event.player.uniqueId)
     }
 
     @Subscribe(handleOrder = HandleOrder.FIRST)

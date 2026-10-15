@@ -61,11 +61,11 @@ class VirtualAnvilContainerScope {
         } else {
             listOf(
                 itemStack.clone().run {
-                    editMeta { nms { tag { setString("BASE1_RANDOM_ID", UUID.randomUUID().toString()) } } }
+                    nms { tag { setString("BASE1_RANDOM_ID", UUID.randomUUID().toString()) } }
                     VirtualItem(receiver, 0, this)
                 },
                 itemStack.clone().run {
-                    editMeta { nms { tag { setString("BASE2_RANDOM_ID", UUID.randomUUID().toString()) } } }
+                    nms { tag { setString("BASE2_RANDOM_ID", UUID.randomUUID().toString()) } }
                     VirtualItem(receiver, 1, this)
                 }
             )
@@ -78,7 +78,7 @@ class VirtualAnvilContainerScope {
         } else {
             items.mapIndexed { index, itemStack ->
                 itemStack.clone().run {
-                    editMeta { nms { tag { setString("BASE${index + 1}_RANDOM_ID", UUID.randomUUID().toString()) } } }
+                    nms { tag { setString("BASE${index + 1}_RANDOM_ID", UUID.randomUUID().toString()) } }
                     VirtualItem(receiver, index, this)
                 }
             }

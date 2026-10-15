@@ -18,7 +18,7 @@ class PacketHandler(
         if (result == null) return
 
         if (result.isNotEmpty()) {
-            result.forEach { super.write(context, it, promise) }
+            writeAll(context, result, promise)
         } else super.write(context, message, promise)
     }
 
@@ -72,10 +72,12 @@ class PacketHandler(
             }
     }
 
-    override fun channelInactive(ctx: ChannelHandlerContext) {
-        if (ctx.pipeline().get("hq_injector") != null) {
-            virtualHandlerRegistry.cleanup(uniqueId)
-            ctx.pipeline().remove("hq_injector")
+    companion object {
+        internal fun writeAll(context: ChannelHandlerContext, messages: List<Any>, promise: ChannelPromise) {
+            messages.forEachIndexed { index, message ->
+                if (index == messages.lastIndex) context.write(message, promise)
+                else context.write(message, context.voidPromise())
+            }
         }
     }
 }

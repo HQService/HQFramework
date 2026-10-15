@@ -14,5 +14,5 @@ class H2DataSource(
         "jdbc:h2:file:$databasePath"
     }
     this.connectionTestQuery = "SELECT 1"
-    this.poolName = "h2framework"
+    this.poolName = "hqframework"
 })

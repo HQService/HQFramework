@@ -12,4 +12,6 @@ interface VirtualHandler {
     fun handle(message: Any)
 
     fun cancelParent(message: Any): Any? = null
+
+    fun close() {}
 }

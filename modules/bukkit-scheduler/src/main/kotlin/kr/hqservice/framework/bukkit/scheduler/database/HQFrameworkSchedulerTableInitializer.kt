@@ -6,6 +6,7 @@ import kr.hqservice.framework.database.datasource.H2DataSource
 import kr.hqservice.framework.database.datasource.MySQLDataSource
 import kr.hqservice.framework.database.datasource.SQLiteDataSource
 import kr.hqservice.framework.global.core.util.AnsiColor
+import java.sql.Connection
 import java.sql.ResultSet
 import java.util.logging.Logger
 import javax.sql.DataSource
@@ -13,6 +14,11 @@ import javax.sql.DataSource
 @Suppress("SqlSourceToSinkFlow", "DuplicatedCode")
 @Module
 class HQFrameworkSchedulerTableInitializer(private val dataSource: DataSource, private val logger: Logger) {
+    private companion object {
+        const val INITIALIZATION_LOCK = "hqframework_scheduler_tables"
+        const val INITIALIZATION_LOCK_TIMEOUT_SECONDS = 60
+    }
+
     @Suppress("SqlDialectInspection", "SqlNoDataSourceInspection", "IdentifierGrammar")
     private interface QuerySet {
         val showTables: String
@@ -538,28 +544,52 @@ class HQFrameworkSchedulerTableInitializer(private val dataSource: DataSource, p
 
             else -> throw UnsupportedOperationException("unsupported datasource provided.")
         }
-        val tablesSize = dataSource.connection.use { connection ->
-            connection.prepareStatement(querySet.showTables, ResultSet.TYPE_FORWARD_ONLY).use { preparedStatement ->
-                preparedStatement.executeQuery().use { resultSet ->
-                    var size = 0
-                    while (resultSet.next()) {
-                        size++
-                    }
-                    size
+        dataSource.connection.use { connection ->
+            withInitializationLock(connection) {
+                val tablesSize = countTables(connection, querySet)
+                if (tablesSize == 0) {
+                    dropIfExistsAndCreateTables(connection, querySet)
+                } else if (tablesSize != 11) {
+                    logger.severe("Some of the scheduler tables are missing. Dropping all tables and recreating tables.")
+                    dropIfExistsAndCreateTables(connection, querySet)
                 }
             }
         }
-        if (tablesSize == 0) {
-            dropIfExistsAndCreateTables(querySet)
-        } else if (tablesSize != 11) {
-            logger.severe("Some of the scheduler tables are missing. Dropping all tables and recreating tables.")
-            dropIfExistsAndCreateTables(querySet)
+    }
+
+    private fun countTables(connection: Connection, querySet: QuerySet): Int {
+        connection.prepareStatement(querySet.showTables, ResultSet.TYPE_FORWARD_ONLY).use { preparedStatement ->
+            preparedStatement.executeQuery().use { resultSet ->
+                var size = 0
+                while (resultSet.next()) {
+                    size++
+                }
+                return size
+            }
         }
     }
 
-    private fun dropIfExistsAndCreateTables(querySet: QuerySet) {
+    private fun withInitializationLock(connection: Connection, action: () -> Unit) {
+        if (dataSource !is MySQLDataSource) return action()
+        val acquired = connection.prepareStatement("SELECT GET_LOCK(?, ?)").use { statement ->
+            statement.setString(1, INITIALIZATION_LOCK)
+            statement.setInt(2, INITIALIZATION_LOCK_TIMEOUT_SECONDS)
+            statement.executeQuery().use { resultSet -> resultSet.next() && resultSet.getInt(1) == 1 }
+        }
+        check(acquired) { "could not acquire the scheduler table initialization lock within ${INITIALIZATION_LOCK_TIMEOUT_SECONDS}s" }
+        try {
+            action()
+        } finally {
+            connection.prepareStatement("SELECT RELEASE_LOCK(?)").use { statement ->
+                statement.setString(1, INITIALIZATION_LOCK)
+                statement.executeQuery().close()
+            }
+        }
+    }
+
+    private fun dropIfExistsAndCreateTables(connection: Connection, querySet: QuerySet) {
         logger.info("${AnsiColor.CYAN}Initializing Scheduler tables...")
-        dataSource.connection.use { connection ->
+        run {
             connection.autoCommit = false
             fun execute(query: String) {
                 connection.prepareStatement(query).use { preparedStatement ->

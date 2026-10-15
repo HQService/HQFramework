@@ -2,10 +2,11 @@ package kr.hqservice.framework.velocity.core.registry
 
 import kr.hqservice.framework.global.core.component.Bean
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 @Bean
 class PlayerLastConnectionRegistry {
-    private val lastConnectionMap = mutableMapOf<UUID, String>()
+    private val lastConnectionMap = ConcurrentHashMap<UUID, String>()
 
     fun restore(playerLastConnectionRegistry: PlayerLastConnectionRegistry) {
         lastConnectionMap.clear()

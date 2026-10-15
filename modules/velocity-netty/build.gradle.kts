@@ -4,9 +4,9 @@ plugins {
 }
 
 dependencies {
+    api(project(":modules:netty-core"))
     apiModule("global", "core")
     apiModule("global", "yaml")
-    implementation(libs.byte.buddy.core)
     implementation(libs.byte.buddy.agent)
     compileOnly(libs.velocity.api)
 

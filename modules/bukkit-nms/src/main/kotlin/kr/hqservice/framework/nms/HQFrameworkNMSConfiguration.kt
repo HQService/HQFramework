@@ -12,7 +12,6 @@ import kr.hqservice.framework.nms.service.entity.NmsDisplayService
 import kr.hqservice.framework.nms.service.entity.NmsTextDisplayService
 import kr.hqservice.framework.nms.service.item.NmsItemService
 import kr.hqservice.framework.nms.service.item.NmsItemStackService
-import kr.hqservice.framework.nms.service.item.NmsNBTTagCompoundService
 import kr.hqservice.framework.nms.service.math.NmsVector3fService
 import kr.hqservice.framework.nms.service.world.NmsWorldBorderService
 import kr.hqservice.framework.nms.service.world.NmsWorldService
@@ -35,32 +34,26 @@ class HQFrameworkNMSConfiguration(
     serviceManager: NMSServiceManager
 ) : NMSServiceProvider, NMSVirtualFactoryProvider {
     private val versionName: String = server.minecraftVersion.split("-")[0]
-    private val versionParts = versionName.split(".")
-    // Mojang naming change after 1.21.11: switched to year-based "<major>.<minor>.<patch>" starting from 26.1.
-    private val isNewNaming = versionParts[0].toInt() >= 26
-    private val majorVersion = if (isNewNaming) versionParts[0].toInt() else versionParts[1].toInt()
-    private val minorVersion = try {
-        if (isNewNaming) versionParts[1].toInt() else versionParts[2].toInt()
-    } catch (e: Exception) {
-        0
-    }
-    private val version = Version.majorVersionOf(majorVersion)
-    private val fullVersion = try {
-        Version.valueOf("V_${majorVersion}_${minorVersion}")
-    } catch (e: Exception) {
-        version
-    }
+    private val version = Version.resolve(versionName)
 
     fun setup() {
-        if (fullVersion == null)
-            throw UnsupportedOperationException("unsupported version: $versionName [$version($fullVersion)]")
+        val version = version ?: throw unsupported()
 
         val serviceManagers = plugin.bukkitComponentRegistry.getComponents(NMSServiceManager::class)
-        val serviceManager = serviceManagers.find { it.support(fullVersion) }
-            ?: throw UnsupportedOperationException("unsupported version: $versionName [$version($fullVersion)]")
+        val serviceManager = serviceManagers.find { it.support(version) } ?: throw unsupported()
+
+        if (!version.matches(versionName)) {
+            plugin.logger.warning("running on $versionName with the ${version.displayName} implementation")
+        }
 
         serviceManager.initialize()
         NMSServiceManager.instance = serviceManager
+    }
+
+    private fun unsupported(): UnsupportedOperationException {
+        return UnsupportedOperationException(
+            "unsupported version: $versionName (supported: ${Version.supportedVersionNames().joinToString()})"
+        )
     }
 
     init {
@@ -99,13 +92,6 @@ class HQFrameworkNMSConfiguration(
     @Bean
     override fun provideItemStackService(): NmsItemStackService {
         return NMSServiceManager.instance?.getServiceProvider()?.provideItemStackService()
-            ?: throw UnsupportedOperationException("unsupported version")
-    }
-
-    @Singleton
-    @Bean
-    override fun provideNBTTagService(): NmsNBTTagCompoundService {
-        return NMSServiceManager.instance?.getServiceProvider()?.provideNBTTagService()
             ?: throw UnsupportedOperationException("unsupported version")
     }
 

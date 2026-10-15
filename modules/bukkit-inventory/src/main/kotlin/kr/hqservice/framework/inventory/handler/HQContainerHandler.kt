@@ -37,6 +37,7 @@ class HQContainerHandler {
     @Subscribe(handleOrder = HandleOrder.EARLY)
     fun inventoryDrag(event: InventoryDragEvent) {
         getContainer(event.view)?.apply {
+            if (isCancelled()) event.isCancelled = true
             onDrag(event)
         }
     }

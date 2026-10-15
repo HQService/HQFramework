@@ -16,10 +16,6 @@ class CommandArgumentProviderRegistryImpl : CommandArgumentProviderRegistry {
         arguments[getArgumentProviderKey(getArgumentProviderType(provider), qualifier)] = provider
     }
 
-    override fun findProvider(kClass: KClass<*>, qualifier: String?): CommandArgumentProvider<*>? {
-        return arguments[getArgumentProviderKey(kClass, qualifier)]
-    }
-
     override fun getProvider(kClass: KClass<*>, qualifier: String?): CommandArgumentProvider<*> {
         return arguments[getArgumentProviderKey(kClass, qualifier)]
             ?: throw IllegalArgumentException("argument provider with classifier $kClass, $qualifier not found.")
